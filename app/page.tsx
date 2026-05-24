@@ -44,13 +44,19 @@ export default function Home() {
           </p>
 
           <div className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <button className="rounded-2xl bg-white px-8 py-4 text-lg font-medium text-black transition hover:scale-105">
+            <a
+              href="mailto:hello@aeonvera.com?subject=Join%20Aeonvera%20Waitlist"
+              className="rounded-2xl bg-white px-8 py-4 text-lg font-medium text-black transition hover:scale-105"
+            >
               Join Waitlist
-            </button>
+            </a>
 
-            <button className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-lg font-medium backdrop-blur transition hover:bg-white/10">
+            <a
+              href="#platform"
+              className="rounded-2xl border border-white/10 bg-white/5 px-8 py-4 text-lg font-medium backdrop-blur transition hover:bg-white/10"
+            >
               View Platform
-            </button>
+            </a>
           </div>
 
           <div className="mt-20 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -119,7 +125,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-6 py-28">
+      <section id="platform" className="px-6 py-28">
         <div className="mx-auto max-w-6xl">
           <div className="text-center">
             <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">
@@ -199,9 +205,12 @@ export default function Home() {
             longevity intelligence.
           </p>
 
-          <button className="mt-12 rounded-2xl bg-white px-10 py-5 text-lg font-medium text-black transition hover:scale-105">
+          <a
+            href="mailto:hello@aeonvera.com?subject=Request%20Early%20Access"
+            className="mt-12 inline-block rounded-2xl bg-white px-10 py-5 text-lg font-medium text-black transition hover:scale-105"
+          >
             Request Early Access
-          </button>
+          </a>
         </div>
       </section>
 
@@ -219,9 +228,9 @@ export default function Home() {
 
           <div className="flex gap-8 text-zinc-400">
             <a href="#">About</a>
-            <a href="#">Platform</a>
+            <a href="#platform">Platform</a>
             <a href="#">Research</a>
-            <a href="#">Contact</a>
+            <a href="mailto:hello@aeonvera.com">Contact</a>
           </div>
         </div>
       </footer>
