@@ -1,12 +1,21 @@
 "use client";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   const sessionId = searchParams.get("session_id");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.push("/");
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white">
@@ -19,8 +28,12 @@ function SuccessContent() {
           Thank you for your purchase.
         </p>
 
+        <p className="text-zinc-500 text-sm">
+          Redirecting back to the site...
+        </p>
+
         {sessionId && (
-          <p className="text-sm text-zinc-500">
+          <p className="text-xs text-zinc-600 mt-4">
             Session ID: {sessionId}
           </p>
         )}
