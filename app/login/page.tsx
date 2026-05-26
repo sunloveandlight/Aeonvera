@@ -1,10 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createBrowserClient } from "@supabase/ssr";
+import { useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-
-export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,11 +11,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const [supabase] = useState(() => 
-    createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 
   const signIn = async () => {
@@ -42,12 +38,11 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` }
     });
 
     if (error) setMessage(error.message);
-    else setMessage("Check your email for the confirmation link!");
-    
+    else setMessage("Check your email for confirmation!");
+
     setLoading(false);
   };
 
