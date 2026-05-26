@@ -5,6 +5,8 @@ import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 import { CreditCard, LogOut } from "lucide-react";
 
+export const dynamic = 'force-dynamic';   // ← This is the key fix
+
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -16,8 +18,7 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
-    // Small delay to ensure client-side hydration
-    const checkUser = async () => {
+    const checkAuth = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
@@ -25,17 +26,17 @@ export default function Dashboard() {
           router.replace("/login");
           return;
         }
-        
+
         setUser(user);
-      } catch (error) {
-        console.error("Auth error:", error);
+      } catch (err) {
+        console.error(err);
         router.replace("/login");
       } finally {
         setLoading(false);
       }
     };
 
-    checkUser();
+    checkAuth();
   }, [supabase, router]);
 
   const handleLogout = async () => {
@@ -46,7 +47,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center text-xl">
-        Loading your dashboard...
+        Loading dashboard...
       </div>
     );
   }
@@ -66,14 +67,14 @@ export default function Dashboard() {
 
         <div className="bg-zinc-950 border border-white/10 rounded-3xl p-10">
           <h2 className="text-3xl mb-4">Welcome back</h2>
-          <p className="text-2xl text-emerald-400 mb-8">{user?.email}</p>
+          <p className="text-2xl text-emerald-400">{user?.email}</p>
           
-          <div className="border border-white/10 rounded-2xl p-8">
+          <div className="mt-10 border border-white/10 rounded-2xl p-8">
             <div className="flex items-center gap-4 mb-6">
               <CreditCard size={32} />
-              <h3 className="text-2xl">Subscription Status</h3>
+              <h3 className="text-2xl">Subscription</h3>
             </div>
-            <p className="text-zinc-400">Your active membership details will appear here once we connect Stripe.</p>
+            <p className="text-zinc-400">Your membership details will be shown here soon.</p>
           </div>
         </div>
       </div>
