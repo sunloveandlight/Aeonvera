@@ -4,6 +4,8 @@ import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,11 +21,17 @@ export default function LoginPage() {
   const signIn = async () => {
     setLoading(true);
     setMessage("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setMessage(error.message);
-    else {
-      setMessage("Login successful!");
-      setTimeout(() => router.push("/dashboard"), 1000);
+
+    const { error } = await supabase.auth.signInWithPassword({ 
+      email, 
+      password 
+    });
+
+    if (error) {
+      setMessage(error.message);
+    } else {
+      setMessage("Login successful! Redirecting...");
+      setTimeout(() => router.push("/dashboard"), 1200);
     }
     setLoading(false);
   };
@@ -31,13 +39,18 @@ export default function LoginPage() {
   const signUp = async () => {
     setLoading(true);
     setMessage("");
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` }
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      },
     });
+
     if (error) setMessage(error.message);
-    else setMessage("Check your email for confirmation link!");
+    else setMessage("Check your email to confirm your account!");
+    
     setLoading(false);
   };
 
@@ -45,7 +58,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
       <div className="w-full max-w-md p-10 rounded-3xl bg-zinc-950 border border-white/10">
         <h1 className="text-4xl font-bold mb-2">Aeonvera</h1>
-        <p className="text-zinc-400 mb-8">Welcome back</p>
+        <p className="text-zinc-400 mb-8">Sign in or create an account</p>
 
         <input
           type="email"
@@ -78,7 +91,7 @@ export default function LoginPage() {
           {loading ? "Loading..." : "Create Account"}
         </button>
 
-        {message && <p className="mt-6 text-center text-sm">{message}</p>}
+        {message && <p className="mt-6 text-center text-sm text-zinc-400">{message}</p>}
       </div>
     </div>
   );
