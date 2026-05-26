@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -11,39 +10,65 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   const signIn = async () => {
+    if (!email || !password) {
+      setMessage("Please enter email and password");
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
 
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setMessage("Login successful! Redirecting...");
-      setTimeout(() => router.push("/dashboard"), 1500);
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        setMessage(error.message);
+      } else {
+        setMessage("Login successful! Redirecting...");
+        setTimeout(() => router.push("/dashboard"), 1500);
+      }
+    } catch (err: any) {
+      setMessage("Something went wrong. Please try again.");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const signUp = async () => {
+    if (!email || !password) {
+      setMessage("Please enter email and password");
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
 
-    if (error) setMessage(error.message);
-    else setMessage("Check your email for confirmation!");
+      const { error } = await supabase.auth.signUp({ email, password });
 
-    setLoading(false);
+      if (error) setMessage(error.message);
+      else setMessage("Check your email for confirmation link!");
+    } catch (err: any) {
+      setMessage("Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
