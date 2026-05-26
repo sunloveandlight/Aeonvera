@@ -37,6 +37,9 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
         const email = session.customer_email;
 
+        console.log("📧 Stripe email:", email);
+console.log("🧾 Full session:", session);
+
 if (!email) break;
 
 // find user by email
