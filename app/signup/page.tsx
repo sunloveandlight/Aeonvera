@@ -4,12 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 
-// Create Supabase client directly (no imports, no broken paths)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export default function SignupPage() {
   const router = useRouter();
 
@@ -17,11 +11,23 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  async function getSupabase() {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!url || !key) {
+      throw new Error("Missing Supabase env vars");
+    }
+
+    return createClient(url, key);
+  }
+
   async function handleSignup() {
     setLoading(true);
 
     try {
-      // 1. Sign up user
+      const supabase = await getSupabase();
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -33,28 +39,16 @@ export default function SignupPage() {
         return;
       }
 
-      const user = data.user;
-
-      if (user) {
-        // 2. Create/update profile
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .upsert({
-            id: user.id,
-            email: user.email,
-          });
-
-        if (profileError) {
-          alert(profileError.message);
-          setLoading(false);
-          return;
-        }
+      if (data.user) {
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          email: data.user.email,
+        });
       }
 
-      // 3. Go to dashboard
       router.push("/dashboard");
     } catch (err: any) {
-      alert(err.message || "Something went wrong");
+      alert(err.message);
     }
 
     setLoading(false);
