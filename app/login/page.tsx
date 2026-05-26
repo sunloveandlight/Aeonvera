@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useRouter } from "next/navigation";
 
@@ -13,25 +13,24 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const [supabase] = useState(() => 
+    createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
   );
 
   const signIn = async () => {
     setLoading(true);
     setMessage("");
 
-    const { error } = await supabase.auth.signInWithPassword({ 
-      email, 
-      password 
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setMessage(error.message);
     } else {
       setMessage("Login successful! Redirecting...");
-      setTimeout(() => router.push("/dashboard"), 1200);
+      setTimeout(() => router.push("/dashboard"), 1500);
     }
     setLoading(false);
   };
@@ -43,13 +42,11 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-      },
+      options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` }
     });
 
     if (error) setMessage(error.message);
-    else setMessage("Check your email to confirm your account!");
+    else setMessage("Check your email for the confirmation link!");
     
     setLoading(false);
   };
