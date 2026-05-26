@@ -35,7 +35,39 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log("💰 Payment completed for:", session.customer_email);
+        const email = session.customer_email;
+
+if (!email) break;
+
+// find user by email
+const { data: usersData } =
+  await supabase.auth.admin.listUsers();
+
+const user = usersData.users.find(
+  (u) => u.email?.toLowerCase() === email.toLowerCase()
+);
+
+if (!user) {
+  console.log("❌ User not found");
+  break;
+}
+
+// update profile
+const { error } = await supabase
+  .from("profiles")
+  .upsert({
+    id: user.id,
+    email,
+    stripe_customer_id: session.customer as string,
+    subscription_status: "active",
+    plan: "core",
+  });
+
+if (error) {
+  console.error("❌ Supabase update failed:", error);
+} else {
+  console.log("✅ User upgraded to core");
+}
         break;
       }
       case "customer.subscription.created":
