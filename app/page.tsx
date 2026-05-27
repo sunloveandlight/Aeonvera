@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
-import { getSupabase } from "../lib/supabaseClient";
+import { getSupabase } from "@/lib/supabase/client";
 import Link from "next/link";
 
 const stripePromise = loadStripe(
