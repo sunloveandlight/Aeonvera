@@ -1,231 +1,152 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
-import { getSupabase } from "../lib/supabaseClient";
 import Link from "next/link";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
-);
-
-const PRICE_IDS = {
-  core: "price_1Tb5DiFBEwY7LhhKvtS1uodp",
-  elite: "price_1Tb5EdFBEwY7LhhK5LOkIrQ6",
-  sovereign: "price_1Tb5FNFBEwY7LhhKHvo82JKF",
-};
-
-export default function AeonveraWebsite() {
-  const [mobileMenu, setMobileMenu] = useState(false);
-  const [waitlistOpen, setWaitlistOpen] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [goals, setGoals] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [stripeLoading, setStripeLoading] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const scrollToSection = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const handleWaitlistSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      setSubmitted(true);
-
-      setTimeout(() => {
-        setSubmitted(false);
-        setWaitlistOpen(false);
-        setName("");
-        setEmail("");
-        setGoals("");
-      }, 2000);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCheckout = async (priceId: string) => {
-    setStripeLoading(true);
-
-    try {
-      const supabase = getSupabase();
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        window.location.href = "/login";
-        return;
-      }
-
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ priceId }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Checkout failed");
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-        return;
-      }
-
-      throw new Error("No checkout URL received");
-    } catch (err: any) {
-      console.error(err);
-      alert("Checkout error: " + err.message);
-    } finally {
-      setStripeLoading(false);
-    }
-  };
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-black text-white">
+    <main className="min-h-screen bg-black text-white overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_40%)] pointer-events-none" />
 
-      {/* BACKGROUND EFFECTS */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <motion.div
-          animate={{ x: [0, 40, 0], y: [0, -40, 0] }}
-          transition={{ repeat: Infinity, duration: 18 }}
-          className="absolute left-[-10%] top-[-10%] h-[600px] w-[600px] rounded-full bg-white/10 blur-3xl"
-        />
-        <motion.div
-          animate={{ x: [0, -60, 0], y: [0, 60, 0] }}
-          transition={{ repeat: Infinity, duration: 20 }}
-          className="absolute bottom-[-10%] right-[-10%] h-[600px] w-[600px] rounded-full bg-zinc-500/10 blur-3xl"
-        />
-      </div>
-
-      {/* HEADER */}
-      <header
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
-          scrollY > 20
-            ? "border-b border-white/10 bg-black/70 backdrop-blur-2xl"
-            : ""
-        }`}
-      >
-        <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-5">
-
-          <button
-            onClick={() => scrollToSection("hero")}
-            className="text-2xl font-semibold"
-          >
+      {/* Navbar */}
+      <header className="relative z-10 border-b border-white/10 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+          <h1 className="text-2xl font-bold tracking-tight">
             Aeonvera
-          </button>
+          </h1>
 
-          {/* NAV */}
-          <nav className="hidden gap-10 text-sm text-zinc-300 lg:flex">
-            <button onClick={() => scrollToSection("platform")}>Platform</button>
-            <button onClick={() => scrollToSection("science")}>Science</button>
-            <button onClick={() => scrollToSection("membership")}>Memberships</button>
-            <button onClick={() => scrollToSection("about")}>About</button>
-          </nav>
-
-          {/* RIGHT SIDE (FIXED STRUCTURE) */}
-          <div className="flex items-center gap-4">
-
-            <div className="flex items-center gap-3">
-
-              <Link href="/login">
-                <button className="rounded-xl border border-white/20 px-4 py-2 text-sm">
-                  Login
-                </button>
-              </Link>
-
-              <Link href="/signup">
-                <button className="rounded-xl bg-white px-4 py-2 text-sm text-black font-medium">
-                  Sign up
-                </button>
-              </Link>
-
-              <button
-                onClick={() => setWaitlistOpen(true)}
-                className="rounded-2xl bg-white px-5 py-3 text-sm text-black font-medium"
-              >
-                Join Waitlist
-              </button>
-
-            </div>
-
-            <button
-              className="lg:hidden"
-              onClick={() => setMobileMenu(!mobileMenu)}
+          <nav className="flex items-center gap-6">
+            <Link
+              href="/pricing"
+              className="text-zinc-300 hover:text-white transition"
             >
-              {mobileMenu ? <X size={24} /> : <Menu size={24} />}
-            </button>
+              Pricing
+            </Link>
 
-          </div>
+            <Link
+              href="/login"
+              className="text-zinc-300 hover:text-white transition"
+            >
+              Login
+            </Link>
+
+            <Link
+              href="/pricing"
+              className="bg-white text-black px-5 py-2 rounded-xl font-medium hover:bg-zinc-200 transition"
+            >
+              Get Started
+            </Link>
+          </nav>
         </div>
       </header>
 
-      {/* MEMBERSHIP SECTION */}
-      <section id="membership" className="px-6 py-32">
-        <div className="mx-auto max-w-6xl text-center">
-
-          <h2 className="text-5xl font-semibold mb-4">
-            Choose Your Path
-          </h2>
-
-          <p className="text-zinc-400 mb-12">
-            Begin your transformation today
-          </p>
-
-          <div className="grid gap-6 md:grid-cols-3">
-
-            {[
-              { name: "Core", price: "$49/mo", id: PRICE_IDS.core },
-              { name: "Elite", price: "$199/mo", id: PRICE_IDS.elite },
-              { name: "Sovereign", price: "$999/yr", id: PRICE_IDS.sovereign },
-            ].map((plan) => (
-              <div
-                key={plan.name}
-                className="rounded-3xl bg-white/5 p-8 border border-white/10 hover:border-white/30 transition-all"
-              >
-                <h3 className="text-2xl font-semibold">{plan.name}</h3>
-                <p className="text-4xl font-bold mt-4 mb-8">{plan.price}</p>
-
-                <button
-                  disabled={stripeLoading}
-                  onClick={() => handleCheckout(plan.id)}
-                  className="w-full rounded-2xl bg-white py-4 text-black font-semibold hover:bg-zinc-200 transition disabled:opacity-70"
-                >
-                  {stripeLoading ? "Processing..." : "Subscribe Now"}
-                </button>
-
-              </div>
-            ))}
-
+      {/* Hero Section */}
+      <section className="relative z-10 px-6 pt-32 pb-24">
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 border border-white/10 bg-white/5 px-4 py-2 rounded-full text-sm text-zinc-300 mb-8 backdrop-blur-xl">
+            Strategic Intelligence Platform
           </div>
 
+          <h1 className="text-6xl md:text-8xl font-bold tracking-tight leading-none mb-8">
+            Intelligence
+            <br />
+            For The Next Era
+          </h1>
+
+          <p className="max-w-2xl mx-auto text-xl text-zinc-400 leading-relaxed mb-10">
+            Aeonvera combines AI systems, strategic workflows, and premium digital infrastructure into a unified operating platform for ambitious individuals.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link
+              href="/pricing"
+              className="bg-white text-black px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-zinc-200 transition w-full sm:w-auto text-center"
+            >
+              Start Your Access
+            </Link>
+
+            <Link
+              href="/login"
+              className="border border-white/10 bg-white/5 backdrop-blur-xl px-8 py-4 rounded-2xl font-semibold text-lg hover:bg-white/10 transition w-full sm:w-auto text-center"
+            >
+              Existing Member
+            </Link>
+          </div>
         </div>
       </section>
 
-    </div>
+      {/* Features */}
+      <section className="relative z-10 px-6 py-24 border-t border-white/10">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-16">
+            <p className="text-zinc-500 uppercase tracking-[0.3em] text-sm mb-4">
+              Capabilities
+            </p>
+
+            <h2 className="text-4xl md:text-5xl font-bold max-w-2xl">
+              Built for high-performance thinking and execution.
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-zinc-950 border border-white/10 rounded-3xl p-8">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 mb-6" />
+
+              <h3 className="text-2xl font-semibold mb-4">
+                AI Intelligence
+              </h3>
+
+              <p className="text-zinc-400 leading-relaxed">
+                Advanced AI systems designed to support strategy, analysis, planning, and execution at scale.
+              </p>
+            </div>
+
+            <div className="bg-zinc-950 border border-white/10 rounded-3xl p-8">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 mb-6" />
+
+              <h3 className="text-2xl font-semibold mb-4">
+                Strategic Systems
+              </h3>
+
+              <p className="text-zinc-400 leading-relaxed">
+                Centralized workflows and premium digital infrastructure built for modern operators.
+              </p>
+            </div>
+
+            <div className="bg-zinc-950 border border-white/10 rounded-3xl p-8">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 mb-6" />
+
+              <h3 className="text-2xl font-semibold mb-4">
+                Sovereign Access
+              </h3>
+
+              <p className="text-zinc-400 leading-relaxed">
+                Premium-tier environments, exclusive tools, and elevated access for advanced members.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="relative z-10 px-6 py-32 border-t border-white/10">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-5xl md:text-6xl font-bold mb-8">
+            Enter The System
+          </h2>
+
+          <p className="text-xl text-zinc-400 mb-10 max-w-2xl mx-auto">
+            Access the next generation of AI-powered strategic infrastructure.
+          </p>
+
+          <Link
+            href="/pricing"
+            className="inline-flex bg-white text-black px-10 py-5 rounded-2xl text-lg font-semibold hover:bg-zinc-200 transition"
+          >
+            View Pricing
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 }
