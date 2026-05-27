@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { getSupabase } from "../lib/supabaseClient";
+import Link from "next/link";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
@@ -60,7 +61,6 @@ export default function AeonveraWebsite() {
     }
   };
 
-  // ✅ ONLY THIS FUNCTION WAS CHANGED
   const handleCheckout = async (priceId: string) => {
     setStripeLoading(true);
 
@@ -153,12 +153,26 @@ export default function AeonveraWebsite() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setWaitlistOpen(true)}
-              className="rounded-2xl bg-white px-5 py-3 text-sm text-black font-medium"
-            >
-              Join Waitlist
-            </button>
+            <div className="flex items-center gap-3">
+              <Link href="/login">
+                <button className="rounded-xl border border-white/20 px-4 py-2 text-sm">
+                  Login
+                </button>
+              </Link>
+
+              <Link href="/signup">
+                <button className="rounded-xl bg-white px-4 py-2 text-sm text-black font-medium">
+                  Sign up
+                </button>
+              </Link>
+
+              <button
+                onClick={() => setWaitlistOpen(true)}
+                className="rounded-2xl bg-white px-5 py-3 text-sm text-black font-medium"
+              >
+                Join Waitlist
+              </button>
+            </div>
 
             <button
               className="lg:hidden"
@@ -183,7 +197,7 @@ export default function AeonveraWebsite() {
               { name: "Elite", price: "$199/mo", id: PRICE_IDS.elite },
               {
                 name: "Sovereign",
-                price: "$999/yr", 
+                price: "$999/yr",
                 id: PRICE_IDS.sovereign,
               },
             ].map((plan) => (
