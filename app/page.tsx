@@ -1,231 +1,246 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
-import { getSupabase } from "@/lib/supabase/client";
 import Link from "next/link";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
-);
-
-const PRICE_IDS = {
-  core: "price_1Tb5DiFBEwY7LhhKvtS1uodp",
-  elite: "price_1Tb5EdFBEwY7LhhK5LOkIrQ6",
-  sovereign: "price_1Tb5FNFBEwY7LhhKHvo82JKF",
-};
-
-export default function AeonveraWebsite() {
-  const [mobileMenu, setMobileMenu] = useState(false);
-  const [waitlistOpen, setWaitlistOpen] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [goals, setGoals] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [stripeLoading, setStripeLoading] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const scrollToSection = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const handleWaitlistSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      setSubmitted(true);
-
-      setTimeout(() => {
-        setSubmitted(false);
-        setWaitlistOpen(false);
-        setName("");
-        setEmail("");
-        setGoals("");
-      }, 2000);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCheckout = async (priceId: string) => {
-    setStripeLoading(true);
-
-    try {
-      const supabase = getSupabase();
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        window.location.href = "/login";
-        return;
-      }
-
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ priceId }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Checkout failed");
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-        return;
-      }
-
-      throw new Error("No checkout URL received");
-    } catch (err: any) {
-      console.error(err);
-      alert("Checkout error: " + err.message);
-    } finally {
-      setStripeLoading(false);
-    }
-  };
-
+export default function HomePage() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-black text-white">
-
-      {/* BACKGROUND EFFECTS */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <motion.div
-          animate={{ x: [0, 40, 0], y: [0, -40, 0] }}
-          transition={{ repeat: Infinity, duration: 18 }}
-          className="absolute left-[-10%] top-[-10%] h-[600px] w-[600px] rounded-full bg-white/10 blur-3xl"
-        />
-        <motion.div
-          animate={{ x: [0, -60, 0], y: [0, 60, 0] }}
-          transition={{ repeat: Infinity, duration: 20 }}
-          className="absolute bottom-[-10%] right-[-10%] h-[600px] w-[600px] rounded-full bg-zinc-500/10 blur-3xl"
-        />
+    <main className="min-h-screen bg-black text-white overflow-hidden">
+      {/* BACKGROUND */}
+      <div className="fixed inset-0 -z-10 bg-black">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_35%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.03))]" />
       </div>
 
-      {/* HEADER */}
-      <header
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
-          scrollY > 20
-            ? "border-b border-white/10 bg-black/70 backdrop-blur-2xl"
-            : ""
-        }`}
-      >
-        <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-5">
+      {/* NAVBAR */}
+      <header className="border-b border-white/10 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold tracking-[0.2em]">
+              AEONVERA
+            </h1>
+          </div>
 
-          <button
-            onClick={() => scrollToSection("hero")}
-            className="text-2xl font-semibold"
-          >
-            Aeonvera
-          </button>
+          <nav className="hidden md:flex items-center gap-10 text-sm text-zinc-400">
+            <a href="#platform" className="hover:text-white transition">
+              Platform
+            </a>
 
-          {/* NAV */}
-          <nav className="hidden gap-10 text-sm text-zinc-300 lg:flex">
-            <button onClick={() => scrollToSection("platform")}>Platform</button>
-            <button onClick={() => scrollToSection("science")}>Science</button>
-            <button onClick={() => scrollToSection("membership")}>Memberships</button>
-            <button onClick={() => scrollToSection("about")}>About</button>
+            <a href="#science" className="hover:text-white transition">
+              Science
+            </a>
+
+            <Link href="/pricing" className="hover:text-white transition">
+              Pricing
+            </Link>
           </nav>
 
-          {/* RIGHT SIDE (FIXED STRUCTURE) */}
           <div className="flex items-center gap-4">
-
-            <div className="flex items-center gap-3">
-
-              <Link href="/login">
-                <button className="rounded-xl border border-white/20 px-4 py-2 text-sm">
-                  Login
-                </button>
-              </Link>
-
-              <Link href="/signup">
-                <button className="rounded-xl bg-white px-4 py-2 text-sm text-black font-medium">
-                  Sign up
-                </button>
-              </Link>
-
-              <button
-                onClick={() => setWaitlistOpen(true)}
-                className="rounded-2xl bg-white px-5 py-3 text-sm text-black font-medium"
-              >
-                Join Waitlist
-              </button>
-
-            </div>
-
-            <button
-              className="lg:hidden"
-              onClick={() => setMobileMenu(!mobileMenu)}
+            <Link
+              href="/login"
+              className="text-sm text-zinc-400 hover:text-white transition"
             >
-              {mobileMenu ? <X size={24} /> : <Menu size={24} />}
-            </button>
+              Sign In
+            </Link>
 
+            <Link
+              href="/pricing"
+              className="px-5 py-2 rounded-xl bg-white text-black text-sm font-medium hover:bg-zinc-200 transition"
+            >
+              Begin
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* MEMBERSHIP SECTION */}
-      <section id="membership" className="px-6 py-32">
-        <div className="mx-auto max-w-6xl text-center">
-
-          <h2 className="text-5xl font-semibold mb-4">
-            Choose Your Path
-          </h2>
-
-          <p className="text-zinc-400 mb-12">
-            Begin your transformation today
+      {/* HERO */}
+      <section className="px-6 pt-32 pb-28">
+        <div className="max-w-6xl mx-auto text-center">
+          <p className="uppercase tracking-[0.35em] text-zinc-500 text-sm mb-8">
+            AI-NATIVE LONGEVITY INTELLIGENCE
           </p>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          <h1 className="text-6xl md:text-8xl font-bold leading-[0.95] tracking-tight max-w-6xl mx-auto">
+            Extend human lifespan through intelligence.
+          </h1>
 
-            {[
-              { name: "Core", price: "$49/mo", id: PRICE_IDS.core },
-              { name: "Elite", price: "$199/mo", id: PRICE_IDS.elite },
-              { name: "Sovereign", price: "$999/yr", id: PRICE_IDS.sovereign },
-            ].map((plan) => (
-              <div
-                key={plan.name}
-                className="rounded-3xl bg-white/5 p-8 border border-white/10 hover:border-white/30 transition-all"
-              >
-                <h3 className="text-2xl font-semibold">{plan.name}</h3>
-                <p className="text-4xl font-bold mt-4 mb-8">{plan.price}</p>
+          <p className="mt-10 text-xl md:text-2xl text-zinc-400 max-w-3xl mx-auto leading-relaxed">
+            Aeonvera is building the intelligence infrastructure for human
+            longevity — integrating AI systems, biological data, health
+            optimization, and computational medicine into a unified platform.
+          </p>
 
-                <button
-                  disabled={stripeLoading}
-                  onClick={() => handleCheckout(plan.id)}
-                  className="w-full rounded-2xl bg-white py-4 text-black font-semibold hover:bg-zinc-200 transition disabled:opacity-70"
-                >
-                  {stripeLoading ? "Processing..." : "Subscribe Now"}
-                </button>
+          <div className="mt-14 flex flex-col sm:flex-row gap-5 justify-center">
+            <Link
+              href="/pricing"
+              className="px-8 py-4 rounded-2xl bg-white text-black font-semibold hover:bg-zinc-200 transition"
+            >
+              Access Platform
+            </Link>
 
-              </div>
-            ))}
-
+            <a
+              href="#platform"
+              className="px-8 py-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition"
+            >
+              Explore Platform
+            </a>
           </div>
-
         </div>
       </section>
 
-    </div>
+      {/* PLATFORM */}
+      <section
+        id="platform"
+        className="px-6 py-28 border-t border-white/10"
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-3xl mb-20">
+            <p className="uppercase tracking-[0.3em] text-zinc-500 text-sm mb-6">
+              PLATFORM
+            </p>
+
+            <h2 className="text-5xl md:text-6xl font-bold leading-tight">
+              A biological intelligence operating system.
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="rounded-3xl border border-white/10 bg-zinc-950/80 p-8">
+              <div className="mb-6 text-zinc-500 text-sm uppercase tracking-[0.2em]">
+                BIOMARKERS
+              </div>
+
+              <h3 className="text-2xl font-semibold mb-5">
+                Biological Monitoring
+              </h3>
+
+              <p className="text-zinc-400 leading-relaxed">
+                Centralize bloodwork, biomarkers, recovery metrics, and health
+                data into a continuously evolving intelligence profile.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-zinc-950/80 p-8">
+              <div className="mb-6 text-zinc-500 text-sm uppercase tracking-[0.2em]">
+                AI SYSTEMS
+              </div>
+
+              <h3 className="text-2xl font-semibold mb-5">
+                Longevity Intelligence
+              </h3>
+
+              <p className="text-zinc-400 leading-relaxed">
+                AI-generated optimization protocols designed around cognition,
+                recovery, metabolic health, sleep, and long-term lifespan.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-zinc-950/80 p-8">
+              <div className="mb-6 text-zinc-500 text-sm uppercase tracking-[0.2em]">
+                INFRASTRUCTURE
+              </div>
+
+              <h3 className="text-2xl font-semibold mb-5">
+                Human Optimization Layer
+              </h3>
+
+              <p className="text-zinc-400 leading-relaxed">
+                Build a personalized intelligence system capable of adapting to
+                changing biological states over time.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SCIENCE */}
+      <section
+        id="science"
+        className="px-6 py-28 border-t border-white/10"
+      >
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
+          <div>
+            <p className="uppercase tracking-[0.3em] text-zinc-500 text-sm mb-6">
+              SCIENTIFIC FOUNDATION
+            </p>
+
+            <h2 className="text-5xl font-bold leading-tight mb-8">
+              Computational longevity at scale.
+            </h2>
+
+            <p className="text-zinc-400 text-lg leading-relaxed mb-6">
+              Aeonvera combines artificial intelligence, longitudinal health
+              data, and optimization systems to create adaptive longevity
+              intelligence.
+            </p>
+
+            <p className="text-zinc-400 text-lg leading-relaxed">
+              The platform is designed to evolve into a unified infrastructure
+              layer for preventive health, cognitive optimization, biomarker
+              analysis, and biological age intervention systems.
+            </p>
+          </div>
+
+          <div className="rounded-[2rem] border border-white/10 bg-zinc-950/80 p-10">
+            <div className="space-y-10">
+              <div>
+                <div className="text-zinc-500 text-sm mb-2">
+                  LONGITUDINAL DATA
+                </div>
+
+                <div className="text-3xl font-semibold">
+                  Continuous Biological Tracking
+                </div>
+              </div>
+
+              <div>
+                <div className="text-zinc-500 text-sm mb-2">
+                  AI REASONING
+                </div>
+
+                <div className="text-3xl font-semibold">
+                  Adaptive Health Intelligence
+                </div>
+              </div>
+
+              <div>
+                <div className="text-zinc-500 text-sm mb-2">
+                  OPTIMIZATION ENGINE
+                </div>
+
+                <div className="text-3xl font-semibold">
+                  Personalized Longevity Protocols
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="px-6 py-36 border-t border-white/10">
+        <div className="max-w-5xl mx-auto text-center">
+          <p className="uppercase tracking-[0.3em] text-zinc-500 text-sm mb-6">
+            BEGIN
+          </p>
+
+          <h2 className="text-5xl md:text-7xl font-bold leading-tight">
+            Build your longevity intelligence layer.
+          </h2>
+
+          <p className="mt-8 text-zinc-400 text-xl max-w-2xl mx-auto leading-relaxed">
+            Access the next generation of AI-powered biological optimization.
+          </p>
+
+          <div className="mt-12">
+            <Link
+              href="/pricing"
+              className="inline-flex px-10 py-5 rounded-2xl bg-white text-black font-semibold hover:bg-zinc-200 transition"
+            >
+              Access Platform
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
