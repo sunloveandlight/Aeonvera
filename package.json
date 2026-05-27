@@ -10,7 +10,7 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix"
   },
   "dependencies": {
-    "@stripe/stripe-js": "^9.6.0",
+    "@stripe/stripe-js": "^9.7.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.106.2",
     "framer-motion": "^12.40.0",
