@@ -2,21 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false); // Toggle between sign in and sign up
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const router = useRouter();
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
 
   const handleAuth = async () => {
     if (!email || !password) {
@@ -28,9 +22,15 @@ export default function LoginPage() {
     setMessage("");
 
     try {
+      const { createClient } = await import("@supabase/supabase-js");
+      
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({ email, password });
-
         if (error) setMessage(error.message);
         else setMessage("Account created! Please check your email to confirm.");
       } else {
@@ -44,8 +44,8 @@ export default function LoginPage() {
         }
       }
     } catch (err: any) {
-      setMessage("Something went wrong. Please try again.");
       console.error(err);
+      setMessage("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
