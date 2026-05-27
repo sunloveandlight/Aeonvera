@@ -1,5 +1,9 @@
-import { getSupabase } from "./supabaseClient";
-import { canAccess, Plan, SubscriptionStatus } from "./permissions";
+import { getSupabase } from "@/lib/supabase/client";
+import {
+  canAccess,
+  Plan,
+  SubscriptionStatus,
+} from "@/lib/auth/permissions";
 
 export async function getUserSubscription() {
   const supabase = getSupabase();

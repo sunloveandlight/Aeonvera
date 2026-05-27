@@ -1,4 +1,7 @@
-import { Plan, SubscriptionStatus } from "./permissions";
+import {
+  Plan,
+  SubscriptionStatus,
+} from "@/lib/auth/permissions";
 
 export type Feature =
   | "core_features"
