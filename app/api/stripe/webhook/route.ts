@@ -6,25 +6,27 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2026-04-22.dahlia",
 });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+async function getSupabaseAdmin() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("Missing Supabase environment variables");
+  }
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
-async function hasEventBeenProcessed(eventId: string) {
+async function hasEventBeenProcessed(eventId: string, supabase: any) {
   const { data } = await supabase
     .from("stripe_events")
     .select("id")
     .eq("id", eventId)
     .maybeSingle();
-
   return !!data;
 }
 
-async function markEventProcessed(eventId: string) {
-  await supabase.from("stripe_events").insert({
-    id: eventId,
-  });
+async function markEventProcessed(eventId: string, supabase: any) {
+  await supabase.from("stripe_events").insert({ id: eventId });
 }
 
 function normalizeSubscriptionStatus(status: Stripe.Subscription.Status) {
@@ -43,7 +45,6 @@ export async function POST(req: Request) {
   }
 
   let event: Stripe.Event;
-
   try {
     event = stripe.webhooks.constructEvent(
       body,
@@ -54,26 +55,19 @@ export async function POST(req: Request) {
     return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
-  const alreadyProcessed = await hasEventBeenProcessed(event.id);
+  const supabase = await getSupabaseAdmin();
+
+  const alreadyProcessed = await hasEventBeenProcessed(event.id, supabase);
   if (alreadyProcessed) {
     return NextResponse.json({ received: true, duplicate: true });
   }
 
   try {
-    // -------------------------
-    // CHECKOUT COMPLETED
-    // -------------------------
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-
       const stripeCustomerId = session.customer as string;
       const stripeSubscriptionId = session.subscription as string;
 
-      if (!stripeCustomerId) {
-        return new NextResponse("Missing stripeCustomerId", { status: 400 });
-      }
-
-      // 🔍 Find user via Stripe customer ID (NEW SAFE METHOD)
       const { data: profile } = await supabase
         .from("profiles")
         .select("user_id")
@@ -81,9 +75,7 @@ export async function POST(req: Request) {
         .maybeSingle();
 
       if (!profile?.user_id) {
-        return new NextResponse("No matching user for Stripe customer", {
-          status: 400,
-        });
+        return new NextResponse("No matching user", { status: 400 });
       }
 
       await supabase.from("profiles").upsert({
@@ -96,29 +88,18 @@ export async function POST(req: Request) {
       });
     }
 
-    // -------------------------
-    // SUBSCRIPTION UPDATED
-    // -------------------------
     if (event.type === "customer.subscription.updated") {
       const sub = event.data.object as Stripe.Subscription;
-
       const status = normalizeSubscriptionStatus(sub.status);
 
       await supabase
         .from("profiles")
-        .update({
-          subscription_status: status,
-          updated_at: new Date().toISOString(),
-        })
+        .update({ subscription_status: status, updated_at: new Date().toISOString() })
         .eq("stripe_subscription_id", sub.id);
     }
 
-    // -------------------------
-    // SUBSCRIPTION DELETED
-    // -------------------------
     if (event.type === "customer.subscription.deleted") {
       const sub = event.data.object as Stripe.Subscription;
-
       await supabase
         .from("profiles")
         .update({
@@ -129,12 +110,10 @@ export async function POST(req: Request) {
         .eq("stripe_subscription_id", sub.id);
     }
 
-    await markEventProcessed(event.id);
-
+    await markEventProcessed(event.id, supabase);
     return NextResponse.json({ received: true });
   } catch (err: any) {
-    return new NextResponse(`Webhook handler failed: ${err.message}`, {
-      status: 500,
-    });
+    console.error(err);
+    return new NextResponse(`Webhook handler failed: ${err.message}`, { status: 500 });
   }
 }
