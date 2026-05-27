@@ -11,9 +11,36 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+async function hasEventBeenProcessed(eventId: string) {
+  const { data } = await supabase
+    .from("stripe_events")
+    .select("id")
+    .eq("id", eventId)
+    .maybeSingle();
+
+  return !!data;
+}
+
+async function markEventProcessed(eventId: string) {
+  await supabase.from("stripe_events").insert({
+    id: eventId,
+  });
+}
+
+function normalizeSubscriptionStatus(status: Stripe.Subscription.Status) {
+  if (status === "active" || status === "trialing") return "active";
+  if (status === "past_due") return "past_due";
+  if (status === "canceled" || status === "unpaid") return "canceled";
+  return "inactive";
+}
+
 export async function POST(req: Request) {
   const body = await req.text();
-  const signature = req.headers.get("stripe-signature")!;
+  const signature = req.headers.get("stripe-signature");
+
+  if (!signature) {
+    return new NextResponse("Missing signature", { status: 400 });
+  }
 
   let event: Stripe.Event;
 
@@ -27,89 +54,87 @@ export async function POST(req: Request) {
     return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
-  // ==============================
-  // 1. Checkout completed
-  // ==============================
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
+  const alreadyProcessed = await hasEventBeenProcessed(event.id);
+  if (alreadyProcessed) {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
 
-    const stripeCustomerId = session.customer as string;
-    const stripeSubscriptionId = session.subscription as string;
+  try {
+    // -------------------------
+    // CHECKOUT COMPLETED
+    // -------------------------
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
 
-    // STEP A: find user by stripe_customer_id
-    let { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("stripe_customer_id", stripeCustomerId)
-      .single();
+      const stripeCustomerId = session.customer as string;
+      const stripeSubscriptionId = session.subscription as string;
 
-    // STEP B: if no user exists, create one (BUY-FIRST FLOW)
-    if (!profile) {
-      // create auth user via admin API
-      const { data: user, error } = await supabase.auth.admin.createUser({
-        email: session.customer_details?.email!,
-        email_confirm: true,
-      });
-
-      if (error || !user.user) {
-        return new NextResponse("User creation failed", { status: 500 });
+      if (!stripeCustomerId) {
+        return new NextResponse("Missing stripeCustomerId", { status: 400 });
       }
 
-      // create profile
-      const { data: newProfile } = await supabase
+      // 🔍 Find user via Stripe customer ID (NEW SAFE METHOD)
+      const { data: profile } = await supabase
         .from("profiles")
-        .insert({
-          user_id: user.user.id,
-          stripe_customer_id: stripeCustomerId,
-          stripe_subscription_id: stripeSubscriptionId,
-          plan: "pro",
-          subscription_status: "active",
-        })
-        .select()
-        .single();
+        .select("user_id")
+        .eq("stripe_customer_id", stripeCustomerId)
+        .maybeSingle();
 
-      profile = newProfile;
-    } else {
-      // STEP C: update existing user (LOGIN-FIRST FLOW)
+      if (!profile?.user_id) {
+        return new NextResponse("No matching user for Stripe customer", {
+          status: 400,
+        });
+      }
+
+      await supabase.from("profiles").upsert({
+        user_id: profile.user_id,
+        stripe_customer_id: stripeCustomerId,
+        stripe_subscription_id: stripeSubscriptionId,
+        plan: "pro",
+        subscription_status: "active",
+        updated_at: new Date().toISOString(),
+      });
+    }
+
+    // -------------------------
+    // SUBSCRIPTION UPDATED
+    // -------------------------
+    if (event.type === "customer.subscription.updated") {
+      const sub = event.data.object as Stripe.Subscription;
+
+      const status = normalizeSubscriptionStatus(sub.status);
+
       await supabase
         .from("profiles")
         .update({
-          stripe_subscription_id: stripeSubscriptionId,
-          subscription_status: "active",
-          plan: "pro",
+          subscription_status: status,
+          updated_at: new Date().toISOString(),
         })
-        .eq("user_id", profile.user_id);
+        .eq("stripe_subscription_id", sub.id);
     }
+
+    // -------------------------
+    // SUBSCRIPTION DELETED
+    // -------------------------
+    if (event.type === "customer.subscription.deleted") {
+      const sub = event.data.object as Stripe.Subscription;
+
+      await supabase
+        .from("profiles")
+        .update({
+          subscription_status: "canceled",
+          plan: "free",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("stripe_subscription_id", sub.id);
+    }
+
+    await markEventProcessed(event.id);
+
+    return NextResponse.json({ received: true });
+  } catch (err: any) {
+    return new NextResponse(`Webhook handler failed: ${err.message}`, {
+      status: 500,
+    });
   }
-
-  // ==============================
-  // 2. Subscription updated
-  // ==============================
-  if (event.type === "customer.subscription.updated") {
-    const sub = event.data.object as Stripe.Subscription;
-
-    await supabase
-      .from("profiles")
-      .update({
-        subscription_status: sub.status,
-      })
-      .eq("stripe_subscription_id", sub.id);
-  }
-
-  // ==============================
-  // 3. Subscription deleted
-  // ==============================
-  if (event.type === "customer.subscription.deleted") {
-    const sub = event.data.object as Stripe.Subscription;
-
-    await supabase
-      .from("profiles")
-      .update({
-        subscription_status: "canceled",
-        plan: "free",
-      })
-      .eq("stripe_subscription_id", sub.id);
-  }
-
-  return NextResponse.json({ received: true });
 }
