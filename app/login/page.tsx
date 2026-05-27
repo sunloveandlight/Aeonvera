@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const supabase = getSupabase();
+
+  const mode = searchParams.get("mode");
+
+  const [isSignUp, setIsSignUp] = useState(mode === "signup");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,7 +20,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const [isSignUp, setIsSignUp] = useState(false);
+  useEffect(() => {
+    setIsSignUp(mode === "signup");
+  }, [mode]);
 
   async function handleAuth() {
     if (!email || !password) {
@@ -39,7 +46,7 @@ export default function LoginPage() {
         }
 
         setMessage(
-          "Account created successfully. Check your email to confirm your account."
+          "Account created successfully. Please check your email."
         );
 
         return;
@@ -67,14 +74,22 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-md bg-zinc-950 border border-white/10 rounded-3xl p-10">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_35%)]" />
+
+      <div className="relative z-10 w-full max-w-md bg-zinc-950/90 border border-white/10 rounded-[2rem] p-10 backdrop-blur-xl">
         <div className="mb-10 text-center">
-          <h1 className="text-5xl font-bold mb-3">Aeonvera</h1>
+          <p className="uppercase tracking-[0.3em] text-zinc-500 text-sm mb-4">
+            AEONVERA
+          </p>
+
+          <h1 className="text-5xl font-bold mb-4">
+            {isSignUp ? "Create Account" : "Welcome Back"}
+          </h1>
 
           <p className="text-zinc-400 text-lg">
             {isSignUp
-              ? "Create your account"
-              : "Sign in to your account"}
+              ? "Begin your longevity intelligence profile."
+              : "Sign in to access the platform."}
           </p>
         </div>
 
@@ -108,7 +123,13 @@ export default function LoginPage() {
           </button>
 
           <button
-            onClick={() => setIsSignUp(!isSignUp)}
+            onClick={() => {
+              router.push(
+                isSignUp
+                  ? "/login?mode=signin"
+                  : "/login?mode=signup"
+              );
+            }}
             className="w-full text-zinc-400 hover:text-white transition text-sm pt-2"
           >
             {isSignUp

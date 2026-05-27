@@ -36,14 +36,14 @@ export default function HomePage() {
 
           <div className="flex items-center gap-4">
             <Link
-              href="/login"
+              href="/login?mode=signin"
               className="text-sm text-zinc-400 hover:text-white transition"
             >
               Sign In
             </Link>
 
             <Link
-              href="/pricing"
+              href="/login?mode=signup"
               className="px-5 py-2 rounded-xl bg-white text-black text-sm font-medium hover:bg-zinc-200 transition"
             >
               Begin
@@ -71,7 +71,7 @@ export default function HomePage() {
 
           <div className="mt-14 flex flex-col sm:flex-row gap-5 justify-center">
             <Link
-              href="/pricing"
+              href="/login?mode=signup"
               className="px-8 py-4 rounded-2xl bg-white text-black font-semibold hover:bg-zinc-200 transition"
             >
               Access Platform
@@ -233,7 +233,7 @@ export default function HomePage() {
 
           <div className="mt-12">
             <Link
-              href="/pricing"
+              href="/login?mode=signup"
               className="inline-flex px-10 py-5 rounded-2xl bg-white text-black font-semibold hover:bg-zinc-200 transition"
             >
               Access Platform
