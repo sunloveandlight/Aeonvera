@@ -82,9 +82,7 @@ export default function AeonveraWebsite() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({
-          priceId,
-        }),
+        body: JSON.stringify({ priceId }),
       });
 
       const data = await res.json();
@@ -109,6 +107,8 @@ export default function AeonveraWebsite() {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-black text-white">
+
+      {/* BACKGROUND EFFECTS */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <motion.div
           animate={{ x: [0, 40, 0], y: [0, -40, 0] }}
@@ -122,6 +122,7 @@ export default function AeonveraWebsite() {
         />
       </div>
 
+      {/* HEADER */}
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
           scrollY > 20
@@ -130,6 +131,7 @@ export default function AeonveraWebsite() {
         }`}
       >
         <div className="mx-auto max-w-7xl flex items-center justify-between px-6 py-5">
+
           <button
             onClick={() => scrollToSection("hero")}
             className="text-2xl font-semibold"
@@ -137,23 +139,19 @@ export default function AeonveraWebsite() {
             Aeonvera
           </button>
 
+          {/* NAV */}
           <nav className="hidden gap-10 text-sm text-zinc-300 lg:flex">
-            <button onClick={() => scrollToSection("platform")}>
-              Platform
-            </button>
-            <button onClick={() => scrollToSection("science")}>
-              Science
-            </button>
-            <button onClick={() => scrollToSection("membership")}>
-              Memberships
-            </button>
-            <button onClick={() => scrollToSection("about")}>
-              About
-            </button>
+            <button onClick={() => scrollToSection("platform")}>Platform</button>
+            <button onClick={() => scrollToSection("science")}>Science</button>
+            <button onClick={() => scrollToSection("membership")}>Memberships</button>
+            <button onClick={() => scrollToSection("about")}>About</button>
           </nav>
 
+          {/* RIGHT SIDE (FIXED STRUCTURE) */}
           <div className="flex items-center gap-4">
+
             <div className="flex items-center gap-3">
+
               <Link href="/login">
                 <button className="rounded-xl border border-white/20 px-4 py-2 text-sm">
                   Login
@@ -172,6 +170,7 @@ export default function AeonveraWebsite() {
               >
                 Join Waitlist
               </button>
+
             </div>
 
             <button
@@ -180,26 +179,29 @@ export default function AeonveraWebsite() {
             >
               {mobileMenu ? <X size={24} /> : <Menu size={24} />}
             </button>
+
           </div>
         </div>
       </header>
 
+      {/* MEMBERSHIP SECTION */}
       <section id="membership" className="px-6 py-32">
         <div className="mx-auto max-w-6xl text-center">
-          <h2 className="text-5xl font-semibold mb-4">Choose Your Path</h2>
+
+          <h2 className="text-5xl font-semibold mb-4">
+            Choose Your Path
+          </h2>
+
           <p className="text-zinc-400 mb-12">
             Begin your transformation today
           </p>
 
           <div className="grid gap-6 md:grid-cols-3">
+
             {[
               { name: "Core", price: "$49/mo", id: PRICE_IDS.core },
               { name: "Elite", price: "$199/mo", id: PRICE_IDS.elite },
-              {
-                name: "Sovereign",
-                price: "$999/yr",
-                id: PRICE_IDS.sovereign,
-              },
+              { name: "Sovereign", price: "$999/yr", id: PRICE_IDS.sovereign },
             ].map((plan) => (
               <div
                 key={plan.name}
@@ -215,11 +217,15 @@ export default function AeonveraWebsite() {
                 >
                   {stripeLoading ? "Processing..." : "Subscribe Now"}
                 </button>
+
               </div>
             ))}
+
           </div>
+
         </div>
       </section>
+
     </div>
   );
 }
