@@ -1,50 +1,42 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createBrowserClient } from "@supabase/ssr";
 
-function SuccessContent() {
-  const searchParams = useSearchParams();
-
-  const sessionId = searchParams.get("session_id");
+export default function SuccessPage() {
+  const router = useRouter();
+  const [message, setMessage] = useState("Confirming your payment...");
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      window.location.href = "https://aeonvera.com";
-    }, 3000);
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
-    return () => clearTimeout(timer);
-  }, []);
+    const checkUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        setMessage("Payment successful! Redirecting...");
+        setTimeout(() => router.push("/dashboard"), 2000);
+      } else {
+        setMessage("Payment received! Please log in to continue.");
+        setTimeout(() => router.push("/login"), 2000);
+      }
+    };
+
+    checkUser();
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">
-          Payment Successful
-        </h1>
-
-        <p className="text-zinc-400 mb-2">
-          Thank you for your purchase.
-        </p>
-
-        <p className="text-zinc-500 text-sm">
-          Redirecting back to website...
-        </p>
-
-        {sessionId && (
-          <p className="text-xs text-zinc-600 mt-4">
-            Session ID: {sessionId}
-          </p>
-        )}
+        <h1 className="text-3xl font-bold mb-4">Success</h1>
+        <p className="text-zinc-400">{message}</p>
       </div>
     </div>
-  );
-}
-
-export default function SuccessPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <SuccessContent />
-    </Suspense>
   );
 }
