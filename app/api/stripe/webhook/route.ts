@@ -1,89 +1,115 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { stripe } from "../../../lib/stripe";
 import { createClient } from "@supabase/supabase-js";
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2026-04-22.dahlia",
+});
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 export async function POST(req: Request) {
-  const sig = req.headers.get("stripe-signature");
+  const body = await req.text();
+  const signature = req.headers.get("stripe-signature")!;
 
   let event: Stripe.Event;
 
   try {
-    const body = await req.text();
     event = stripe.webhooks.constructEvent(
       body,
-      sig!,
+      signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
   } catch (err: any) {
-    console.error("Webhook signature verification failed:", err.message);
-    return NextResponse.json({ error: "Webhook Error" }, { status: 400 });
+    return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
-  // Create Supabase client inside the handler
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: { autoRefreshToken: false, persistSession: false }
-    }
-  );
+  // ==============================
+  // 1. Checkout completed
+  // ==============================
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
 
-  console.log(`✅ Webhook received: ${event.type}`);
+    const stripeCustomerId = session.customer as string;
+    const stripeSubscriptionId = session.subscription as string;
 
-  try {
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const email = session.customer_details?.email;
+    // STEP A: find user by stripe_customer_id
+    let { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("stripe_customer_id", stripeCustomerId)
+      .single();
 
-        console.log("📧 Stripe email:", email);
-console.log("🧾 Full session:", session);
+    // STEP B: if no user exists, create one (BUY-FIRST FLOW)
+    if (!profile) {
+      // create auth user via admin API
+      const { data: user, error } = await supabase.auth.admin.createUser({
+        email: session.customer_details?.email!,
+        email_confirm: true,
+      });
 
-if (!email) break;
-
-// find user by email
-const { data: usersData } =
-  await supabase.auth.admin.listUsers();
-
-const user = usersData.users.find(
-  (u) => u.email?.toLowerCase() === email.toLowerCase()
-);
-
-if (!user) {
-  console.log("❌ User not found");
-  break;
-}
-
-// update profile
-const { error } = await supabase
-  .from("profiles")
-  .upsert({
-    id: user.id,
-    email,
-    stripe_customer_id: session.customer as string,
-    subscription_status: "active",
-    plan: "core",
-  });
-
-if (error) {
-  console.error("❌ Supabase update failed:", error);
-} else {
-  console.log("✅ User upgraded to core");
-}
-        break;
+      if (error || !user.user) {
+        return new NextResponse("User creation failed", { status: 500 });
       }
-      case "customer.subscription.created":
-      case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
-        console.log("📋 Subscription updated:", subscription.id, subscription.status);
-        break;
-      }
-    }
 
-    return NextResponse.json({ received: true });
-  } catch (err: any) {
-    console.error("Webhook handling error:", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+      // create profile
+      const { data: newProfile } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: user.user.id,
+          stripe_customer_id: stripeCustomerId,
+          stripe_subscription_id: stripeSubscriptionId,
+          plan: "pro",
+          subscription_status: "active",
+        })
+        .select()
+        .single();
+
+      profile = newProfile;
+    } else {
+      // STEP C: update existing user (LOGIN-FIRST FLOW)
+      await supabase
+        .from("profiles")
+        .update({
+          stripe_subscription_id: stripeSubscriptionId,
+          subscription_status: "active",
+          plan: "pro",
+        })
+        .eq("user_id", profile.user_id);
+    }
   }
+
+  // ==============================
+  // 2. Subscription updated
+  // ==============================
+  if (event.type === "customer.subscription.updated") {
+    const sub = event.data.object as Stripe.Subscription;
+
+    await supabase
+      .from("profiles")
+      .update({
+        subscription_status: sub.status,
+      })
+      .eq("stripe_subscription_id", sub.id);
+  }
+
+  // ==============================
+  // 3. Subscription deleted
+  // ==============================
+  if (event.type === "customer.subscription.deleted") {
+    const sub = event.data.object as Stripe.Subscription;
+
+    await supabase
+      .from("profiles")
+      .update({
+        subscription_status: "canceled",
+        plan: "free",
+      })
+      .eq("stripe_subscription_id", sub.id);
+  }
+
+  return NextResponse.json({ received: true });
 }
