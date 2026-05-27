@@ -8,13 +8,12 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
     const run = async () => {
       const result = await getUserSubscription();
 
-      if (!result.user) {
+      if (!result?.user) {
         router.replace("/login");
         return;
       }
@@ -24,18 +23,15 @@ export default function DashboardPage() {
         return;
       }
 
-      setAllowed(true);
       setLoading(false);
     };
 
     run();
-  }, []);
+  }, [router]);
 
   if (loading) {
     return <div style={{ padding: 40 }}>Checking subscription...</div>;
   }
-
-  if (!allowed) return null;
 
   return (
     <div style={{ padding: 40 }}>

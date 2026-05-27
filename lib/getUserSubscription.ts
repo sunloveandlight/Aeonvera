@@ -1,55 +1,51 @@
 import { getSupabase } from "./supabaseClient";
-
-export type SubscriptionStatus =
-  | "active"
-  | "canceled"
-  | "past_due"
-  | "free"
-  | "inactive";
+import { canAccess, Plan, SubscriptionStatus } from "./permissions";
 
 export async function getUserSubscription() {
   const supabase = getSupabase();
 
-  // 1. Get current user
+  // 1. Get logged-in user
   const {
     data: { user },
-    error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) {
+  if (!user) {
     return {
       user: null,
-      subscriptionStatus: "free" as SubscriptionStatus,
+      plan: null,
+      subscriptionStatus: null,
       allowed: false,
-      error: "No user logged in",
+      isPaidUser: false,
     };
   }
 
-  // 2. Get profile
-  const { data: profile, error: profileError } = await supabase
+  // 2. Get profile (FIXED: no destructuring warning)
+  const { data, error } = await supabase
     .from("profiles")
-    .select("subscription_status")
+    .select("plan, subscription_status")
     .eq("user_id", user.id)
     .single();
 
-  if (profileError || !profile) {
+  if (error || !data) {
     return {
       user,
-      subscriptionStatus: "free" as SubscriptionStatus,
+      plan: null,
+      subscriptionStatus: null,
       allowed: false,
-      error: "No profile found",
+      isPaidUser: false,
     };
   }
 
-  const status = profile.subscription_status as SubscriptionStatus;
+  const plan = data.plan as Plan;
+  const subscriptionStatus = data.subscription_status as SubscriptionStatus;
 
-  // 3. Decide access
-  const allowed = status === "active";
+  const allowed = canAccess(plan, subscriptionStatus, "dashboard_access");
 
   return {
     user,
-    subscriptionStatus: status,
+    plan,
+    subscriptionStatus,
     allowed,
-    error: null,
+    isPaidUser: plan !== "free" && !!plan,
   };
 }
