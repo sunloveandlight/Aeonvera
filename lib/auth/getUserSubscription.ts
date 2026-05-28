@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase/client";
-
 import {
   canAccess,
   Plan,
@@ -7,9 +6,18 @@ import {
 } from "@/lib/auth/permissions";
 
 export async function getUserSubscription() {
+  console.log("CHECKING USER SESSION...");
+
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
+
+  console.log("USER RESULT:", user);
+
+  if (userError) {
+    console.error("USER ERROR:", userError);
+  }
 
   if (!user) {
     return {
@@ -21,20 +29,21 @@ export async function getUserSubscription() {
     };
   }
 
-  const { data, error } =
-    await supabase
-      .from("profiles")
-      .select(
-        `
-        plan,
-        subscription_status,
-        billing_type
-      `
-      )
-      .eq("user_id", user.id)
-      .single();
+  console.log("FETCHING PROFILE...");
 
-  if (error || !data) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", user.id)
+    .single();
+
+  console.log("PROFILE DATA:", data);
+
+  if (error) {
+    console.error("PROFILE ERROR:", error);
+  }
+
+  if (!data) {
     return {
       user,
       plan: null,
@@ -45,22 +54,16 @@ export async function getUserSubscription() {
   }
 
   const plan = data.plan as Plan;
+  const status = data.subscription_status as SubscriptionStatus;
 
-  const subscriptionStatus =
-    data.subscription_status as SubscriptionStatus;
-
-  const allowed = canAccess(
-    plan,
-    subscriptionStatus,
-    "dashboard_access"
-  );
+  console.log("PLAN:", plan);
+  console.log("STATUS:", status);
 
   return {
     user,
     plan,
-    billingType: data.billing_type,
-    subscriptionStatus,
-    allowed,
+    subscriptionStatus: status,
+    allowed: canAccess(plan, status, "dashboard_access"),
     isPaidUser: !!plan,
   };
 }
