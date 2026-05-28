@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getSupabase } from "@/lib/supabase/client";
 
 export default function PricingPage() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
@@ -9,10 +10,20 @@ export default function PricingPage() {
     try {
       setLoadingPlan(plan);
 
+      const {
+        data: { session },
+      } = await getSupabase().auth.getSession();
+
+      if (!session) {
+        window.location.href = "/login?mode=signin";
+        return;
+      }
+
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           plan,
