@@ -1,165 +1,133 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+
+type Plan = "core" | "elite" | "sovereign";
 
 export default function PricingPage() {
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const router = useRouter();
+  const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
 
-  async function handleCheckout(plan: string) {
+  async function handleCheckout(plan: Plan) {
     try {
       setLoadingPlan(plan);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const token = localStorage.getItem("sb-access-token");
 
-      if (!session) {
-        window.location.href = "/login?mode=signin";
-        return;
-      }
-
-      const response = await fetch("/api/stripe/checkout", {
+      const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          plan,
-        }),
+        body: JSON.stringify({ plan }),
       });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok) {
-        alert(data.error || "Something went wrong.");
-        return;
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong");
       }
 
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Checkout failed.");
+      window.location.href = data.url;
+    } catch (err) {
+      console.error(err);
+      alert("Failed to start checkout.");
     } finally {
       setLoadingPlan(null);
     }
   }
 
   return (
-    <main className="min-h-screen bg-black text-white px-6 py-20">
-      <div className="mx-auto max-w-7xl">
-        <div className="text-center mb-20">
-          <p className="text-sm tracking-[0.3em] text-zinc-500 uppercase mb-6">
-            AEONVERA ACCESS
-          </p>
+    <div className="min-h-screen bg-black text-white px-6 py-16">
+      <div className="max-w-5xl mx-auto text-center mb-12">
+        <h1 className="text-4xl font-bold mb-3">Choose your plan</h1>
+        <p className="text-gray-400">
+          Upgrade anytime. Elite and Sovereign include the same features.
+        </p>
+      </div>
 
-          <h1 className="text-5xl md:text-7xl font-light tracking-tight mb-8">
-            Biological Intelligence Infrastructure
-          </h1>
+      <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        {/* CORE */}
+        <div className="border border-gray-800 rounded-2xl p-6">
+          <h2 className="text-xl font-semibold">Core</h2>
+          <p className="text-gray-400 mt-2">Basic access</p>
 
-          <p className="max-w-3xl mx-auto text-zinc-400 text-lg leading-relaxed">
-            Access the AI-native longevity optimization platform designed for
-            adaptive health intelligence, biological monitoring, recovery
-            systems, and lifespan enhancement.
-          </p>
+          <div className="mt-6 text-3xl font-bold">$49</div>
+          <div className="text-gray-500">/ month</div>
+
+          <ul className="mt-6 space-y-2 text-sm text-gray-300">
+            <li>✓ Dashboard access</li>
+            <li>✓ Core features</li>
+            <li>— Elite features</li>
+          </ul>
+
+          <button
+            onClick={() => handleCheckout("core")}
+            disabled={loadingPlan !== null}
+            className="mt-6 w-full bg-white text-black py-2 rounded-xl font-medium"
+          >
+            {loadingPlan === "core" ? "Processing..." : "Get Core"}
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* CORE */}
-          <div className="border border-zinc-800 rounded-3xl p-10 bg-zinc-950">
-            <p className="text-sm tracking-[0.3em] text-zinc-500 uppercase mb-6">
-              Core
-            </p>
-
-            <h2 className="text-5xl font-light mb-4">$49</h2>
-
-            <p className="text-zinc-500 mb-10">Monthly Access</p>
-
-            <ul className="space-y-4 text-zinc-300 mb-12">
-              <li>Longevity dashboard access</li>
-              <li>Core biomarker systems</li>
-              <li>Foundational AI insights</li>
-              <li>Recovery optimization</li>
-              <li>Sleep intelligence systems</li>
-            </ul>
-
-            <button
-              onClick={() => handleCheckout("core")}
-              disabled={loadingPlan === "core"}
-              className="w-full rounded-full bg-white text-black py-4 font-medium hover:bg-zinc-200 transition"
-            >
-              {loadingPlan === "core"
-                ? "Redirecting..."
-                : "Begin Core Access"}
-            </button>
+        {/* ELITE (MONTHLY) */}
+        <div className="border border-gray-800 rounded-2xl p-6 relative">
+          <div className="absolute top-3 right-3 text-xs bg-white text-black px-2 py-1 rounded-full">
+            Popular
           </div>
 
-          {/* ELITE */}
-          <div className="border border-white rounded-3xl p-10 bg-white text-black relative overflow-hidden">
-            <div className="absolute top-4 right-4 text-xs uppercase tracking-[0.3em]">
-              Most Popular
-            </div>
+          <h2 className="text-xl font-semibold">Elite</h2>
+          <p className="text-gray-400 mt-2">Full access</p>
 
-            <p className="text-sm tracking-[0.3em] text-zinc-500 uppercase mb-6">
-              Elite
-            </p>
+          <div className="mt-6 text-3xl font-bold">$199</div>
+          <div className="text-gray-500">/ month</div>
 
-            <h2 className="text-5xl font-light mb-4">$199</h2>
+          <ul className="mt-6 space-y-2 text-sm text-gray-300">
+            <li>✓ Dashboard access</li>
+            <li>✓ Core features</li>
+            <li>✓ Elite features</li>
+          </ul>
 
-            <p className="text-zinc-600 mb-10">Monthly Access</p>
+          <button
+            onClick={() => handleCheckout("elite")}
+            disabled={loadingPlan !== null}
+            className="mt-6 w-full bg-white text-black py-2 rounded-xl font-medium"
+          >
+            {loadingPlan === "elite" ? "Processing..." : "Get Elite"}
+          </button>
+        </div>
 
-            <ul className="space-y-4 text-zinc-700 mb-12">
-              <li>Everything in Core</li>
-              <li>Advanced biological intelligence</li>
-              <li>Adaptive optimization systems</li>
-              <li>Priority protocol generation</li>
-              <li>Cognitive & performance systems</li>
-            </ul>
+        {/* SOVEREIGN (YEARLY = SAME AS ELITE) */}
+        <div className="border border-gray-800 rounded-2xl p-6">
+          <h2 className="text-xl font-semibold">Sovereign</h2>
+          <p className="text-gray-400 mt-2">
+            Same as Elite — billed yearly
+          </p>
 
-            <button
-              onClick={() => handleCheckout("elite")}
-              disabled={loadingPlan === "elite"}
-              className="w-full rounded-full bg-black text-white py-4 font-medium hover:bg-zinc-800 transition"
-            >
-              {loadingPlan === "elite"
-                ? "Redirecting..."
-                : "Unlock Elite"}
-            </button>
-          </div>
+          <div className="mt-6 text-3xl font-bold">$999</div>
+          <div className="text-gray-500">/ year</div>
 
-          {/* SOVEREIGN */}
-          <div className="border border-zinc-800 rounded-3xl p-10 bg-zinc-950">
-            <p className="text-sm tracking-[0.3em] text-zinc-500 uppercase mb-6">
-              Sovereign
-            </p>
+          <ul className="mt-6 space-y-2 text-sm text-gray-300">
+            <li>✓ Dashboard access</li>
+            <li>✓ Core features</li>
+            <li>✓ Elite features</li>
+          </ul>
 
-            <h2 className="text-5xl font-light mb-4">$999</h2>
-
-            <p className="text-zinc-500 mb-10">Annual Access</p>
-
-            <ul className="space-y-4 text-zinc-300 mb-12">
-              <li>Everything in Elite</li>
-              <li>Annual optimization pathway</li>
-              <li>Premium intelligence access</li>
-              <li>Highest-value subscription tier</li>
-              <li>Long-term biological tracking</li>
-            </ul>
-
-            <button
-              onClick={() => handleCheckout("sovereign")}
-              disabled={loadingPlan === "sovereign"}
-              className="w-full rounded-full border border-white py-4 font-medium hover:bg-white hover:text-black transition"
-            >
-              {loadingPlan === "sovereign"
-                ? "Redirecting..."
-                : "Enter Sovereign"}
-            </button>
-          </div>
+          <button
+            onClick={() => handleCheckout("sovereign")}
+            disabled={loadingPlan !== null}
+            className="mt-6 w-full bg-white text-black py-2 rounded-xl font-medium"
+          >
+            {loadingPlan === "sovereign" ? "Processing..." : "Get Sovereign"}
+          </button>
         </div>
       </div>
-    </main>
+
+      <div className="text-center mt-10 text-gray-500 text-sm">
+        Sovereign = Elite plan with annual billing
+      </div>
+    </div>
   );
 }
