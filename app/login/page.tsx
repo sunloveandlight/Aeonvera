@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getSupabase } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,8 +20,6 @@ export default function LoginPage() {
   async function handleAuth() {
     try {
       setLoading(true);
-
-      const supabase = getSupabase();
 
       if (isSignUpMode) {
         const { data, error } = await supabase.auth.signUp({

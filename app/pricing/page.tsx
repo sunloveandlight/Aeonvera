@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getSupabase } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 export default function PricingPage() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
@@ -12,7 +12,7 @@ export default function PricingPage() {
 
       const {
         data: { session },
-      } = await getSupabase().auth.getSession();
+      } = await supabase.auth.getSession();
 
       if (!session) {
         window.location.href = "/login?mode=signin";

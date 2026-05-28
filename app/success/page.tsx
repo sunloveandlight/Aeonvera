@@ -2,14 +2,13 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getSupabase } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 export default function SuccessPage() {
   const router = useRouter();
 
   useEffect(() => {
     async function checkSession() {
-      const supabase = getSupabase();
 
       const {
         data: { session },
