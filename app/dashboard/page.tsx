@@ -2,83 +2,60 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+import { getUserSubscription } from "@/lib/auth/getUserSubscription";
 
 export default function DashboardPage() {
   const router = useRouter();
-
   const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
-    async function checkUser() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    const checkAccess = async () => {
+      const result = await getUserSubscription();
 
-      if (!session) {
-        router.push("/login?mode=signin");
+      if (!result.user) {
+        router.replace("/login");
         return;
       }
 
-      setLoading(false);
-    }
+      if (!result.allowed) {
+        router.replace("/");
+        return;
+      }
 
-    checkUser();
+      setUserData(result);
+      setLoading(false);
+    };
+
+    checkAccess();
   }, [router]);
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-zinc-500">
-          Initializing biological intelligence systems...
-        </p>
-      </main>
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-white border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p>Checking your subscription...</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-black text-white px-6 py-20">
-      <div className="max-w-7xl mx-auto">
-        <p className="text-sm tracking-[0.3em] uppercase text-zinc-500 mb-6">
-          AEONVERA DASHBOARD
+    <div className="min-h-screen bg-black text-white p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-5xl font-bold mb-2">Welcome to Aeonvera</h1>
+        <p className="text-zinc-400 text-xl mb-8">
+          You have an active {userData?.plan} subscription ✅
         </p>
 
-        <h1 className="text-5xl md:text-7xl font-light tracking-tight mb-10">
-          Biological Intelligence Layer
-        </h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="border border-zinc-800 rounded-3xl p-8 bg-zinc-950">
-            <h2 className="text-2xl font-light mb-4">
-              Recovery Systems
-            </h2>
-
-            <p className="text-zinc-500">
-              Adaptive recovery optimization infrastructure initializing.
-            </p>
-          </div>
-
-          <div className="border border-zinc-800 rounded-3xl p-8 bg-zinc-950">
-            <h2 className="text-2xl font-light mb-4">
-              Biomarker Intelligence
-            </h2>
-
-            <p className="text-zinc-500">
-              Longitudinal biological monitoring systems coming online.
-            </p>
-          </div>
-
-          <div className="border border-zinc-800 rounded-3xl p-8 bg-zinc-950">
-            <h2 className="text-2xl font-light mb-4">
-              Longevity Optimization
-            </h2>
-
-            <p className="text-zinc-500">
-              Personalized protocol generation infrastructure initializing.
-            </p>
-          </div>
+        <div className="bg-zinc-950 border border-white/10 rounded-3xl p-8">
+          <h2 className="text-2xl font-semibold mb-6">Dashboard</h2>
+          <p className="text-zinc-300">
+            This is your protected dashboard. You can start building your main features here.
+          </p>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

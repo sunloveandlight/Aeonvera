@@ -1,4 +1,4 @@
-import { getSupabase } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import {
   canAccess,
   Plan,
@@ -6,8 +6,6 @@ import {
 } from "@/lib/auth/permissions";
 
 export async function getUserSubscription() {
-  const supabase = getSupabase();
-
   // 1. Get logged-in user
   const {
     data: { user },
@@ -23,7 +21,7 @@ export async function getUserSubscription() {
     };
   }
 
-  // 2. Get profile (FIXED: no destructuring warning)
+  // 2. Get profile
   const { data, error } = await supabase
     .from("profiles")
     .select("plan, subscription_status")
