@@ -42,9 +42,17 @@ export async function middleware(req: NextRequest) {
   }
 
   // Redirect to dashboard if already logged in and trying to access login
-  if (isLogin && session) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
-  }
+  const mode = req.nextUrl.searchParams.get("mode");
+
+const isSignup =
+  req.nextUrl.pathname === "/login" &&
+  mode === "signup";
+
+if (isLogin && session && !isSignup) {
+  return NextResponse.redirect(
+    new URL('/dashboard', req.url)
+  );
+}
 
   return response;
 }
