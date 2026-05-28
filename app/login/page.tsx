@@ -9,23 +9,25 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
 
   const mode = searchParams.get("mode");
-
   const isSignUpMode = mode === "signup";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   async function handleAuth() {
     try {
       setLoading(true);
 
+      /**
+       * SIGN UP
+       */
       if (isSignUpMode) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
+        const { data, error } =
+          await supabase.auth.signUp({
+            email,
+            password,
+          });
 
         if (error) {
           alert(error.message);
@@ -33,27 +35,42 @@ export default function LoginPage() {
         }
 
         if (data.user) {
+          /**
+           * IMPORTANT:
+           * No free tier exists in system
+           * Users start as "unassigned" until Stripe payment
+           */
           await supabase.from("profiles").upsert({
             user_id: data.user.id,
-            plan: "free",
+            plan: null,
+            billing_type: null,
             subscription_status: "inactive",
           });
         }
 
         router.push("/pricing");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        return;
+      }
+
+      /**
+       * SIGN IN
+       */
+      const { error } =
+        await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (error) {
-          alert(error.message);
-          return;
-        }
-
-        router.push("/dashboard");
+      if (error) {
+        alert(error.message);
+        return;
       }
+
+      /**
+       * After login:
+       * Access control is handled in dashboard redirect logic
+       */
+      router.push("/dashboard");
     } catch (error) {
       console.error(error);
       alert("Authentication failed.");
@@ -65,12 +82,15 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
       <div className="w-full max-w-md border border-zinc-800 bg-zinc-950 rounded-3xl p-10">
+
         <p className="text-sm tracking-[0.3em] uppercase text-zinc-500 mb-6">
           AEONVERA
         </p>
 
         <h1 className="text-4xl font-light mb-3">
-          {isSignUpMode ? "Create Account" : "Welcome Back"}
+          {isSignUpMode
+            ? "Create Account"
+            : "Welcome Back"}
         </h1>
 
         <p className="text-zinc-500 mb-10">
@@ -84,7 +104,9 @@ export default function LoginPage() {
             type="email"
             placeholder="Email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
             className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-4 outline-none focus:border-white"
           />
 
@@ -92,7 +114,9 @@ export default function LoginPage() {
             type="password"
             placeholder="Password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) =>
+              setPassword(e.target.value)
+            }
             className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-4 outline-none focus:border-white"
           />
 
