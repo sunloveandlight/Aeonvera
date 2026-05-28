@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabase } from "@/lib/supabase/client";
 
@@ -8,98 +8,86 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const supabase = getSupabase();
-
   const mode = searchParams.get("mode");
 
-  const [isSignUp, setIsSignUp] = useState(mode === "signup");
+  const isSignUpMode = mode === "signup";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-
-  useEffect(() => {
-    setIsSignUp(mode === "signup");
-  }, [mode]);
 
   async function handleAuth() {
-    if (!email || !password) {
-      setMessage("Please enter email and password");
-      return;
-    }
-
     try {
       setLoading(true);
-      setMessage("");
 
-      if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+      const supabase = getSupabase();
+
+      if (isSignUpMode) {
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
         });
 
         if (error) {
-          setMessage(error.message);
+          alert(error.message);
           return;
         }
 
-        setMessage(
-          "Account created successfully. Please check your email."
-        );
+        if (data.user) {
+          await supabase.from("profiles").upsert({
+            user_id: data.user.id,
+            plan: "free",
+            subscription_status: "inactive",
+          });
+        }
 
-        return;
+        router.push("/pricing");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          alert(error.message);
+          return;
+        }
+
+        router.push("/dashboard");
       }
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setMessage(error.message);
-        return;
-      }
-
-      router.push("/dashboard");
-      router.refresh();
-    } catch (err) {
-      console.error(err);
-      setMessage("Something went wrong.");
+    } catch (error) {
+      console.error(error);
+      alert("Authentication failed.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_35%)]" />
+    <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
+      <div className="w-full max-w-md border border-zinc-800 bg-zinc-950 rounded-3xl p-10">
+        <p className="text-sm tracking-[0.3em] uppercase text-zinc-500 mb-6">
+          AEONVERA
+        </p>
 
-      <div className="relative z-10 w-full max-w-md bg-zinc-950/90 border border-white/10 rounded-[2rem] p-10 backdrop-blur-xl">
-        <div className="mb-10 text-center">
-          <p className="uppercase tracking-[0.3em] text-zinc-500 text-sm mb-4">
-            AEONVERA
-          </p>
+        <h1 className="text-4xl font-light mb-3">
+          {isSignUpMode ? "Create Account" : "Welcome Back"}
+        </h1>
 
-          <h1 className="text-5xl font-bold mb-4">
-            {isSignUp ? "Create Account" : "Welcome Back"}
-          </h1>
+        <p className="text-zinc-500 mb-10">
+          {isSignUpMode
+            ? "Begin your biological intelligence journey."
+            : "Access your longevity intelligence dashboard."}
+        </p>
 
-          <p className="text-zinc-400 text-lg">
-            {isSignUp
-              ? "Begin your longevity intelligence profile."
-              : "Sign in to access the platform."}
-          </p>
-        </div>
-
-        <div className="space-y-4">
+        <div className="space-y-5">
           <input
             type="email"
-            placeholder="Email address"
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-zinc-900 border border-white/10 rounded-2xl p-4 outline-none focus:border-white/30"
+            className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-4 outline-none focus:border-white"
           />
 
           <input
@@ -107,43 +95,46 @@ export default function LoginPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-zinc-900 border border-white/10 rounded-2xl p-4 outline-none focus:border-white/30"
+            className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-4 outline-none focus:border-white"
           />
 
           <button
             onClick={handleAuth}
             disabled={loading}
-            className="w-full bg-white text-black rounded-2xl py-4 font-semibold hover:bg-zinc-200 transition disabled:opacity-60"
+            className="w-full bg-white text-black rounded-xl py-4 font-medium hover:bg-zinc-200 transition"
           >
             {loading
               ? "Loading..."
-              : isSignUp
+              : isSignUpMode
               ? "Create Account"
               : "Sign In"}
           </button>
+        </div>
 
-          <button
-            onClick={() => {
-              router.push(
-                isSignUp
-                  ? "/login?mode=signin"
-                  : "/login?mode=signup"
-              );
-            }}
-            className="w-full text-zinc-400 hover:text-white transition text-sm pt-2"
-          >
-            {isSignUp
-              ? "Already have an account? Sign In"
-              : "Need an account? Create one"}
-          </button>
-
-          {message && (
-            <div className="pt-4 text-center text-sm text-zinc-400">
-              {message}
-            </div>
+        <div className="mt-8 text-sm text-zinc-500 text-center">
+          {isSignUpMode ? (
+            <>
+              Already have an account?{" "}
+              <a
+                href="/login?mode=signin"
+                className="text-white hover:underline"
+              >
+                Sign In
+              </a>
+            </>
+          ) : (
+            <>
+              Need an account?{" "}
+              <a
+                href="/login?mode=signup"
+                className="text-white hover:underline"
+              >
+                Create Account
+              </a>
+            </>
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
