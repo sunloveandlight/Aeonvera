@@ -82,7 +82,12 @@ export async function POST(req: Request) {
         .eq("stripe_customer_id", customerId)
         .single();
 
-      if (!profile?.user_id) return;
+      if (!profile?.user_id) {
+  return NextResponse.json(
+    { error: "Profile not found" },
+    { status: 404 }
+  );
+}
 
       await supabase.from("profiles").update({
         stripe_customer_id: customerId,
