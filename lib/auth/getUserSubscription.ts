@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
+
 import {
   canAccess,
   Plan,
@@ -6,20 +7,17 @@ import {
 } from "@/lib/auth/permissions";
 
 export async function getUserSubscription() {
-  console.log("CHECKING USER SESSION...");
 
+  /**
+   * FIRST:
+   * Get active session directly
+   */
   const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
 
-  console.log("USER RESULT:", user);
-
-  if (userError) {
-    console.error("USER ERROR:", userError);
-  }
-
-  if (!user) {
+  if (sessionError || !session) {
     return {
       user: null,
       plan: null,
@@ -29,21 +27,41 @@ export async function getUserSubscription() {
     };
   }
 
-  console.log("FETCHING PROFILE...");
+  /**
+   * THEN:
+   * Get authenticated user
+   */
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
+  if (userError || !user) {
+    return {
+      user: null,
+      plan: null,
+      subscriptionStatus: null,
+      allowed: false,
+      isPaidUser: false,
+    };
+  }
+
+  /**
+   * Fetch subscription/profile
+   */
   const { data, error } = await supabase
     .from("profiles")
-    .select("*")
+    .select(`
+      plan,
+      subscription_status,
+      onboarding_completed,
+      entity_state,
+      life_stage
+    `)
     .eq("user_id", user.id)
     .single();
 
-  console.log("PROFILE DATA:", data);
-
-  if (error) {
-    console.error("PROFILE ERROR:", error);
-  }
-
-  if (!data) {
+  if (error || !data) {
     return {
       user,
       plan: null,
@@ -53,17 +71,34 @@ export async function getUserSubscription() {
     };
   }
 
-  const plan = data.plan as Plan;
-  const status = data.subscription_status as SubscriptionStatus;
+  const plan =
+    data.plan as Plan | null;
 
-  console.log("PLAN:", plan);
-  console.log("STATUS:", status);
+  const status =
+    data.subscription_status as SubscriptionStatus | null;
 
   return {
     user,
+
     plan,
+
     subscriptionStatus: status,
-    allowed: canAccess(plan, status, "dashboard_access"),
+
+    onboardingCompleted:
+      data.onboarding_completed,
+
+    entityState:
+      data.entity_state,
+
+    lifeStage:
+      data.life_stage,
+
+    allowed: canAccess(
+      plan,
+      status,
+      "dashboard_access"
+    ),
+
     isPaidUser: !!plan,
   };
 }
