@@ -1,45 +1,46 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getSupabase } from "@/lib/supabase/client";
 
 export default function SuccessPage() {
   const router = useRouter();
-  const [message, setMessage] = useState("Confirming your payment...");
 
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const { createClient } = await import("@supabase/supabase-js");
-        const supabase = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        );
+    async function checkSession() {
+      const supabase = getSupabase();
 
-        const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-        if (user) {
-          setMessage("Payment successful! Redirecting to dashboard...");
-          setTimeout(() => router.push("/dashboard"), 2000);
-        } else {
-          setMessage("Payment received! Please log in.");
-          setTimeout(() => router.push("/login"), 2000);
-        }
-      } catch (err) {
-        setMessage("Something went wrong. Please log in.");
-        setTimeout(() => router.push("/login"), 2000);
+      if (!session) {
+        router.push("/login?mode=signin");
+        return;
       }
-    };
 
-    checkUser();
+      router.push("/dashboard");
+    }
+
+    checkSession();
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center">
+    <main className="min-h-screen bg-black text-white flex items-center justify-center">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Success</h1>
-        <p className="text-zinc-400">{message}</p>
+        <p className="text-zinc-500 uppercase tracking-[0.3em] mb-6">
+          AEONVERA
+        </p>
+
+        <h1 className="text-5xl font-light mb-6">
+          Subscription Activated
+        </h1>
+
+        <p className="text-zinc-400">
+          Initializing your biological intelligence systems...
+        </p>
       </div>
-    </div>
+    </main>
   );
 }
