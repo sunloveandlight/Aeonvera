@@ -13,6 +13,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
 
   async function handleAuth() {
@@ -35,27 +36,31 @@ export default function LoginPage() {
         }
 
         if (data.user) {
-          /**
-           * IMPORTANT:
-           * No free tier exists in system
-           * Users start as "unassigned" until Stripe payment
-           */
-          await supabase.from("profiles").upsert({
-            user_id: data.user.id,
-            plan: null,
-            billing_type: null,
-            subscription_status: "inactive",
-          });
+          await supabase
+            .from("profiles")
+            .upsert({
+              user_id: data.user.id,
+              plan: null,
+              billing_type: null,
+              subscription_status: "inactive",
+
+              entity_state: "dormant",
+              onboarding_completed: false,
+              life_stage: "initializing",
+            });
         }
 
+        alert("Account created successfully.");
+
         router.push("/pricing");
+
         return;
       }
 
       /**
        * SIGN IN
        */
-      const { error } =
+      const { data, error } =
         await supabase.auth.signInWithPassword({
           email,
           password,
@@ -67,10 +72,25 @@ export default function LoginPage() {
       }
 
       /**
-       * After login:
-       * Access control is handled in dashboard redirect logic
+       * IMPORTANT:
+       * Wait for session to fully initialize
        */
+      const session = data.session;
+
+      if (!session) {
+        alert("No session created.");
+        return;
+      }
+
+      /**
+       * Small delay helps Supabase persist auth
+       */
+      await new Promise((resolve) =>
+        setTimeout(resolve, 1000)
+      );
+
       router.push("/dashboard");
+
     } catch (error) {
       console.error(error);
       alert("Authentication failed.");
@@ -100,6 +120,7 @@ export default function LoginPage() {
         </p>
 
         <div className="space-y-5">
+
           <input
             type="email"
             placeholder="Email"
@@ -123,7 +144,7 @@ export default function LoginPage() {
           <button
             onClick={handleAuth}
             disabled={loading}
-            className="w-full bg-white text-black rounded-xl py-4 font-medium hover:bg-zinc-200 transition"
+            className="w-full bg-white text-black rounded-xl py-4 font-medium hover:bg-zinc-200 transition disabled:opacity-50"
           >
             {loading
               ? "Loading..."
@@ -131,14 +152,16 @@ export default function LoginPage() {
               ? "Create Account"
               : "Sign In"}
           </button>
+
         </div>
 
         <div className="mt-8 text-sm text-zinc-500 text-center">
           {isSignUpMode ? (
             <>
               Already have an account?{" "}
+
               <a
-                href="/login?mode=signin"
+                href="/login"
                 className="text-white hover:underline"
               >
                 Sign In
@@ -147,6 +170,7 @@ export default function LoginPage() {
           ) : (
             <>
               Need an account?{" "}
+
               <a
                 href="/login?mode=signup"
                 className="text-white hover:underline"
@@ -156,6 +180,7 @@ export default function LoginPage() {
             </>
           )}
         </div>
+
       </div>
     </main>
   );
