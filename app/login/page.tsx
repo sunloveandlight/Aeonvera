@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+
 import { supabase } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -9,16 +10,52 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
 
   const mode = searchParams.get("mode");
-  const isSignUpMode = mode === "signup";
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const isSignUpMode =
+    mode === "signup";
 
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] =
+    useState("");
 
-  async function handleAuth() {
+  const [password, setPassword] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState("");
+
+  /**
+   * If already logged in:
+   * send user directly to dashboard
+   */
+  useEffect(() => {
+    async function checkSession() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        router.replace("/dashboard");
+      }
+    }
+
+    checkSession();
+  }, [router]);
+
+  /**
+   * LOGIN / SIGNUP
+   */
+  async function handleAuth(
+    e: FormEvent
+  ) {
+    e.preventDefault();
+
     try {
       setLoading(true);
+
+      setMessage("");
 
       /**
        * SIGN UP
@@ -31,7 +68,7 @@ export default function LoginPage() {
           });
 
         if (error) {
-          alert(error.message);
+          setMessage(error.message);
           return;
         }
 
@@ -40,19 +77,32 @@ export default function LoginPage() {
             .from("profiles")
             .upsert({
               user_id: data.user.id,
-              plan: null,
-              billing_type: null,
-              subscription_status: "inactive",
 
-              entity_state: "dormant",
-              onboarding_completed: false,
-              life_stage: "initializing",
+              plan: null,
+
+              billing_type: null,
+
+              subscription_status:
+                "inactive",
+
+              entity_state:
+                "dormant",
+
+              onboarding_completed:
+                false,
+
+              life_stage:
+                "initializing",
             });
         }
 
-        alert("Account created successfully.");
+        setMessage(
+          "Account created successfully."
+        );
 
-        router.push("/pricing");
+        setTimeout(() => {
+          router.push("/pricing");
+        }, 1000);
 
         return;
       }
@@ -60,47 +110,71 @@ export default function LoginPage() {
       /**
        * SIGN IN
        */
-      const { data, error } =
+      const { error } =
         await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
       if (error) {
-        alert(error.message);
+        setMessage(error.message);
         return;
       }
 
       /**
-       * IMPORTANT:
-       * Wait for session to fully initialize
-       */
-      const session = data.session;
-
-      if (!session) {
-        alert("No session created.");
-        return;
-      }
-
-      /**
-       * Small delay helps Supabase persist auth
+       * Wait for auth persistence
        */
       await new Promise((resolve) =>
-        setTimeout(resolve, 1000)
+        setTimeout(resolve, 1500)
       );
 
-      router.push("/dashboard");
+      router.replace("/dashboard");
 
     } catch (error) {
       console.error(error);
-      alert("Authentication failed.");
+
+      setMessage(
+        "Authentication failed."
+      );
     } finally {
       setLoading(false);
     }
   }
 
+  /**
+   * PASSWORD RESET
+   */
+  async function handlePasswordReset() {
+    if (!email) {
+      setMessage(
+        "Enter your email first."
+      );
+
+      return;
+    }
+
+    const { error } =
+      await supabase.auth.resetPasswordForEmail(
+        email,
+        {
+          redirectTo:
+            "http://localhost:3000/login",
+        }
+      );
+
+    if (error) {
+      setMessage(error.message);
+      return;
+    }
+
+    setMessage(
+      "Password reset email sent."
+    );
+  }
+
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
+
       <div className="w-full max-w-md border border-zinc-800 bg-zinc-950 rounded-3xl p-10">
 
         <p className="text-sm tracking-[0.3em] uppercase text-zinc-500 mb-6">
@@ -119,31 +193,42 @@ export default function LoginPage() {
             : "Access your longevity intelligence dashboard."}
         </p>
 
-        <div className="space-y-5">
+        <form
+          onSubmit={handleAuth}
+          className="space-y-5"
+        >
 
           <input
             type="email"
             placeholder="Email"
+
             value={email}
+
             onChange={(e) =>
               setEmail(e.target.value)
             }
+
             className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-4 outline-none focus:border-white"
           />
 
           <input
             type="password"
             placeholder="Password"
+
             value={password}
+
             onChange={(e) =>
               setPassword(e.target.value)
             }
+
             className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-4 outline-none focus:border-white"
           />
 
           <button
-            onClick={handleAuth}
+            type="submit"
+
             disabled={loading}
+
             className="w-full bg-white text-black rounded-xl py-4 font-medium hover:bg-zinc-200 transition disabled:opacity-50"
           >
             {loading
@@ -153,9 +238,25 @@ export default function LoginPage() {
               : "Sign In"}
           </button>
 
-        </div>
+        </form>
+
+        {!isSignUpMode && (
+          <button
+            onClick={handlePasswordReset}
+            className="mt-4 text-sm text-zinc-400 hover:text-white transition"
+          >
+            Forgot Password?
+          </button>
+        )}
+
+        {message && (
+          <div className="mt-6 border border-white/10 bg-black rounded-xl p-4 text-sm text-zinc-300">
+            {message}
+          </div>
+        )}
 
         <div className="mt-8 text-sm text-zinc-500 text-center">
+
           {isSignUpMode ? (
             <>
               Already have an account?{" "}
@@ -179,9 +280,11 @@ export default function LoginPage() {
               </a>
             </>
           )}
+
         </div>
 
       </div>
+
     </main>
   );
 }
