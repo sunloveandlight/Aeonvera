@@ -1,13 +1,13 @@
 import Stripe from "stripe";
 
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2026-04-22.dahlia",
+});
+
+// ✅ keep old import working
+export const stripe = stripeClient;
+
+// future-safe factory
 export function getStripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
-
-  if (!key) {
-    throw new Error("Missing STRIPE_SECRET_KEY");
-  }
-
-  return new Stripe(key, {
-    apiVersion: "2026-04-22.dahlia",
-  });
+  return stripeClient;
 }
