@@ -15,21 +15,22 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  // Check if already logged in
   useEffect(() => {
-    const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data }) => {
       if (data.session) router.replace("/dashboard");
-    };
-    checkSession();
+    });
   }, [router]);
 
+  // Global auth listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("🔄 Auth event:", event);
+      console.log("🔄 Auth event:", event, session ? "HAS SESSION" : "NO SESSION");
+
       if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-        console.log("✅ Session detected - redirecting to dashboard");
+        console.log("✅ Redirecting to dashboard");
         router.replace("/dashboard");
-        router.refresh();
+        router.refresh();   // Forces server to re-check middleware
       }
     });
 
@@ -42,20 +43,22 @@ export default function LoginPage() {
     setMessage(null);
 
     if (isSignUpMode) {
-      // ... (signup logic stays the same)
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) {
         setMessage(error.message);
         setLoading(false);
         return;
       }
-      setMessage("Account created. Redirecting...");
-      setTimeout(() => router.replace("/pricing"), 800);
+      setMessage("Account created. Redirecting to pricing...");
+      setTimeout(() => router.replace("/pricing"), 1000);
       return;
     }
 
-    // LOGIN
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    // === LOGIN ===
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
     if (error) {
       setMessage(error.message);
@@ -64,12 +67,11 @@ export default function LoginPage() {
     }
 
     if (data.session) {
-      setMessage("Login successful. Redirecting...");
-      console.log("🚀 Login successful - forcing navigation");
+      setMessage("Login successful → Redirecting...");
       router.replace("/dashboard");
-      router.refresh();           // Very important
+      router.refresh();
     } else {
-      setMessage("Login succeeded but session missing.");
+      setMessage("Login done but no session returned.");
     }
 
     setLoading(false);
@@ -109,7 +111,11 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {message && <div className="mt-4 text-sm border border-white/10 p-3 rounded-xl">{message}</div>}
+        {message && (
+          <div className="mt-4 text-sm border border-white/10 p-3 rounded-xl text-white/80">
+            {message}
+          </div>
+        )}
       </div>
     </main>
   );
