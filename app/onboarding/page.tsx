@@ -28,29 +28,29 @@ export default function OnboardingPage() {
 
       setUserId(session.user.id);
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("user_id")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("PROFILE LOOKUP ERROR:", profileError);
+        return;
+      }
 
       if (!profile) {
         const { error } = await supabase.from("profiles").insert({
           user_id: session.user.id,
-          plan: null,
+          plan: "free",
           subscription_status: "inactive",
-          entity_state: "dormant",
           onboarding_completed: false,
+          entity_state: "dormant",
           life_stage: "initializing",
         });
 
         if (error) {
           console.error("PROFILE INSERT ERROR:", error);
-
-          alert(
-            `PROFILE INSERT ERROR\n\n${JSON.stringify(error, null, 2)}`
-          );
-
           return;
         }
       }
@@ -70,8 +70,8 @@ export default function OnboardingPage() {
       const { error } = await supabase
         .from("profiles")
         .update({
-          entity_name: entityName || "Unnamed Entity",
           display_name: displayName || "Entity",
+          entity_name: entityName || "Unnamed Entity",
           onboarding_completed: true,
           entity_state: "active",
           life_stage: "initialized",
@@ -80,12 +80,10 @@ export default function OnboardingPage() {
         .eq("user_id", userId);
 
       if (error) {
-        console.error(error);
+        console.error("PROFILE UPDATE ERROR:", error);
         alert("Failed to save onboarding.");
         return;
       }
-
-      await supabase.auth.getSession();
 
       router.replace("/dashboard");
     } catch (err) {
