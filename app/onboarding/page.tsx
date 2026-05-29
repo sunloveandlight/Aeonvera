@@ -45,7 +45,6 @@ export default function OnboardingPage() {
         const { error } = await supabase.from("profiles").insert({
           user_id: session.user.id,
           plan: null,
-          billing_type: null,
           subscription_status: "inactive",
           entity_state: "dormant",
           onboarding_completed: false,
@@ -74,10 +73,6 @@ export default function OnboardingPage() {
     try {
       setSaving(true);
 
-      /**
-       * IMPORTANT:
-       * Update ONLY after confirming row exists
-       */
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -96,9 +91,6 @@ export default function OnboardingPage() {
         return;
       }
 
-      /**
-       * Ensure session consistency (safe refresh)
-       */
       await supabase.auth.getSession();
 
       router.replace("/dashboard");
@@ -121,7 +113,6 @@ export default function OnboardingPage() {
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
       <div className="w-full max-w-lg border border-white/10 rounded-3xl p-10 bg-white/5">
-
         <h1 className="text-3xl font-light mb-2">
           Initialize Your Entity
         </h1>
@@ -131,7 +122,6 @@ export default function OnboardingPage() {
         </p>
 
         <div className="space-y-4">
-
           <input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
@@ -153,9 +143,7 @@ export default function OnboardingPage() {
           >
             {saving ? "Finalizing..." : "Complete Setup"}
           </button>
-
         </div>
-
       </div>
     </main>
   );
