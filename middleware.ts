@@ -15,22 +15,10 @@ export async function middleware(req: NextRequest) {
           return req.cookies.getAll();
         },
 
-        setAll(
-          cookies: {
-            name: string;
-            value: string;
-            options?: CookieOptions;
-          }[]
-        ) {
-          cookies.forEach(
-            (cookie: {
-              name: string;
-              value: string;
-              options?: CookieOptions;
-            }) => {
-              res.cookies.set(cookie.name, cookie.value, cookie.options);
-            }
-          );
+        setAll(cookies: { name: string; value: string; options?: CookieOptions }[]) {
+          cookies.forEach((cookie) => {
+            res.cookies.set(cookie.name, cookie.value, cookie.options);
+          });
         },
       },
     }
@@ -42,17 +30,13 @@ export async function middleware(req: NextRequest) {
 
   const path = req.nextUrl.pathname;
 
-  const isDashboard = path.startsWith("/dashboard");
-  const isLogin = path.startsWith("/login");
-  const isOnboarding = path.startsWith("/onboarding");
-
-  if (!session) {
-    if (isDashboard || isOnboarding) {
-      return NextResponse.redirect(new URL("/login", req.url));
-    }
+  // Protect dashboard and onboarding
+  if (!session && (path.startsWith("/dashboard") || path.startsWith("/onboarding"))) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (session && isLogin) {
+  // Redirect logged-in users away from login
+  if (session && path.startsWith("/login")) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
@@ -60,5 +44,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/onboarding"],
+  matcher: ["/dashboard/:path*", "/login", "/onboarding", "/pricing"],
 };

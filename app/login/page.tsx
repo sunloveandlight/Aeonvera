@@ -15,22 +15,22 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  // Check if already logged in
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.replace("/dashboard");
+      if (data.session) {
+        router.replace("/dashboard");
+      }
     });
   }, [router]);
 
-  // Global auth listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("🔄 Auth event:", event, session ? "HAS SESSION" : "NO SESSION");
 
       if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-        console.log("✅ Redirecting to dashboard");
+        console.log("✅ Redirecting to /dashboard");
         router.replace("/dashboard");
-        router.refresh();   // Forces server to re-check middleware
+        router.refresh();
       }
     });
 
@@ -49,29 +49,36 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      setMessage("Account created. Redirecting to pricing...");
+      setMessage("Account created. Redirecting...");
       setTimeout(() => router.replace("/pricing"), 1000);
       return;
     }
 
-    // === LOGIN ===
+    // LOGIN
+    console.log("Attempting login...");
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
+      console.error("Login error:", error);
       setMessage(error.message);
       setLoading(false);
       return;
     }
 
+    console.log("Login response:", { hasSession: !!data.session });
+
     if (data.session) {
-      setMessage("Login successful → Redirecting...");
-      router.replace("/dashboard");
-      router.refresh();
+      setMessage("Login successful. Redirecting to dashboard...");
+      // Safer redirect method
+      setTimeout(() => {
+        router.push("/dashboard");     // changed to push + small delay
+        router.refresh();
+      }, 300);
     } else {
-      setMessage("Login done but no session returned.");
+      setMessage("Login succeeded but no session was returned.");
     }
 
     setLoading(false);
