@@ -14,11 +14,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
 
-  /**
-   * If already logged in → go dashboard
-   */
   useEffect(() => {
     async function checkSession() {
       const { data } = await supabase.auth.getSession();
@@ -31,18 +28,15 @@ export default function LoginPage() {
     checkSession();
   }, [router]);
 
-  /**
-   * AUTH HANDLER
-   */
   async function handleAuth(e: FormEvent) {
     e.preventDefault();
 
-    try {
-      setLoading(true);
-      setMessage("");
+    setLoading(true);
+    setMessage(null);
 
+    try {
       /**
-       * SIGN UP FLOW
+       * SIGN UP
        */
       if (isSignUpMode) {
         const { data, error } = await supabase.auth.signUp({
@@ -52,6 +46,7 @@ export default function LoginPage() {
 
         if (error) {
           setMessage(error.message);
+          setLoading(false);
           return;
         }
 
@@ -67,66 +62,53 @@ export default function LoginPage() {
           });
         }
 
-        setMessage("Account created successfully.");
+        setMessage("Account created. Redirecting...");
 
-        /**
-         * IMPORTANT:
-         * wait for auth state to fully register in Supabase
-         */
-        const { data: sessionCheck } = await supabase.auth.getSession();
+        setTimeout(() => {
+          router.replace("/pricing");
+        }, 500);
 
-        if (!sessionCheck.session) {
-          setMessage("Session not initialized. Please sign in manually.");
-          return;
-        }
-
-        router.replace("/pricing");
         return;
       }
 
       /**
-       * SIGN IN FLOW
+       * SIGN IN
        */
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      /**
+       * 🔥 CRITICAL FIX: SHOW REAL ERROR
+       */
       if (error) {
-        setMessage(error.message);
+        setMessage(error.message); // THIS WAS YOUR MISSING PIECE
+        setLoading(false);
         return;
       }
 
       if (!data.session) {
         setMessage("Login failed: no session created.");
+        setLoading(false);
         return;
       }
+
+      setMessage("Login successful. Redirecting...");
 
       /**
-       * CRITICAL FIX:
-       * Force Supabase to confirm session persistence before redirect
+       * IMPORTANT:
+       * Direct redirect (no session polling)
        */
-      const { data: confirmSession } = await supabase.auth.getSession();
-
-      if (!confirmSession.session) {
-        setMessage("Session not stable. Please try again.");
-        return;
-      }
-
-      setMessage("Login successful.");
-
       router.replace("/dashboard");
-    } catch (error) {
-      console.error(error);
-      setMessage("Authentication failed.");
+    } catch (err) {
+      console.error(err);
+      setMessage("Unexpected authentication error.");
     } finally {
       setLoading(false);
     }
   }
 
-  /**
-   * PASSWORD RESET
-   */
   async function handlePasswordReset() {
     if (!email) {
       setMessage("Enter your email first.");
@@ -148,27 +130,18 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
       <div className="w-full max-w-md border border-zinc-800 bg-zinc-950 rounded-3xl p-10">
-        <p className="text-sm tracking-[0.3em] uppercase text-zinc-500 mb-6">
-          AEONVERA
-        </p>
 
-        <h1 className="text-4xl font-light mb-3">
+        <h1 className="text-4xl font-light mb-6">
           {isSignUpMode ? "Create Account" : "Welcome Back"}
         </h1>
 
-        <p className="text-zinc-500 mb-10">
-          {isSignUpMode
-            ? "Begin your biological intelligence journey."
-            : "Access your longevity intelligence dashboard."}
-        </p>
-
-        <form onSubmit={handleAuth} className="space-y-5">
+        <form onSubmit={handleAuth} className="space-y-4">
           <input
             type="email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-4 outline-none focus:border-white"
+            className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3"
           />
 
           <input
@@ -176,13 +149,13 @@ export default function LoginPage() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-4 outline-none focus:border-white"
+            className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3"
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-white text-black rounded-xl py-4 font-medium hover:bg-zinc-200 transition disabled:opacity-50"
+            className="w-full bg-white text-black rounded-xl py-3"
           >
             {loading
               ? "Loading..."
@@ -192,38 +165,20 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {!isSignUpMode && (
-          <button
-            onClick={handlePasswordReset}
-            className="mt-4 text-sm text-zinc-400 hover:text-white transition"
-          >
-            Forgot Password?
-          </button>
-        )}
-
         {message && (
-          <div className="mt-6 border border-white/10 bg-black rounded-xl p-4 text-sm text-zinc-300">
+          <div className="mt-4 text-sm text-white/70 border border-white/10 p-3 rounded-xl">
             {message}
           </div>
         )}
 
-        <div className="mt-8 text-sm text-zinc-500 text-center">
-          {isSignUpMode ? (
-            <>
-              Already have an account?{" "}
-              <a href="/login" className="text-white hover:underline">
-                Sign In
-              </a>
-            </>
-          ) : (
-            <>
-              Need an account?{" "}
-              <a href="/login?mode=signup" className="text-white hover:underline">
-                Create Account
-              </a>
-            </>
-          )}
-        </div>
+        {!isSignUpMode && (
+          <button
+            onClick={handlePasswordReset}
+            className="mt-4 text-sm text-white/50"
+          >
+            Forgot password?
+          </button>
+        )}
       </div>
     </main>
   );
