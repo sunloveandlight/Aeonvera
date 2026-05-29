@@ -16,7 +16,7 @@ export default function OnboardingPage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   /**
-   * STEP 1: Verify session
+   * STEP 1: Verify session + ensure profile exists
    */
   useEffect(() => {
     const init = async () => {
@@ -30,6 +30,35 @@ export default function OnboardingPage() {
       }
 
       setUserId(session.user.id);
+
+      /**
+       * IMPORTANT:
+       * Ensure profile exists BEFORE onboarding continues
+       */
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (!profile) {
+        const { error } = await supabase.from("profiles").insert({
+          user_id: session.user.id,
+          plan: null,
+          billing_type: null,
+          subscription_status: "inactive",
+          entity_state: "dormant",
+          onboarding_completed: false,
+          life_stage: "initializing",
+        });
+
+        if (error) {
+          console.error(error);
+          router.replace("/login");
+          return;
+        }
+      }
+
       setLoading(false);
     };
 
@@ -37,7 +66,7 @@ export default function OnboardingPage() {
   }, [router]);
 
   /**
-   * STEP 2: Save onboarding data
+   * STEP 2: Save onboarding data safely
    */
   async function handleCompleteOnboarding() {
     if (!userId) return;
@@ -45,6 +74,10 @@ export default function OnboardingPage() {
     try {
       setSaving(true);
 
+      /**
+       * IMPORTANT:
+       * Update ONLY after confirming row exists
+       */
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -53,6 +86,7 @@ export default function OnboardingPage() {
           onboarding_completed: true,
           entity_state: "active",
           life_stage: "initialized",
+          updated_at: new Date().toISOString(),
         })
         .eq("user_id", userId);
 
@@ -63,13 +97,10 @@ export default function OnboardingPage() {
       }
 
       /**
-       * STEP 3: Force session refresh (important for dashboard consistency)
+       * Ensure session consistency (safe refresh)
        */
       await supabase.auth.getSession();
 
-      /**
-       * STEP 4: Redirect to dashboard
-       */
       router.replace("/dashboard");
     } catch (err) {
       console.error(err);

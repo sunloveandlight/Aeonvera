@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
 
   /**
-   * If session already exists → redirect
+   * If already logged in → go dashboard
    */
   useEffect(() => {
     async function checkSession() {
@@ -69,10 +69,18 @@ export default function LoginPage() {
 
         setMessage("Account created successfully.");
 
-        setTimeout(() => {
-          router.replace("/pricing");
-        }, 1000);
+        /**
+         * IMPORTANT:
+         * wait for auth state to fully register in Supabase
+         */
+        const { data: sessionCheck } = await supabase.auth.getSession();
 
+        if (!sessionCheck.session) {
+          setMessage("Session not initialized. Please sign in manually.");
+          return;
+        }
+
+        router.replace("/pricing");
         return;
       }
 
@@ -89,22 +97,25 @@ export default function LoginPage() {
         return;
       }
 
-      /**
-       * 🔥 CRITICAL FIX:
-       * Force session refresh before redirect
-       */
-      const { data: sessionData } = await supabase.auth.getSession();
+      if (!data.session) {
+        setMessage("Login failed: no session created.");
+        return;
+      }
 
-      if (!sessionData.session) {
-        setMessage("Session failed to initialize. Try again.");
+      /**
+       * CRITICAL FIX:
+       * Force Supabase to confirm session persistence before redirect
+       */
+      const { data: confirmSession } = await supabase.auth.getSession();
+
+      if (!confirmSession.session) {
+        setMessage("Session not stable. Please try again.");
         return;
       }
 
       setMessage("Login successful.");
 
-      setTimeout(() => {
-        router.replace("/dashboard");
-      }, 500);
+      router.replace("/dashboard");
     } catch (error) {
       console.error(error);
       setMessage("Authentication failed.");
@@ -123,7 +134,7 @@ export default function LoginPage() {
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "http://localhost:3000/login",
+      redirectTo: `${window.location.origin}/login`,
     });
 
     if (error) {
@@ -207,10 +218,7 @@ export default function LoginPage() {
           ) : (
             <>
               Need an account?{" "}
-              <a
-                href="/login?mode=signup"
-                className="text-white hover:underline"
-              >
+              <a href="/login?mode=signup" className="text-white hover:underline">
                 Create Account
               </a>
             </>

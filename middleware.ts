@@ -1,15 +1,11 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import type { CookieOptions } from "@supabase/ssr";
 
 export async function middleware(req: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: req.headers,
-    },
-  });
+  let res = NextResponse.next();
 
-  // Create Supabase client
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -18,45 +14,51 @@ export async function middleware(req: NextRequest) {
         getAll() {
           return req.cookies.getAll();
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              response.cookies.set(name, value, options);
-            });
-          } catch {
-            // Ignore if response already sent
-          }
+
+        setAll(
+          cookies: {
+            name: string;
+            value: string;
+            options?: CookieOptions;
+          }[]
+        ) {
+          cookies.forEach(
+            (cookie: {
+              name: string;
+              value: string;
+              options?: CookieOptions;
+            }) => {
+              res.cookies.set(cookie.name, cookie.value, cookie.options);
+            }
+          );
         },
       },
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  const isDashboard = req.nextUrl.pathname.startsWith('/dashboard');
-  const isLogin = req.nextUrl.pathname === '/login';
+  const path = req.nextUrl.pathname;
 
-  // Redirect to login if trying to access dashboard without session
-  if (isDashboard && !session) {
-    return NextResponse.redirect(new URL('/login', req.url));
+  const isDashboard = path.startsWith("/dashboard");
+  const isLogin = path.startsWith("/login");
+  const isOnboarding = path.startsWith("/onboarding");
+
+  if (!session) {
+    if (isDashboard || isOnboarding) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
   }
 
-  // Redirect to dashboard if already logged in and trying to access login
-  const mode = req.nextUrl.searchParams.get("mode");
+  if (session && isLogin) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
 
-const isSignup =
-  req.nextUrl.pathname === "/login" &&
-  mode === "signup";
-
-if (isLogin && session && !isSignup) {
-  return NextResponse.redirect(
-    new URL('/dashboard', req.url)
-  );
-}
-
-  return response;
+  return res;
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
+  matcher: ["/dashboard/:path*", "/login", "/onboarding"],
 };
