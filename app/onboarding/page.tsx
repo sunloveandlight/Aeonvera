@@ -15,9 +15,6 @@ export default function OnboardingPage() {
 
   const [userId, setUserId] = useState<string | null>(null);
 
-  /**
-   * STEP 1: Verify session + ensure profile exists
-   */
   useEffect(() => {
     const init = async () => {
       const {
@@ -31,10 +28,6 @@ export default function OnboardingPage() {
 
       setUserId(session.user.id);
 
-      /**
-       * IMPORTANT:
-       * Ensure profile exists BEFORE onboarding continues
-       */
       const { data: profile } = await supabase
         .from("profiles")
         .select("user_id")
@@ -52,8 +45,12 @@ export default function OnboardingPage() {
         });
 
         if (error) {
-          console.error(error);
-          router.replace("/login");
+          console.error("PROFILE INSERT ERROR:", error);
+
+          alert(
+            `PROFILE INSERT ERROR\n\n${JSON.stringify(error, null, 2)}`
+          );
+
           return;
         }
       }
@@ -64,9 +61,6 @@ export default function OnboardingPage() {
     init();
   }, [router]);
 
-  /**
-   * STEP 2: Save onboarding data safely
-   */
   async function handleCompleteOnboarding() {
     if (!userId) return;
 
