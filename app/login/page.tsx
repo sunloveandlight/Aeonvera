@@ -1,10 +1,18 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div />}>
+      <LoginInner />
+    </Suspense>
+  );
+}
+
+function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
@@ -24,15 +32,20 @@ export default function LoginPage() {
   }, [router]);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("🔄 Auth event:", event, session ? "HAS SESSION" : "NO SESSION");
+    const { data: { subscription } } =
+      supabase.auth.onAuthStateChange((event, session) => {
+        console.log(
+          "🔄 Auth event:",
+          event,
+          session ? "HAS SESSION" : "NO SESSION"
+        );
 
-      if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-        console.log("✅ Redirecting to /dashboard");
-        router.replace("/dashboard");
-        router.refresh();
-      }
-    });
+        if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+          console.log("✅ Redirecting to /dashboard");
+          router.replace("/dashboard");
+          router.refresh();
+        }
+      });
 
     return () => subscription.unsubscribe();
   }, [router]);
@@ -44,18 +57,20 @@ export default function LoginPage() {
 
     if (isSignUpMode) {
       const { data, error } = await supabase.auth.signUp({ email, password });
+
       if (error) {
         setMessage(error.message);
         setLoading(false);
         return;
       }
+
       setMessage("Account created. Redirecting...");
       setTimeout(() => router.replace("/pricing"), 1000);
       return;
     }
 
-    // LOGIN
     console.log("Attempting login...");
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -72,9 +87,9 @@ export default function LoginPage() {
 
     if (data.session) {
       setMessage("Login successful. Redirecting to dashboard...");
-      // Safer redirect method
+
       setTimeout(() => {
-        router.push("/dashboard");     // changed to push + small delay
+        router.push("/dashboard");
         router.refresh();
       }, 300);
     } else {
