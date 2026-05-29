@@ -1,11 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe/stripe";
+import Stripe from "stripe";
 import { createServerClient } from "@supabase/ssr";
 
 type CheckoutPlan = "core" | "elite" | "sovereign";
 
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+
+  if (!key) {
+    throw new Error("Missing STRIPE_SECRET_KEY");
+  }
+
+  return new Stripe(key, {
+    apiVersion: "2026-04-22.dahlia",
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
+    const stripe = getStripe();
+
     const PRICE_IDS = {
       core: process.env.STRIPE_CORE_PRICE_ID,
       elite: process.env.STRIPE_ELITE_PRICE_ID,
@@ -34,14 +48,20 @@ export async function POST(req: NextRequest) {
     } = await supabase.auth.getSession();
 
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized." },
+        { status: 401 }
+      );
     }
 
     const body = await req.json();
     const { plan } = body as { plan: CheckoutPlan };
 
     if (!plan || !PRICE_IDS[plan]) {
-      return NextResponse.json({ error: "Invalid subscription plan." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid subscription plan." },
+        { status: 400 }
+      );
     }
 
     const user = session.user;
