@@ -32,20 +32,21 @@ function LoginInner() {
   }, [router]);
 
   useEffect(() => {
-    const { data: { subscription } } =
-      supabase.auth.onAuthStateChange((event, session) => {
-        console.log(
-          "🔄 Auth event:",
-          event,
-          session ? "HAS SESSION" : "NO SESSION"
-        );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(
+        "🔄 Auth event:",
+        event,
+        session ? "HAS SESSION" : "NO SESSION"
+      );
 
-        if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-          console.log("✅ Redirecting to /dashboard");
-          router.replace("/dashboard");
-          router.refresh();
-        }
-      });
+      if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+        console.log("✅ Redirecting to /dashboard");
+        router.replace("/dashboard");
+        router.refresh();
+      }
+    });
 
     return () => subscription.unsubscribe();
   }, [router]);
@@ -56,7 +57,13 @@ function LoginInner() {
     setMessage(null);
 
     if (isSignUpMode) {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      console.log("SIGNUP DATA:", data);
+      console.log("SIGNUP ERROR:", error);
 
       if (error) {
         setMessage(error.message);
@@ -115,6 +122,7 @@ function LoginInner() {
             className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3"
             required
           />
+
           <input
             type="password"
             value={password}
@@ -129,7 +137,11 @@ function LoginInner() {
             disabled={loading}
             className="w-full bg-white text-black rounded-xl py-3 font-medium disabled:opacity-50"
           >
-            {loading ? "Signing in..." : isSignUpMode ? "Create Account" : "Sign In"}
+            {loading
+              ? "Signing in..."
+              : isSignUpMode
+              ? "Create Account"
+              : "Sign In"}
           </button>
         </form>
 
