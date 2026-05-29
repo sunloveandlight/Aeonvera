@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe/stripe";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
 const PRICE_IDS = {
   core: process.env.STRIPE_CORE_PRICE_ID!,
@@ -22,31 +24,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const authHeader = req.headers.get("authorization");
+    // ✅ FIX: await cookies() (THIS IS THE BUG YOU HIT)
+    const cookieStore = await cookies();
 
-    if (!authHeader) {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll() {
+            // no-op for route handlers
+          },
+        },
+      }
+    );
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json(
         { error: "Unauthorized." },
         { status: 401 }
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const supabase = getSupabaseAdmin();
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Invalid user session." },
-        { status: 401 }
-      );
-    }
-
-    const { data: profile } = await supabase
+    const { data: profile } = await getSupabaseAdmin()
       .from("profiles")
       .select("stripe_customer_id")
       .eq("user_id", user.id)
@@ -62,7 +70,7 @@ export async function POST(req: NextRequest) {
 
       customerId = customer.id;
 
-      await supabase
+      await getSupabaseAdmin()
         .from("profiles")
         .update({ stripe_customer_id: customerId })
         .eq("user_id", user.id);

@@ -13,14 +13,12 @@ export default function PricingPage() {
     try {
       setLoadingPlan(plan);
 
-      const token = localStorage.getItem("sb-access-token");
-
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({ plan }),
       });
 
@@ -72,7 +70,7 @@ export default function PricingPage() {
           </button>
         </div>
 
-        {/* ELITE (MONTHLY) */}
+        {/* ELITE */}
         <div className="border border-gray-800 rounded-2xl p-6 relative">
           <div className="absolute top-3 right-3 text-xs bg-white text-black px-2 py-1 rounded-full">
             Popular
@@ -99,12 +97,10 @@ export default function PricingPage() {
           </button>
         </div>
 
-        {/* SOVEREIGN (YEARLY = SAME AS ELITE) */}
+        {/* SOVEREIGN */}
         <div className="border border-gray-800 rounded-2xl p-6">
           <h2 className="text-xl font-semibold">Sovereign</h2>
-          <p className="text-gray-400 mt-2">
-            Same as Elite — billed yearly
-          </p>
+          <p className="text-gray-400 mt-2">Same as Elite — billed yearly</p>
 
           <div className="mt-6 text-3xl font-bold">$999</div>
           <div className="text-gray-500">/ year</div>
