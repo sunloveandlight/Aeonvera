@@ -9,7 +9,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkUser = async () => {
+    const check = async () => {
       const { data } = await supabase.auth.getSession();
 
       if (!data.session) {
@@ -17,10 +17,27 @@ export default function DashboardPage() {
         return;
       }
 
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("user_id", data.session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Profile fetch error:", error);
+        setLoading(false);
+        return;
+      }
+
+      if (profile && profile.onboarding_completed === false) {
+        router.replace("/onboarding");
+        return;
+      }
+
       setLoading(false);
     };
 
-    checkUser();
+    check();
   }, [router]);
 
   if (loading) {
