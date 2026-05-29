@@ -33,29 +33,34 @@ export async function POST(req: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    // 🔐 STEP 1: DEDUPLICATION CHECK
     const eventId = event.id;
 
+    // 🔥 FIX 1: SAFE DEDUP CHECK (no .single crash)
     const { data: existingEvent } = await supabase
       .from("stripe_events")
       .select("id")
       .eq("id", eventId)
-      .single();
+      .maybeSingle();
 
     if (existingEvent) {
-      // already processed → prevent duplicate execution
       return NextResponse.json({ received: true, duplicate: true });
     }
 
-    // mark event as processed FIRST (important for safety)
-    await supabase.from("stripe_events").insert({
-      id: eventId,
-      type: event.type,
-      created_at: new Date().toISOString(),
-    });
+    // 🔥 FIX 2: INSERT FIRST, BUT IGNORE DUP FAIL SAFELY
+    const { error: insertError } = await supabase
+      .from("stripe_events")
+      .insert({
+        id: eventId,
+        type: event.type,
+        created_at: new Date().toISOString(),
+      });
+
+    if (insertError && insertError.code !== "23505") {
+      console.error("Event insert error:", insertError);
+      return NextResponse.json({ error: "Event logging failed" }, { status: 500 });
+    }
 
     // 🔁 STEP 2: HANDLE EVENTS
-
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -63,7 +68,11 @@ export async function POST(req: NextRequest) {
         const userId = session.metadata?.user_id;
         const plan = session.metadata?.plan;
 
-        if (!userId || !plan) break;
+        // 🔥 FIX 3: HARD GUARD (no silent failures)
+        if (!userId || !plan) {
+          console.error("Missing metadata:", session.metadata);
+          break;
+        }
 
         await supabase
           .from("profiles")
@@ -81,12 +90,11 @@ export async function POST(req: NextRequest) {
 
         const customerId = subscription.customer as string;
 
-        const status = subscription.status;
-
         await supabase
           .from("profiles")
           .update({
-            subscription_status: status,
+            subscription_status: subscription.status,
+            plan: subscription.status === "active" ? "pro" : "free",
           })
           .eq("stripe_customer_id", customerId);
 
@@ -102,7 +110,7 @@ export async function POST(req: NextRequest) {
           .from("profiles")
           .update({
             subscription_status: "canceled",
-            plan: null,
+            plan: "free",
           })
           .eq("stripe_customer_id", customerId);
 
@@ -110,7 +118,6 @@ export async function POST(req: NextRequest) {
       }
 
       default:
-        // ignore other events safely
         break;
     }
 
