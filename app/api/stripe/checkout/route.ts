@@ -2,16 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe/stripe";
 import { createServerClient } from "@supabase/ssr";
 
-const PRICE_IDS = {
-  core: process.env.STRIPE_CORE_PRICE_ID!,
-  elite: process.env.STRIPE_ELITE_PRICE_ID!,
-  sovereign: process.env.STRIPE_SOVEREIGN_PRICE_ID!,
-} as const;
-
-type CheckoutPlan = keyof typeof PRICE_IDS;
+type CheckoutPlan = "core" | "elite" | "sovereign";
 
 export async function POST(req: NextRequest) {
   try {
+    const PRICE_IDS = {
+      core: process.env.STRIPE_CORE_PRICE_ID,
+      elite: process.env.STRIPE_ELITE_PRICE_ID,
+      sovereign: process.env.STRIPE_SOVEREIGN_PRICE_ID,
+    };
+
+    if (!PRICE_IDS.core || !PRICE_IDS.elite || !PRICE_IDS.sovereign) {
+      throw new Error("Missing Stripe Price IDs in environment variables");
+    }
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -30,20 +34,14 @@ export async function POST(req: NextRequest) {
     } = await supabase.auth.getSession();
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized." },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
     const body = await req.json();
     const { plan } = body as { plan: CheckoutPlan };
 
     if (!plan || !PRICE_IDS[plan]) {
-      return NextResponse.json(
-        { error: "Invalid subscription plan." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid subscription plan." }, { status: 400 });
     }
 
     const user = session.user;
