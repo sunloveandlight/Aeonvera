@@ -4,6 +4,13 @@ import type { NextRequest } from "next/server";
 import type { CookieOptions } from "@supabase/ssr";
 
 export async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname;
+
+  // 🚨 CRITICAL FIX: NEVER run middleware logic on Stripe webhooks or API routes
+  if (path.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
   let res = NextResponse.next();
 
   const supabase = createServerClient(
@@ -28,8 +35,6 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const path = req.nextUrl.pathname;
-
   // Protect dashboard and onboarding
   if (!session && (path.startsWith("/dashboard") || path.startsWith("/onboarding"))) {
     return NextResponse.redirect(new URL("/login", req.url));
@@ -44,5 +49,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/onboarding", "/pricing"],
+  matcher: [
+    "/((?!api).*)"
+  ],
 };
