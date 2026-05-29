@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { ensureProfile } from "@/lib/auth/ensureProfile";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -10,31 +11,48 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const check = async () => {
-      const { data } = await supabase.auth.getSession();
+      try {
+        const { data } = await supabase.auth.getSession();
 
-      if (!data.session) {
-        router.replace("/login");
-        return;
-      }
+        if (!data.session) {
+          router.replace("/login");
+          return;
+        }
 
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("onboarding_completed")
-        .eq("user_id", data.session.user.id)
-        .single();
+        const userId = data.session.user.id;
 
-      if (error) {
-        console.error("Profile fetch error:", error);
+        // 🔥 GUARANTEE PROFILE EXISTS (CRITICAL FIX)
+        await ensureProfile(userId);
+
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("onboarding_completed, plan")
+          .eq("user_id", userId)
+          .maybeSingle(); // 🔥 SAFE FOR PRODUCTION
+
+        if (error) {
+          console.error("Profile fetch error:", error);
+          setLoading(false);
+          return;
+        }
+
+        // 🔥 ONBOARDING GATE
+        if (!profile?.onboarding_completed) {
+          router.replace("/onboarding");
+          return;
+        }
+
+        // 🔥 STRIPE / PLAN GATE (FINAL LAUNCH RULE)
+        if (profile?.plan && profile.plan !== "pro") {
+          router.replace("/pricing");
+          return;
+        }
+
         setLoading(false);
-        return;
+      } catch (err) {
+        console.error("Dashboard crash guard:", err);
+        setLoading(false);
       }
-
-      if (profile && profile.onboarding_completed === false) {
-        router.replace("/onboarding");
-        return;
-      }
-
-      setLoading(false);
     };
 
     check();
