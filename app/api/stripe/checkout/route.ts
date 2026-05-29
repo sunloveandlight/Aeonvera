@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe/stripe";
-import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 
 const PRICE_IDS = {
   core: process.env.STRIPE_CORE_PRICE_ID!,
@@ -14,6 +12,30 @@ type CheckoutPlan = keyof typeof PRICE_IDS;
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return req.cookies.getAll();
+          },
+          setAll() {},
+        },
+      }
+    );
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized." },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const { plan } = body as { plan: CheckoutPlan };
 
@@ -24,37 +46,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ✅ FIX: await cookies() (THIS IS THE BUG YOU HIT)
-    const cookieStore = await cookies();
+    const user = session.user;
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll() {
-            // no-op for route handlers
-          },
-        },
-      }
-    );
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized." },
-        { status: 401 }
-      );
-    }
-
-    const { data: profile } = await getSupabaseAdmin()
+    const { data: profile } = await supabase
       .from("profiles")
       .select("stripe_customer_id")
       .eq("user_id", user.id)
@@ -70,13 +64,13 @@ export async function POST(req: NextRequest) {
 
       customerId = customer.id;
 
-      await getSupabaseAdmin()
+      await supabase
         .from("profiles")
         .update({ stripe_customer_id: customerId })
         .eq("user_id", user.id);
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionStripe = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
       line_items: [
@@ -93,7 +87,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: sessionStripe.url });
   } catch (error) {
     console.error("Stripe Checkout Error:", error);
 
