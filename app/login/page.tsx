@@ -79,11 +79,8 @@ export default function LoginPage() {
         password,
       });
 
-      /**
-       * 🔥 CRITICAL FIX: SHOW REAL ERROR
-       */
       if (error) {
-        setMessage(error.message); // THIS WAS YOUR MISSING PIECE
+        setMessage(error.message);
         setLoading(false);
         return;
       }
@@ -96,10 +93,9 @@ export default function LoginPage() {
 
       setMessage("Login successful. Redirecting...");
 
-      /**
-       * IMPORTANT:
-       * Direct redirect (no session polling)
-       */
+      // 🔍 DEBUG: confirm redirect path is reached
+      console.log("REDIRECT TRIGGERED");
+
       router.replace("/dashboard");
     } catch (err) {
       console.error(err);
