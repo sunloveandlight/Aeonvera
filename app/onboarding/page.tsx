@@ -1,133 +1,130 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
 export default function OnboardingPage() {
   const router = useRouter();
 
-  const [displayName, setDisplayName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
   const [entityName, setEntityName] = useState("");
-  const [lifeFocus, setLifeFocus] = useState("");
+  const [displayName, setDisplayName] = useState("");
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
 
-  async function handleActivation() {
-    try {
-      setLoading(true);
-      setError("");
-
+  /**
+   * STEP 1: Verify session
+   */
+  useEffect(() => {
+    const init = async () => {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (!user) {
-        setError("No authenticated user found.");
+      if (!session?.user) {
+        router.replace("/login");
         return;
       }
 
-      const { error: updateError } = await supabase
+      setUserId(session.user.id);
+      setLoading(false);
+    };
+
+    init();
+  }, [router]);
+
+  /**
+   * STEP 2: Save onboarding data
+   */
+  async function handleCompleteOnboarding() {
+    if (!userId) return;
+
+    try {
+      setSaving(true);
+
+      const { error } = await supabase
         .from("profiles")
         .update({
-          display_name: displayName,
-          entity_name: entityName,
-          life_stage: lifeFocus,
-          entity_state: "active",
+          entity_name: entityName || "Unnamed Entity",
+          display_name: displayName || "Entity",
           onboarding_completed: true,
-          last_entity_sync: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          entity_state: "active",
+          life_stage: "initialized",
         })
-        .eq("user_id", user.id);
+        .eq("user_id", userId);
 
-      if (updateError) {
-        setError(updateError.message);
+      if (error) {
+        console.error(error);
+        alert("Failed to save onboarding.");
         return;
       }
 
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
+      /**
+       * STEP 3: Force session refresh (important for dashboard consistency)
+       */
+      await supabase.auth.getSession();
+
+      /**
+       * STEP 4: Redirect to dashboard
+       */
+      router.replace("/dashboard");
+    } catch (err) {
+      console.error(err);
+      alert("Onboarding failed.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <p className="text-white/60">Initializing onboarding...</p>
+      </div>
+    );
   }
 
   return (
     <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-xl border border-white/10 rounded-3xl p-10 bg-white/5 backdrop-blur-xl">
-        <div className="mb-10">
-          <p className="text-sm uppercase tracking-[0.3em] text-white/40 mb-4">
-            AEONVERA ENTITY ACTIVATION
-          </p>
+      <div className="w-full max-w-lg border border-white/10 rounded-3xl p-10 bg-white/5">
 
-          <h1 className="text-5xl font-light mb-4 leading-tight">
-            Initialize Your
-            <br />
-            Lifeline Entity
-          </h1>
+        <h1 className="text-3xl font-light mb-2">
+          Initialize Your Entity
+        </h1>
 
-          <p className="text-white/60 text-lg">
-            Your entity will begin constructing your long-term trajectory model.
-          </p>
-        </div>
+        <p className="text-white/50 mb-8">
+          Set up your system identity before accessing the dashboard.
+        </p>
 
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm text-white/50 mb-2">
-              Display Name
-            </label>
+        <div className="space-y-4">
 
-            <input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Your identity"
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-white/30"
-            />
-          </div>
+          <input
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            placeholder="Display Name"
+            className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-white"
+          />
 
-          <div>
-            <label className="block text-sm text-white/50 mb-2">
-              Entity Name
-            </label>
-
-            <input
-              value={entityName}
-              onChange={(e) => setEntityName(e.target.value)}
-              placeholder="Name your entity"
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-white/30"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-white/50 mb-2">
-              Current Life Focus
-            </label>
-
-            <textarea
-              value={lifeFocus}
-              onChange={(e) => setLifeFocus(e.target.value)}
-              placeholder="Health, longevity, performance, clarity, discipline..."
-              rows={4}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-white/30 resize-none"
-            />
-          </div>
-
-          {error && (
-            <div className="text-red-400 text-sm">
-              {error}
-            </div>
-          )}
+          <input
+            value={entityName}
+            onChange={(e) => setEntityName(e.target.value)}
+            placeholder="Entity Name"
+            className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-white"
+          />
 
           <button
-            onClick={handleActivation}
-            disabled={loading}
-            className="w-full bg-white text-black rounded-2xl py-4 font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+            onClick={handleCompleteOnboarding}
+            disabled={saving}
+            className="w-full bg-white text-black rounded-xl py-3 font-medium hover:bg-gray-200 transition"
           >
-            {loading ? "Activating Entity..." : "Activate Entity"}
+            {saving ? "Finalizing..." : "Complete Setup"}
           </button>
+
         </div>
+
       </div>
     </main>
   );

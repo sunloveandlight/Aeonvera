@@ -2,91 +2,62 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-import { getUserSubscription } from "@/lib/auth/getUserSubscription";
 import { supabase } from "@/lib/supabase/client";
 
 export default function DashboardPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-
   const [userData, setUserData] = useState<any>(null);
-
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
-        const result =
-          await getUserSubscription();
+        setLoading(true);
 
-        /**
-         * NOT LOGGED IN
-         */
-        if (!result.user) {
+        // ✅ STEP 1: DIRECT SESSION CHECK (SOURCE OF TRUTH)
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session?.user) {
           router.replace("/login");
           return;
         }
 
-        /**
-         * USER HAS NO SUBSCRIPTION
-         */
-        if (!result.plan) {
-          router.replace("/pricing");
-          return;
-        }
+        const user = session.user;
 
-        /**
-         * SUBSCRIPTION NOT ACTIVE
-         */
-        if (
-          result.subscriptionStatus !== "active" &&
-          result.subscriptionStatus !== "trialing"
-        ) {
-          router.replace("/pricing");
-          return;
-        }
-
-        /**
-         * LOAD PROFILE
-         */
-        const {
-          data: profileData,
-          error,
-        } = await supabase
+        // ✅ STEP 2: LOAD PROFILE (ONLY AFTER AUTH IS CONFIRMED)
+        const { data: profileData, error } = await supabase
           .from("profiles")
           .select("*")
-          .eq("user_id", result.user.id)
+          .eq("user_id", user.id)
           .single();
 
-        /**
-         * NO PROFILE YET
-         */
+        // no profile → onboarding
         if (error || !profileData) {
           router.replace("/onboarding");
           return;
         }
 
-        /**
-         * ONBOARDING NOT COMPLETE
-         */
-        if (
-          !profileData.onboarding_completed
-        ) {
+        // onboarding incomplete → onboarding
+        if (!profileData.onboarding_completed) {
           router.replace("/onboarding");
           return;
         }
 
-        setUserData(result);
+        // ❗ STEP 3: DO NOT BLOCK ON SUBSCRIPTION — JUST DISPLAY IT
+        setUserData({
+          user,
+          plan: profileData.plan,
+          subscriptionStatus: profileData.subscription_status,
+        });
 
         setProfile(profileData);
-
       } catch (err) {
         console.error(err);
-
         router.replace("/login");
-
       } finally {
         setLoading(false);
       }
@@ -125,7 +96,7 @@ export default function DashboardPage() {
           </h1>
 
           <p className="text-white/50 text-xl max-w-2xl">
-            Your lifeline system is active and continuously evolving.
+            Your system is active and synchronized.
           </p>
         </div>
 
@@ -143,8 +114,7 @@ export default function DashboardPage() {
                 </p>
 
                 <h2 className="text-3xl font-light">
-                  {profile?.entity_name ||
-                    "Uninitialized"}
+                  {profile?.entity_name || "Uninitialized"}
                 </h2>
               </div>
 
@@ -154,8 +124,7 @@ export default function DashboardPage() {
                 </p>
 
                 <p className="text-xl text-green-400">
-                  {profile?.entity_state ||
-                    "dormant"}
+                  {profile?.entity_state || "dormant"}
                 </p>
               </div>
 
@@ -165,8 +134,7 @@ export default function DashboardPage() {
                 </p>
 
                 <p className="text-lg text-white/80">
-                  {profile?.life_stage ||
-                    "initializing"}
+                  {profile?.life_stage || "initializing"}
                 </p>
               </div>
             </div>
@@ -184,7 +152,7 @@ export default function DashboardPage() {
                 </p>
 
                 <h2 className="text-3xl font-light capitalize">
-                  {userData?.plan}
+                  {userData?.plan || "none"}
                 </h2>
               </div>
 
@@ -194,7 +162,7 @@ export default function DashboardPage() {
                 </p>
 
                 <p className="text-green-400 text-lg capitalize">
-                  {userData?.subscriptionStatus}
+                  {userData?.subscriptionStatus || "inactive"}
                 </p>
               </div>
 
@@ -207,23 +175,6 @@ export default function DashboardPage() {
                   Active
                 </p>
               </div>
-            </div>
-          </div>
-
-          <div className="md:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-xl">
-            <p className="text-sm uppercase tracking-[0.25em] text-white/40 mb-6">
-              TRAJECTORY ENGINE
-            </p>
-
-            <div className="border border-dashed border-white/10 rounded-2xl p-10 text-center">
-              <h3 className="text-2xl font-light mb-4">
-                Trajectory Modeling Initializing
-              </h3>
-
-              <p className="text-white/50 max-w-2xl mx-auto">
-                Your entity has begun constructing long-term behavioral,
-                biological, and cognitive trajectory systems.
-              </p>
             </div>
           </div>
 
