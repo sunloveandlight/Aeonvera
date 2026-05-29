@@ -1,66 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe/stripe";
-import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import Stripe from "stripe";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+
+  if (!key) {
+    throw new Error("Missing STRIPE_SECRET_KEY");
+  }
+
+  return new Stripe(key, {
+    apiVersion: "2026-04-22.dahlia",
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
+    const stripe = getStripe();
+    const supabase = getSupabaseAdmin();
+
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
 
     if (!signature) {
-      return NextResponse.json(
-        { error: "Missing stripe signature" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing signature" }, { status: 400 });
     }
 
-    let event: Stripe.Event;
+    const event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
 
-    try {
-      event = stripe.webhooks.constructEvent(
-        body,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET!
-      );
-    } catch (err) {
-      console.error("Webhook signature verification failed:", err);
-      return NextResponse.json(
-        { error: "Invalid signature" },
-        { status: 400 }
-      );
-    }
-
-    const supabase = getSupabaseAdmin();
-
-    const eventId = event.id;
-
-    // 🔥 FIX 1: SAFE DEDUP CHECK (no .single crash)
-    const { data: existingEvent } = await supabase
+    // Prevent double processing
+    const { data: existing } = await supabase
       .from("stripe_events")
       .select("id")
-      .eq("id", eventId)
-      .maybeSingle();
+      .eq("id", event.id)
+      .single();
 
-    if (existingEvent) {
-      return NextResponse.json({ received: true, duplicate: true });
+    if (existing) {
+      return NextResponse.json({ received: true });
     }
 
-    // 🔥 FIX 2: INSERT FIRST, BUT IGNORE DUP FAIL SAFELY
-    const { error: insertError } = await supabase
-      .from("stripe_events")
-      .insert({
-        id: eventId,
-        type: event.type,
-        created_at: new Date().toISOString(),
-      });
+    await supabase.from("stripe_events").insert({ id: event.id });
 
-    if (insertError && insertError.code !== "23505") {
-      console.error("Event insert error:", insertError);
-      return NextResponse.json({ error: "Event logging failed" }, { status: 500 });
-    }
-
-    // 🔁 STEP 2: HANDLE EVENTS
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -68,11 +52,7 @@ export async function POST(req: NextRequest) {
         const userId = session.metadata?.user_id;
         const plan = session.metadata?.plan;
 
-        // 🔥 FIX 3: HARD GUARD (no silent failures)
-        if (!userId || !plan) {
-          console.error("Missing metadata:", session.metadata);
-          break;
-        }
+        if (!userId) break;
 
         await supabase
           .from("profiles")
@@ -86,47 +66,38 @@ export async function POST(req: NextRequest) {
       }
 
       case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
-
-        const customerId = subscription.customer as string;
+        const sub = event.data.object as Stripe.Subscription;
 
         await supabase
           .from("profiles")
           .update({
-            subscription_status: subscription.status,
-            plan: subscription.status === "active" ? "pro" : "free",
+            subscription_status: sub.status,
           })
-          .eq("stripe_customer_id", customerId);
+          .eq("stripe_customer_id", sub.customer as string);
 
         break;
       }
 
       case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
-
-        const customerId = subscription.customer as string;
+        const sub = event.data.object as Stripe.Subscription;
 
         await supabase
           .from("profiles")
           .update({
-            subscription_status: "canceled",
             plan: "free",
+            subscription_status: "canceled",
           })
-          .eq("stripe_customer_id", customerId);
+          .eq("stripe_customer_id", sub.customer as string);
 
         break;
       }
-
-      default:
-        break;
     }
 
     return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error("Webhook error:", error);
-
+  } catch (err) {
+    console.error("Webhook error:", err);
     return NextResponse.json(
-      { error: "Webhook failed" },
+      { error: "Webhook handler failed" },
       { status: 500 }
     );
   }
