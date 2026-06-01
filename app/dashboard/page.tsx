@@ -12,14 +12,17 @@ export default function DashboardPage() {
   useEffect(() => {
     const check = async () => {
       try {
-        const { data } = await supabase.auth.getSession();
+        // ✅ FIX: stable auth source
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-        if (!data.session) {
+        if (!user) {
           router.replace("/login");
           return;
         }
 
-        const userId = data.session.user.id;
+        const userId = user.id;
 
         await ensureProfile(userId);
 

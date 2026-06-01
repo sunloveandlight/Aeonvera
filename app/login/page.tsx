@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState, Suspense } from "react";
+import { FormEvent, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
@@ -15,6 +15,7 @@ export default function LoginPage() {
 function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const mode = searchParams.get("mode");
   const isSignUpMode = mode === "signup";
 
@@ -23,47 +24,44 @@ function LoginInner() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) {
-        router.replace("/dashboard");
-      }
-    });
-  }, [router]);
-
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log(
-        "🔄 Auth event:",
-        event,
-        session ? "HAS SESSION" : "NO SESSION"
-      );
-
-      if (session && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
-        console.log("✅ Redirecting to /dashboard");
-        router.replace("/dashboard");
-        router.refresh();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [router]);
-
   async function handleAuth(e: FormEvent) {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
-    if (isSignUpMode) {
-      const { data, error } = await supabase.auth.signUp({
+    try {
+      // -------------------------
+      // SIGN UP FLOW
+      // -------------------------
+      if (isSignUpMode) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (error) {
+          setMessage(error.message);
+          setLoading(false);
+          return;
+        }
+
+        setMessage("Account created. Redirecting...");
+
+        setTimeout(() => {
+          router.replace("/pricing");
+        }, 800);
+
+        setLoading(false);
+        return;
+      }
+
+      // -------------------------
+      // LOGIN FLOW
+      // -------------------------
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-
-      console.log("SIGNUP DATA:", data);
-      console.log("SIGNUP ERROR:", error);
 
       if (error) {
         setMessage(error.message);
@@ -71,39 +69,31 @@ function LoginInner() {
         return;
       }
 
-      setMessage("Account created. Redirecting...");
-      setTimeout(() => router.replace("/pricing"), 1000);
-      return;
-    }
+      // 🔥 CRITICAL FIX:
+      // Wait for Supabase to actually resolve session via cookie sync
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    console.log("Attempting login...");
+      if (!user) {
+        setMessage("Login succeeded but session failed to initialize.");
+        setLoading(false);
+        return;
+      }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+      setMessage("Login successful. Redirecting...");
 
-    if (error) {
-      console.error("Login error:", error);
-      setMessage(error.message);
-      setLoading(false);
-      return;
-    }
-
-    console.log("Login response:", { hasSession: !!data.session });
-
-    if (data.session) {
-      setMessage("Login successful. Redirecting to dashboard...");
-
+      // small delay ensures middleware + cookie sync catches up
       setTimeout(() => {
-        router.push("/dashboard");
+        router.replace("/dashboard");
         router.refresh();
       }, 300);
-    } else {
-      setMessage("Login succeeded but no session was returned.");
+    } catch (err: any) {
+      console.error("Login crash:", err);
+      setMessage("Unexpected error during login.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   return (
