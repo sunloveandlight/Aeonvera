@@ -21,14 +21,13 @@ export default function DashboardPage() {
 
         const userId = data.session.user.id;
 
-        // 🔥 GUARANTEE PROFILE EXISTS (CRITICAL FIX)
         await ensureProfile(userId);
 
         const { data: profile, error } = await supabase
           .from("profiles")
           .select("onboarding_completed, plan")
           .eq("user_id", userId)
-          .maybeSingle(); // 🔥 SAFE FOR PRODUCTION
+          .maybeSingle();
 
         if (error) {
           console.error("Profile fetch error:", error);
@@ -36,14 +35,12 @@ export default function DashboardPage() {
           return;
         }
 
-        // 🔥 ONBOARDING GATE
         if (!profile?.onboarding_completed) {
           router.replace("/onboarding");
           return;
         }
 
-        // 🔥 STRIPE / PLAN GATE (FINAL LAUNCH RULE)
-        if (profile?.plan && profile.plan !== "pro") {
+        if (profile?.plan && profile.plan !== "elite") {
           router.replace("/pricing");
           return;
         }
