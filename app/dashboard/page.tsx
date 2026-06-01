@@ -3,16 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { ensureProfile } from "@/lib/auth/ensureProfile";
 
 export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const check = async () => {
+    const run = async () => {
       try {
-        // ✅ FIX: stable auth source
         const {
           data: { user },
         } = await supabase.auth.getUser();
@@ -22,40 +20,55 @@ export default function DashboardPage() {
           return;
         }
 
-        const userId = user.id;
+        // 🔥 WAIT FOR PROFILE TO EXIST (RETRY SAFE)
+        let profile = null;
 
-        await ensureProfile(userId);
+        for (let i = 0; i < 5; i++) {
+          const { data } = await supabase
+            .from("profiles")
+            .select("onboarding_completed, plan")
+            .eq("user_id", user.id)
+            .maybeSingle();
 
-        const { data: profile, error } = await supabase
-          .from("profiles")
-          .select("onboarding_completed, plan")
-          .eq("user_id", userId)
-          .maybeSingle();
+          if (data) {
+            profile = data;
+            break;
+          }
 
-        if (error) {
-          console.error("Profile fetch error:", error);
+          await new Promise((r) => setTimeout(r, 300));
+        }
+
+        if (!profile) {
+          // default safe state instead of redirect loop
           setLoading(false);
           return;
         }
 
-        if (!profile?.onboarding_completed) {
+        if (!profile.onboarding_completed) {
           router.replace("/onboarding");
           return;
         }
 
-        if (profile?.plan && profile.plan !== "elite") {
+        // 🔥 IMPORTANT FIX:
+        // don't hard-block users with missing plan
+        if (!profile.plan) {
+          setLoading(false);
+          return;
+        }
+
+        if (profile.plan !== "elite") {
           router.replace("/pricing");
           return;
         }
 
         setLoading(false);
       } catch (err) {
-        console.error("Dashboard crash guard:", err);
+        console.error(err);
         setLoading(false);
       }
     };
 
-    check();
+    run();
   }, [router]);
 
   if (loading) {
