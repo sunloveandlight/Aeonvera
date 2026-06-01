@@ -1,39 +1,26 @@
-import { createClient } from "@supabase/supabase-js";
-
-function getBrowserSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !key) {
-    throw new Error("Missing Supabase browser env vars");
-  }
-
-  return createClient(url, key);
-}
+import { supabase } from "@/lib/supabase/client";
 
 export async function ensureProfile(userId: string) {
   if (!userId) return;
 
-  const supabase = getBrowserSupabase();
-
-  const { data } = await supabase
+  const { data: existingProfile, error: fetchError } = await supabase
     .from("profiles")
     .select("user_id")
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (data) return;
+  if (fetchError) {
+    console.error("Profile fetch error:", fetchError);
+    return;
+  }
 
-  const { error } = await supabase.from("profiles").insert({
-    user_id: userId,
-    plan: "free",
-    subscription_status: "inactive",
-    entity_state: "dormant",
-    onboarding_completed: false,
-    life_stage: "initializing",
-  });
+  if (existingProfile) return;
 
-  if (error) {
-    console.error("ensureProfile INSERT ERROR:", error);
+  const { error: insertError } = await supabase
+    .from("profiles")
+    .insert([{ user_id: userId }]);
+
+  if (insertError) {
+    console.error("Profile insert error:", insertError);
   }
 }
