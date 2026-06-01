@@ -1,9 +1,20 @@
-"use client";
+import { createClient } from "@supabase/supabase-js";
 
-import { supabase } from "@/lib/supabase/client";
+function getBrowserSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error("Missing Supabase browser env vars");
+  }
+
+  return createClient(url, key);
+}
 
 export async function ensureProfile(userId: string) {
   if (!userId) return;
+
+  const supabase = getBrowserSupabase();
 
   const { data } = await supabase
     .from("profiles")
