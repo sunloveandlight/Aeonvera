@@ -3,6 +3,7 @@
 import { FormEvent, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { ensureProfile } from "@/lib/auth/ensureProfile";
 
 export default function LoginPage() {
   return (
@@ -34,7 +35,7 @@ function LoginInner() {
       // SIGN UP FLOW
       // -------------------------
       if (isSignUpMode) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
         });
@@ -45,11 +46,14 @@ function LoginInner() {
           return;
         }
 
-        setMessage("Account created. Redirecting...");
+        const user = data.user;
 
-        setTimeout(() => {
-          router.replace("/pricing");
-        }, 800);
+        if (user) {
+          await ensureProfile(user.id);
+        }
+
+        setMessage("Account created. Redirecting...");
+        setTimeout(() => router.replace("/pricing"), 800);
 
         setLoading(false);
         return;
@@ -58,7 +62,7 @@ function LoginInner() {
       // -------------------------
       // LOGIN FLOW
       // -------------------------
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -69,29 +73,29 @@ function LoginInner() {
         return;
       }
 
-      // 🔥 CRITICAL FIX:
-      // Wait for Supabase to actually resolve session via cookie sync
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const user = data.user;
 
       if (!user) {
-        setMessage("Login succeeded but session failed to initialize.");
+        setMessage("Login failed: no user returned.");
         setLoading(false);
         return;
       }
 
+      // 🔥 CRITICAL FIX:
+      // Ensure profile exists BEFORE navigation
+      await ensureProfile(user.id);
+
+      // allow Supabase session propagation
+      await new Promise((r) => setTimeout(r, 400));
+
       setMessage("Login successful. Redirecting...");
 
-      // small delay ensures middleware + cookie sync catches up
-      setTimeout(() => {
-        router.replace("/dashboard");
-        router.refresh();
-      }, 300);
-    } catch (err: any) {
-      console.error("Login crash:", err);
-      setMessage("Unexpected error during login.");
-    } finally {
+      window.location.href = "/dashboard";
+
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setMessage("Unexpected login error.");
       setLoading(false);
     }
   }
