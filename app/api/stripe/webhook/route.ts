@@ -14,6 +14,8 @@ function getStripe() {
   });
 }
 
+type AllowedPlan = "core" | "elite" | "sovereign";
+
 export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe();
@@ -35,10 +37,9 @@ export async function POST(req: NextRequest) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
 
-    /**
-     * ✅ SAFE IDEMPOTENCY CHECK
-     * (NO .single() → prevents webhook crashes)
-     */
+    // ----------------------------
+    // IDEMPOTENCY CHECK (SAFE)
+    // ----------------------------
     const { data: existing, error: fetchError } = await supabase
       .from("stripe_events")
       .select("id")
@@ -47,32 +48,36 @@ export async function POST(req: NextRequest) {
 
     if (fetchError) {
       console.error("Stripe event lookup error:", fetchError);
-      // do NOT fail webhook — just continue safely
     }
 
-    // If already processed → exit safely
     if (existing) {
       return NextResponse.json({ received: true });
     }
 
-    // Mark event as processed
     const { error: insertError } = await supabase
       .from("stripe_events")
       .insert({ id: event.id });
 
     if (insertError) {
       console.error("Stripe event insert error:", insertError);
-      // still continue — avoids double-processing risk later
     }
 
+    // ----------------------------
+    // EVENT HANDLING
+    // ----------------------------
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
 
         const userId = session.metadata?.user_id;
-        const plan = session.metadata?.plan;
+        let plan = session.metadata?.plan as AllowedPlan | undefined;
 
         if (!userId) break;
+
+        // normalize invalid legacy plan
+        if (plan === "sovereign") {
+          plan = "elite";
+        }
 
         await supabase
           .from("profiles")
