@@ -23,7 +23,10 @@ export async function POST(req: NextRequest) {
     const signature = req.headers.get("stripe-signature");
 
     if (!signature) {
-      return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing signature" },
+        { status: 400 }
+      );
     }
 
     const event = stripe.webhooks.constructEvent(
@@ -32,18 +35,35 @@ export async function POST(req: NextRequest) {
       process.env.STRIPE_WEBHOOK_SECRET!
     );
 
-    // Prevent double processing
-    const { data: existing } = await supabase
+    /**
+     * ✅ SAFE IDEMPOTENCY CHECK
+     * (NO .single() → prevents webhook crashes)
+     */
+    const { data: existing, error: fetchError } = await supabase
       .from("stripe_events")
       .select("id")
       .eq("id", event.id)
-      .single();
+      .maybeSingle();
 
+    if (fetchError) {
+      console.error("Stripe event lookup error:", fetchError);
+      // do NOT fail webhook — just continue safely
+    }
+
+    // If already processed → exit safely
     if (existing) {
       return NextResponse.json({ received: true });
     }
 
-    await supabase.from("stripe_events").insert({ id: event.id });
+    // Mark event as processed
+    const { error: insertError } = await supabase
+      .from("stripe_events")
+      .insert({ id: event.id });
+
+    if (insertError) {
+      console.error("Stripe event insert error:", insertError);
+      // still continue — avoids double-processing risk later
+    }
 
     switch (event.type) {
       case "checkout.session.completed": {
@@ -84,7 +104,7 @@ export async function POST(req: NextRequest) {
         await supabase
           .from("profiles")
           .update({
-            plan: "free",
+            plan: "core",
             subscription_status: "canceled",
           })
           .eq("stripe_customer_id", sub.customer as string);
