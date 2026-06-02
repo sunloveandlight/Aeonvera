@@ -31,9 +31,11 @@ function LoginInner() {
     setMessage(null);
 
     try {
-      // -------------------------
-      // SIGN UP FLOW
-      // -------------------------
+      /**
+       * =========================
+       * SIGN UP FLOW
+       * =========================
+       */
       if (isSignUpMode) {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -46,22 +48,24 @@ function LoginInner() {
           return;
         }
 
-        const user = data.user;
-
-        if (user) {
-          await ensureProfile(user.id);
+        if (data.user) {
+          await ensureProfile(data.user.id);
         }
 
         setMessage("Account created. Redirecting...");
-        setTimeout(() => router.replace("/pricing"), 800);
+
+        // ❌ REMOVED setTimeout
+        router.replace("/pricing");
 
         setLoading(false);
         return;
       }
 
-      // -------------------------
-      // LOGIN FLOW
-      // -------------------------
+      /**
+       * =========================
+       * LOGIN FLOW
+       * =========================
+       */
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -73,24 +77,27 @@ function LoginInner() {
         return;
       }
 
-      const user = data.user;
-
-      if (!user) {
+      if (!data.user) {
         setMessage("Login failed: no user returned.");
         setLoading(false);
         return;
       }
 
-      // 🔥 CRITICAL FIX:
-      // Ensure profile exists BEFORE navigation
-      await ensureProfile(user.id);
-
-      // allow Supabase session propagation
-      await new Promise((r) => setTimeout(r, 400));
+      /**
+       * KEY FIX:
+       * Ensure profile exists BEFORE navigation
+       */
+      await ensureProfile(data.user.id);
 
       setMessage("Login successful. Redirecting...");
 
-      window.location.href = "/dashboard";
+      /**
+       * ❌ REMOVED:
+       * - setTimeout
+       * - window.location.href
+       */
+
+      router.replace("/dashboard");
 
       setLoading(false);
     } catch (err) {
