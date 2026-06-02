@@ -12,8 +12,6 @@ export type Feature =
   | "core_features"
   | "elite_features";
 
-export type BillingType = "monthly" | "annual";
-
 const PLAN_PERMISSIONS: Record<Plan, Feature[]> = {
   core: ["dashboard_access", "core_features"],
   elite: ["dashboard_access", "core_features", "elite_features"],
@@ -30,4 +28,14 @@ export function canAccess(
 ) {
   if (!plan || !isSubscriptionValid(status)) return false;
   return PLAN_PERMISSIONS[plan].includes(feature);
+}
+
+/**
+ * SINGLE SOURCE OF TRUTH FOR APP ACCESS
+ */
+export function isUserAllowed(
+  plan: Plan | null,
+  status: SubscriptionStatus | null
+) {
+  return isSubscriptionValid(status) && !!plan;
 }
