@@ -4,10 +4,11 @@ import { FormEvent, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { ensureProfile } from "@/lib/auth/ensureProfile";
+import { isUserAllowed } from "@/lib/auth/permissions";
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div />}>
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
       <LoginInner />
     </Suspense>
   );
@@ -31,11 +32,6 @@ function LoginInner() {
     setMessage(null);
 
     try {
-      /**
-       * =========================
-       * SIGN UP FLOW
-       * =========================
-       */
       if (isSignUpMode) {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -44,7 +40,6 @@ function LoginInner() {
 
         if (error) {
           setMessage(error.message);
-          setLoading(false);
           return;
         }
 
@@ -52,20 +47,12 @@ function LoginInner() {
           await ensureProfile(data.user.id);
         }
 
-        setMessage("Account created. Redirecting...");
-
-        // ❌ REMOVED setTimeout
-        router.replace("/pricing");
-
-        setLoading(false);
+        setMessage("Account created successfully!");
+        router.replace("/onboarding"); // New users → onboarding
         return;
       }
 
-      /**
-       * =========================
-       * LOGIN FLOW
-       * =========================
-       */
+      // ====================== LOGIN ======================
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -73,36 +60,36 @@ function LoginInner() {
 
       if (error) {
         setMessage(error.message);
-        setLoading(false);
         return;
       }
 
       if (!data.user) {
-        setMessage("Login failed: no user returned.");
-        setLoading(false);
+        setMessage("Login failed");
         return;
       }
 
-      /**
-       * KEY FIX:
-       * Ensure profile exists BEFORE navigation
-       */
       await ensureProfile(data.user.id);
+
+      // Get fresh profile to decide where to send user
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_completed, plan, subscription_status")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
 
       setMessage("Login successful. Redirecting...");
 
-      /**
-       * ❌ REMOVED:
-       * - setTimeout
-       * - window.location.href
-       */
-
-      router.replace("/dashboard");
-
-      setLoading(false);
+      if (!profile?.onboarding_completed) {
+        router.replace("/onboarding");
+      } else if (isUserAllowed(profile.plan, profile.subscription_status)) {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/pricing");
+      }
     } catch (err) {
       console.error(err);
-      setMessage("Unexpected login error.");
+      setMessage("Unexpected error occurred.");
+    } finally {
       setLoading(false);
     }
   }
@@ -139,7 +126,7 @@ function LoginInner() {
             className="w-full bg-white text-black rounded-xl py-3 font-medium disabled:opacity-50"
           >
             {loading
-              ? "Signing in..."
+              ? "Processing..."
               : isSignUpMode
               ? "Create Account"
               : "Sign In"}
