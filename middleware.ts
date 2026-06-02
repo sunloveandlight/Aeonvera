@@ -1,11 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import type { CookieOptions } from "@supabase/ssr";
+
+type Cookie = {
+  name: string;
+  value: string;
+  options?: CookieOptions;
+};
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ✅ Always allow API routes (Stripe, webhooks, etc.)
+  // Always allow API routes
   if (pathname.startsWith("/api")) {
     return NextResponse.next();
   }
@@ -15,7 +22,6 @@ export async function middleware(req: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // ✅ Fail safely instead of crashing deployment
   if (!supabaseUrl || !supabaseAnonKey) {
     console.warn("Missing Supabase env vars in middleware");
     return res;
@@ -27,19 +33,7 @@ export async function middleware(req: NextRequest) {
         return req.cookies.getAll();
       },
 
-      setAll(
-        cookies: Array<{
-          name: string;
-          value: string;
-          options?: {
-            path?: string;
-            domain?: string;
-            maxAge?: number;
-            sameSite?: "lax" | "strict" | "none";
-            secure?: boolean;
-          };
-        }>
-      ) {
+      setAll(cookies: Cookie[]) {
         cookies.forEach(({ name, value, options }) => {
           res.cookies.set(name, value, options);
         });
@@ -47,28 +41,32 @@ export async function middleware(req: NextRequest) {
     },
   });
 
-  // ✅ Get session safely
+  /**
+   * FIXED AUTH STRATEGY:
+   * getUser() is more stable in middleware than getSession()
+   */
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const isAuthPage = pathname.startsWith("/login");
-  const isProtected = pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding");
+  const isProtected =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/onboarding");
 
   // 🔒 Protect private routes
-  if (!session && isProtected) {
+  if (!user && isProtected) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
   // 🔁 Redirect logged-in users away from login
-  if (session && isAuthPage) {
+  if (user && isAuthPage) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   return res;
 }
 
-// ✅ Keep matcher tight (prevents unnecessary edge execution)
 export const config = {
   matcher: ["/dashboard/:path*", "/login", "/onboarding/:path*"],
 };
