@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { isUserAllowed } from "@/lib/auth/permissions";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -20,7 +21,6 @@ export default function DashboardPage() {
           return;
         }
 
-        // Get profile (single reliable fetch)
         const { data: profile, error } = await supabase
           .from("profiles")
           .select("onboarding_completed, plan, subscription_status")
@@ -33,32 +33,31 @@ export default function DashboardPage() {
           return;
         }
 
-        // No profile → safe fallback (don’t loop redirect)
         if (!profile) {
           setLoading(false);
           return;
         }
 
-        // 🔒 onboarding gate
+        // ----------------------------
+        // ONBOARDING GATE
+        // ----------------------------
         if (!profile.onboarding_completed) {
           router.replace("/onboarding");
           return;
         }
 
-        // 🔑 subscription validation (REAL RULE)
-        const isPaid =
-          profile.subscription_status === "active" ||
-          profile.subscription_status === "trialing";
+        // ----------------------------
+        // SINGLE SOURCE OF TRUTH ACCESS CHECK
+        // ----------------------------
+        const allowed = isUserAllowed(
+          profile.plan,
+          profile.subscription_status
+        );
 
-        const plan = profile.plan;
-
-        // If user has no valid subscription → pricing
-        if (!isPaid || !plan) {
+        if (!allowed) {
           router.replace("/pricing");
           return;
         }
-
-        // ❌ REMOVED: elite-only restriction (this was your bug)
 
         setLoading(false);
       } catch (err) {
