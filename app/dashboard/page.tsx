@@ -20,46 +20,45 @@ export default function DashboardPage() {
           return;
         }
 
-        // 🔥 WAIT FOR PROFILE TO EXIST (RETRY SAFE)
-        let profile = null;
+        // Get profile (single reliable fetch)
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("onboarding_completed, plan, subscription_status")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-        for (let i = 0; i < 5; i++) {
-          const { data } = await supabase
-            .from("profiles")
-            .select("onboarding_completed, plan")
-            .eq("user_id", user.id)
-            .maybeSingle();
-
-          if (data) {
-            profile = data;
-            break;
-          }
-
-          await new Promise((r) => setTimeout(r, 300));
-        }
-
-        if (!profile) {
-          // default safe state instead of redirect loop
+        if (error) {
+          console.error(error);
           setLoading(false);
           return;
         }
 
+        // No profile → safe fallback (don’t loop redirect)
+        if (!profile) {
+          setLoading(false);
+          return;
+        }
+
+        // 🔒 onboarding gate
         if (!profile.onboarding_completed) {
           router.replace("/onboarding");
           return;
         }
 
-        // 🔥 IMPORTANT FIX:
-        // don't hard-block users with missing plan
-        if (!profile.plan) {
-          setLoading(false);
-          return;
-        }
+        // 🔑 subscription validation (REAL RULE)
+        const isPaid =
+          profile.subscription_status === "active" ||
+          profile.subscription_status === "trialing";
 
-        if (profile.plan !== "elite") {
+        const plan = profile.plan;
+
+        // If user has no valid subscription → pricing
+        if (!isPaid || !plan) {
           router.replace("/pricing");
           return;
         }
+
+        // ❌ REMOVED: elite-only restriction (this was your bug)
 
         setLoading(false);
       } catch (err) {
