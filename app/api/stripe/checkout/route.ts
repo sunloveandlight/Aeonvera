@@ -20,11 +20,17 @@ export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe();
 
-    const PRICE_IDS = {
-      core: process.env.STRIPE_CORE_PRICE_ID,
-      elite: process.env.STRIPE_ELITE_PRICE_ID,
-      sovereign: process.env.STRIPE_SOVEREIGN_PRICE_ID,
-    };
+    console.log("STRIPE ENV DEBUG", {
+  core: process.env.STRIPE_CORE_PRICE_ID,
+  elite: process.env.STRIPE_ELITE_PRICE_ID,
+  sovereign: process.env.STRIPE_SOVEREIGN_PRICE_ID,
+});
+
+const PRICE_IDS = {
+  core: process.env.STRIPE_CORE_PRICE_ID,
+  elite: process.env.STRIPE_ELITE_PRICE_ID,
+  sovereign: process.env.STRIPE_SOVEREIGN_PRICE_ID,
+};
 
     if (!PRICE_IDS.core || !PRICE_IDS.elite || !PRICE_IDS.sovereign) {
       throw new Error("Missing Stripe Price IDs in environment variables");
