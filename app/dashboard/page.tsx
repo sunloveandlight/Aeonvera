@@ -7,8 +7,10 @@ import { isUserAllowed } from "@/lib/auth/permissions";
 
 export default function DashboardPage() {
   const router = useRouter();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [openingPortal, setOpeningPortal] = useState(false);
 
   useEffect(() => {
     const run = async () => {
@@ -24,7 +26,9 @@ export default function DashboardPage() {
 
         const { data: profile, error: profileError } = await supabase
           .from("profiles")
-          .select("onboarding_completed, plan, subscription_status")
+          .select(
+            "onboarding_completed, plan, subscription_status"
+          )
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -35,19 +39,16 @@ export default function DashboardPage() {
           return;
         }
 
-        // No profile → should not happen but handle gracefully
         if (!profile) {
           router.replace("/onboarding");
           return;
         }
 
-        // ------------------- ONBOARDING GATE -------------------
         if (!profile.onboarding_completed) {
           router.replace("/onboarding");
           return;
         }
 
-        // ------------------- SUBSCRIPTION GATE -------------------
         const allowed = isUserAllowed(
           profile.plan,
           profile.subscription_status
@@ -58,7 +59,6 @@ export default function DashboardPage() {
           return;
         }
 
-        // User is good to go
         setLoading(false);
       } catch (err) {
         console.error("Dashboard init error:", err);
@@ -70,13 +70,39 @@ export default function DashboardPage() {
     run();
   }, [router]);
 
+  async function openBillingPortal() {
+    try {
+      setOpeningPortal(true);
+
+      const res = await fetch(
+        "/api/stripe/customer-portal",
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data.error || "Failed to open portal"
+        );
+      }
+
+      window.location.href = data.url;
+    } catch (err) {
+      console.error(err);
+      alert("Failed to open billing portal.");
+    } finally {
+      setOpeningPortal(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white bg-black">
-        <div className="text-center">
-          <div className="animate-spin w-6 h-6 border-2 border-white/20 border-t-white rounded-full mx-auto mb-4"></div>
-          Loading dashboard...
-        </div>
+        Loading dashboard...
       </div>
     );
   }
@@ -84,24 +110,26 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white bg-black">
-        <div className="text-center max-w-md">
-          <h2 className="text-xl mb-4">Error</h2>
-          <p className="text-zinc-400 mb-6">{error}</p>
-          <button
-            onClick={() => router.replace("/pricing")}
-            className="px-6 py-3 bg-white text-black rounded-xl"
-          >
-            Go to Pricing
-          </button>
-        </div>
+        {error}
       </div>
     );
   }
 
   return (
     <main className="min-h-screen bg-black text-white p-10">
-      <h1 className="text-3xl">Dashboard</h1>
-      {/* Your actual dashboard content */}
+      <h1 className="text-3xl mb-8">
+        Dashboard
+      </h1>
+
+      <button
+        onClick={openBillingPortal}
+        disabled={openingPortal}
+        className="px-6 py-3 bg-white text-black rounded-xl font-medium"
+      >
+        {openingPortal
+          ? "Opening..."
+          : "Manage Subscription"}
+      </button>
     </main>
   );
 }
