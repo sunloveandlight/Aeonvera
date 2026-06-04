@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     );
 
     // ----------------------------
-    // IDEMPOTENCY CHECK (SAFE)
+    // IDEMPOTENCY CHECK
     // ----------------------------
     const { data: existing, error: fetchError } = await supabase
       .from("stripe_events")
@@ -66,15 +66,18 @@ export async function POST(req: NextRequest) {
     // EVENT HANDLING
     // ----------------------------
     switch (event.type) {
-      case "checkout.session.completed": {
+      case "checkout.session.completed":
+      case "checkout.session.async_payment_succeeded": {
         const session = event.data.object as Stripe.Checkout.Session;
 
         const userId = session.metadata?.user_id;
         let plan = session.metadata?.plan as AllowedPlan | undefined;
 
-        if (!userId) break;
+        if (!userId) {
+          break;
+        }
 
-        // normalize invalid legacy plan
+        // Temporary compatibility layer
         if (plan === "sovereign") {
           plan = "elite";
         }
@@ -103,6 +106,28 @@ export async function POST(req: NextRequest) {
         break;
       }
 
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+
+        const customerId =
+          typeof invoice.customer === "string"
+            ? invoice.customer
+            : invoice.customer?.id;
+
+        if (!customerId) {
+          break;
+        }
+
+        await supabase
+          .from("profiles")
+          .update({
+            subscription_status: "past_due",
+          })
+          .eq("stripe_customer_id", customerId);
+
+        break;
+      }
+
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
 
@@ -116,11 +141,15 @@ export async function POST(req: NextRequest) {
 
         break;
       }
+
+      default:
+        console.log(`Unhandled Stripe event: ${event.type}`);
     }
 
     return NextResponse.json({ received: true });
   } catch (err) {
     console.error("Webhook error:", err);
+
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 }
