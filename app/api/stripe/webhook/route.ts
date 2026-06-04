@@ -73,6 +73,11 @@ export async function POST(req: NextRequest) {
         const userId = session.metadata?.user_id;
         const plan = session.metadata?.plan as AllowedPlan | undefined;
 
+        const subscriptionId =
+          typeof session.subscription === "string"
+            ? session.subscription
+            : session.subscription?.id;
+
         if (!userId) {
           break;
         }
@@ -82,6 +87,7 @@ export async function POST(req: NextRequest) {
           .update({
             plan,
             subscription_status: "active",
+            stripe_subscription_id: subscriptionId,
           })
           .eq("user_id", userId);
 
@@ -95,6 +101,7 @@ export async function POST(req: NextRequest) {
           .from("profiles")
           .update({
             subscription_status: sub.status,
+            stripe_subscription_id: sub.id,
           })
           .eq("stripe_customer_id", sub.customer as string);
 
