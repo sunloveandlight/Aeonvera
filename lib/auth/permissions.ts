@@ -1,4 +1,4 @@
-export type Plan = "core" | "elite";
+export type Plan = "core" | "elite" | "sovereign";
 
 export type SubscriptionStatus =
   | "active"
@@ -13,12 +13,31 @@ export type Feature =
   | "elite_features";
 
 const PLAN_PERMISSIONS: Record<Plan, Feature[]> = {
-  core: ["dashboard_access", "core_features"],
-  elite: ["dashboard_access", "core_features", "elite_features"],
+  core: [
+    "dashboard_access",
+    "core_features",
+  ],
+
+  elite: [
+    "dashboard_access",
+    "core_features",
+    "elite_features",
+  ],
+
+  sovereign: [
+    "dashboard_access",
+    "core_features",
+    "elite_features",
+  ],
 };
 
-export function isSubscriptionValid(status?: SubscriptionStatus | null) {
-  return status === "active" || status === "trialing";
+export function isSubscriptionValid(
+  status?: SubscriptionStatus | null
+) {
+  return (
+    status === "active" ||
+    status === "trialing"
+  );
 }
 
 export function canAccess(
@@ -26,7 +45,10 @@ export function canAccess(
   status: SubscriptionStatus | null,
   feature: Feature
 ) {
-  if (!plan || !isSubscriptionValid(status)) return false;
+  if (!plan || !isSubscriptionValid(status)) {
+    return false;
+  }
+
   return PLAN_PERMISSIONS[plan].includes(feature);
 }
 
@@ -37,5 +59,8 @@ export function isUserAllowed(
   plan: Plan | null,
   status: SubscriptionStatus | null
 ) {
-  return isSubscriptionValid(status) && !!plan;
+  return (
+    !!plan &&
+    isSubscriptionValid(status)
+  );
 }
