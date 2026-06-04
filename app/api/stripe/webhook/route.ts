@@ -71,15 +71,10 @@ export async function POST(req: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
 
         const userId = session.metadata?.user_id;
-        let plan = session.metadata?.plan as AllowedPlan | undefined;
+        const plan = session.metadata?.plan as AllowedPlan | undefined;
 
         if (!userId) {
           break;
-        }
-
-        // Temporary compatibility layer
-        if (plan === "sovereign") {
-          plan = "elite";
         }
 
         await supabase
