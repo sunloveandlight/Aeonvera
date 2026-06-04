@@ -26,6 +26,7 @@ export function isFeatureUnlocked(
   const hierarchy: Record<Plan, number> = {
     core: 1,
     elite: 2,
+    sovereign: 2,
   };
 
   const requiredLevel: Record<
