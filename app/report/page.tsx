@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
+import AppShell from "@/components/layout/AppShell";
+import PageContainer from "@/components/ui/PageContainer";
+import Card from "@/components/ui/Card";
+
 type ReportData = {
   risk_score: number;
   primary_goal: string;
@@ -26,6 +30,7 @@ type ReportData = {
 
 export default function ReportPage() {
   const router = useRouter();
+
   const [report, setReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +56,7 @@ export default function ReportPage() {
           .single();
 
         if (error || !data) {
-          setError("No report found. Please generate one from the dashboard.");
+          setError("No report found. Generate one from dashboard.");
           setLoading(false);
           return;
         }
@@ -69,28 +74,34 @@ export default function ReportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#05060a] text-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-cyan-400 rounded-full mx-auto mb-4" />
-          <p className="text-white/60">Decoding your longevity blueprint...</p>
-        </div>
-      </div>
+      <AppShell>
+        <PageContainer>
+          <div className="min-h-[60vh] flex items-center justify-center text-white/40 text-sm tracking-[0.3em] uppercase">
+            Decoding longevity system...
+          </div>
+        </PageContainer>
+      </AppShell>
     );
   }
 
   if (error || !report) {
     return (
-      <div className="min-h-screen bg-[#05060a] text-white flex items-center justify-center px-6">
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl text-center max-w-md">
-          <p className="text-red-400 mb-6">{error}</p>
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="px-6 py-3 bg-white text-black rounded-xl font-medium hover:opacity-90 transition"
-          >
-            Return to Dashboard
-          </button>
-        </div>
-      </div>
+      <AppShell>
+        <PageContainer>
+          <div className="min-h-[60vh] flex items-center justify-center">
+            <Card className="max-w-md text-center">
+              <p className="text-red-400 mb-6">{error}</p>
+
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="px-6 py-3 rounded-xl bg-white text-black font-medium"
+              >
+                Return to Dashboard
+              </button>
+            </Card>
+          </div>
+        </PageContainer>
+      </AppShell>
     );
   }
 
@@ -101,198 +112,151 @@ export default function ReportPage() {
       ? "text-yellow-400"
       : "text-red-400";
 
-  const glow =
-    report.risk_score <= 35
-      ? "bg-green-500/10"
-      : report.risk_score <= 65
-      ? "bg-yellow-500/10"
-      : "bg-red-500/10";
-
   return (
-    <main className="min-h-screen bg-[#05060a] text-white relative overflow-hidden">
-      {/* background glow system (MATCH DASHBOARD STYLE) */}
-      <div className="absolute inset-0">
-        <div className={`absolute w-[700px] h-[700px] ${glow} blur-[140px] rounded-full top-[-250px] left-[-250px]`} />
-        <div className="absolute w-[600px] h-[600px] bg-purple-500/10 blur-[140px] rounded-full bottom-[-250px] right-[-250px]" />
-      </div>
+    <AppShell>
+      <PageContainer>
+        <div className="py-16 space-y-8">
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-14">
-        {/* HEADER */}
-        <div className="mb-10">
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
-            Biological Intelligence Report
-          </h1>
-          <p className="text-white/50 mt-2">
-            AI-generated systemic longevity analysis
-          </p>
-        </div>
+          {/* HEADER */}
+          <div>
+            <p className="text-xs tracking-[0.4em] text-white/40 uppercase mb-4">
+              Biological Intelligence Report
+            </p>
 
-        {/* RISK SCORE CARD */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl mb-10">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-            <div>
-              <p className="text-white/50 text-sm">OVERALL RISK SCORE</p>
-              <p className={`text-6xl font-semibold mt-2 ${riskColor}`}>
-                {report.risk_score}
-              </p>
-              <p className="text-white/40">/ 100</p>
-            </div>
+            <h1 className="text-5xl font-semibold tracking-tight">
+              Longevity Analysis
+            </h1>
+          </div>
 
-            <div className="w-full md:w-1/2">
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${
-                    report.risk_score <= 35
-                      ? "bg-gradient-to-r from-green-400 to-emerald-500"
-                      : report.risk_score <= 65
-                      ? "bg-gradient-to-r from-yellow-400 to-orange-500"
-                      : "bg-gradient-to-r from-red-400 to-red-600"
-                  }`}
-                  style={{ width: `${report.risk_score}%` }}
-                />
+          {/* RISK SCORE */}
+          <Card label="System Risk Index">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+
+              <div>
+                <p className="text-white/50 text-sm">
+                  Overall Biological Risk
+                </p>
+
+                <p className={`text-6xl font-semibold mt-2 ${riskColor}`}>
+                  {report.risk_score}
+                  <span className="text-white/40 text-2xl"> / 100</span>
+                </p>
               </div>
-              <p className="text-white/40 text-xs mt-2">
-                System-wide biological stress index
-              </p>
-            </div>
-          </div>
-        </div>
 
-        {/* PRIMARY GOAL (MATCH DASHBOARD CARD STYLE) */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl mb-10">
-          <h2 className="text-white/50 text-sm mb-2">
-            PRIMARY OBJECTIVE
-          </h2>
-          <p className="text-2xl md:text-3xl font-light">
-            {report.primary_goal}
-          </p>
-        </div>
-
-        {/* RISK PROFILE */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-          {Object.entries(report.risk_profile).map(([key, value]) => (
-            <div
-              key={key}
-              className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl"
-            >
-              <p className="text-white/40 text-sm capitalize mb-2">
-                {key.replace("_", " ")}
-              </p>
-              <p
-                className={`text-xl font-medium capitalize ${
-                  value === "low"
-                    ? "text-green-400"
-                    : value === "medium"
-                    ? "text-yellow-400"
-                    : "text-red-400"
-                }`}
-              >
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* STRENGTHS / WEAKNESSES (MATCH DASHBOARD CARD STYLE) */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl">
-            <h3 className="text-green-400 mb-4">STRENGTHS</h3>
-            <div className="space-y-3">
-              {report.strengths.map((item, i) => (
-                <div
-                  key={i}
-                  className="bg-green-500/10 border border-green-500/20 rounded-xl p-4"
-                >
-                  {item}
+              <div className="w-full md:w-1/2">
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${
+                      report.risk_score <= 35
+                        ? "bg-green-400"
+                        : report.risk_score <= 65
+                        ? "bg-yellow-400"
+                        : "bg-red-400"
+                    }`}
+                    style={{ width: `${report.risk_score}%` }}
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl">
-            <h3 className="text-orange-400 mb-4">WEAKNESSES</h3>
-            <div className="space-y-3">
-              {report.weaknesses.map((item, i) => (
-                <div
-                  key={i}
-                  className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4"
-                >
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* TOP PRIORITIES */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl mb-12">
-          <h3 className="text-white/50 mb-6">TOP PRIORITIES</h3>
-          <div className="space-y-4">
-            {report.top_priorities.map((p, i) => (
-              <div
-                key={i}
-                className="bg-white/5 border border-white/10 rounded-xl p-4"
-              >
-                {i + 1}. {p}
               </div>
+
+            </div>
+          </Card>
+
+          {/* PRIMARY GOAL */}
+          <Card label="Primary Objective">
+            <p className="text-2xl md:text-3xl font-light">
+              {report.primary_goal}
+            </p>
+          </Card>
+
+          {/* RISK PROFILE */}
+          <div className="grid md:grid-cols-4 gap-6">
+            {Object.entries(report.risk_profile).map(([key, value]) => (
+              <Card key={key} label={key.replace("_", " ")}>
+                <p
+                  className={
+                    value === "low"
+                      ? "text-green-400"
+                      : value === "medium"
+                      ? "text-yellow-400"
+                      : "text-red-400"
+                  }
+                >
+                  {value}
+                </p>
+              </Card>
             ))}
           </div>
-        </div>
 
-        {/* 90 DAY PLAN */}
-        <div className="mb-12">
-          <h3 className="text-white/50 mb-6">90-DAY PLAN</h3>
+          {/* STRENGTHS / WEAKNESSES */}
+          <div className="grid md:grid-cols-2 gap-6">
 
-          <div className="space-y-6">
-            {report["90_day_plan"].map((item, i) => (
-              <div
-                key={i}
-                className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl"
-              >
-                <div className="flex justify-between gap-6">
+            <Card label="Strengths">
+              <div className="space-y-3">
+                {report.strengths.map((item, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-green-500/10">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card label="Weaknesses">
+              <div className="space-y-3">
+                {report.weaknesses.map((item, i) => (
+                  <div key={i} className="p-3 rounded-xl bg-orange-500/10">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+          </div>
+
+          {/* TOP PRIORITIES */}
+          <Card label="Top Priorities">
+            <div className="space-y-3">
+              {report.top_priorities.map((p, i) => (
+                <div key={i} className="p-3 rounded-xl bg-white/5">
+                  {i + 1}. {p}
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* 90 DAY PLAN */}
+          <Card label="90-Day Plan">
+            <div className="space-y-4">
+              {report["90_day_plan"].map((item, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between items-center p-4 rounded-xl bg-white/5"
+                >
                   <div>
                     <p className="font-medium">{item.category}</p>
-                    <p className="text-white/70 mt-2">{item.action}</p>
+                    <p className="text-white/60 text-sm">{item.action}</p>
                   </div>
 
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs ${
-                      item.impact === "high"
-                        ? "bg-green-500/20 text-green-400"
-                        : item.impact === "medium"
-                        ? "bg-yellow-500/20 text-yellow-400"
-                        : "bg-white/10 text-white/60"
-                    }`}
-                  >
+                  <span className="text-xs px-3 py-1 rounded-full bg-white/10">
                     {item.impact}
                   </span>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </Card>
 
-        {/* INSIGHTS */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl">
-          <h3 className="text-white/50 mb-6">BEHAVIORAL INSIGHTS</h3>
+          {/* INSIGHTS */}
+          <Card label="Behavioral Insights">
+            <div className="space-y-4">
+              {report.behavioral_insights.map((insight, i) => (
+                <p key={i} className="text-white/70 border-l border-white/20 pl-4">
+                  {insight}
+                </p>
+              ))}
+            </div>
+          </Card>
 
-          <div className="space-y-6">
-            {report.behavioral_insights.map((insight, i) => (
-              <p
-                key={i}
-                className="border-l-2 border-cyan-400/40 pl-4 text-white/80"
-              >
-                {insight}
-              </p>
-            ))}
-          </div>
         </div>
-
-        {/* FOOTER */}
-        <div className="mt-16 text-center text-white/30 text-xs">
-          Aeonvera Intelligence System • Generated in real-time
-        </div>
-      </div>
-    </main>
+      </PageContainer>
+    </AppShell>
   );
 }
