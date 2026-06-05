@@ -104,7 +104,7 @@ export default function AssessmentPage() {
       <AppShell>
         <Section size="lg">
           <PageContainer>
-            <div className="text-white/60">
+            <div className="text-white/50 tracking-wide">
               Initializing Aeonvera systems...
             </div>
           </PageContainer>
@@ -113,6 +113,8 @@ export default function AssessmentPage() {
     );
   }
 
+  const progress = ((step + 1) / steps.length) * 100;
+
   return (
     <AppShell>
       <Section size="lg">
@@ -120,21 +122,20 @@ export default function AssessmentPage() {
 
           {/* HEADER */}
           <div className="mb-10">
-            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
+            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-white">
               Longevity Assessment
             </h1>
 
-            <p className="text-white/60 mt-3">
-              Step {step + 1} of {steps.length} — {steps[step]}
+            <p className="text-white/50 mt-3">
+              Step {step + 1} of {steps.length} —{" "}
+              <span className="text-white/70">{steps[step]}</span>
             </p>
 
-            {/* PROGRESS */}
-            <div className="w-full h-1 bg-white/10 mt-5 rounded-full overflow-hidden">
+            {/* PROGRESS SYSTEM (MATCH DASHBOARD AURA STYLE) */}
+            <div className="w-full h-1 bg-white/10 mt-6 rounded-full overflow-hidden">
               <div
-                className="h-full bg-white transition-all"
-                style={{
-                  width: `${((step + 1) / steps.length) * 100}%`,
-                }}
+                className="h-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-300"
+                style={{ width: `${progress}%` }}
               />
             </div>
           </div>
@@ -186,7 +187,7 @@ export default function AssessmentPage() {
           <div className="flex justify-between mt-8">
             <button
               onClick={() => setStep((s) => Math.max(0, s - 1))}
-              className="px-5 py-2 rounded-xl border border-white/10 text-white/70 hover:text-white transition"
+              className="px-5 py-2 rounded-xl border border-white/10 text-white/60 hover:text-white hover:border-white/30 transition"
             >
               Back
             </button>
@@ -194,7 +195,7 @@ export default function AssessmentPage() {
             {step < steps.length - 1 ? (
               <button
                 onClick={() => setStep((s) => s + 1)}
-                className="px-5 py-2 rounded-xl bg-white text-black"
+                className="px-5 py-2 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
               >
                 Next
               </button>
@@ -202,7 +203,7 @@ export default function AssessmentPage() {
               <button
                 onClick={submit}
                 disabled={saving}
-                className="px-5 py-2 rounded-xl bg-white text-black disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-medium hover:opacity-90 transition disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Finish Assessment"}
               </button>
@@ -227,11 +228,12 @@ function Input({
 }) {
   return (
     <div>
-      <label className="text-sm text-white/60">{label}</label>
+      <label className="text-sm text-white/50">{label}</label>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full mt-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/20 transition"
+        className="w-full mt-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white
+        focus:outline-none focus:ring-2 focus:ring-cyan-400/30 focus:border-cyan-400/30 transition"
       />
     </div>
   );
