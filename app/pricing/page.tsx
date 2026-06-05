@@ -1,31 +1,37 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import AppShell from "@/components/layout/AppShell";
+import PageContainer from "@/components/ui/PageContainer";
 
 type Plan = "core" | "elite" | "sovereign";
 
 export default function PricingPage() {
-  const router = useRouter();
-  const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
+  const [loadingPlan, setLoadingPlan] =
+    useState<Plan | null>(null);
 
   async function handleCheckout(plan: Plan) {
     try {
       setLoadingPlan(plan);
 
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ plan }),
-      });
+      const res = await fetch(
+        "/api/stripe/checkout",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ plan }),
+        }
+      );
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Something went wrong");
+        throw new Error(
+          data.error || "Checkout failed"
+        );
       }
 
       window.location.href = data.url;
@@ -38,92 +44,227 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white px-6 py-16">
-      <div className="max-w-5xl mx-auto text-center mb-12">
-        <h1 className="text-4xl font-bold mb-3">Choose your plan</h1>
-        <p className="text-gray-400">
-          Upgrade anytime. Elite and Sovereign include the same features.
-        </p>
-      </div>
+    <AppShell>
+      <section className="pt-32 pb-24">
+        <PageContainer>
 
-      <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        {/* CORE */}
-        <div className="border border-gray-800 rounded-2xl p-6">
-          <h2 className="text-xl font-semibold">Core</h2>
-          <p className="text-gray-400 mt-2">Basic access</p>
+          <div className="max-w-4xl mx-auto text-center">
 
-          <div className="mt-6 text-3xl font-bold">$49</div>
-          <div className="text-gray-500">/ month</div>
+            <p className="text-xs uppercase tracking-[0.5em] text-white/40 mb-8">
+              Membership
+            </p>
 
-          <ul className="mt-6 space-y-2 text-sm text-gray-300">
-            <li>✓ Dashboard access</li>
-            <li>✓ Core features</li>
-            <li>— Elite features</li>
-          </ul>
+            <h1 className="text-5xl md:text-7xl font-semibold tracking-tight leading-[0.95]">
+              Choose Your
+              <br />
+              Longevity Layer
+            </h1>
 
-          <button
-            onClick={() => handleCheckout("core")}
-            disabled={loadingPlan !== null}
-            className="mt-6 w-full bg-white text-black py-2 rounded-xl font-medium"
-          >
-            {loadingPlan === "core" ? "Processing..." : "Get Core"}
-          </button>
-        </div>
+            <p className="mt-8 text-xl text-white/60 max-w-3xl mx-auto">
+              From foundational tracking to a fully
+              personalized longevity intelligence
+              system.
+            </p>
 
-        {/* ELITE */}
-        <div className="border border-gray-800 rounded-2xl p-6 relative">
-          <div className="absolute top-3 right-3 text-xs bg-white text-black px-2 py-1 rounded-full">
-            Popular
           </div>
 
-          <h2 className="text-xl font-semibold">Elite</h2>
-          <p className="text-gray-400 mt-2">Full access</p>
+        </PageContainer>
+      </section>
 
-          <div className="mt-6 text-3xl font-bold">$199</div>
-          <div className="text-gray-500">/ month</div>
+      <section className="pb-32">
+        <PageContainer>
 
-          <ul className="mt-6 space-y-2 text-sm text-gray-300">
-            <li>✓ Dashboard access</li>
-            <li>✓ Core features</li>
-            <li>✓ Elite features</li>
-          </ul>
+          <div className="grid lg:grid-cols-3 gap-8">
 
-          <button
-            onClick={() => handleCheckout("elite")}
-            disabled={loadingPlan !== null}
-            className="mt-6 w-full bg-white text-black py-2 rounded-xl font-medium"
-          >
-            {loadingPlan === "elite" ? "Processing..." : "Get Elite"}
-          </button>
-        </div>
+            {/* CORE */}
 
-        {/* SOVEREIGN */}
-        <div className="border border-gray-800 rounded-2xl p-6">
-          <h2 className="text-xl font-semibold">Sovereign</h2>
-          <p className="text-gray-400 mt-2">Same as Elite — billed yearly</p>
+            <div className="rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl p-8">
 
-          <div className="mt-6 text-3xl font-bold">$999</div>
-          <div className="text-gray-500">/ year</div>
+              <div className="mb-8">
 
-          <ul className="mt-6 space-y-2 text-sm text-gray-300">
-            <li>✓ Dashboard access</li>
-            <li>✓ Core features</li>
-            <li>✓ Elite features</li>
-          </ul>
+                <h2 className="text-2xl font-semibold">
+                  Core
+                </h2>
 
-          <button
-            onClick={() => handleCheckout("sovereign")}
-            disabled={loadingPlan !== null}
-            className="mt-6 w-full bg-white text-black py-2 rounded-xl font-medium"
-          >
-            {loadingPlan === "sovereign" ? "Processing..." : "Get Sovereign"}
-          </button>
-        </div>
-      </div>
+                <p className="mt-3 text-white/50">
+                  Foundational longevity tracking.
+                </p>
 
-      <div className="text-center mt-10 text-gray-500 text-sm">
-        Sovereign = Elite plan with annual billing
-      </div>
-    </div>
+              </div>
+
+              <div className="mb-8">
+
+                <div className="text-5xl font-semibold">
+                  $49
+                </div>
+
+                <div className="text-white/40 mt-2">
+                  per month
+                </div>
+
+              </div>
+
+              <ul className="space-y-4 text-white/70 mb-10">
+                <li>✓ Dashboard Access</li>
+                <li>✓ Health Profile</li>
+                <li>✓ Basic Assessments</li>
+                <li>✓ Longevity Tracking</li>
+                <li>✓ AI Report Generation</li>
+              </ul>
+
+              <button
+                onClick={() =>
+                  handleCheckout("core")
+                }
+                disabled={loadingPlan !== null}
+                className="
+                  w-full
+                  h-12
+                  rounded-xl
+                  bg-white
+                  text-black
+                  font-medium
+                  transition
+                  hover:bg-zinc-200
+                "
+              >
+                {loadingPlan === "core"
+                  ? "Processing..."
+                  : "Get Core"}
+              </button>
+
+            </div>
+
+            {/* ELITE */}
+
+            <div className="rounded-[32px] border border-white/20 bg-white/[0.05] backdrop-blur-xl p-8 relative">
+
+              <div className="absolute top-6 right-6 text-xs px-3 py-1 rounded-full bg-white text-black font-medium">
+                Recommended
+              </div>
+
+              <div className="mb-8">
+
+                <h2 className="text-2xl font-semibold">
+                  Elite
+                </h2>
+
+                <p className="mt-3 text-white/50">
+                  Full AI-powered optimization.
+                </p>
+
+              </div>
+
+              <div className="mb-8">
+
+                <div className="text-5xl font-semibold">
+                  $199
+                </div>
+
+                <div className="text-white/40 mt-2">
+                  per month
+                </div>
+
+              </div>
+
+              <ul className="space-y-4 text-white/70 mb-10">
+                <li>✓ Everything in Core</li>
+                <li>✓ Advanced AI Reports</li>
+                <li>✓ Biological Age Tracking</li>
+                <li>✓ Risk Intelligence Engine</li>
+                <li>✓ Optimization Protocols</li>
+                <li>✓ Priority Feature Access</li>
+              </ul>
+
+              <button
+                onClick={() =>
+                  handleCheckout("elite")
+                }
+                disabled={loadingPlan !== null}
+                className="
+                  w-full
+                  h-12
+                  rounded-xl
+                  bg-white
+                  text-black
+                  font-medium
+                  transition
+                  hover:bg-zinc-200
+                "
+              >
+                {loadingPlan === "elite"
+                  ? "Processing..."
+                  : "Get Elite"}
+              </button>
+
+            </div>
+
+            {/* SOVEREIGN */}
+
+            <div className="rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl p-8">
+
+              <div className="mb-8">
+
+                <h2 className="text-2xl font-semibold">
+                  Sovereign
+                </h2>
+
+                <p className="mt-3 text-white/50">
+                  Private longevity intelligence.
+                </p>
+
+              </div>
+
+              <div className="mb-8">
+
+                <div className="text-5xl font-semibold">
+                  $999
+                </div>
+
+                <div className="text-white/40 mt-2">
+                  per month
+                </div>
+
+              </div>
+
+              <ul className="space-y-4 text-white/70 mb-10">
+                <li>✓ Everything in Elite</li>
+                <li>✓ Unlimited AI Analysis</li>
+                <li>✓ Digital Twin Modeling</li>
+                <li>✓ Executive Health Dashboard</li>
+                <li>✓ Concierge Data Integration</li>
+                <li>✓ Priority Support</li>
+                <li>✓ Future Genomics Layer</li>
+                <li>✓ Future Family Accounts</li>
+              </ul>
+
+              <button
+                onClick={() =>
+                  handleCheckout("sovereign")
+                }
+                disabled={loadingPlan !== null}
+                className="
+                  w-full
+                  h-12
+                  rounded-xl
+                  bg-white
+                  text-black
+                  font-medium
+                  transition
+                  hover:bg-zinc-200
+                "
+              >
+                {loadingPlan === "sovereign"
+                  ? "Processing..."
+                  : "Get Sovereign"}
+              </button>
+
+            </div>
+
+          </div>
+
+        </PageContainer>
+      </section>
+    </AppShell>
   );
 }
