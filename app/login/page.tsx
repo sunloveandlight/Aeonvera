@@ -1,144 +1,226 @@
 "use client";
 
-import { FormEvent, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
-import { ensureProfile } from "@/lib/auth/ensureProfile";
-import { isUserAllowed } from "@/lib/auth/permissions";
+import Link from "next/link";
 
-export default function LoginPage() {
+export default function HomePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-black" />}>
-      <LoginInner />
-    </Suspense>
-  );
-}
+    <main className="min-h-screen bg-[#07090d] text-white overflow-hidden relative">
+      {/* BACKGROUND — STABLE (NO PULSING) */}
+      <div className="fixed inset-0 -z-10 bg-[#07090d]">
+        {/* soft radial base */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_55%)]" />
 
-function LoginInner() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+        {/* LEFT → RIGHT REFINED LUXURY SWEEP */}
+        <div className="absolute inset-0 opacity-60">
+          <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-yellow-200/5 to-cyan-200/5" />
+        </div>
 
-  const mode = searchParams.get("mode");
-  const isSignUpMode = mode === "signup";
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  async function handleAuth(e: FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-
-    try {
-      if (isSignUpMode) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-
-        if (error) {
-          setMessage(error.message);
-          return;
-        }
-
-        if (data.user) {
-          await ensureProfile(data.user.id);
-        }
-
-        setMessage("Account created successfully!");
-        router.replace("/onboarding"); // New users → onboarding
-        return;
-      }
-
-      // ====================== LOGIN ======================
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setMessage(error.message);
-        return;
-      }
-
-      if (!data.user) {
-        setMessage("Login failed");
-        return;
-      }
-
-      await ensureProfile(data.user.id);
-
-      // Get fresh profile to decide where to send user
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("onboarding_completed, plan, subscription_status")
-        .eq("user_id", data.user.id)
-        .maybeSingle();
-
-      setMessage("Login successful. Redirecting...");
-
-      if (!profile?.onboarding_completed) {
-        router.replace("/onboarding");
-      } else if (isUserAllowed(profile.plan, profile.subscription_status)) {
-        router.replace("/dashboard");
-      } else {
-        router.replace("/pricing");
-      }
-    } catch (err) {
-      console.error(err);
-      setMessage("Unexpected error occurred.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-md border border-zinc-800 bg-zinc-950 rounded-3xl p-10">
-        <h1 className="text-4xl font-light mb-6">
-          {isSignUpMode ? "Create Account" : "Welcome Back"}
-        </h1>
-
-        <form onSubmit={handleAuth} className="space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3"
-            required
-          />
-
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-3"
-            required
-          />
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-white text-black rounded-xl py-3 font-medium disabled:opacity-50"
-          >
-            {loading
-              ? "Processing..."
-              : isSignUpMode
-              ? "Create Account"
-              : "Sign In"}
-          </button>
-        </form>
-
-        {message && (
-          <div className="mt-4 text-sm border border-white/10 p-3 rounded-xl text-white/80">
-            {message}
-          </div>
-        )}
+        {/* subtle structure grid (gives “OS feel”) */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] bg-[size:80px_80px]" />
       </div>
+
+      {/* NAVBAR */}
+      <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <h1 className="text-xl font-semibold tracking-[0.25em]">
+            <span className="bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent">
+              AEONVERA
+            </span>
+          </h1>
+
+          <nav className="hidden md:flex items-center gap-10 text-sm text-zinc-400">
+            <a href="#platform" className="hover:text-white transition">
+              Platform
+            </a>
+            <a href="#science" className="hover:text-white transition">
+              Science
+            </a>
+            <Link href="/pricing" className="hover:text-white transition">
+              Pricing
+            </Link>
+          </nav>
+
+          <div className="flex items-center gap-4">
+            <Link
+              href="/login?mode=signin"
+              className="text-sm text-zinc-400 hover:text-white transition"
+            >
+              Sign In
+            </Link>
+
+            <Link
+              href="/login?mode=signup"
+              className="px-5 py-2 rounded-xl bg-white text-black text-sm font-medium hover:bg-zinc-200 transition shadow-sm"
+            >
+              Begin
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* HERO */}
+      <section className="px-6 pt-32 pb-28">
+        <div className="max-w-6xl mx-auto text-center">
+          <p className="uppercase tracking-[0.35em] text-zinc-400 text-sm mb-8">
+            AI-NATIVE LONGEVITY INTELLIGENCE
+          </p>
+
+          {/* CLEAN LUXURY HEADLINE */}
+          <h1 className="text-6xl md:text-8xl font-bold leading-[0.95] tracking-tight max-w-6xl mx-auto">
+            <span className="bg-gradient-to-r from-white via-yellow-100 via-40% to-cyan-100 bg-clip-text text-transparent">
+              Extend human lifespan through intelligence.
+            </span>
+          </h1>
+
+          <p className="mt-10 text-xl md:text-2xl text-zinc-300 max-w-3xl mx-auto leading-relaxed">
+            Aeonvera is building the intelligence infrastructure for human
+            longevity — integrating AI systems, biological data, health
+            optimization, and computational medicine into a unified platform.
+          </p>
+
+          <div className="mt-14 flex flex-col sm:flex-row gap-5 justify-center">
+            <Link
+              href="/login?mode=signup"
+              className="px-8 py-4 rounded-2xl bg-white text-black font-semibold hover:scale-[1.01] transition shadow-sm"
+            >
+              Access Platform
+            </Link>
+
+            <a
+              href="#platform"
+              className="px-8 py-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition"
+            >
+              Explore Platform
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* PLATFORM */}
+      <section id="platform" className="px-6 py-28 border-t border-white/10">
+        <div className="max-w-7xl mx-auto">
+          <div className="max-w-3xl mb-20">
+            <p className="uppercase tracking-[0.3em] text-zinc-400 text-sm mb-6">
+              PLATFORM
+            </p>
+
+            <h2 className="text-5xl md:text-6xl font-bold leading-tight text-white">
+              A biological intelligence operating system.
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Biological Monitoring",
+                tag: "BIOMARKERS",
+                desc: "Centralize bloodwork, biomarkers, recovery metrics, and health data into a continuously evolving intelligence profile.",
+              },
+              {
+                title: "Longevity Intelligence",
+                tag: "AI SYSTEMS",
+                desc: "AI-generated optimization protocols designed around cognition, recovery, metabolic health, sleep, and lifespan.",
+              },
+              {
+                title: "Human Optimization Layer",
+                tag: "INFRASTRUCTURE",
+                desc: "Adaptive intelligence system capable of evolving with biological state over time.",
+              },
+            ].map((item, i) => (
+              <div
+                key={i}
+                className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl hover:bg-white/10 transition"
+              >
+                <div className="mb-6 text-zinc-400 text-sm uppercase tracking-[0.2em]">
+                  {item.tag}
+                </div>
+
+                <h3 className="text-2xl font-semibold mb-5">
+                  {item.title}
+                </h3>
+
+                <p className="text-zinc-300 leading-relaxed">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SCIENCE */}
+      <section id="science" className="px-6 py-28 border-t border-white/10">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
+          <div>
+            <p className="uppercase tracking-[0.3em] text-zinc-400 text-sm mb-6">
+              SCIENTIFIC FOUNDATION
+            </p>
+
+            <h2 className="text-5xl font-bold leading-tight mb-8 text-white">
+              Computational longevity at scale.
+            </h2>
+
+            <p className="text-zinc-300 text-lg leading-relaxed mb-6">
+              Aeonvera combines artificial intelligence, longitudinal health
+              data, and optimization systems to create adaptive longevity
+              intelligence.
+            </p>
+
+            <p className="text-zinc-300 text-lg leading-relaxed">
+              The platform evolves into a unified infrastructure layer for
+              preventive health, cognitive optimization, biomarker analysis,
+              and biological age intervention systems.
+            </p>
+          </div>
+
+          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-10 backdrop-blur-xl">
+            <div className="space-y-10">
+              {[
+                "Continuous Biological Tracking",
+                "Adaptive Health Intelligence",
+                "Personalized Longevity Protocols",
+              ].map((t, i) => (
+                <div key={i}>
+                  <div className="text-zinc-400 text-sm mb-2">
+                    SYSTEM MODULE
+                  </div>
+                  <div className="text-3xl font-semibold text-white">
+                    {t}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="px-6 py-36 border-t border-white/10">
+        <div className="max-w-5xl mx-auto text-center">
+          <p className="uppercase tracking-[0.35em] text-zinc-400 text-sm mb-6">
+            BEGIN
+          </p>
+
+          <h2 className="text-5xl md:text-7xl font-bold leading-tight">
+            <span className="bg-gradient-to-r from-white via-yellow-100 to-cyan-100 bg-clip-text text-transparent">
+              Build your longevity intelligence layer.
+            </span>
+          </h2>
+
+          <p className="mt-8 text-zinc-300 text-xl max-w-2xl mx-auto leading-relaxed">
+            Access the next generation of AI-powered biological optimization.
+          </p>
+
+          <div className="mt-12">
+            <Link
+              href="/login?mode=signup"
+              className="inline-flex px-10 py-5 rounded-2xl bg-white text-black font-semibold hover:scale-[1.01] transition shadow-sm"
+            >
+              Access Platform
+            </Link>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
