@@ -16,76 +16,87 @@ type Report = {
   risk_score: number;
   primary_goal: string;
   report: any;
+  created_at: string;
 };
 
 export default function DashboardPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [openingPortal, setOpeningPortal] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
+
   const [profile, setProfile] = useState<Profile | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [hasAssessment, setHasAssessment] = useState(false);
 
-  const [generatingReport, setGeneratingReport] = useState(false);
-  const [openingPortal, setOpeningPortal] = useState(false);
-
   useEffect(() => {
     const run = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.replace("/login");
-        return;
+        if (!user) {
+          router.replace("/login");
+          return;
+        }
+
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("display_name, plan, subscription_status")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!profileData) {
+          router.replace("/onboarding");
+          return;
+        }
+
+        if (
+          !isUserAllowed(profileData.plan, profileData.subscription_status)
+        ) {
+          router.replace("/pricing");
+          return;
+        }
+
+        setProfile(profileData);
+
+        const { data: existingReport } = await supabase
+          .from("longevity_reports")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (existingReport) setReport(existingReport);
+
+        const { data: assessment } = await supabase
+          .from("longevity_assessments")
+          .select("id")
+          .eq("user_id", user.id)
+          .limit(1)
+          .single();
+
+        setHasAssessment(!!assessment);
+
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError("System failure. Please retry.");
+        setLoading(false);
       }
-
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("display_name, plan, subscription_status")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!profileData) {
-        router.replace("/onboarding");
-        return;
-      }
-
-      if (!isUserAllowed(profileData.plan, profileData.subscription_status)) {
-        router.replace("/pricing");
-        return;
-      }
-
-      setProfile(profileData);
-
-      const { data: existingReport } = await supabase
-        .from("longevity_reports")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (existingReport) setReport(existingReport);
-
-      const { data: assessment } = await supabase
-        .from("longevity_assessments")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      setHasAssessment(!!assessment);
-
-      setLoading(false);
     };
 
     run();
   }, [router]);
 
   async function generateReport() {
-    setGeneratingReport(true);
-
     try {
+      setGeneratingReport(true);
+
       const res = await fetch("/api/longevity/report", {
         method: "POST",
         credentials: "include",
@@ -105,9 +116,9 @@ export default function DashboardPage() {
   }
 
   async function openBillingPortal() {
-    setOpeningPortal(true);
-
     try {
+      setOpeningPortal(true);
+
       const res = await fetch("/api/stripe/customer-portal", {
         method: "POST",
         credentials: "include",
@@ -115,7 +126,7 @@ export default function DashboardPage() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) throw new Error(data.error);
 
       window.location.href = data.url;
     } catch {
@@ -127,143 +138,167 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white">
-        <div className="text-white/60 animate-pulse">
-          Initializing Aeonvera systems...
+      <div className="min-h-screen bg-[#050507] text-white flex items-center justify-center">
+        <div className="text-white/50 text-sm tracking-[0.25em] uppercase">
+          Initializing intelligence system...
         </div>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#050507] text-red-400 flex items-center justify-center">
+        {error}
+      </div>
+    );
+  }
+
+  const initials =
+    profile?.display_name?.slice(0, 2).toUpperCase() || "AU";
+
   return (
-    <main className="min-h-screen bg-black text-white overflow-hidden relative">
+    <main className="min-h-screen bg-[#050507] text-white relative overflow-hidden">
 
-      {/* BACKGROUND (MATCH HOMEPAGE) */}
-      <div className="fixed inset-0 -z-10 bg-black">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_40%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.03))]" />
-
-        <div className="absolute inset-0 opacity-[0.2]">
-          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-r from-white/10 via-yellow-200/10 to-transparent blur-[140px]" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-gradient-to-r from-white/10 via-cyan-200/10 to-transparent blur-[140px]" />
-        </div>
+      {/* BACKGROUND */}
+      <div className="absolute inset-0">
+        <div className="absolute w-[800px] h-[800px] bg-white/5 blur-[160px] rounded-full top-[-300px] left-[-300px]" />
+        <div className="absolute w-[700px] h-[700px] bg-cyan-500/5 blur-[180px] rounded-full bottom-[-300px] right-[-300px]" />
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-14 relative z-10">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
 
         {/* HEADER */}
-        <div className="flex items-center justify-between mb-14">
+        <div className="flex items-center justify-between mb-12">
 
-          <div className="tracking-[0.35em] text-sm text-white/70">
-            AEONVERA
+          <div>
+            <h1 className="text-sm tracking-[0.35em] text-white/70">
+              AEONVERA
+            </h1>
+            <p className="text-white/40 text-xs mt-2">
+              Longevity Intelligence System
+            </p>
           </div>
 
-          <div className="flex items-center gap-5">
-            <div className="text-right">
-              <p className="text-white/80 text-sm">
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden sm:block">
+              <p className="text-white/70 text-sm">
                 {profile?.display_name || "User"}
               </p>
-              <p className="text-white/40 text-xs uppercase tracking-wider">
+              <p className="text-white/40 text-xs uppercase">
                 {profile?.plan || "core"}
               </p>
             </div>
 
-            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm">
-              {profile?.display_name?.slice(0, 2).toUpperCase() || "AU"}
+            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sm">
+              {initials}
             </div>
           </div>
+
         </div>
 
         {/* MAIN GRID */}
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-6">
 
-          {/* DIGITAL TWIN */}
-          <div className="md:col-span-3 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-10">
+          {/* PRIMARY INTELLIGENCE CARD */}
+          <div className="md:col-span-3 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8">
 
-            <p className="text-white/40 text-xs tracking-[0.4em] mb-6">
-              DIGITAL TWIN
-            </p>
+            <h2 className="text-white/50 text-xs tracking-[0.3em] uppercase mb-6">
+              Digital Twin Status
+            </h2>
 
             {report ? (
-              <div>
-                <p className="text-2xl font-medium mb-4">
-                  Intelligence Model Active
-                </p>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
 
-                <p className="text-white/60 mb-6">
-                  Risk Score: {report.risk_score}/100
-                </p>
+                <div>
+                  <p className="text-white/70 mb-2">
+                    Intelligence Report Active
+                  </p>
+                  <p className="text-3xl font-medium">
+                    Risk Score{" "}
+                    <span className="text-white/40">
+                      {report.risk_score}/100
+                    </span>
+                  </p>
+                </div>
 
                 <button
                   onClick={() => router.push("/report")}
-                  className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
+                  className="px-6 py-3 rounded-xl bg-white text-black text-sm font-medium hover:opacity-90 transition"
                 >
-                  Open Full Report →
+                  Open Report
                 </button>
+
               </div>
             ) : hasAssessment ? (
-              <div>
-                <p className="text-white/60 mb-6">
-                  Assessment complete. Generate your intelligence model.
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+
+                <p className="text-white/60">
+                  Assessment complete. Ready to generate intelligence model.
                 </p>
 
                 <button
                   onClick={generateReport}
                   disabled={generatingReport}
-                  className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:opacity-90 transition disabled:opacity-50"
+                  className="px-6 py-3 rounded-xl bg-white text-black text-sm font-medium disabled:opacity-50 hover:opacity-90 transition"
                 >
-                  {generatingReport ? "Generating..." : "Generate Report"}
+                  {generatingReport ? "Processing..." : "Generate Report"}
                 </button>
+
               </div>
             ) : (
-              <div>
-                <p className="text-white/60 mb-6">
-                  Complete your assessment to activate your system.
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+
+                <p className="text-white/60">
+                  No assessment detected. Initialize your system profile.
                 </p>
 
                 <button
                   onClick={() => router.push("/assessment")}
-                  className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
+                  className="px-6 py-3 rounded-xl bg-white text-black text-sm font-medium hover:opacity-90 transition"
                 >
                   Start Assessment
                 </button>
+
               </div>
             )}
+
           </div>
 
           {/* SUBSCRIPTION */}
-          <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-6">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
 
-            <p className="text-white/40 text-xs tracking-[0.4em] mb-4">
-              SUBSCRIPTION
-            </p>
+            <h3 className="text-white/50 text-xs tracking-[0.3em] uppercase mb-4">
+              Subscription
+            </h3>
 
-            <p className="text-white/80 mb-6">
-              {profile?.plan?.toUpperCase() || "CORE"}
+            <p className="text-white/80 mb-6 uppercase text-sm">
+              {profile?.plan || "core"}
             </p>
 
             <button
               onClick={openBillingPortal}
               disabled={openingPortal}
-              className="w-full px-4 py-3 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 transition"
+              className="w-full px-4 py-3 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 transition text-sm"
             >
               {openingPortal ? "Opening..." : "Manage Plan"}
             </button>
+
           </div>
 
           {/* QUICK ACTIONS */}
-          <div className="md:col-span-2 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-6">
+          <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
 
-            <p className="text-white/40 text-xs tracking-[0.4em] mb-4">
-              QUICK ACTIONS
-            </p>
+            <h3 className="text-white/50 text-xs tracking-[0.3em] uppercase mb-4">
+              Quick Actions
+            </h3>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3">
 
               {!hasAssessment && (
                 <button
                   onClick={() => router.push("/assessment")}
-                  className="px-5 py-3 rounded-xl bg-white text-black font-medium"
+                  className="px-5 py-3 rounded-xl bg-white text-black text-sm font-medium"
                 >
                   Start Assessment
                 </button>
@@ -271,14 +306,14 @@ export default function DashboardPage() {
 
               <button
                 onClick={openBillingPortal}
-                className="px-5 py-3 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 transition"
+                className="px-5 py-3 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 transition text-sm"
               >
                 Billing
               </button>
 
               <button
                 onClick={() => router.push("/report")}
-                className="px-5 py-3 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 transition"
+                className="px-5 py-3 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 transition text-sm"
               >
                 View Report
               </button>
