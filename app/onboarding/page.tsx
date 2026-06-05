@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
+import AppShell from "@/components/layout/AppShell";
+import PageContainer from "@/components/ui/PageContainer";
+import Card from "@/components/ui/Card";
+
 export default function OnboardingPage() {
   const router = useRouter();
 
@@ -28,29 +32,32 @@ export default function OnboardingPage() {
 
       setUserId(session.user.id);
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("user_id")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select("user_id")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
 
       if (profileError) {
-        console.error("PROFILE LOOKUP ERROR:", profileError);
+        console.error(profileError);
         return;
       }
 
       if (!profile) {
-        const { error } = await supabase.from("profiles").insert({
-          user_id: session.user.id,
-          plan: "free",
-          subscription_status: "inactive",
-          onboarding_completed: false,
-          entity_state: "dormant",
-          life_stage: "initializing",
-        });
+        const { error } = await supabase
+          .from("profiles")
+          .insert({
+            user_id: session.user.id,
+            plan: "free",
+            subscription_status: "inactive",
+            onboarding_completed: false,
+            entity_state: "dormant",
+            life_stage: "initializing",
+          });
 
         if (error) {
-          console.error("PROFILE INSERT ERROR:", error);
+          console.error(error);
           return;
         }
       }
@@ -80,7 +87,7 @@ export default function OnboardingPage() {
         .eq("user_id", userId);
 
       if (error) {
-        console.error("PROFILE UPDATE ERROR:", error);
+        console.error(error);
         alert("Failed to save onboarding.");
         return;
       }
@@ -97,46 +104,125 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-white/60">Initializing onboarding...</p>
+        Initializing...
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-lg border border-white/10 rounded-3xl p-10 bg-white/5">
-        <h1 className="text-3xl font-light mb-2">
-          Initialize Your Entity
-        </h1>
+    <AppShell>
+      <section className="pt-32 pb-24">
+        <PageContainer>
 
-        <p className="text-white/50 mb-8">
-          Set up your system identity before accessing the dashboard.
-        </p>
+          <div className="max-w-4xl mx-auto text-center">
 
-        <div className="space-y-4">
-          <input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Display Name"
-            className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-white"
-          />
+            <p className="text-xs uppercase tracking-[0.5em] text-white/40 mb-8">
+              Initialization
+            </p>
 
-          <input
-            value={entityName}
-            onChange={(e) => setEntityName(e.target.value)}
-            placeholder="Entity Name"
-            className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-white"
-          />
+            <h1 className="text-5xl md:text-7xl font-semibold tracking-tight leading-[0.95]">
+              Create Your
+              <br />
+              Longevity Identity
+            </h1>
 
-          <button
-            onClick={handleCompleteOnboarding}
-            disabled={saving}
-            className="w-full bg-white text-black rounded-xl py-3 font-medium hover:bg-gray-200 transition"
-          >
-            {saving ? "Finalizing..." : "Complete Setup"}
-          </button>
-        </div>
-      </div>
-    </main>
+            <p className="mt-8 text-xl text-white/60 max-w-2xl mx-auto">
+              Configure the foundation of your biological intelligence system.
+            </p>
+
+          </div>
+
+        </PageContainer>
+      </section>
+
+      <section className="pb-32">
+        <PageContainer>
+
+          <div className="max-w-2xl mx-auto">
+
+            <Card className="p-10">
+
+              <div className="space-y-6">
+
+                <div>
+                  <label className="block text-sm text-white/50 mb-3">
+                    Display Name
+                  </label>
+
+                  <input
+                    value={displayName}
+                    onChange={(e) =>
+                      setDisplayName(e.target.value)
+                    }
+                    placeholder="John Smith"
+                    className="
+                      w-full
+                      h-14
+                      rounded-xl
+                      bg-black/50
+                      border
+                      border-white/10
+                      px-4
+                      text-white
+                      outline-none
+                      focus:border-white/30
+                    "
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-white/50 mb-3">
+                    Entity Name
+                  </label>
+
+                  <input
+                    value={entityName}
+                    onChange={(e) =>
+                      setEntityName(e.target.value)
+                    }
+                    placeholder="Aeon Entity Alpha"
+                    className="
+                      w-full
+                      h-14
+                      rounded-xl
+                      bg-black/50
+                      border
+                      border-white/10
+                      px-4
+                      text-white
+                      outline-none
+                      focus:border-white/30
+                    "
+                  />
+                </div>
+
+                <button
+                  onClick={handleCompleteOnboarding}
+                  disabled={saving}
+                  className="
+                    w-full
+                    h-14
+                    rounded-xl
+                    bg-white
+                    text-black
+                    font-medium
+                    transition
+                    hover:bg-zinc-200
+                  "
+                >
+                  {saving
+                    ? "Initializing..."
+                    : "Complete Setup"}
+                </button>
+
+              </div>
+
+            </Card>
+
+          </div>
+
+        </PageContainer>
+      </section>
+    </AppShell>
   );
 }
