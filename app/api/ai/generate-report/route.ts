@@ -139,7 +139,8 @@ Return ONLY JSON:
       temperature: 0.4,
     });
 
-    const content = completion.choices[0].message.content;
+    // ✅ ONLY CHANGE (FIXED SAFE ACCESS)
+    const content = completion.choices?.[0]?.message?.content;
 
     if (!content) {
       return NextResponse.json(
