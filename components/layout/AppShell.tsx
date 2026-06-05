@@ -7,13 +7,13 @@ type AppShellProps = {
 
 export default function AppShell({ children }: AppShellProps) {
   return (
-    <main className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
 
-      {/* GLOBAL BACKGROUND */}
+      {/* GLOBAL BACKGROUND (SYSTEM-WIDE) */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-black" />
 
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_40%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_45%)]" />
 
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.02))]" />
       </div>
@@ -21,14 +21,13 @@ export default function AppShell({ children }: AppShellProps) {
       {/* HEADER */}
       <Header />
 
-      {/* PAGE CONTENT */}
-      <div className="flex-1">
+      {/* PAGE CONTENT WRAPPER (IMPORTANT CONSISTENCY LAYER) */}
+      <main className="flex-1 w-full">
         {children}
-      </div>
+      </main>
 
       {/* FOOTER */}
       <Footer />
-
-    </main>
+    </div>
   );
 }
