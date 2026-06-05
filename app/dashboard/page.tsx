@@ -38,21 +38,31 @@ export default function DashboardPage() {
     const run = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { router.replace("/login"); return; }
 
-        const { data: profileData } = await supabase
+        if (!user) {
+          router.replace("/login");
+          return;
+        }
+
+        const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("display_name, plan, subscription_status, date_of_birth, primary_goal")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (!profileData) { router.replace("/onboarding"); return; }
+        if (profileError || !profileData) {
+          router.replace("/onboarding");
+          return;
+        }
+
         if (!isUserAllowed(profileData.plan, profileData.subscription_status)) {
-          router.replace("/pricing"); return;
+          router.replace("/pricing");
+          return;
         }
 
         setProfile(profileData);
 
+        // Check for existing report
         const { data: existingReport } = await supabase
           .from("longevity_reports")
           .select("*")
@@ -61,8 +71,11 @@ export default function DashboardPage() {
           .limit(1)
           .single();
 
-        if (existingReport) setReport(existingReport);
+        if (existingReport) {
+          setReport(existingReport);
+        }
 
+        // Check if assessment exists
         const { data: assessment } = await supabase
           .from("longevity_assessments")
           .select("id")
@@ -71,9 +84,11 @@ export default function DashboardPage() {
           .single();
 
         setHasAssessment(!!assessment);
+
+        setLoading(false);
       } catch (err) {
-        setError("System initialization failed");
-      } finally {
+        console.error(err);
+        setError("Something went wrong. Please try again.");
         setLoading(false);
       }
     };
@@ -82,27 +97,44 @@ export default function DashboardPage() {
   }, [router]);
 
   async function generateReport() {
-    setGeneratingReport(true);
     try {
-      const res = await fetch("/api/longevity/report", { method: "POST", credentials: "include" });
+      setGeneratingReport(true);
+
+      const res = await fetch("/api/longevity/report", {
+        method: "POST",
+        credentials: "include",
+      });
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+
+      if (!res.ok) {
+        alert(data.error || "Failed to generate report");
+        return;
+      }
+
       setReport(data.report);
-    } catch (err: any) {
-      alert(err.message || "Generation failed");
+      alert("Longevity Report generated successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Error generating report");
     } finally {
       setGeneratingReport(false);
     }
   }
 
   async function openBillingPortal() {
-    setOpeningPortal(true);
     try {
-      const res = await fetch("/api/stripe/customer-portal", { method: "POST", credentials: "include" });
+      setOpeningPortal(true);
+      const res = await fetch("/api/stripe/customer-portal", {
+        method: "POST",
+        credentials: "include",
+      });
+
       const data = await res.json();
-      if (res.ok) window.location.href = data.url;
-    } catch {
-      alert("Portal access failed");
+      if (!res.ok) throw new Error(data.error || "Failed to open portal");
+      window.location.href = data.url;
+    } catch (err) {
+      alert("Failed to open billing portal.");
     } finally {
       setOpeningPortal(false);
     }
@@ -110,11 +142,18 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center overflow-hidden">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin mx-auto mb-6" />
-          <p className="text-cyan-400 tracking-[4px] text-sm">AEONVERA CORE ONLINE</p>
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <div className="animate-pulse text-white/60">
+          Initializing Aeonvera Intelligence System...
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-red-400">
+        {error}
       </div>
     );
   }
@@ -122,89 +161,88 @@ export default function DashboardPage() {
   const initials = profile?.display_name?.slice(0, 2).toUpperCase() || "AU";
 
   return (
-    <main className="min-h-screen bg-black text-white overflow-hidden relative">
-      {/* Futuristic Background */}
-      <div className="absolute inset-0 bg-[radial-gradient(at_50%_30%,rgba(34,211,238,0.15),transparent_70%)]" />
-      <div className="absolute inset-0 bg-grid opacity-10" />
+    <main className="min-h-screen bg-black text-white p-8 relative overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.15),transparent_60%)]" />
 
-      <div className="relative z-10 p-8 max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-16">
-          <div>
-            <h1 className="text-5xl font-light tracking-[-2px] bg-gradient-to-r from-white via-cyan-300 to-purple-400 bg-clip-text text-transparent">
-              AEONVERA
-            </h1>
-            <p className="text-cyan-400/70 text-sm tracking-[3px] mt-1">LONGEVITY INTELLIGENCE OS</p>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <div className="text-right">
-              <p className="text-lg">{profile?.display_name}</p>
-              <p className="text-xs text-cyan-400">{profile?.plan?.toUpperCase()} • ACTIVE</p>
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-xl font-bold border border-white/20">
-              {initials}
-            </div>
-          </div>
+      {/* Header */}
+      <div className="relative z-10 flex items-center justify-between mb-10">
+        <div>
+          <h1 className="text-2xl font-light tracking-wide">AEONVERA</h1>
+          <p className="text-white/50 text-sm">Longevity Intelligence System</p>
         </div>
 
-        {/* Main Status Card */}
-        <div className="bg-zinc-950/70 backdrop-blur-3xl border border-white/10 rounded-3xl p-12 mb-12">
-          <div className="text-center mb-10">
-            <p className="uppercase tracking-[4px] text-cyan-400 text-sm mb-3">DIGITAL TWIN STATUS</p>
-            <h2 className="text-6xl font-light">NEURAL CORE</h2>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-white/70 text-sm">{profile?.display_name || "User"}</p>
+            <p className="text-white/40 text-xs">{profile?.plan?.toUpperCase() || "CORE"}</p>
           </div>
+          <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+            {initials}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+        {/* Digital Twin / Report Status */}
+        <div className="p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl md:col-span-2">
+          <h2 className="text-sm text-white/50 mb-4">YOUR DIGITAL TWIN</h2>
 
           {report ? (
-            <div className="text-center">
-              <div className="inline-block px-8 py-4 bg-green-500/10 border border-green-400/30 rounded-2xl mb-8">
-                <p className="text-green-400 text-xl">INTELLIGENCE REPORT SYNCHRONIZED</p>
-              </div>
+            <div className="bg-green-950/30 border border-green-500/30 rounded-xl p-6">
+              <p className="text-green-400 text-xl mb-2">✅ Intelligence Report Ready</p>
+              <p className="text-white/70">
+                Risk Score: <span className="font-bold">{report.risk_score}/100</span>
+              </p>
               <button
                 onClick={() => router.push("/report")}
-                className="px-12 py-5 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-medium rounded-2xl text-lg hover:scale-105 transition-transform"
+                className="mt-4 px-6 py-3 bg-white text-black rounded-xl font-medium hover:bg-white/90 transition"
               >
-                ACCESS FULL BLUEPRINT →
+                View Full Report →
               </button>
             </div>
           ) : hasAssessment ? (
-            <div className="text-center">
+            <div>
+              <p className="text-yellow-400 mb-4">Assessment Complete — Ready for Analysis</p>
               <button
                 onClick={generateReport}
                 disabled={generatingReport}
-                className="px-12 py-5 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-medium rounded-2xl text-lg hover:scale-105 transition-transform disabled:opacity-70"
+                className="px-8 py-4 bg-white text-black rounded-2xl font-medium hover:bg-white/90 transition disabled:opacity-50"
               >
-                {generatingReport ? "ANALYZING BIOLOGY..." : "GENERATE LONGEVITY REPORT"}
+                {generatingReport ? "Generating Intelligence Report..." : "Generate Longevity Report"}
               </button>
             </div>
           ) : (
-            <div className="text-center">
+            <div>
+              <p className="text-yellow-400 mb-4">Complete your assessment to activate your Digital Twin</p>
               <button
                 onClick={() => router.push("/assessment")}
-                className="px-12 py-5 bg-gradient-to-r from-cyan-400 to-purple-500 text-black font-medium rounded-2xl text-lg hover:scale-105 transition-transform"
+                className="px-8 py-4 bg-white text-black rounded-2xl font-medium hover:bg-white/90 transition"
               >
-                INITIALIZE ASSESSMENT
+                Start Longevity Assessment
               </button>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Quick Actions */}
-        <div className="flex gap-6">
+      {/* Footer Actions */}
+      <div className="relative z-10 mt-10 flex gap-4">
+        {!hasAssessment && (
           <button
             onClick={() => router.push("/assessment")}
-            className="flex-1 py-6 bg-white/5 hover:bg-white/10 border border-white/10 rounded-3xl text-lg transition-all hover:border-cyan-400/50"
+            className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:bg-white/90 transition"
           >
-            NEW ASSESSMENT
+            Start Assessment
           </button>
-          <button
-            onClick={openBillingPortal}
-            disabled={openingPortal}
-            className="flex-1 py-6 bg-white/5 hover:bg-white/10 border border-white/10 rounded-3xl text-lg transition-all hover:border-purple-400/50"
-          >
-            {openingPortal ? "CONNECTING..." : "MANAGE SUBSCRIPTION"}
-          </button>
-        </div>
+        )}
+
+        <button
+          onClick={openBillingPortal}
+          disabled={openingPortal}
+          className="px-6 py-3 rounded-xl border border-white/20 text-white/80 hover:bg-white/5 transition"
+        >
+          {openingPortal ? "Opening..." : "Manage Subscription"}
+        </button>
       </div>
     </main>
   );
