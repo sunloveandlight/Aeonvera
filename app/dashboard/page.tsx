@@ -131,7 +131,7 @@ export default function DashboardPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || "Failed to open portal");
       window.location.href = data.url;
     } catch (err) {
       alert("Failed to open billing portal.");
@@ -190,12 +190,14 @@ export default function DashboardPage() {
           {report ? (
             <div className="bg-green-950/30 border border-green-500/30 rounded-xl p-6">
               <p className="text-green-400 text-xl mb-2">✅ Intelligence Report Ready</p>
-              <p className="text-white/70">Risk Score: <span className="font-bold">{report.risk_score}/100</span></p>
+              <p className="text-white/70">
+                Risk Score: <span className="font-bold">{report.risk_score}/100</span>
+              </p>
               <button
-                onClick={() => alert("Full report view coming soon...")}
-                className="mt-4 px-6 py-2 bg-white text-black rounded-lg"
+                onClick={() => router.push("/report")}
+                className="mt-4 px-6 py-3 bg-white text-black rounded-xl font-medium hover:bg-white/90 transition"
               >
-                View Full Report
+                View Full Report →
               </button>
             </div>
           ) : hasAssessment ? (
