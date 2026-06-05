@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -37,7 +36,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const run = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
         if (!user) {
           router.replace("/login");
@@ -46,7 +47,9 @@ export default function DashboardPage() {
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("display_name, plan, subscription_status, date_of_birth, primary_goal")
+          .select(
+            "display_name, plan, subscription_status, date_of_birth, primary_goal"
+          )
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -62,7 +65,6 @@ export default function DashboardPage() {
 
         setProfile(profileData);
 
-        // Check for existing report
         const { data: existingReport } = await supabase
           .from("longevity_reports")
           .select("*")
@@ -75,7 +77,6 @@ export default function DashboardPage() {
           setReport(existingReport);
         }
 
-        // Check if assessment exists
         const { data: assessment } = await supabase
           .from("longevity_assessments")
           .select("id")
@@ -88,7 +89,7 @@ export default function DashboardPage() {
         setLoading(false);
       } catch (err) {
         console.error(err);
-        setError("Something went wrong. Please try again.");
+        setError("System failure. Please retry.");
         setLoading(false);
       }
     };
@@ -113,7 +114,7 @@ export default function DashboardPage() {
       }
 
       setReport(data.report);
-      alert("Longevity Report generated successfully!");
+      alert("Intelligence Report generated successfully.");
     } catch (err) {
       console.error(err);
       alert("Error generating report");
@@ -125,13 +126,16 @@ export default function DashboardPage() {
   async function openBillingPortal() {
     try {
       setOpeningPortal(true);
+
       const res = await fetch("/api/stripe/customer-portal", {
         method: "POST",
         credentials: "include",
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to open portal");
+
+      if (!res.ok) throw new Error(data.error);
+
       window.location.href = data.url;
     } catch (err) {
       alert("Failed to open billing portal.");
@@ -142,9 +146,9 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#05060a] text-white">
         <div className="animate-pulse text-white/60">
-          Initializing Aeonvera Intelligence System...
+          Booting Aeonvera Intelligence Core...
         </div>
       </div>
     );
@@ -152,97 +156,155 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black text-red-400">
+      <div className="min-h-screen flex items-center justify-center bg-[#05060a] text-red-400">
         {error}
       </div>
     );
   }
 
-  const initials = profile?.display_name?.slice(0, 2).toUpperCase() || "AU";
+  const initials =
+    profile?.display_name?.slice(0, 2).toUpperCase() || "AU";
 
   return (
-    <main className="min-h-screen bg-black text-white p-8 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.15),transparent_60%)]" />
-
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-between mb-10">
-        <div>
-          <h1 className="text-2xl font-light tracking-wide">AEONVERA</h1>
-          <p className="text-white/50 text-sm">Longevity Intelligence System</p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="text-white/70 text-sm">{profile?.display_name || "User"}</p>
-            <p className="text-white/40 text-xs">{profile?.plan?.toUpperCase() || "CORE"}</p>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
-            {initials}
-          </div>
-        </div>
+    <main className="min-h-screen bg-[#05060a] text-white relative overflow-hidden">
+      {/* Glow Background */}
+      <div className="absolute inset-0">
+        <div className="absolute w-[700px] h-[700px] bg-cyan-500/10 blur-[140px] rounded-full top-[-250px] left-[-250px]" />
+        <div className="absolute w-[600px] h-[600px] bg-purple-500/10 blur-[140px] rounded-full bottom-[-250px] right-[-250px]" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-        {/* Digital Twin / Report Status */}
-        <div className="p-6 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl md:col-span-2">
-          <h2 className="text-sm text-white/50 mb-4">YOUR DIGITAL TWIN</h2>
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-14">
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              AEONVERA
+            </h1>
+            <p className="text-white/50 text-sm">
+              Longevity Intelligence Operating System
+            </p>
+          </div>
 
-          {report ? (
-            <div className="bg-green-950/30 border border-green-500/30 rounded-xl p-6">
-              <p className="text-green-400 text-xl mb-2">✅ Intelligence Report Ready</p>
-              <p className="text-white/70">
-                Risk Score: <span className="font-bold">{report.risk_score}/100</span>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-white/70 text-sm">
+                {profile?.display_name || "User"}
               </p>
-              <button
-                onClick={() => router.push("/report")}
-                className="mt-4 px-6 py-3 bg-white text-black rounded-xl font-medium hover:bg-white/90 transition"
-              >
-                View Full Report →
-              </button>
+              <p className="text-white/40 text-xs">
+                {profile?.plan?.toUpperCase() || "CORE"}
+              </p>
             </div>
-          ) : hasAssessment ? (
-            <div>
-              <p className="text-yellow-400 mb-4">Assessment Complete — Ready for Analysis</p>
-              <button
-                onClick={generateReport}
-                disabled={generatingReport}
-                className="px-8 py-4 bg-white text-black rounded-2xl font-medium hover:bg-white/90 transition disabled:opacity-50"
-              >
-                {generatingReport ? "Generating Intelligence Report..." : "Generate Longevity Report"}
-              </button>
+
+            <div className="w-11 h-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-xl">
+              {initials}
             </div>
-          ) : (
-            <div>
-              <p className="text-yellow-400 mb-4">Complete your assessment to activate your Digital Twin</p>
-              <button
-                onClick={() => router.push("/assessment")}
-                className="px-8 py-4 bg-white text-black rounded-2xl font-medium hover:bg-white/90 transition"
-              >
-                Start Longevity Assessment
-              </button>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
 
-      {/* Footer Actions */}
-      <div className="relative z-10 mt-10 flex gap-4">
-        {!hasAssessment && (
-          <button
-            onClick={() => router.push("/assessment")}
-            className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:bg-white/90 transition"
-          >
-            Start Assessment
-          </button>
-        )}
+        {/* MAIN GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* DIGITAL TWIN CARD */}
+          <div className="md:col-span-3 bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl">
+            <h2 className="text-white/50 text-sm mb-4">
+              YOUR DIGITAL TWIN
+            </h2>
 
-        <button
-          onClick={openBillingPortal}
-          disabled={openingPortal}
-          className="px-6 py-3 rounded-xl border border-white/20 text-white/80 hover:bg-white/5 transition"
-        >
-          {openingPortal ? "Opening..." : "Manage Subscription"}
-        </button>
+            {report ? (
+              <div className="p-6 rounded-xl bg-green-500/10 border border-green-500/20">
+                <p className="text-green-400 text-lg mb-2">
+                  Intelligence Report Active
+                </p>
+
+                <p className="text-white/70">
+                  Risk Score:{" "}
+                  <span className="font-semibold">
+                    {report.risk_score}/100
+                  </span>
+                </p>
+
+                <button
+                  onClick={() => router.push("/report")}
+                  className="mt-5 px-6 py-3 bg-white text-black rounded-xl font-medium hover:opacity-90 transition"
+                >
+                  Open Full Report →
+                </button>
+              </div>
+            ) : hasAssessment ? (
+              <div>
+                <p className="text-yellow-400 mb-4">
+                  Assessment complete — ready for AI analysis
+                </p>
+
+                <button
+                  onClick={generateReport}
+                  disabled={generatingReport}
+                  className="px-8 py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 font-medium hover:opacity-90 transition disabled:opacity-50"
+                >
+                  {generatingReport
+                    ? "Generating Intelligence Report..."
+                    : "Generate Longevity Report"}
+                </button>
+              </div>
+            ) : (
+              <div>
+                <p className="text-white/60 mb-4">
+                  Activate your Digital Twin by completing assessment
+                </p>
+
+                <button
+                  onClick={() => router.push("/assessment")}
+                  className="px-8 py-4 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
+                >
+                  Start Assessment
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* SUBSCRIPTION CARD */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl">
+            <h3 className="text-white/50 text-sm mb-3">
+              SUBSCRIPTION
+            </h3>
+
+            <p className="text-white/80 mb-4">
+              {profile?.plan?.toUpperCase() || "CORE"}
+            </p>
+
+            <button
+              onClick={openBillingPortal}
+              disabled={openingPortal}
+              className="w-full px-4 py-3 rounded-xl border border-white/15 text-white/70 hover:bg-white/5 transition"
+            >
+              {openingPortal ? "Opening..." : "Manage Plan"}
+            </button>
+          </div>
+
+          {/* QUICK ACTIONS */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl md:col-span-2">
+            <h3 className="text-white/50 text-sm mb-4">
+              QUICK ACTIONS
+            </h3>
+
+            <div className="flex gap-4 flex-wrap">
+              {!hasAssessment && (
+                <button
+                  onClick={() => router.push("/assessment")}
+                  className="px-5 py-3 rounded-xl bg-white text-black font-medium"
+                >
+                  Start Assessment
+                </button>
+              )}
+
+              <button
+                onClick={openBillingPortal}
+                className="px-5 py-3 rounded-xl border border-white/15 text-white/70 hover:bg-white/5 transition"
+              >
+                Billing
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
   );
