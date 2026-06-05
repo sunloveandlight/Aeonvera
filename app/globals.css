@@ -1,8 +1,25 @@
 @import "tailwindcss";
 
+/* ================================
+   AEONVERA DESIGN SYSTEM
+   GLOBAL VISUAL LAYER
+================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+
+  /* Core Background */
+  --background: #05060a;
+  --foreground: rgba(255, 255, 255, 0.92);
+
+  /* Text hierarchy */
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-tertiary: rgba(255, 255, 255, 0.4);
+
+  /* Accent system */
+  --accent-cyan: 34, 211, 238;
+  --accent-purple: 168, 85, 247;
 }
 
 @theme inline {
@@ -12,15 +29,99 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ================================
+   BASE GLOBAL STYLES
+================================ */
+
+html {
+  background: var(--background);
+  color: var(--foreground);
+  height: 100%;
 }
 
 body {
+  min-height: 100%;
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-primary);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ================================
+   TYPOGRAPHY SYSTEM (FIX READABILITY)
+================================ */
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* subtle UI text */
+.text-muted {
+  color: var(--text-tertiary);
+}
+
+/* ================================
+   SELECTION STYLE (PREMIUM FEEL)
+================================ */
+
+::selection {
+  background: rgba(var(--accent-cyan), 0.25);
+  color: white;
+}
+
+/* ================================
+   GLOBAL BACKGROUND AURA SYSTEM
+   (THIS RESTORES "MULTIBILLION" FEEL)
+================================ */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+
+  background:
+    radial-gradient(
+      800px circle at 20% 0%,
+      rgba(var(--accent-cyan), 0.12),
+      transparent 60%
+    ),
+    radial-gradient(
+      700px circle at 80% 20%,
+      rgba(var(--accent-purple), 0.10),
+      transparent 55%
+    ),
+    radial-gradient(
+      900px circle at 50% 100%,
+      rgba(255, 255, 255, 0.04),
+      transparent 60%
+    );
+}
+
+/* ================================
+   SUBTLE GRID DEPTH LAYER
+================================ */
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+
+  background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+
+  background-size: 80px 80px;
+  opacity: 0.25;
+  mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
 }
