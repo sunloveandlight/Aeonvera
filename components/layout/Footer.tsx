@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 
 export default function Footer() {
@@ -5,12 +7,15 @@ export default function Footer() {
     <footer className="border-t border-white/10 bg-black/60 backdrop-blur-xl mt-24">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        {/* TOP ROW */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
 
-          <div className="tracking-[0.25em] text-sm font-semibold">
+          {/* BRAND */}
+          <div className="text-sm tracking-[0.35em] font-semibold text-white/80">
             AEONVERA
           </div>
 
+          {/* NAV LINKS */}
           <div className="flex flex-wrap gap-6 text-sm text-white/50">
             <Link href="/pricing" className="hover:text-white transition">
               Pricing
@@ -26,9 +31,18 @@ export default function Footer() {
             </Link>
           </div>
 
-          <div className="text-xs text-white/30">
+        </div>
+
+        {/* BOTTOM ROW */}
+        <div className="mt-8 pt-6 border-t border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+          <p className="text-xs text-white/30">
             © {new Date().getFullYear()} AEONVERA. All rights reserved.
-          </div>
+          </p>
+
+          <p className="text-xs text-white/30">
+            Built for longevity intelligence systems
+          </p>
 
         </div>
 
