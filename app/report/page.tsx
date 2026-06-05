@@ -57,7 +57,7 @@ export default function ReportPage() {
         }
 
         setReport(data.report);
-      } catch (err) {
+      } catch {
         setError("Failed to load report");
       } finally {
         setLoading(false);
@@ -72,9 +72,7 @@ export default function ReportPage() {
       <div className="min-h-screen bg-[#05060a] text-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-cyan-400 rounded-full mx-auto mb-4" />
-          <p className="text-white/60">
-            Decoding your longevity blueprint...
-          </p>
+          <p className="text-white/60">Decoding your longevity blueprint...</p>
         </div>
       </div>
     );
@@ -83,9 +81,8 @@ export default function ReportPage() {
   if (error || !report) {
     return (
       <div className="min-h-screen bg-[#05060a] text-white flex items-center justify-center px-6">
-        <div className="text-center max-w-md bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl">
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl text-center max-w-md">
           <p className="text-red-400 mb-6">{error}</p>
-
           <button
             onClick={() => router.push("/dashboard")}
             className="px-6 py-3 bg-white text-black rounded-xl font-medium hover:opacity-90 transition"
@@ -104,18 +101,18 @@ export default function ReportPage() {
       ? "text-yellow-400"
       : "text-red-400";
 
-  const glowBg =
+  const glow =
     report.risk_score <= 35
-      ? "from-green-500/10"
+      ? "bg-green-500/10"
       : report.risk_score <= 65
-      ? "from-yellow-500/10"
-      : "from-red-500/10";
+      ? "bg-yellow-500/10"
+      : "bg-red-500/10";
 
   return (
     <main className="min-h-screen bg-[#05060a] text-white relative overflow-hidden">
-      {/* Background glow */}
+      {/* background glow system (MATCH DASHBOARD STYLE) */}
       <div className="absolute inset-0">
-        <div className={`absolute w-[700px] h-[700px] ${glowBg} to-transparent blur-[140px] rounded-full top-[-250px] left-[-250px]`} />
+        <div className={`absolute w-[700px] h-[700px] ${glow} blur-[140px] rounded-full top-[-250px] left-[-250px]`} />
         <div className="absolute w-[600px] h-[600px] bg-purple-500/10 blur-[140px] rounded-full bottom-[-250px] right-[-250px]" />
       </div>
 
@@ -130,21 +127,19 @@ export default function ReportPage() {
           </p>
         </div>
 
-        {/* RISK SCORE */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-10 mb-10 backdrop-blur-xl">
+        {/* RISK SCORE CARD */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl mb-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
             <div>
-              <p className="text-white/50 text-sm">
-                OVERALL RISK SCORE
-              </p>
-              <p className={`text-7xl font-semibold mt-2 ${riskColor}`}>
+              <p className="text-white/50 text-sm">OVERALL RISK SCORE</p>
+              <p className={`text-6xl font-semibold mt-2 ${riskColor}`}>
                 {report.risk_score}
               </p>
-              <p className="text-white/60 mt-2">/ 100</p>
+              <p className="text-white/40">/ 100</p>
             </div>
 
             <div className="w-full md:w-1/2">
-              <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                 <div
                   className={`h-full ${
                     report.risk_score <= 35
@@ -156,7 +151,6 @@ export default function ReportPage() {
                   style={{ width: `${report.risk_score}%` }}
                 />
               </div>
-
               <p className="text-white/40 text-xs mt-2">
                 System-wide biological stress index
               </p>
@@ -164,8 +158,8 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* PRIMARY GOAL */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-10 backdrop-blur-xl">
+        {/* PRIMARY GOAL (MATCH DASHBOARD CARD STYLE) */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl mb-10">
           <h2 className="text-white/50 text-sm mb-2">
             PRIMARY OBJECTIVE
           </h2>
@@ -184,9 +178,8 @@ export default function ReportPage() {
               <p className="text-white/40 text-sm capitalize mb-2">
                 {key.replace("_", " ")}
               </p>
-
               <p
-                className={`text-2xl font-semibold capitalize ${
+                className={`text-xl font-medium capitalize ${
                   value === "low"
                     ? "text-green-400"
                     : value === "medium"
@@ -200,7 +193,7 @@ export default function ReportPage() {
           ))}
         </div>
 
-        {/* STRENGTHS / WEAKNESSES */}
+        {/* STRENGTHS / WEAKNESSES (MATCH DASHBOARD CARD STYLE) */}
         <div className="grid md:grid-cols-2 gap-8 mb-12">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl">
             <h3 className="text-green-400 mb-4">STRENGTHS</h3>
@@ -208,7 +201,7 @@ export default function ReportPage() {
               {report.strengths.map((item, i) => (
                 <div
                   key={i}
-                  className="p-4 rounded-xl bg-green-500/10 border border-green-500/20"
+                  className="bg-green-500/10 border border-green-500/20 rounded-xl p-4"
                 >
                   {item}
                 </div>
@@ -222,7 +215,7 @@ export default function ReportPage() {
               {report.weaknesses.map((item, i) => (
                 <div
                   key={i}
-                  className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20"
+                  className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4"
                 >
                   {item}
                 </div>
@@ -231,17 +224,16 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* PRIORITIES */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-12 backdrop-blur-xl">
-          <h3 className="mb-6 text-white/60">TOP PRIORITIES</h3>
+        {/* TOP PRIORITIES */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl mb-12">
+          <h3 className="text-white/50 mb-6">TOP PRIORITIES</h3>
           <div className="space-y-4">
-            {report.top_priorities.map((priority, i) => (
+            {report.top_priorities.map((p, i) => (
               <div
                 key={i}
-                className="p-5 rounded-xl border border-white/10 bg-white/5"
+                className="bg-white/5 border border-white/10 rounded-xl p-4"
               >
-                <span className="text-white/40 mr-2">{i + 1}.</span>
-                {priority}
+                {i + 1}. {p}
               </div>
             ))}
           </div>
@@ -249,7 +241,7 @@ export default function ReportPage() {
 
         {/* 90 DAY PLAN */}
         <div className="mb-12">
-          <h3 className="mb-6 text-white/60">90-DAY OPTIMIZATION PLAN</h3>
+          <h3 className="text-white/50 mb-6">90-DAY PLAN</h3>
 
           <div className="space-y-6">
             {report["90_day_plan"].map((item, i) => (
@@ -257,7 +249,7 @@ export default function ReportPage() {
                 key={i}
                 className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl"
               >
-                <div className="flex justify-between items-start gap-6">
+                <div className="flex justify-between gap-6">
                   <div>
                     <p className="font-medium">{item.category}</p>
                     <p className="text-white/70 mt-2">{item.action}</p>
@@ -282,7 +274,7 @@ export default function ReportPage() {
 
         {/* INSIGHTS */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl">
-          <h3 className="text-white/60 mb-6">BEHAVIORAL INSIGHTS</h3>
+          <h3 className="text-white/50 mb-6">BEHAVIORAL INSIGHTS</h3>
 
           <div className="space-y-6">
             {report.behavioral_insights.map((insight, i) => (
