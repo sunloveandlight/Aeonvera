@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import AppShell from "@/components/layout/AppShell";
 import PageContainer from "@/components/ui/PageContainer";
 import Button from "@/components/ui/Button";
@@ -12,33 +11,30 @@ export default function HomePage() {
     <AppShell>
 
       {/* HERO */}
-      <section className="pt-32 pb-28">
+      <section className="pt-40 pb-36">
         <PageContainer>
 
-          <div className="max-w-5xl mx-auto text-center">
+          <div className="max-w-6xl mx-auto text-center">
 
-            <p className="text-xs uppercase tracking-[0.45em] text-white/40 mb-8">
+            <p className="text-xs uppercase tracking-[0.5em] text-white/40 mb-10">
               Longevity Intelligence Platform
             </p>
 
-            <h1 className="text-6xl md:text-8xl font-semibold tracking-tight leading-[0.95]">
-              Extend Human
+            <h1 className="text-6xl md:text-8xl lg:text-[7rem] font-semibold tracking-tight leading-[0.9]">
+              The Operating System
               <br />
-              Lifespan Through
-              <br />
-              Intelligence.
+              For Human Longevity
             </h1>
 
-            <p className="mt-10 text-xl text-white/60 max-w-3xl mx-auto leading-relaxed">
-              Aeonvera is building the operating system for human longevity,
-              integrating artificial intelligence, biological data,
-              optimization protocols, and predictive health intelligence
-              into a unified platform.
+            <p className="mt-10 text-xl md:text-2xl text-white/60 max-w-3xl mx-auto leading-relaxed">
+              Build a living digital model of your biology.
+              Analyze risk patterns, track optimization opportunities,
+              and generate personalized longevity intelligence through AI.
             </p>
 
-            <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12">
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mt-14">
               <Button href="/login?mode=signup">
-                Access Platform
+                Begin Assessment
               </Button>
 
               <Button
@@ -48,22 +44,66 @@ export default function HomePage() {
                 Explore Platform
               </Button>
             </div>
+
+          </div>
+
+        </PageContainer>
+      </section>
+
+      {/* FEATURE STRIP */}
+
+      <section className="border-y border-white/10">
+        <PageContainer>
+
+          <div className="grid md:grid-cols-3 gap-0">
+
+            <div className="py-8 text-center border-b md:border-b-0 md:border-r border-white/10">
+              <div className="text-3xl font-semibold">
+                AI
+              </div>
+
+              <div className="text-white/50 text-sm mt-2">
+                Intelligence Engine
+              </div>
+            </div>
+
+            <div className="py-8 text-center border-b md:border-b-0 md:border-r border-white/10">
+              <div className="text-3xl font-semibold">
+                Digital Twin
+              </div>
+
+              <div className="text-white/50 text-sm mt-2">
+                Persistent Biological Model
+              </div>
+            </div>
+
+            <div className="py-8 text-center">
+              <div className="text-3xl font-semibold">
+                Longevity
+              </div>
+
+              <div className="text-white/50 text-sm mt-2">
+                Optimization System
+              </div>
+            </div>
+
           </div>
 
         </PageContainer>
       </section>
 
       {/* PLATFORM */}
+
       <section
         id="platform"
-        className="py-28 border-t border-white/10"
+        className="py-32"
       >
         <PageContainer>
 
           <SectionTitle
             eyebrow="Platform"
-            title="A biological intelligence operating system."
-            description="Unified infrastructure for health data, longevity optimization, and AI-driven biological intelligence."
+            title="A biological intelligence infrastructure."
+            description="Every data point contributes to a continuously evolving understanding of your long-term health trajectory."
           />
 
           <div className="grid md:grid-cols-3 gap-8 mt-20">
@@ -72,27 +112,26 @@ export default function HomePage() {
               label="Biomarkers"
               title="Biological Monitoring"
             >
-              Centralize bloodwork, biomarker trends,
-              recovery metrics, sleep data, and health signals
-              into a continuously evolving intelligence profile.
+              Track bloodwork, biomarkers, sleep,
+              recovery, body composition, and
+              health metrics through a unified system.
             </Card>
 
             <Card
-              label="AI Systems"
-              title="Longevity Intelligence"
+              label="Artificial Intelligence"
+              title="Adaptive Analysis"
             >
-              Generate adaptive optimization strategies
-              focused on lifespan, cognitive performance,
-              metabolic resilience, and recovery.
+              Generate personalized insights,
+              identify emerging patterns,
+              and prioritize interventions.
             </Card>
 
             <Card
-              label="Infrastructure"
-              title="Digital Twin"
+              label="Digital Twin"
+              title="Longitudinal Intelligence"
             >
-              Build a persistent biological model that
-              continuously evolves as new data is collected
-              and analyzed.
+              Build a persistent biological profile
+              that becomes more accurate as data accumulates.
             </Card>
 
           </div>
@@ -101,65 +140,59 @@ export default function HomePage() {
       </section>
 
       {/* SCIENCE */}
-      <section className="py-28 border-t border-white/10">
+
+      <section className="border-t border-white/10 py-32">
         <PageContainer>
 
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-20 items-center">
 
             <div>
 
               <SectionTitle
                 eyebrow="Scientific Foundation"
-                title="Computational longevity at scale."
-                description="A new approach to lifespan optimization powered by artificial intelligence and longitudinal biological data."
+                title="Built for long-term biological optimization."
+                description="Aeonvera combines artificial intelligence, longitudinal data collection, and evidence-informed optimization systems."
               />
 
               <p className="mt-8 text-white/60 leading-relaxed">
-                Aeonvera integrates AI reasoning systems,
-                biomarker analysis, behavioral modeling,
-                and predictive health intelligence into a
-                unified platform capable of adapting over time.
-              </p>
-
-              <p className="mt-6 text-white/60 leading-relaxed">
-                The result is a continuously evolving
-                biological operating system designed to
-                improve long-term health outcomes.
+                Rather than focusing on isolated health metrics,
+                the platform continuously models relationships
+                across biological systems and behavioral patterns.
               </p>
 
             </div>
 
             <Card className="p-12">
 
-              <div className="space-y-10">
+              <div className="space-y-12">
 
                 <div>
-                  <p className="text-xs uppercase tracking-[0.35em] text-white/40 mb-3">
+                  <div className="text-xs uppercase tracking-[0.35em] text-white/40 mb-3">
                     System Module
-                  </p>
+                  </div>
 
                   <h3 className="text-3xl font-semibold">
-                    Continuous Biological Tracking
+                    Continuous Tracking
                   </h3>
                 </div>
 
                 <div>
-                  <p className="text-xs uppercase tracking-[0.35em] text-white/40 mb-3">
+                  <div className="text-xs uppercase tracking-[0.35em] text-white/40 mb-3">
                     System Module
-                  </p>
+                  </div>
 
                   <h3 className="text-3xl font-semibold">
-                    Adaptive Health Intelligence
+                    Adaptive Intelligence
                   </h3>
                 </div>
 
                 <div>
-                  <p className="text-xs uppercase tracking-[0.35em] text-white/40 mb-3">
+                  <div className="text-xs uppercase tracking-[0.35em] text-white/40 mb-3">
                     System Module
-                  </p>
+                  </div>
 
                   <h3 className="text-3xl font-semibold">
-                    Personalized Longevity Protocols
+                    Personalized Protocols
                   </h3>
                 </div>
 
@@ -173,25 +206,25 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="py-32 border-t border-white/10">
 
+      <section className="border-t border-white/10 py-40">
         <PageContainer>
 
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-5xl mx-auto text-center">
 
-            <p className="text-xs uppercase tracking-[0.45em] text-white/40 mb-6">
+            <p className="text-xs uppercase tracking-[0.5em] text-white/40 mb-8">
               Begin
             </p>
 
-            <h2 className="text-5xl md:text-7xl font-semibold tracking-tight">
+            <h2 className="text-5xl md:text-7xl font-semibold tracking-tight leading-tight">
               Build Your
               <br />
-              Longevity Intelligence Layer.
+              Longevity Intelligence Layer
             </h2>
 
-            <p className="mt-8 text-white/60 text-xl">
-              Access the next generation of AI-powered
-              biological optimization.
+            <p className="mt-8 text-xl text-white/60 max-w-2xl mx-auto">
+              Start with your assessment.
+              Generate your first AI-powered longevity report.
             </p>
 
             <div className="mt-12">
@@ -203,7 +236,6 @@ export default function HomePage() {
           </div>
 
         </PageContainer>
-
       </section>
 
     </AppShell>
