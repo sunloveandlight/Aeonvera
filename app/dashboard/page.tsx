@@ -42,9 +42,7 @@ export default function DashboardPage() {
 
       const { data: profileData } = await supabase
         .from("profiles")
-        .select(
-          "display_name, plan, subscription_status"
-        )
+        .select("display_name, plan, subscription_status")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -53,12 +51,7 @@ export default function DashboardPage() {
         return;
       }
 
-      if (
-        !isUserAllowed(
-          profileData.plan,
-          profileData.subscription_status
-        )
-      ) {
+      if (!isUserAllowed(profileData.plan, profileData.subscription_status)) {
         router.replace("/pricing");
         return;
       }
@@ -134,28 +127,26 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050507] flex items-center justify-center text-white">
-        <div className="text-center">
-          <div className="w-10 h-10 border border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-white/50 tracking-wide">
-            Initializing Aeonvera Intelligence Core
-          </p>
+      <div className="min-h-screen bg-black flex items-center justify-center text-white">
+        <div className="text-white/60 animate-pulse">
+          Initializing Aeonvera systems...
         </div>
       </div>
     );
   }
 
-  const initials =
-    profile?.display_name?.slice(0, 2).toUpperCase() || "AU";
-
   return (
-    <main className="min-h-screen bg-[#050507] text-white relative overflow-hidden">
+    <main className="min-h-screen bg-black text-white overflow-hidden relative">
 
-      {/* BACKGROUND */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050507] to-black" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_45%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(120,180,255,0.06),transparent_50%)]" />
+      {/* BACKGROUND (MATCH HOMEPAGE) */}
+      <div className="fixed inset-0 -z-10 bg-black">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_40%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.03))]" />
+
+        <div className="absolute inset-0 opacity-[0.2]">
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-r from-white/10 via-yellow-200/10 to-transparent blur-[140px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-gradient-to-r from-white/10 via-cyan-200/10 to-transparent blur-[140px]" />
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-14 relative z-10">
@@ -163,130 +154,107 @@ export default function DashboardPage() {
         {/* HEADER */}
         <div className="flex items-center justify-between mb-14">
 
-          <div>
-            <h1 className="text-2xl tracking-[0.35em] font-light">
-              AEONVERA
-            </h1>
-            <p className="text-white/40 text-sm mt-1">
-              Intelligence Operating System
-            </p>
+          <div className="tracking-[0.35em] text-sm text-white/70">
+            AEONVERA
           </div>
 
           <div className="flex items-center gap-5">
-
             <div className="text-right">
-              <p className="text-white/70 text-sm">
+              <p className="text-white/80 text-sm">
                 {profile?.display_name || "User"}
               </p>
-              <p className="text-white/40 text-xs uppercase tracking-wide">
+              <p className="text-white/40 text-xs uppercase tracking-wider">
                 {profile?.plan || "core"}
               </p>
             </div>
 
-            <div className="w-11 h-11 rounded-full border border-white/10 bg-white/5 flex items-center justify-center">
-              {initials}
+            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm">
+              {profile?.display_name?.slice(0, 2).toUpperCase() || "AU"}
             </div>
-
           </div>
         </div>
 
         {/* MAIN GRID */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-8">
 
           {/* DIGITAL TWIN */}
           <div className="md:col-span-3 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-10">
 
-            <p className="text-white/40 text-xs tracking-[0.35em] mb-6">
-              DIGITAL TWIN CORE
+            <p className="text-white/40 text-xs tracking-[0.4em] mb-6">
+              DIGITAL TWIN
             </p>
 
             {report ? (
               <div>
-                <div className="flex items-end justify-between flex-wrap gap-6">
+                <p className="text-2xl font-medium mb-4">
+                  Intelligence Model Active
+                </p>
 
-                  <div>
-                    <p className="text-white/50 text-sm">
-                      SYSTEM STATUS
-                    </p>
-                    <p className="text-3xl font-semibold mt-2">
-                      Active Intelligence Model
-                    </p>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="text-white/40 text-sm">
-                      Risk Score
-                    </p>
-                    <p className="text-4xl font-semibold text-white">
-                      {report.risk_score}
-                    </p>
-                  </div>
-
-                </div>
+                <p className="text-white/60 mb-6">
+                  Risk Score: {report.risk_score}/100
+                </p>
 
                 <button
                   onClick={() => router.push("/report")}
-                  className="mt-8 px-6 py-3 rounded-xl bg-white text-black font-medium hover:scale-[1.02] transition"
+                  className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
                 >
-                  Open Full Intelligence Report →
+                  Open Full Report →
                 </button>
               </div>
             ) : hasAssessment ? (
               <div>
                 <p className="text-white/60 mb-6">
-                  Assessment completed. Intelligence model ready for generation.
+                  Assessment complete. Generate your intelligence model.
                 </p>
 
                 <button
                   onClick={generateReport}
                   disabled={generatingReport}
-                  className="px-8 py-4 rounded-xl bg-white text-black font-medium hover:scale-[1.02] transition disabled:opacity-50"
+                  className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:opacity-90 transition disabled:opacity-50"
                 >
-                  {generatingReport
-                    ? "Generating..."
-                    : "Generate Intelligence Report"}
+                  {generatingReport ? "Generating..." : "Generate Report"}
                 </button>
               </div>
             ) : (
               <div>
                 <p className="text-white/60 mb-6">
-                  No biological model detected. Run assessment to initialize system.
+                  Complete your assessment to activate your system.
                 </p>
 
                 <button
                   onClick={() => router.push("/assessment")}
-                  className="px-8 py-4 rounded-xl bg-white text-black font-medium hover:scale-[1.02] transition"
+                  className="px-6 py-3 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
                 >
                   Start Assessment
                 </button>
               </div>
             )}
-
           </div>
 
           {/* SUBSCRIPTION */}
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-            <p className="text-white/40 text-xs tracking-[0.35em] mb-4">
+          <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-6">
+
+            <p className="text-white/40 text-xs tracking-[0.4em] mb-4">
               SUBSCRIPTION
             </p>
 
-            <p className="text-lg font-medium mb-6">
+            <p className="text-white/80 mb-6">
               {profile?.plan?.toUpperCase() || "CORE"}
             </p>
 
             <button
               onClick={openBillingPortal}
               disabled={openingPortal}
-              className="w-full px-4 py-3 rounded-xl border border-white/10 hover:bg-white/5 transition text-white/70"
+              className="w-full px-4 py-3 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 transition"
             >
               {openingPortal ? "Opening..." : "Manage Plan"}
             </button>
           </div>
 
           {/* QUICK ACTIONS */}
-          <div className="md:col-span-2 rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+          <div className="md:col-span-2 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-6">
 
-            <p className="text-white/40 text-xs tracking-[0.35em] mb-4">
+            <p className="text-white/40 text-xs tracking-[0.4em] mb-4">
               QUICK ACTIONS
             </p>
 
@@ -297,7 +265,7 @@ export default function DashboardPage() {
                   onClick={() => router.push("/assessment")}
                   className="px-5 py-3 rounded-xl bg-white text-black font-medium"
                 >
-                  Run Assessment
+                  Start Assessment
                 </button>
               )}
 
