@@ -1,18 +1,14 @@
 import { NextResponse } from "next/server";
 
-export async function POST() {
-  console.log("STEP 1 HIT");
+export async function POST(req: Request) {
+  console.log("🔥 RAW POST HIT");
 
-  const start = Date.now();
+  const body = await req.text();
 
-  while (Date.now() - start < 3000) {
-    // simulate work
-  }
-
-  console.log("STEP 2 DONE");
+  console.log("BODY:", body);
 
   return NextResponse.json({
     ok: true,
-    message: "no supabase, no openai, pure execution works",
+    received: body || "empty",
   });
 }
