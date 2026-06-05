@@ -4,27 +4,40 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-black text-white overflow-hidden relative">
-      {/* GLOBAL BACKGROUND */}
-      <div className="fixed inset-0 -z-10 bg-black">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_35%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.03))]" />
+    <main className="min-h-screen bg-[#050507] text-white overflow-hidden relative">
 
-        {/* subtle gold/silver aurora layer */}
-        <div className="absolute inset-0 opacity-[0.35] mix-blend-screen animate-pulse">
-          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-r from-white/10 via-yellow-300/10 to-transparent blur-[120px]" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-gradient-to-r from-white/10 via-cyan-200/10 to-transparent blur-[140px]" />
+      {/* =========================
+          LUXURY BACKGROUND LAYER
+      ========================== */}
+      <div className="fixed inset-0 -z-10">
+        {/* base gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-[#050507] to-black" />
+
+        {/* soft radial luxury glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.10),transparent_40%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(120,180,255,0.08),transparent_45%)]" />
+
+        {/* gold / platinum aurora */}
+        <div className="absolute inset-0 opacity-[0.25] mix-blend-screen">
+          <div className="absolute top-[-15%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-r from-white/10 via-yellow-200/10 to-transparent blur-[140px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-gradient-to-r from-white/10 via-cyan-200/10 to-transparent blur-[160px]" />
         </div>
+
+        {/* subtle grain feel */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]" />
       </div>
 
-      {/* NAVBAR */}
-      <header className="border-b border-white/10 backdrop-blur-xl bg-black/30">
+      {/* =========================
+              NAVBAR
+      ========================== */}
+      <header className="border-b border-white/10 backdrop-blur-xl bg-black/20">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <h1 className="text-xl font-semibold tracking-[0.25em] relative">
-            <span className="bg-gradient-to-r from-white via-yellow-200 to-white bg-clip-text text-transparent animate-pulse">
+
+          <div className="tracking-[0.35em] text-sm font-light">
+            <span className="bg-gradient-to-r from-white via-yellow-100 to-white bg-clip-text text-transparent">
               AEONVERA
             </span>
-          </h1>
+          </div>
 
           <nav className="hidden md:flex items-center gap-10 text-sm text-zinc-400">
             <a href="#platform" className="hover:text-white transition">
@@ -48,7 +61,7 @@ export default function HomePage() {
 
             <Link
               href="/login?mode=signup"
-              className="px-5 py-2 rounded-xl bg-white text-black text-sm font-medium hover:bg-zinc-200 transition shadow-[0_0_25px_rgba(255,255,255,0.15)]"
+              className="px-5 py-2 rounded-xl bg-white text-black text-sm font-medium hover:scale-[1.02] transition shadow-[0_0_25px_rgba(255,255,255,0.12)]"
             >
               Begin
             </Link>
@@ -56,87 +69,94 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* HERO */}
-      <section className="px-6 pt-32 pb-28">
+      {/* =========================
+              HERO
+      ========================== */}
+      <section className="px-6 pt-36 pb-32">
         <div className="max-w-6xl mx-auto text-center">
-          <p className="uppercase tracking-[0.4em] text-zinc-500 text-sm mb-8">
-            AI-NATIVE LONGEVITY INTELLIGENCE
+
+          <p className="uppercase tracking-[0.5em] text-zinc-500 text-xs mb-10">
+            AI • BIOLOGICAL INTELLIGENCE • LONGEVITY SYSTEM
           </p>
 
-          {/* shimmering headline */}
-          <h1 className="text-6xl md:text-8xl font-bold leading-[0.95] tracking-tight max-w-6xl mx-auto relative">
-            <span className="bg-gradient-to-r from-white via-yellow-100 via-60% to-cyan-100 bg-clip-text text-transparent animate-[pulse_6s_ease-in-out_infinite]">
-              Extend human lifespan through intelligence.
+          <h1 className="text-6xl md:text-8xl font-semibold leading-[0.95] tracking-tight">
+            <span className="bg-gradient-to-r from-white via-yellow-100 via-50% to-cyan-100 bg-clip-text text-transparent">
+              Extend human lifespan
             </span>
-
-            {/* subtle shimmer overlay */}
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent blur-xl animate-[ping_8s_linear_infinite]" />
+            <br />
+            <span className="text-white/80 font-light">
+              through intelligence.
+            </span>
           </h1>
 
-          <p className="mt-10 text-xl md:text-2xl text-zinc-400 max-w-3xl mx-auto leading-relaxed">
-            Aeonvera is building the intelligence infrastructure for human
-            longevity — integrating AI systems, biological data, health
-            optimization, and computational medicine into a unified platform.
+          <p className="mt-10 text-lg md:text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed">
+            Aeonvera is a computational longevity system — unifying AI,
+            biological data, and adaptive health modeling into a single
+            intelligence layer for human optimization.
           </p>
 
           <div className="mt-14 flex flex-col sm:flex-row gap-5 justify-center">
             <Link
               href="/login?mode=signup"
-              className="px-8 py-4 rounded-2xl bg-white text-black font-semibold hover:scale-[1.02] transition shadow-[0_0_30px_rgba(255,255,255,0.15)]"
+              className="px-9 py-4 rounded-2xl bg-white text-black font-medium hover:scale-[1.02] transition shadow-[0_0_40px_rgba(255,255,255,0.15)]"
             >
               Access Platform
             </Link>
 
             <a
               href="#platform"
-              className="px-8 py-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition"
+              className="px-9 py-4 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 transition text-white/80"
             >
-              Explore Platform
+              Explore System
             </a>
           </div>
         </div>
       </section>
 
-      {/* PLATFORM */}
+      {/* =========================
+            PLATFORM SECTION
+      ========================== */}
       <section id="platform" className="px-6 py-28 border-t border-white/10">
         <div className="max-w-7xl mx-auto">
+
           <div className="max-w-3xl mb-20">
-            <p className="uppercase tracking-[0.35em] text-zinc-500 text-sm mb-6">
+            <p className="uppercase tracking-[0.4em] text-zinc-500 text-xs mb-6">
               PLATFORM
             </p>
 
-            <h2 className="text-5xl md:text-6xl font-bold leading-tight bg-gradient-to-r from-white via-zinc-200 to-white bg-clip-text text-transparent">
+            <h2 className="text-5xl md:text-6xl font-semibold leading-tight">
               A biological intelligence operating system.
             </h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
+
             {[
               {
                 title: "Biological Monitoring",
                 tag: "BIOMARKERS",
-                desc: "Centralize bloodwork, biomarkers, recovery metrics, and health data into a continuously evolving intelligence profile.",
+                desc: "Unified tracking of biomarkers, recovery, sleep, and metabolic health into a continuously evolving intelligence layer.",
               },
               {
                 title: "Longevity Intelligence",
                 tag: "AI SYSTEMS",
-                desc: "AI-generated optimization protocols designed around cognition, recovery, metabolic health, sleep, and lifespan.",
+                desc: "Adaptive AI models generating optimization protocols for cognition, energy, and lifespan extension.",
               },
               {
-                title: "Human Optimization Layer",
+                title: "Adaptive Health Layer",
                 tag: "INFRASTRUCTURE",
-                desc: "Adaptive intelligence system capable of evolving with biological state over time.",
+                desc: "A persistent system that evolves with your biological state over time.",
               },
             ].map((item, i) => (
               <div
                 key={i}
                 className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl hover:scale-[1.02] transition"
               >
-                <div className="mb-6 text-zinc-500 text-sm uppercase tracking-[0.2em]">
+                <div className="text-xs tracking-[0.3em] text-zinc-500 mb-5">
                   {item.tag}
                 </div>
 
-                <h3 className="text-2xl font-semibold mb-5">
+                <h3 className="text-2xl font-medium mb-4">
                   {item.title}
                 </h3>
 
@@ -145,79 +165,89 @@ export default function HomePage() {
                 </p>
               </div>
             ))}
+
           </div>
         </div>
       </section>
 
-      {/* SCIENCE */}
+      {/* =========================
+              SCIENCE
+      ========================== */}
       <section id="science" className="px-6 py-28 border-t border-white/10">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
+
           <div>
-            <p className="uppercase tracking-[0.35em] text-zinc-500 text-sm mb-6">
+            <p className="uppercase tracking-[0.4em] text-zinc-500 text-xs mb-6">
               SCIENTIFIC FOUNDATION
             </p>
 
-            <h2 className="text-5xl font-bold leading-tight mb-8 bg-gradient-to-r from-white via-zinc-300 to-white bg-clip-text text-transparent">
-              Computational longevity at scale.
+            <h2 className="text-5xl font-semibold mb-8">
+              Computational longevity infrastructure.
             </h2>
 
             <p className="text-zinc-400 text-lg leading-relaxed mb-6">
-              Aeonvera combines artificial intelligence, longitudinal health
-              data, and optimization systems to create adaptive longevity
-              intelligence.
+              Aeonvera integrates artificial intelligence with longitudinal
+              biological datasets to model human health trajectories and
+              intervention outcomes.
             </p>
 
             <p className="text-zinc-400 text-lg leading-relaxed">
-              The platform evolves into a unified infrastructure layer for
-              preventive health, cognitive optimization, biomarker analysis,
-              and biological age intervention systems.
+              The system functions as an adaptive intelligence layer for
+              predictive health, biological optimization, and lifespan
+              engineering.
             </p>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-10 backdrop-blur-xl">
-            <div className="space-y-10">
-              {[
-                "Continuous Biological Tracking",
-                "Adaptive Health Intelligence",
-                "Personalized Longevity Protocols",
-              ].map((t, i) => (
-                <div key={i}>
-                  <div className="text-zinc-500 text-sm mb-2">
-                    SYSTEM MODULE
-                  </div>
-                  <div className="text-3xl font-semibold">{t}</div>
-                </div>
-              ))}
-            </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-10 backdrop-blur-xl space-y-10">
+
+            {[
+              "Continuous Biological Tracking",
+              "Adaptive AI Reasoning",
+              "Personalized Longevity Protocols",
+            ].map((t, i) => (
+              <div key={i}>
+                <p className="text-xs tracking-[0.3em] text-zinc-500 mb-2">
+                  SYSTEM MODULE
+                </p>
+                <p className="text-2xl font-medium">{t}</p>
+              </div>
+            ))}
+
           </div>
+
         </div>
       </section>
 
-      {/* CTA */}
+      {/* =========================
+                CTA
+      ========================== */}
       <section className="px-6 py-36 border-t border-white/10">
         <div className="max-w-5xl mx-auto text-center">
-          <p className="uppercase tracking-[0.4em] text-zinc-500 text-sm mb-6">
+
+          <p className="uppercase tracking-[0.4em] text-zinc-500 text-xs mb-6">
             BEGIN
           </p>
 
-          <h2 className="text-5xl md:text-7xl font-bold leading-tight bg-gradient-to-r from-white via-yellow-100 to-cyan-100 bg-clip-text text-transparent">
+          <h2 className="text-5xl md:text-7xl font-semibold leading-tight">
             Build your longevity intelligence layer.
           </h2>
 
-          <p className="mt-8 text-zinc-400 text-xl max-w-2xl mx-auto leading-relaxed">
-            Access the next generation of AI-powered biological optimization.
+          <p className="mt-8 text-zinc-400 text-lg max-w-2xl mx-auto">
+            Access next-generation AI-powered biological optimization systems.
           </p>
 
           <div className="mt-12">
             <Link
               href="/login?mode=signup"
-              className="inline-flex px-10 py-5 rounded-2xl bg-white text-black font-semibold hover:scale-[1.02] transition shadow-[0_0_40px_rgba(255,255,255,0.15)]"
+              className="inline-flex px-10 py-5 rounded-2xl bg-white text-black font-medium hover:scale-[1.02] transition shadow-[0_0_45px_rgba(255,255,255,0.15)]"
             >
               Access Platform
             </Link>
           </div>
+
         </div>
       </section>
+
     </main>
   );
 }
