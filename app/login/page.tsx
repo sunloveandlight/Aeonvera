@@ -4,22 +4,23 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#07090d] text-white overflow-hidden relative">
-      {/* BACKGROUND — STABLE (NO PULSING) */}
-      <div className="fixed inset-0 -z-10 bg-[#07090d]">
-        {/* soft radial base */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_55%)]" />
+    <main className="min-h-screen bg-[#080a0f] text-white overflow-hidden relative">
+      {/* STATIC BACKGROUND ONLY (NO ANIMATION ANYWHERE) */}
+      <div className="fixed inset-0 -z-10 bg-[#080a0f]">
 
-        {/* LEFT → RIGHT REFINED LUXURY SWEEP */}
-        <div className="absolute inset-0 opacity-60">
-          <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-yellow-200/5 to-cyan-200/5" />
+        {/* base soft light */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_60%)]" />
+
+        {/* LEFT → RIGHT LIGHT STRUCTURE (STATIC ONLY) */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-white/5 via-yellow-100/5 to-cyan-100/5" />
         </div>
 
-        {/* subtle structure grid (gives “OS feel”) */}
-        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] bg-[size:80px_80px]" />
+        {/* subtle architectural grid (NO movement, NO blur animation tricks) */}
+        <div className="absolute inset-0 opacity-[0.04] bg-[linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] bg-[size:90px_90px]" />
       </div>
 
-      {/* NAVBAR */}
+      {/* NAV */}
       <header className="border-b border-white/10 bg-black/40 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <h1 className="text-xl font-semibold tracking-[0.25em]">
@@ -50,7 +51,7 @@ export default function HomePage() {
 
             <Link
               href="/login?mode=signup"
-              className="px-5 py-2 rounded-xl bg-white text-black text-sm font-medium hover:bg-zinc-200 transition shadow-sm"
+              className="px-5 py-2 rounded-xl bg-white text-black text-sm font-medium hover:bg-zinc-200 transition"
             >
               Begin
             </Link>
@@ -65,9 +66,9 @@ export default function HomePage() {
             AI-NATIVE LONGEVITY INTELLIGENCE
           </p>
 
-          {/* CLEAN LUXURY HEADLINE */}
+          {/* STATIC PREMIUM GRADIENT TEXT (NO ANIMATION) */}
           <h1 className="text-6xl md:text-8xl font-bold leading-[0.95] tracking-tight max-w-6xl mx-auto">
-            <span className="bg-gradient-to-r from-white via-yellow-100 via-40% to-cyan-100 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-white via-zinc-100 via-40% to-zinc-200 bg-clip-text text-transparent">
               Extend human lifespan through intelligence.
             </span>
           </h1>
@@ -201,10 +202,8 @@ export default function HomePage() {
             BEGIN
           </p>
 
-          <h2 className="text-5xl md:text-7xl font-bold leading-tight">
-            <span className="bg-gradient-to-r from-white via-yellow-100 to-cyan-100 bg-clip-text text-transparent">
-              Build your longevity intelligence layer.
-            </span>
+          <h2 className="text-5xl md:text-7xl font-bold leading-tight text-white">
+            Build your longevity intelligence layer.
           </h2>
 
           <p className="mt-8 text-zinc-300 text-xl max-w-2xl mx-auto leading-relaxed">
