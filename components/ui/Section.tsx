@@ -24,7 +24,6 @@ export default function Section({
       className={`
         w-full
         ${sizes[size]}
-        border-white/10
         ${className}
       `}
     >
