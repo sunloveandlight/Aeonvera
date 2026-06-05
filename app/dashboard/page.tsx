@@ -24,6 +24,7 @@ export default function DashboardPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [openingPortal, setOpeningPortal] = useState(false);
   const [generatingReport, setGeneratingReport] = useState(false);
 
@@ -55,7 +56,10 @@ export default function DashboardPage() {
         }
 
         if (
-          !isUserAllowed(profileData.plan, profileData.subscription_status)
+          !isUserAllowed(
+            profileData.plan,
+            profileData.subscription_status
+          )
         ) {
           router.replace("/pricing");
           return;
@@ -71,7 +75,9 @@ export default function DashboardPage() {
           .limit(1)
           .single();
 
-        if (existingReport) setReport(existingReport);
+        if (existingReport) {
+          setReport(existingReport);
+        }
 
         const { data: assessment } = await supabase
           .from("longevity_assessments")
@@ -126,7 +132,9 @@ export default function DashboardPage() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) {
+        throw new Error(data.error);
+      }
 
       window.location.href = data.url;
     } catch {
@@ -140,7 +148,7 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-[#050507] text-white flex items-center justify-center">
         <div className="text-white/50 text-sm tracking-[0.25em] uppercase">
-          Initializing intelligence system...
+          Initializing Intelligence System...
         </div>
       </div>
     );
@@ -158,172 +166,176 @@ export default function DashboardPage() {
     profile?.display_name?.slice(0, 2).toUpperCase() || "AU";
 
   return (
-    <main className="min-h-screen bg-[#050507] text-white relative overflow-hidden">
-
+    <main className="min-h-screen bg-[#050507] text-white overflow-hidden relative">
       {/* BACKGROUND */}
-      <div className="absolute inset-0">
-        <div className="absolute w-[800px] h-[800px] bg-white/5 blur-[160px] rounded-full top-[-300px] left-[-300px]" />
-        <div className="absolute w-[700px] h-[700px] bg-cyan-500/5 blur-[180px] rounded-full bottom-[-300px] right-[-300px]" />
+      <div className="fixed inset-0 -z-10 bg-[#050507]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_40%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.02))]" />
+
+        <div className="absolute inset-0 opacity-40">
+          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-white/5 blur-[140px]" />
+          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-cyan-500/5 blur-[160px]" />
+        </div>
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
-
-        {/* HEADER */}
-        <div className="flex items-center justify-between mb-12">
-
+      {/* HEADER */}
+      <header className="border-b border-white/10 backdrop-blur-xl bg-black/20">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div>
-            <h1 className="text-sm tracking-[0.35em] text-white/70">
+            <h1 className="text-sm tracking-[0.35em] font-medium">
               AEONVERA
             </h1>
-            <p className="text-white/40 text-xs mt-2">
-              Longevity Intelligence System
-            </p>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
-              <p className="text-white/70 text-sm">
+              <p className="text-sm text-white/70">
                 {profile?.display_name || "User"}
               </p>
-              <p className="text-white/40 text-xs uppercase">
+
+              <p className="text-xs uppercase text-white/40">
                 {profile?.plan || "core"}
               </p>
             </div>
 
-            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-sm">
+            <div className="w-10 h-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-sm">
               {initials}
             </div>
           </div>
-
         </div>
+      </header>
 
-        {/* MAIN GRID */}
-        <div className="grid md:grid-cols-3 gap-6">
+      {/* CONTENT */}
+      <section className="px-6 py-16">
+        <div className="max-w-6xl mx-auto">
+          <p className="text-xs tracking-[0.4em] text-white/40 uppercase mb-8">
+            LONGEVITY INTELLIGENCE
+          </p>
 
-          {/* PRIMARY INTELLIGENCE CARD */}
-          <div className="md:col-span-3 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8">
+          <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">
+            Dashboard
+          </h1>
 
-            <h2 className="text-white/50 text-xs tracking-[0.3em] uppercase mb-6">
-              Digital Twin Status
-            </h2>
+          <p className="mt-6 text-white/60 text-lg max-w-2xl">
+            Your biological intelligence layer, assessment status,
+            reports, and subscription management.
+          </p>
+
+          {/* PRIMARY CARD */}
+          <div className="mt-14 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8">
+            <p className="text-xs tracking-[0.35em] uppercase text-white/40 mb-6">
+              DIGITAL TWIN STATUS
+            </p>
 
             {report ? (
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
                 <div>
-                  <p className="text-white/70 mb-2">
+                  <p className="text-white/60 mb-2">
                     Intelligence Report Active
                   </p>
-                  <p className="text-3xl font-medium">
-                    Risk Score{" "}
-                    <span className="text-white/40">
-                      {report.risk_score}/100
-                    </span>
-                  </p>
+
+                  <h2 className="text-4xl font-semibold">
+                    {report.risk_score}
+                    <span className="text-white/40"> / 100</span>
+                  </h2>
                 </div>
 
                 <button
                   onClick={() => router.push("/report")}
-                  className="px-6 py-3 rounded-xl bg-white text-black text-sm font-medium hover:opacity-90 transition"
+                  className="px-8 py-3 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
                 >
                   Open Report
                 </button>
-
               </div>
             ) : hasAssessment ? (
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
                 <p className="text-white/60">
-                  Assessment complete. Ready to generate intelligence model.
+                  Assessment completed. Generate your AI longevity report.
                 </p>
 
                 <button
                   onClick={generateReport}
                   disabled={generatingReport}
-                  className="px-6 py-3 rounded-xl bg-white text-black text-sm font-medium disabled:opacity-50 hover:opacity-90 transition"
+                  className="px-8 py-3 rounded-xl bg-white text-black font-medium disabled:opacity-50"
                 >
-                  {generatingReport ? "Processing..." : "Generate Report"}
+                  {generatingReport
+                    ? "Processing..."
+                    : "Generate Report"}
                 </button>
-
               </div>
             ) : (
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
                 <p className="text-white/60">
-                  No assessment detected. Initialize your system profile.
+                  No assessment detected. Begin your intelligence profile.
                 </p>
 
                 <button
                   onClick={() => router.push("/assessment")}
-                  className="px-6 py-3 rounded-xl bg-white text-black text-sm font-medium hover:opacity-90 transition"
+                  className="px-8 py-3 rounded-xl bg-white text-black font-medium"
                 >
                   Start Assessment
                 </button>
-
               </div>
             )}
-
           </div>
 
-          {/* SUBSCRIPTION */}
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+          {/* GRID */}
+          <div className="grid md:grid-cols-2 gap-6 mt-6">
+            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8">
+              <p className="text-xs tracking-[0.35em] uppercase text-white/40 mb-6">
+                SUBSCRIPTION
+              </p>
 
-            <h3 className="text-white/50 text-xs tracking-[0.3em] uppercase mb-4">
-              Subscription
-            </h3>
-
-            <p className="text-white/80 mb-6 uppercase text-sm">
-              {profile?.plan || "core"}
-            </p>
-
-            <button
-              onClick={openBillingPortal}
-              disabled={openingPortal}
-              className="w-full px-4 py-3 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 transition text-sm"
-            >
-              {openingPortal ? "Opening..." : "Manage Plan"}
-            </button>
-
-          </div>
-
-          {/* QUICK ACTIONS */}
-          <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-
-            <h3 className="text-white/50 text-xs tracking-[0.3em] uppercase mb-4">
-              Quick Actions
-            </h3>
-
-            <div className="flex flex-wrap gap-3">
-
-              {!hasAssessment && (
-                <button
-                  onClick={() => router.push("/assessment")}
-                  className="px-5 py-3 rounded-xl bg-white text-black text-sm font-medium"
-                >
-                  Start Assessment
-                </button>
-              )}
+              <h3 className="text-2xl font-medium uppercase mb-6">
+                {profile?.plan || "core"}
+              </h3>
 
               <button
                 onClick={openBillingPortal}
-                className="px-5 py-3 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 transition text-sm"
+                disabled={openingPortal}
+                className="w-full px-8 py-3 rounded-xl border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 transition"
               >
-                Billing
+                {openingPortal
+                  ? "Opening..."
+                  : "Manage Plan"}
               </button>
-
-              <button
-                onClick={() => router.push("/report")}
-                className="px-5 py-3 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 transition text-sm"
-              >
-                View Report
-              </button>
-
             </div>
 
-          </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8">
+              <p className="text-xs tracking-[0.35em] uppercase text-white/40 mb-6">
+                QUICK ACTIONS
+              </p>
 
+              <div className="flex flex-wrap gap-3">
+                {!hasAssessment && (
+                  <button
+                    onClick={() =>
+                      router.push("/assessment")
+                    }
+                    className="px-8 py-3 rounded-xl bg-white text-black font-medium"
+                  >
+                    Start Assessment
+                  </button>
+                )}
+
+                <button
+                  onClick={openBillingPortal}
+                  className="px-8 py-3 rounded-xl border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 transition"
+                >
+                  Billing
+                </button>
+
+                <button
+                  onClick={() => router.push("/report")}
+                  className="px-8 py-3 rounded-xl border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 transition"
+                >
+                  View Report
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
     </main>
   );
 }
