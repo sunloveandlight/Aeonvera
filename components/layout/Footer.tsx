@@ -7,12 +7,10 @@ export default function Footer() {
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
 
-          {/* Brand */}
           <div className="tracking-[0.25em] text-sm font-semibold">
             AEONVERA
           </div>
 
-          {/* Links */}
           <div className="flex flex-wrap gap-6 text-sm text-white/50">
             <Link href="/pricing" className="hover:text-white transition">
               Pricing
@@ -28,7 +26,6 @@ export default function Footer() {
             </Link>
           </div>
 
-          {/* Legal */}
           <div className="text-xs text-white/30">
             © {new Date().getFullYear()} AEONVERA. All rights reserved.
           </div>
