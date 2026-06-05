@@ -7,6 +7,7 @@ import { isUserAllowed } from "@/lib/auth/permissions";
 
 import AppShell from "@/components/layout/AppShell";
 import PageContainer from "@/components/ui/PageContainer";
+import Card from "@/components/ui/Card";
 
 type Profile = {
   display_name: string | null;
@@ -57,9 +58,7 @@ export default function DashboardPage() {
           return;
         }
 
-        if (
-          !isUserAllowed(profileData.plan, profileData.subscription_status)
-        ) {
+        if (!isUserAllowed(profileData.plan, profileData.subscription_status)) {
           router.replace("/pricing");
           return;
         }
@@ -162,9 +161,6 @@ export default function DashboardPage() {
     );
   }
 
-  const initials =
-    profile?.display_name?.slice(0, 2).toUpperCase() || "AU";
-
   return (
     <AppShell>
       <PageContainer>
@@ -186,11 +182,7 @@ export default function DashboardPage() {
           </div>
 
           {/* PRIMARY CARD */}
-          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 mb-8">
-            <p className="text-xs tracking-[0.35em] uppercase text-white/40 mb-6">
-              DIGITAL TWIN STATUS
-            </p>
-
+          <Card label="DIGITAL TWIN STATUS">
             {report ? (
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
                 <div>
@@ -238,17 +230,12 @@ export default function DashboardPage() {
                 </button>
               </div>
             )}
-          </div>
+          </Card>
 
           {/* GRID */}
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-6 mt-6">
 
-            {/* SUBSCRIPTION */}
-            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8">
-              <p className="text-xs tracking-[0.35em] uppercase text-white/40 mb-6">
-                SUBSCRIPTION
-              </p>
-
+            <Card label="SUBSCRIPTION">
               <h3 className="text-2xl font-medium uppercase mb-6">
                 {profile?.plan || "core"}
               </h3>
@@ -260,15 +247,11 @@ export default function DashboardPage() {
               >
                 {openingPortal ? "Opening..." : "Manage Plan"}
               </button>
-            </div>
+            </Card>
 
-            {/* QUICK ACTIONS */}
-            <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8">
-              <p className="text-xs tracking-[0.35em] uppercase text-white/40 mb-6">
-                QUICK ACTIONS
-              </p>
-
+            <Card label="QUICK ACTIONS">
               <div className="flex flex-wrap gap-3">
+
                 {!hasAssessment && (
                   <button
                     onClick={() => router.push("/assessment")}
@@ -291,8 +274,9 @@ export default function DashboardPage() {
                 >
                   View Report
                 </button>
+
               </div>
-            </div>
+            </Card>
 
           </div>
 
