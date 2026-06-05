@@ -1,5 +1,18 @@
 import { NextResponse } from "next/server";
 
 export async function POST() {
-  return NextResponse.json({ ok: true, route: "test-post", method: "POST" });
+  console.log("🔥 TEST POST HIT");
+
+  return NextResponse.json({
+    ok: true,
+    route: "test-post",
+    method: "POST",
+  });
+}
+
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    method: "GET fallback",
+  });
 }
