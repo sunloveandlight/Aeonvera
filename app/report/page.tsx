@@ -1,4 +1,3 @@
-// app/report/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -34,7 +33,9 @@ export default function ReportPage() {
   useEffect(() => {
     const fetchLatestReport = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
         if (!user) {
           router.replace("/login");
@@ -68,10 +69,12 @@ export default function ReportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#05060a] text-white flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full mx-auto mb-4" />
-          <p>Decoding your longevity blueprint...</p>
+          <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-cyan-400 rounded-full mx-auto mb-4" />
+          <p className="text-white/60">
+            Decoding your longevity blueprint...
+          </p>
         </div>
       </div>
     );
@@ -79,12 +82,13 @@ export default function ReportPage() {
 
   if (error || !report) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center max-w-md">
+      <div className="min-h-screen bg-[#05060a] text-white flex items-center justify-center px-6">
+        <div className="text-center max-w-md bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl">
           <p className="text-red-400 mb-6">{error}</p>
+
           <button
             onClick={() => router.push("/dashboard")}
-            className="px-6 py-3 bg-white text-black rounded-xl"
+            className="px-6 py-3 bg-white text-black rounded-xl font-medium hover:opacity-90 transition"
           >
             Return to Dashboard
           </button>
@@ -93,108 +97,182 @@ export default function ReportPage() {
     );
   }
 
-  const riskColor = report.risk_score <= 35 ? "text-green-400" : 
-                    report.risk_score <= 65 ? "text-yellow-400" : "text-red-400";
+  const riskColor =
+    report.risk_score <= 35
+      ? "text-green-400"
+      : report.risk_score <= 65
+      ? "text-yellow-400"
+      : "text-red-400";
+
+  const glowBg =
+    report.risk_score <= 35
+      ? "from-green-500/10"
+      : report.risk_score <= 65
+      ? "from-yellow-500/10"
+      : "from-red-500/10";
 
   return (
-    <main className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="mb-8 text-white/60 hover:text-white flex items-center gap-2"
-        >
-          ← Back to Dashboard
-        </button>
+    <main className="min-h-screen bg-[#05060a] text-white relative overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute inset-0">
+        <div className={`absolute w-[700px] h-[700px] ${glowBg} to-transparent blur-[140px] rounded-full top-[-250px] left-[-250px]`} />
+        <div className="absolute w-[600px] h-[600px] bg-purple-500/10 blur-[140px] rounded-full bottom-[-250px] right-[-250px]" />
+      </div>
 
-        <h1 className="text-5xl font-light mb-2">Your Longevity Blueprint</h1>
-        <p className="text-white/50 mb-10">AI-Generated Intelligence Report</p>
-
-        {/* Risk Score */}
-        <div className="bg-zinc-950 border border-white/10 rounded-3xl p-10 mb-10 text-center">
-          <p className="text-sm text-white/50 mb-2">OVERALL RISK SCORE</p>
-          <div className={`text-8xl font-light ${riskColor}`}>
-            {report.risk_score}
-          </div>
-          <p className="text-xl mt-2">/ 100</p>
-        </div>
-
-        {/* Primary Goal */}
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-14">
+        {/* HEADER */}
         <div className="mb-10">
-          <h2 className="text-sm uppercase tracking-widest text-white/50 mb-3">PRIMARY GOAL</h2>
-          <p className="text-3xl font-light">{report.primary_goal}</p>
+          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
+            Biological Intelligence Report
+          </h1>
+          <p className="text-white/50 mt-2">
+            AI-generated systemic longevity analysis
+          </p>
         </div>
 
-        {/* Risk Profile */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+        {/* RISK SCORE */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-10 mb-10 backdrop-blur-xl">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+            <div>
+              <p className="text-white/50 text-sm">
+                OVERALL RISK SCORE
+              </p>
+              <p className={`text-7xl font-semibold mt-2 ${riskColor}`}>
+                {report.risk_score}
+              </p>
+              <p className="text-white/60 mt-2">/ 100</p>
+            </div>
+
+            <div className="w-full md:w-1/2">
+              <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${
+                    report.risk_score <= 35
+                      ? "bg-gradient-to-r from-green-400 to-emerald-500"
+                      : report.risk_score <= 65
+                      ? "bg-gradient-to-r from-yellow-400 to-orange-500"
+                      : "bg-gradient-to-r from-red-400 to-red-600"
+                  }`}
+                  style={{ width: `${report.risk_score}%` }}
+                />
+              </div>
+
+              <p className="text-white/40 text-xs mt-2">
+                System-wide biological stress index
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* PRIMARY GOAL */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-10 backdrop-blur-xl">
+          <h2 className="text-white/50 text-sm mb-2">
+            PRIMARY OBJECTIVE
+          </h2>
+          <p className="text-2xl md:text-3xl font-light">
+            {report.primary_goal}
+          </p>
+        </div>
+
+        {/* RISK PROFILE */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
           {Object.entries(report.risk_profile).map(([key, value]) => (
-            <div key={key} className="bg-zinc-950 border border-white/10 rounded-2xl p-6">
-              <p className="text-white/50 text-sm capitalize mb-2">
+            <div
+              key={key}
+              className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl"
+            >
+              <p className="text-white/40 text-sm capitalize mb-2">
                 {key.replace("_", " ")}
               </p>
-              <p className={`text-3xl font-medium capitalize ${
-                value === "low" ? "text-green-400" : 
-                value === "medium" ? "text-yellow-400" : "text-red-400"
-              }`}>
+
+              <p
+                className={`text-2xl font-semibold capitalize ${
+                  value === "low"
+                    ? "text-green-400"
+                    : value === "medium"
+                    ? "text-yellow-400"
+                    : "text-red-400"
+                }`}
+              >
                 {value}
               </p>
             </div>
           ))}
         </div>
 
-        {/* Strengths & Weaknesses */}
+        {/* STRENGTHS / WEAKNESSES */}
         <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <div>
-            <h3 className="text-lg mb-4 text-green-400">STRENGTHS</h3>
-            <ul className="space-y-3">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl">
+            <h3 className="text-green-400 mb-4">STRENGTHS</h3>
+            <div className="space-y-3">
               {report.strengths.map((item, i) => (
-                <li key={i} className="bg-green-950/30 border border-green-500/20 rounded-xl p-4">
-                  • {item}
-                </li>
+                <div
+                  key={i}
+                  className="p-4 rounded-xl bg-green-500/10 border border-green-500/20"
+                >
+                  {item}
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
 
-          <div>
-            <h3 className="text-lg mb-4 text-orange-400">WEAKNESSES</h3>
-            <ul className="space-y-3">
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl">
+            <h3 className="text-orange-400 mb-4">WEAKNESSES</h3>
+            <div className="space-y-3">
               {report.weaknesses.map((item, i) => (
-                <li key={i} className="bg-orange-950/30 border border-orange-500/20 rounded-xl p-4">
-                  • {item}
-                </li>
+                <div
+                  key={i}
+                  className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20"
+                >
+                  {item}
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </div>
 
-        {/* Top Priorities */}
-        <div className="mb-12">
-          <h3 className="text-lg mb-6">TOP PRIORITIES</h3>
+        {/* PRIORITIES */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-12 backdrop-blur-xl">
+          <h3 className="mb-6 text-white/60">TOP PRIORITIES</h3>
           <div className="space-y-4">
             {report.top_priorities.map((priority, i) => (
-              <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                {i + 1}. {priority}
+              <div
+                key={i}
+                className="p-5 rounded-xl border border-white/10 bg-white/5"
+              >
+                <span className="text-white/40 mr-2">{i + 1}.</span>
+                {priority}
               </div>
             ))}
           </div>
         </div>
 
-        {/* 90 Day Plan */}
+        {/* 90 DAY PLAN */}
         <div className="mb-12">
-          <h3 className="text-lg mb-6">90-DAY OPTIMIZATION PLAN</h3>
+          <h3 className="mb-6 text-white/60">90-DAY OPTIMIZATION PLAN</h3>
+
           <div className="space-y-6">
             {report["90_day_plan"].map((item, i) => (
-              <div key={i} className="border border-white/10 bg-zinc-950 rounded-2xl p-6">
-                <div className="flex justify-between items-start">
+              <div
+                key={i}
+                className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl"
+              >
+                <div className="flex justify-between items-start gap-6">
                   <div>
-                    <p className="font-medium text-white">{item.category}</p>
-                    <p className="mt-2 text-white/80">{item.action}</p>
+                    <p className="font-medium">{item.category}</p>
+                    <p className="text-white/70 mt-2">{item.action}</p>
                   </div>
-                  <span className={`px-4 py-1 rounded-full text-sm ${
-                    item.impact === "high" ? "bg-green-500/20 text-green-400" : 
-                    item.impact === "medium" ? "bg-yellow-500/20 text-yellow-400" : 
-                    "bg-white/10 text-white/70"
-                  }`}>
-                    {item.impact} impact
+
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs ${
+                      item.impact === "high"
+                        ? "bg-green-500/20 text-green-400"
+                        : item.impact === "medium"
+                        ? "bg-yellow-500/20 text-yellow-400"
+                        : "bg-white/10 text-white/60"
+                    }`}
+                  >
+                    {item.impact}
                   </span>
                 </div>
               </div>
@@ -202,20 +280,25 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* Behavioral Insights */}
-        <div>
-          <h3 className="text-lg mb-6">BEHAVIORAL INSIGHTS</h3>
-          <div className="bg-zinc-950 border border-white/10 rounded-3xl p-8 space-y-6">
+        {/* INSIGHTS */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl">
+          <h3 className="text-white/60 mb-6">BEHAVIORAL INSIGHTS</h3>
+
+          <div className="space-y-6">
             {report.behavioral_insights.map((insight, i) => (
-              <p key={i} className="text-lg leading-relaxed border-l-4 border-white/30 pl-6">
+              <p
+                key={i}
+                className="border-l-2 border-cyan-400/40 pl-4 text-white/80"
+              >
                 {insight}
               </p>
             ))}
           </div>
         </div>
 
-        <div className="mt-16 text-center text-white/40 text-sm">
-          Generated by Aeonvera • {new Date().toLocaleDateString()}
+        {/* FOOTER */}
+        <div className="mt-16 text-center text-white/30 text-xs">
+          Aeonvera Intelligence System • Generated in real-time
         </div>
       </div>
     </main>
