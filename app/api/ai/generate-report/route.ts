@@ -1,19 +1,38 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import OpenAI from "openai";
+import { cookies } from "next/headers";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
-function getSupabase(request: Request) {
+async function getSupabase() {
+  const cookieStore = await cookies();
+
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll: () => [],
-        setAll: () => {},
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet: any) {
+          cookiesToSet.forEach(
+            ({
+              name,
+              value,
+              options,
+            }: {
+              name: string;
+              value: string;
+              options?: any;
+            }) => {
+              cookieStore.set(name, value, options);
+            }
+          );
+        },
       },
     }
   );
@@ -21,7 +40,7 @@ function getSupabase(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const supabase = getSupabase(request);
+    const supabase = await getSupabase();
 
     // 1. Get user
     const {
@@ -58,7 +77,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Build AI prompt (structured intelligence system)
+    // 4. AI prompt
     const prompt = `
 You are Aeonvera, a longevity intelligence engine.
 
@@ -78,24 +97,20 @@ ASSESSMENT DATA:
 ${JSON.stringify(assessment, null, 2)}
 
 OUTPUT FORMAT:
-Return ONLY JSON in this structure:
+Return ONLY JSON:
 
 {
-  "risk_score": number (0-100),
+  "risk_score": number,
   "primary_goal": string,
-
   "risk_profile": {
     "sleep_risk": "low | medium | high",
     "metabolic_risk": "low | medium | high",
     "cardiovascular_risk": "low | medium | high",
     "lifestyle_risk": "low | medium | high"
   },
-
   "strengths": [string],
   "weaknesses": [string],
-
   "top_priorities": [string],
-
   "90_day_plan": [
     {
       "category": string,
@@ -103,12 +118,11 @@ Return ONLY JSON in this structure:
       "impact": "low | medium | high"
     }
   ],
-
   "behavioral_insights": [string]
 }
 `;
 
-    // 5. Call OpenAI
+    // 5. OpenAI call
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
@@ -134,8 +148,8 @@ Return ONLY JSON in this structure:
       );
     }
 
-    // 6. Parse JSON safely
     let report;
+
     try {
       report = JSON.parse(content);
     } catch (e) {
@@ -145,7 +159,7 @@ Return ONLY JSON in this structure:
       );
     }
 
-    // 7. Save to Supabase
+    // 6. Save report
     const { data, error } = await supabase
       .from("longevity_reports")
       .insert({
@@ -162,7 +176,6 @@ Return ONLY JSON in this structure:
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // 8. Return result
     return NextResponse.json({
       success: true,
       report: data,
