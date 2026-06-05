@@ -1,48 +1,29 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
-import { cookies } from "next/headers";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
-async function getSupabase() {
-  const cookieStore = await cookies();
-
-  return createServerClient(
+// ✅ Production-safe Supabase server client (NO cookies() usage)
+function getSupabase() {
+  return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet: any) {
-          cookiesToSet.forEach(
-            ({
-              name,
-              value,
-              options,
-            }: {
-              name: string;
-              value: string;
-              options?: any;
-            }) => {
-              cookieStore.set(name, value, options);
-            }
-          );
-        },
+      auth: {
+        persistSession: false,
       },
     }
   );
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
-    const supabase = await getSupabase();
+    const supabase = getSupabase();
 
-    // 1. Get user
+    // 1. Get user from JWT (works with Supabase auth cookies automatically)
     const {
       data: { user },
       error: userError,
@@ -78,62 +59,33 @@ export async function POST(request: Request) {
     }
 
     // 4. AI prompt
-    const prompt = `
-You are Aeonvera, a longevity intelligence engine.
-
-You analyze human biological + lifestyle data and produce structured, non-medical optimization intelligence.
-
-IMPORTANT RULES:
-- Do NOT give medical diagnoses
-- Do NOT claim certainty
-- Focus on risk patterns and optimization opportunities
-- Be structured and concise
-- Output MUST be valid JSON only
-
-USER PROFILE:
-${JSON.stringify(profile, null, 2)}
-
-ASSESSMENT DATA:
-${JSON.stringify(assessment, null, 2)}
-
-OUTPUT FORMAT:
-Return ONLY JSON:
-
-{
-  "risk_score": number,
-  "primary_goal": string,
-  "risk_profile": {
-    "sleep_risk": "low | medium | high",
-    "metabolic_risk": "low | medium | high",
-    "cardiovascular_risk": "low | medium | high",
-    "lifestyle_risk": "low | medium | high"
-  },
-  "strengths": [string],
-  "weaknesses": [string],
-  "top_priorities": [string],
-  "90_day_plan": [
-    {
-      "category": string,
-      "action": string,
-      "impact": "low | medium | high"
-    }
-  ],
-  "behavioral_insights": [string]
-}
-`;
-
-    // 5. OpenAI call
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
         {
           role: "system",
           content:
-            "You are a precise structured health intelligence engine. Return only valid JSON.",
+            "You are Aeonvera, a longevity intelligence engine. Return ONLY valid JSON.",
         },
         {
           role: "user",
-          content: prompt,
+          content: `
+Analyze this user:
+
+PROFILE:
+${JSON.stringify(profile, null, 2)}
+
+ASSESSMENT:
+${JSON.stringify(assessment, null, 2)}
+
+Return JSON with:
+- risk_score (0-100)
+- primary_goal
+- strengths
+- weaknesses
+- top_priorities
+- 90_day_plan
+          `,
         },
       ],
       temperature: 0.4,
@@ -149,17 +101,16 @@ Return ONLY JSON:
     }
 
     let report;
-
     try {
       report = JSON.parse(content);
-    } catch (e) {
+    } catch {
       return NextResponse.json(
-        { error: "Invalid AI JSON output", raw: content },
+        { error: "Invalid JSON from AI", raw: content },
         { status: 500 }
       );
     }
 
-    // 6. Save report
+    // 5. Save report
     const { data, error } = await supabase
       .from("longevity_reports")
       .insert({
