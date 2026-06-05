@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { isUserAllowed } from "@/lib/auth/permissions";
 
+import AppShell from "@/components/layout/AppShell";
+import PageContainer from "@/components/ui/PageContainer";
+
 type Profile = {
   display_name: string | null;
   plan: string | null;
@@ -15,7 +18,6 @@ type Report = {
   id: string;
   risk_score: number;
   primary_goal: string;
-  report: any;
   created_at: string;
 };
 
@@ -56,10 +58,7 @@ export default function DashboardPage() {
         }
 
         if (
-          !isUserAllowed(
-            profileData.plan,
-            profileData.subscription_status
-          )
+          !isUserAllowed(profileData.plan, profileData.subscription_status)
         ) {
           router.replace("/pricing");
           return;
@@ -83,8 +82,7 @@ export default function DashboardPage() {
           .from("longevity_assessments")
           .select("id")
           .eq("user_id", user.id)
-          .limit(1)
-          .single();
+          .maybeSingle();
 
         setHasAssessment(!!assessment);
 
@@ -146,19 +144,21 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050507] text-white flex items-center justify-center">
-        <div className="text-white/50 text-sm tracking-[0.25em] uppercase">
+      <AppShell>
+        <div className="flex items-center justify-center min-h-[60vh] text-white/50 text-sm tracking-[0.25em] uppercase">
           Initializing Intelligence System...
         </div>
-      </div>
+      </AppShell>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#050507] text-red-400 flex items-center justify-center">
-        {error}
-      </div>
+      <AppShell>
+        <div className="flex items-center justify-center min-h-[60vh] text-red-400">
+          {error}
+        </div>
+      </AppShell>
     );
   }
 
@@ -166,63 +166,27 @@ export default function DashboardPage() {
     profile?.display_name?.slice(0, 2).toUpperCase() || "AU";
 
   return (
-    <main className="min-h-screen bg-[#050507] text-white overflow-hidden relative">
-      {/* BACKGROUND */}
-      <div className="fixed inset-0 -z-10 bg-[#050507]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_40%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,0.02))]" />
+    <AppShell>
+      <PageContainer>
+        <div className="py-16">
 
-        <div className="absolute inset-0 opacity-40">
-          <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-white/5 blur-[140px]" />
-          <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-cyan-500/5 blur-[160px]" />
-        </div>
-      </div>
+          {/* HEADER */}
+          <div className="mb-12">
+            <p className="text-xs tracking-[0.4em] text-white/40 uppercase mb-6">
+              LONGEVITY INTELLIGENCE
+            </p>
 
-      {/* HEADER */}
-      <header className="border-b border-white/10 backdrop-blur-xl bg-black/20">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div>
-            <h1 className="text-sm tracking-[0.35em] font-medium">
-              AEONVERA
+            <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">
+              Dashboard
             </h1>
+
+            <p className="mt-6 text-white/60 text-lg max-w-2xl">
+              Your biological intelligence layer, assessment status, reports, and subscription management.
+            </p>
           </div>
-
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm text-white/70">
-                {profile?.display_name || "User"}
-              </p>
-
-              <p className="text-xs uppercase text-white/40">
-                {profile?.plan || "core"}
-              </p>
-            </div>
-
-            <div className="w-10 h-10 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-sm">
-              {initials}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* CONTENT */}
-      <section className="px-6 py-16">
-        <div className="max-w-6xl mx-auto">
-          <p className="text-xs tracking-[0.4em] text-white/40 uppercase mb-8">
-            LONGEVITY INTELLIGENCE
-          </p>
-
-          <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">
-            Dashboard
-          </h1>
-
-          <p className="mt-6 text-white/60 text-lg max-w-2xl">
-            Your biological intelligence layer, assessment status,
-            reports, and subscription management.
-          </p>
 
           {/* PRIMARY CARD */}
-          <div className="mt-14 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8">
+          <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 mb-8">
             <p className="text-xs tracking-[0.35em] uppercase text-white/40 mb-6">
               DIGITAL TWIN STATUS
             </p>
@@ -233,7 +197,6 @@ export default function DashboardPage() {
                   <p className="text-white/60 mb-2">
                     Intelligence Report Active
                   </p>
-
                   <h2 className="text-4xl font-semibold">
                     {report.risk_score}
                     <span className="text-white/40"> / 100</span>
@@ -242,7 +205,7 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => router.push("/report")}
-                  className="px-8 py-3 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
+                  className="px-8 py-3 rounded-xl bg-white text-black font-medium"
                 >
                   Open Report
                 </button>
@@ -258,9 +221,7 @@ export default function DashboardPage() {
                   disabled={generatingReport}
                   className="px-8 py-3 rounded-xl bg-white text-black font-medium disabled:opacity-50"
                 >
-                  {generatingReport
-                    ? "Processing..."
-                    : "Generate Report"}
+                  {generatingReport ? "Processing..." : "Generate Report"}
                 </button>
               </div>
             ) : (
@@ -280,7 +241,9 @@ export default function DashboardPage() {
           </div>
 
           {/* GRID */}
-          <div className="grid md:grid-cols-2 gap-6 mt-6">
+          <div className="grid md:grid-cols-2 gap-6">
+
+            {/* SUBSCRIPTION */}
             <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8">
               <p className="text-xs tracking-[0.35em] uppercase text-white/40 mb-6">
                 SUBSCRIPTION
@@ -293,14 +256,13 @@ export default function DashboardPage() {
               <button
                 onClick={openBillingPortal}
                 disabled={openingPortal}
-                className="w-full px-8 py-3 rounded-xl border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 transition"
+                className="w-full px-8 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition"
               >
-                {openingPortal
-                  ? "Opening..."
-                  : "Manage Plan"}
+                {openingPortal ? "Opening..." : "Manage Plan"}
               </button>
             </div>
 
+            {/* QUICK ACTIONS */}
             <div className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8">
               <p className="text-xs tracking-[0.35em] uppercase text-white/40 mb-6">
                 QUICK ACTIONS
@@ -309,10 +271,8 @@ export default function DashboardPage() {
               <div className="flex flex-wrap gap-3">
                 {!hasAssessment && (
                   <button
-                    onClick={() =>
-                      router.push("/assessment")
-                    }
-                    className="px-8 py-3 rounded-xl bg-white text-black font-medium"
+                    onClick={() => router.push("/assessment")}
+                    className="px-6 py-3 rounded-xl bg-white text-black font-medium"
                   >
                     Start Assessment
                   </button>
@@ -320,22 +280,24 @@ export default function DashboardPage() {
 
                 <button
                   onClick={openBillingPortal}
-                  className="px-8 py-3 rounded-xl border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 transition"
+                  className="px-6 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10"
                 >
                   Billing
                 </button>
 
                 <button
                   onClick={() => router.push("/report")}
-                  className="px-8 py-3 rounded-xl border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 transition"
+                  className="px-6 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10"
                 >
                   View Report
                 </button>
               </div>
             </div>
+
           </div>
+
         </div>
-      </section>
-    </main>
+      </PageContainer>
+    </AppShell>
   );
 }
