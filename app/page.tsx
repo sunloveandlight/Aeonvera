@@ -4,14 +4,14 @@ import PageContainer from "@/components/ui/PageContainer";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import SectionTitle from "@/components/ui/SectionTitle";
+import Section from "@/components/ui/Section";
 
 export default function HomePage() {
   return (
     <>
       {/* HERO */}
-      <section className="pt-40 pb-36">
+      <Section size="xl">
         <PageContainer>
-
           <div className="max-w-6xl mx-auto text-center">
 
             <p className="text-xs uppercase tracking-[0.5em] text-white/40 mb-10">
@@ -41,29 +41,18 @@ export default function HomePage() {
             </div>
 
           </div>
-
         </PageContainer>
-      </section>
+      </Section>
 
-      {/* FEATURE STRIP (SYSTEMIZED HEIGHT) */}
-      <section className="border-y border-white/10">
+      {/* FEATURE STRIP */}
+      <Section size="md">
         <PageContainer>
-
           <div className="grid md:grid-cols-3">
 
             {[
-              {
-                title: "AI",
-                desc: "Intelligence Engine",
-              },
-              {
-                title: "Digital Twin",
-                desc: "Persistent Biological Model",
-              },
-              {
-                title: "Longevity",
-                desc: "Optimization System",
-              },
+              { title: "AI", desc: "Intelligence Engine" },
+              { title: "Digital Twin", desc: "Persistent Biological Model" },
+              { title: "Longevity", desc: "Optimization System" },
             ].map((item, i) => (
               <div
                 key={i}
@@ -82,12 +71,11 @@ export default function HomePage() {
             ))}
 
           </div>
-
         </PageContainer>
-      </section>
+      </Section>
 
       {/* PLATFORM */}
-      <section id="platform" className="py-32">
+      <Section size="lg" id="platform">
         <PageContainer>
 
           <SectionTitle
@@ -117,10 +105,10 @@ export default function HomePage() {
           </div>
 
         </PageContainer>
-      </section>
+      </Section>
 
       {/* SCIENCE */}
-      <section className="border-t border-white/10 py-32">
+      <Section size="lg">
         <PageContainer>
 
           <div className="grid lg:grid-cols-2 gap-20 items-center">
@@ -163,10 +151,10 @@ export default function HomePage() {
           </div>
 
         </PageContainer>
-      </section>
+      </Section>
 
       {/* CTA */}
-      <section className="border-t border-white/10 py-40">
+      <Section size="xl">
         <PageContainer>
 
           <div className="max-w-5xl mx-auto text-center">
@@ -195,7 +183,7 @@ export default function HomePage() {
           </div>
 
         </PageContainer>
-      </section>
+      </Section>
     </>
   );
 }
