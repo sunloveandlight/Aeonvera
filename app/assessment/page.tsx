@@ -1,211 +1,243 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
 
-type FormState = {
-  age: string;
-  height: string;
-  weight: string;
-  sleep: string;
-  exercise: string;
-  stress: string;
-  diet: string;
-  smoking: string;
-  alcohol: string;
+type Answers = {
+  age?: string;
+  sex?: string;
+  height_cm?: string;
+  weight_kg?: string;
+
+  sleep_hours?: string;
+  sleep_quality?: string;
+
+  exercise_days?: string;
+  strength_training?: string;
+
+  diet_type?: string;
+  alcohol_use?: string;
+  smoking?: string;
+
+  stress_level?: string;
+
+  primary_goal?: string;
 };
+
+const steps = [
+  "Basics",
+  "Sleep",
+  "Exercise",
+  "Lifestyle",
+  "Goals",
+];
 
 export default function AssessmentPage() {
   const router = useRouter();
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [step, setStep] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [answers, setAnswers] = useState<Answers>({});
 
-  const [form, setForm] = useState<FormState>({
-    age: "",
-    height: "",
-    weight: "",
-    sleep: "",
-    exercise: "",
-    stress: "",
-    diet: "",
-    smoking: "",
-    alcohol: "",
-  });
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  function updateField(field: keyof FormState, value: string) {
-    setForm((prev) => ({
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+
+      setLoading(false);
+    };
+
+    checkAuth();
+  }, [router]);
+
+  function update(field: keyof Answers, value: string) {
+    setAnswers((prev) => ({
       ...prev,
       [field]: value,
     }));
   }
 
-  async function handleSubmit() {
-    setLoading(true);
-    setError(null);
-
+  async function submit() {
     try {
-      const res = await fetch("/api/longevity/report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      setSaving(true);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { error } = await supabase.from("longevity_assessments").insert([
+        {
+          user_id: user.id,
+          ...answers,
         },
-        body: JSON.stringify(form),
-      });
+      ]);
 
-      if (!res.ok) {
-        throw new Error("Failed to generate report");
+      if (error) {
+        console.error(error);
+        alert("Failed to save assessment");
+        return;
       }
 
-      const data = await res.json();
-
-      // optional: store report temporarily
-      if (typeof window !== "undefined") {
-        localStorage.setItem("latestReport", JSON.stringify(data));
-      }
-
-      router.push("/report");
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      router.push("/dashboard");
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
 
-  const Input = ({
-    label,
-    value,
-    onChange,
-    placeholder,
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    placeholder?: string;
-  }) => (
-    <div className="flex flex-col gap-2">
-      <label className="text-sm text-white/70">{label}</label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30
-        focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400/30 transition"
-      />
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#05060a] text-white">
+        <div className="animate-pulse text-white/60">
+          Initializing Aeonvera systems...
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen w-full bg-[#05060a] text-white relative overflow-hidden">
-      {/* Background Glow */}
+    <main className="min-h-screen bg-[#05060a] text-white relative overflow-hidden">
+      {/* Glow Background */}
       <div className="absolute inset-0">
         <div className="absolute w-[600px] h-[600px] bg-cyan-500/20 blur-[120px] rounded-full top-[-200px] left-[-200px]" />
         <div className="absolute w-[500px] h-[500px] bg-purple-500/20 blur-[120px] rounded-full bottom-[-200px] right-[-200px]" />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-6 py-16">
+      <div className="relative z-10 max-w-3xl mx-auto px-6 py-14">
         {/* Header */}
         <div className="mb-10">
           <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
             Longevity Assessment
           </h1>
+
           <p className="text-white/60 mt-3">
-            A precise signal model for your biological trajectory.
+            Step {step + 1} of {steps.length} — {steps[step]}
           </p>
+
+          {/* Progress Bar */}
+          <div className="w-full h-1 bg-white/10 mt-5 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all"
+              style={{
+                width: `${((step + 1) / steps.length) * 100}%`,
+              }}
+            />
+          </div>
         </div>
 
         {/* Card */}
         <div className="bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-xl shadow-xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="Age"
-              value={form.age}
-              onChange={(v) => updateField("age", v)}
-              placeholder="e.g. 29"
-            />
-
-            <Input
-              label="Height (cm)"
-              value={form.height}
-              onChange={(v) => updateField("height", v)}
-              placeholder="e.g. 178"
-            />
-
-            <Input
-              label="Weight (kg)"
-              value={form.weight}
-              onChange={(v) => updateField("weight", v)}
-              placeholder="e.g. 72"
-            />
-
-            <Input
-              label="Sleep (hours avg)"
-              value={form.sleep}
-              onChange={(v) => updateField("sleep", v)}
-              placeholder="e.g. 7"
-            />
-
-            <Input
-              label="Exercise (days/week)"
-              value={form.exercise}
-              onChange={(v) => updateField("exercise", v)}
-              placeholder="e.g. 3"
-            />
-
-            <Input
-              label="Stress level (1-10)"
-              value={form.stress}
-              onChange={(v) => updateField("stress", v)}
-              placeholder="e.g. 6"
-            />
-
-            <Input
-              label="Diet quality"
-              value={form.diet}
-              onChange={(v) => updateField("diet", v)}
-              placeholder="e.g. balanced / average / poor"
-            />
-
-            <Input
-              label="Smoking"
-              value={form.smoking}
-              onChange={(v) => updateField("smoking", v)}
-              placeholder="yes / no"
-            />
-
-            <Input
-              label="Alcohol consumption"
-              value={form.alcohol}
-              onChange={(v) => updateField("alcohol", v)}
-              placeholder="none / light / moderate / heavy"
-            />
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="mt-6 text-red-400 text-sm">
-              {error}
+          {/* STEP 1 */}
+          {step === 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input label="Age" value={answers.age || ""} onChange={(v) => update("age", v)} />
+              <Input label="Sex" value={answers.sex || ""} onChange={(v) => update("sex", v)} />
+              <Input label="Height (cm)" value={answers.height_cm || ""} onChange={(v) => update("height_cm", v)} />
+              <Input label="Weight (kg)" value={answers.weight_kg || ""} onChange={(v) => update("weight_kg", v)} />
             </div>
           )}
 
-          {/* Submit */}
-          <div className="mt-10 flex justify-end">
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 
-              hover:opacity-90 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Generating Report..." : "Generate Longevity Report"}
-            </button>
-          </div>
+          {/* STEP 2 */}
+          {step === 1 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input label="Sleep hours" value={answers.sleep_hours || ""} onChange={(v) => update("sleep_hours", v)} />
+              <Input label="Sleep quality (1-10)" value={answers.sleep_quality || ""} onChange={(v) => update("sleep_quality", v)} />
+            </div>
+          )}
+
+          {/* STEP 3 */}
+          {step === 2 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input label="Exercise days/week" value={answers.exercise_days || ""} onChange={(v) => update("exercise_days", v)} />
+              <Input label="Strength training (yes/no)" value={answers.strength_training || ""} onChange={(v) => update("strength_training", v)} />
+            </div>
+          )}
+
+          {/* STEP 4 */}
+          {step === 3 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input label="Diet type" value={answers.diet_type || ""} onChange={(v) => update("diet_type", v)} />
+              <Input label="Alcohol use" value={answers.alcohol_use || ""} onChange={(v) => update("alcohol_use", v)} />
+              <Input label="Smoking" value={answers.smoking || ""} onChange={(v) => update("smoking", v)} />
+              <Input label="Stress level (1-10)" value={answers.stress_level || ""} onChange={(v) => update("stress_level", v)} />
+            </div>
+          )}
+
+          {/* STEP 5 */}
+          {step === 4 && (
+            <div>
+              <Input
+                label="Primary goal"
+                value={answers.primary_goal || ""}
+                onChange={(v) => update("primary_goal", v)}
+              />
+            </div>
+          )}
         </div>
 
-        {/* Footer hint */}
-        <p className="text-white/30 text-xs mt-6 text-center">
-          Aeonvera AI models analyze multi-dimensional health signals.
-        </p>
+        {/* Buttons */}
+        <div className="flex justify-between mt-8">
+          <button
+            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            className="px-5 py-2 rounded-xl border border-white/15 text-white/70 hover:text-white hover:border-white/30 transition"
+          >
+            Back
+          </button>
+
+          {step < steps.length - 1 ? (
+            <button
+              onClick={() => setStep((s) => s + 1)}
+              className="px-5 py-2 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              onClick={submit}
+              disabled={saving}
+              className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 font-medium hover:opacity-90 transition disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Finish Assessment"}
+            </button>
+          )}
+        </div>
       </div>
+    </main>
+  );
+}
+
+/* ---------------- INPUT ---------------- */
+
+function Input({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="text-sm text-white/60">{label}</label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full mt-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white
+        focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/30 transition"
+      />
     </div>
   );
 }
