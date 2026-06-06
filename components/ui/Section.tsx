@@ -7,6 +7,7 @@ type SectionProps = {
   className?: string;
   size?: "sm" | "md" | "lg" | "xl";
   id?: string;
+  label?: string;
 };
 
 const sizes = {
@@ -21,9 +22,14 @@ export default function Section({
   className = "",
   size = "lg",
   id,
+  label,
 }: SectionProps) {
   return (
-    <section id={id} className={`w-full ${sizes[size]} ${className}`}>
+    <section
+      id={id}
+      data-aeonvera-label={label || "Section"}
+      className={`w-full ${sizes[size]} ${className}`}
+    >
       <div className="mx-auto max-w-7xl px-6">
         <FadeIn>{children}</FadeIn>
       </div>
