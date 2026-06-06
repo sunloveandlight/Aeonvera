@@ -18,6 +18,8 @@ export default function Card({
   return (
     <HoverLift>
       <div
+        data-aeonvera-card
+        data-aeonvera-label="Card"
         className={`
           relative
           rounded-2xl
@@ -25,24 +27,26 @@ export default function Card({
           bg-white/[0.03]
           backdrop-blur-xl
           p-6
-          transition-colors
+          transition-all
+          duration-200
           hover:border-white/20
+          hover:bg-white/[0.04]
           ${className}
         `}
       >
         {label && (
-          <div className="text-xs uppercase tracking-[0.35em] text-white/40 mb-3">
+          <div className="text-[11px] uppercase tracking-[0.35em] text-white/40 mb-3">
             {label}
           </div>
         )}
 
         {title && (
-          <h3 className="text-xl font-semibold text-white mb-3">
+          <h3 className="text-xl font-semibold text-white mb-3 tracking-tight">
             {title}
           </h3>
         )}
 
-        <div className="text-white/60 leading-relaxed">
+        <div className="text-white/70 leading-relaxed">
           {children}
         </div>
       </div>
