@@ -8,6 +8,7 @@ import { isUserAllowed } from "@/lib/auth/permissions";
 import AppShell from "@/components/layout/AppShell";
 import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 
 type Profile = {
   display_name: string | null;
@@ -73,9 +74,7 @@ export default function DashboardPage() {
           .limit(1)
           .single();
 
-        if (existingReport) {
-          setReport(existingReport);
-        }
+        if (existingReport) setReport(existingReport);
 
         const { data: assessment } = await supabase
           .from("longevity_assessments")
@@ -129,9 +128,7 @@ export default function DashboardPage() {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error);
-      }
+      if (!res.ok) throw new Error(data.error);
 
       window.location.href = data.url;
     } catch {
@@ -183,98 +180,84 @@ export default function DashboardPage() {
 
           {/* PRIMARY CARD */}
           <Card label="DIGITAL TWIN STATUS">
-            {report ? (
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-                <div>
-                  <p className="text-white/60 mb-2">
-                    Intelligence Report Active
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+              {report ? (
+                <>
+                  <div>
+                    <p className="text-white/60 mb-2">
+                      Intelligence Report Active
+                    </p>
+                    <h2 className="text-4xl font-semibold">
+                      {report.risk_score}
+                      <span className="text-white/40"> / 100</span>
+                    </h2>
+                  </div>
+
+                  <Button onClick={() => router.push("/report")}>
+                    Open Report
+                  </Button>
+                </>
+              ) : hasAssessment ? (
+                <>
+                  <p className="text-white/60">
+                    Assessment completed. Generate your AI longevity report.
                   </p>
-                  <h2 className="text-4xl font-semibold">
-                    {report.risk_score}
-                    <span className="text-white/40"> / 100</span>
-                  </h2>
-                </div>
 
-                <button
-                  onClick={() => router.push("/report")}
-                  className="px-8 py-3 rounded-xl bg-white text-black font-medium"
-                >
-                  Open Report
-                </button>
-              </div>
-            ) : hasAssessment ? (
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-                <p className="text-white/60">
-                  Assessment completed. Generate your AI longevity report.
-                </p>
+                  <Button
+                    onClick={generateReport}
+                    disabled={generatingReport}
+                  >
+                    {generatingReport ? "Processing..." : "Generate Report"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-white/60">
+                    No assessment detected. Begin your intelligence profile.
+                  </p>
 
-                <button
-                  onClick={generateReport}
-                  disabled={generatingReport}
-                  className="px-8 py-3 rounded-xl bg-white text-black font-medium disabled:opacity-50"
-                >
-                  {generatingReport ? "Processing..." : "Generate Report"}
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-                <p className="text-white/60">
-                  No assessment detected. Begin your intelligence profile.
-                </p>
-
-                <button
-                  onClick={() => router.push("/assessment")}
-                  className="px-8 py-3 rounded-xl bg-white text-black font-medium"
-                >
-                  Start Assessment
-                </button>
-              </div>
-            )}
+                  <Button onClick={() => router.push("/assessment")}>
+                    Start Assessment
+                  </Button>
+                </>
+              )}
+            </div>
           </Card>
 
           {/* GRID */}
           <div className="grid md:grid-cols-2 gap-6 mt-6">
 
             <Card label="SUBSCRIPTION">
-              <h3 className="text-2xl font-medium uppercase mb-6">
-                {profile?.plan || "core"}
-              </h3>
+              <div className="flex flex-col gap-6">
+                <h3 className="text-2xl font-medium uppercase">
+                  {profile?.plan || "core"}
+                </h3>
 
-              <button
-                onClick={openBillingPortal}
-                disabled={openingPortal}
-                className="w-full px-8 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition"
-              >
-                {openingPortal ? "Opening..." : "Manage Plan"}
-              </button>
+                <Button
+                  variant="secondary"
+                  onClick={openBillingPortal}
+                  disabled={openingPortal}
+                >
+                  {openingPortal ? "Opening..." : "Manage Plan"}
+                </Button>
+              </div>
             </Card>
 
             <Card label="QUICK ACTIONS">
               <div className="flex flex-wrap gap-3">
-
                 {!hasAssessment && (
-                  <button
-                    onClick={() => router.push("/assessment")}
-                    className="px-6 py-3 rounded-xl bg-white text-black font-medium"
-                  >
+                  <Button onClick={() => router.push("/assessment")}>
                     Start Assessment
-                  </button>
+                  </Button>
                 )}
 
-                <button
-                  onClick={openBillingPortal}
-                  className="px-6 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10"
-                >
+                <Button variant="secondary" onClick={openBillingPortal}>
                   Billing
-                </button>
+                </Button>
 
-                <button
-                  onClick={() => router.push("/report")}
-                  className="px-6 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10"
-                >
+                <Button variant="secondary" onClick={() => router.push("/report")}>
                   View Report
-                </button>
-
+                </Button>
               </div>
             </Card>
 
