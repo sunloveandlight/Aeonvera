@@ -30,13 +30,7 @@ type Answers = {
   primary_goal?: string;
 };
 
-const steps = [
-  "Basics",
-  "Sleep",
-  "Exercise",
-  "Lifestyle",
-  "Goals",
-];
+const steps = ["Basics", "Sleep", "Exercise", "Lifestyle", "Goals"];
 
 export default function AssessmentPage() {
   const router = useRouter();
@@ -121,18 +115,18 @@ export default function AssessmentPage() {
         <PageContainer className="max-w-3xl">
 
           {/* HEADER */}
-          <div className="mb-10">
+          <div className="mb-8">
             <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-white">
               Longevity Assessment
             </h1>
 
-            <p className="text-white/50 mt-3">
+            <p className="text-white/50 mt-2">
               Step {step + 1} of {steps.length} —{" "}
               <span className="text-white/70">{steps[step]}</span>
             </p>
 
-            {/* PROGRESS SYSTEM (MATCH DASHBOARD AURA STYLE) */}
-            <div className="w-full h-1 bg-white/10 mt-6 rounded-full overflow-hidden">
+            {/* PROGRESS */}
+            <div className="w-full h-1 bg-white/10 mt-5 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-300"
                 style={{ width: `${progress}%` }}
@@ -216,7 +210,7 @@ export default function AssessmentPage() {
   );
 }
 
-/* INPUT */
+/* LOCAL INPUT (SAFE, STABLE, NO DEPENDENCIES) */
 function Input({
   label,
   value,
@@ -227,13 +221,20 @@ function Input({
   onChange: (v: string) => void;
 }) {
   return (
-    <div>
-      <label className="text-sm text-white/50">{label}</label>
+    <div className="flex flex-col">
+      <label className="text-sm text-white/50 mb-2">{label}</label>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full mt-2 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white
-        focus:outline-none focus:ring-2 focus:ring-cyan-400/30 focus:border-cyan-400/30 transition"
+        className="
+          w-full px-4 py-3 rounded-xl
+          bg-white/5 border border-white/10
+          text-white placeholder-white/30
+          focus:outline-none
+          focus:ring-2 focus:ring-cyan-400/30
+          focus:border-cyan-400/30
+          transition
+        "
       />
     </div>
   );
