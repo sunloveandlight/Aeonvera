@@ -1,3 +1,7 @@
+"use client";
+
+import { FadeIn } from "@/components/motion/Motion";
+
 type SectionProps = {
   children: React.ReactNode;
   className?: string;
@@ -19,16 +23,9 @@ export default function Section({
   id,
 }: SectionProps) {
   return (
-    <section
-      id={id}
-      className={`
-        w-full
-        ${sizes[size]}
-        ${className}
-      `}
-    >
+    <section id={id} className={`w-full ${sizes[size]} ${className}`}>
       <div className="mx-auto max-w-7xl px-6">
-        {children}
+        <FadeIn>{children}</FadeIn>
       </div>
     </section>
   );
