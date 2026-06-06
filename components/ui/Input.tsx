@@ -18,16 +18,16 @@ export default function Input({
   onChange,
 }: InputProps) {
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full space-y-2" data-aeonvera-input>
       {label && (
-        <div className="text-xs uppercase tracking-[0.3em] text-white/40">
+        <div className="text-[11px] uppercase tracking-[0.28em] text-white/40">
           {label}
         </div>
       )}
 
       <motion.input
-        whileFocus={{ scale: 1.01 }}
-        transition={{ duration: 0.15 }}
+        whileFocus={{ scale: 1.015 }}
+        transition={{ duration: 0.12, ease: "easeOut" }}
         type={type}
         value={value}
         onChange={onChange}
@@ -35,14 +35,19 @@ export default function Input({
         className="
           w-full
           rounded-xl
-          bg-white/[0.03]
+          bg-white/[0.04]
           border border-white/10
           px-4 py-3
           text-white/90
-          placeholder:text-white/30
+          placeholder:text-white/25
           outline-none
-          focus:border-white/25
           transition-all
+          duration-200
+
+          focus:border-white/25
+          focus:bg-white/[0.05]
+          focus:ring-2
+          focus:ring-white/5
         "
       />
     </div>
