@@ -1,46 +1,33 @@
 @import "tailwindcss";
 
 /* ================================
-   AEONVERA DESIGN SYSTEM
-   GLOBAL VISUAL LAYER
+   AEONVERA DESIGN SYSTEM v1.0
 ================================ */
 
 :root {
   color-scheme: dark;
 
-  /* Core Background */
+  /* Core background system */
   --background: #05060a;
-  --foreground: rgba(255, 255, 255, 0.92);
+  --surface: rgba(255, 255, 255, 0.04);
 
-  /* Text hierarchy */
-  --text-primary: rgba(255, 255, 255, 0.92);
-  --text-secondary: rgba(255, 255, 255, 0.65);
-  --text-tertiary: rgba(255, 255, 255, 0.4);
+  /* Text hierarchy (IMPORTANT FIX) */
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-tertiary: rgba(255, 255, 255, 0.45);
 
   /* Accent system */
   --accent-cyan: 34, 211, 238;
   --accent-purple: 168, 85, 247;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 /* ================================
-   BASE GLOBAL STYLES
+   BASE
 ================================ */
 
-html {
-  background: var(--background);
-  color: var(--foreground);
-  height: 100%;
-}
-
+html,
 body {
-  min-height: 100%;
+  height: 100%;
   background: var(--background);
   color: var(--text-primary);
   font-family: var(--font-sans), system-ui, sans-serif;
@@ -49,36 +36,21 @@ body {
 }
 
 /* ================================
-   TYPOGRAPHY SYSTEM (FIX READABILITY)
+   TYPOGRAPHY FIX (IMPORTANT)
 ================================ */
 
 h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 p {
   color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-/* subtle UI text */
-.text-muted {
-  color: var(--text-tertiary);
+  line-height: 1.65;
 }
 
 /* ================================
-   SELECTION STYLE (PREMIUM FEEL)
-================================ */
-
-::selection {
-  background: rgba(var(--accent-cyan), 0.25);
-  color: white;
-}
-
-/* ================================
-   GLOBAL BACKGROUND AURA SYSTEM
-   (THIS RESTORES "MULTIBILLION" FEEL)
+   BACKGROUND SYSTEM (CLEANED)
 ================================ */
 
 body::before {
@@ -90,24 +62,24 @@ body::before {
 
   background:
     radial-gradient(
-      800px circle at 20% 0%,
-      rgba(var(--accent-cyan), 0.12),
+      900px circle at 15% 10%,
+      rgba(var(--accent-cyan), 0.14),
       transparent 60%
     ),
     radial-gradient(
-      700px circle at 80% 20%,
+      800px circle at 85% 20%,
       rgba(var(--accent-purple), 0.10),
       transparent 55%
     ),
     radial-gradient(
       900px circle at 50% 100%,
-      rgba(255, 255, 255, 0.04),
+      rgba(255, 255, 255, 0.03),
       transparent 60%
     );
 }
 
 /* ================================
-   SUBTLE GRID DEPTH LAYER
+   GRID DEPTH LAYER
 ================================ */
 
 body::after {
@@ -118,10 +90,19 @@ body::after {
   z-index: -1;
 
   background-image:
-    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
 
-  background-size: 80px 80px;
-  opacity: 0.25;
-  mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+  background-size: 72px 72px;
+  opacity: 0.18;
+  mask-image: radial-gradient(circle at center, black 45%, transparent 80%);
+}
+
+/* ================================
+   SELECTION
+================================ */
+
+::selection {
+  background: rgba(var(--accent-cyan), 0.25);
+  color: white;
 }
