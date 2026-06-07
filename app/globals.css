@@ -2,7 +2,7 @@
 
 /* ================================
    AEONVERA DESIGN SYSTEM v2.0
-   (SYSTEM CORE + OVERLAY SUPPORT)
+   GOLD & PLATINUM EDITION
 ================================ */
 
 :root {
@@ -12,14 +12,15 @@
   --background: #05060a;
   --surface: rgba(255, 255, 255, 0.035);
 
-  /* Text hierarchy (refined for Apple-level contrast) */
+  /* Text hierarchy */
   --text-primary: rgba(255, 255, 255, 0.92);
   --text-secondary: rgba(255, 255, 255, 0.68);
   --text-tertiary: rgba(255, 255, 255, 0.42);
 
-  /* Accent system */
-  --accent-cyan: 34, 211, 238;
-  --accent-purple: 168, 85, 247;
+  /* Accent system — gold & platinum */
+  --accent-gold: 212, 175, 55;
+  --accent-platinum: 229, 228, 226;
+  --accent-warm: 180, 140, 60;
 }
 
 /* ================================
@@ -37,7 +38,7 @@ body {
 }
 
 /* ================================
-   TYPOGRAPHY SYSTEM (REFINED)
+   TYPOGRAPHY
 ================================ */
 
 h1, h2, h3, h4, h5, h6 {
@@ -51,7 +52,7 @@ p {
 }
 
 /* ================================
-   BACKGROUND SYSTEM (CLEANER APPLE STYLE)
+   BACKGROUND — GOLD & PLATINUM GLOW
 ================================ */
 
 body::before {
@@ -60,27 +61,26 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: -1;
-
   background:
     radial-gradient(
       800px circle at 15% 10%,
-      rgba(var(--accent-cyan), 0.12),
+      rgba(var(--accent-gold), 0.07),
       transparent 60%
     ),
     radial-gradient(
       700px circle at 85% 20%,
-      rgba(var(--accent-purple), 0.09),
+      rgba(var(--accent-platinum), 0.04),
       transparent 55%
     ),
     radial-gradient(
       900px circle at 50% 100%,
-      rgba(255, 255, 255, 0.02),
+      rgba(var(--accent-warm), 0.05),
       transparent 60%
     );
 }
 
 /* ================================
-   GRID SYSTEM (SOFTER, LESS NOISY)
+   GRID SYSTEM
 ================================ */
 
 body::after {
@@ -89,11 +89,9 @@ body::after {
   inset: 0;
   pointer-events: none;
   z-index: -1;
-
   background-image:
-    linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
   background-size: 80px 80px;
   opacity: 0.12;
   mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
@@ -104,41 +102,36 @@ body::after {
 ================================ */
 
 ::selection {
-  background: rgba(var(--accent-cyan), 0.22);
+  background: rgba(var(--accent-gold), 0.20);
   color: white;
 }
 
 /* ================================
-   OVERLAY MODE (FIGMA-STYLE DEBUG LAYER)
+   OVERLAY MODE
 ================================ */
 
 body.aeonvera-overlay * {
   outline: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Sections */
 body.aeonvera-overlay section {
-  outline: 1px solid rgba(0, 200, 255, 0.22);
+  outline: 1px solid rgba(212, 175, 55, 0.22);
   position: relative;
 }
 
-/* Cards */
 body.aeonvera-overlay [data-aeonvera-card] {
-  outline: 1px solid rgba(255, 180, 0, 0.22);
+  outline: 1px solid rgba(229, 228, 226, 0.22);
   position: relative;
 }
 
-/* Inputs */
 body.aeonvera-overlay [data-aeonvera-input] {
-  outline: 1px solid rgba(0, 255, 160, 0.22);
+  outline: 1px solid rgba(180, 140, 60, 0.22);
 }
 
-/* Buttons */
 body.aeonvera-overlay [data-aeonvera-button] {
-  outline: 1px solid rgba(255, 80, 120, 0.22);
+  outline: 1px solid rgba(212, 175, 55, 0.22);
 }
 
-/* Overlay labels */
 body.aeonvera-overlay
 [data-aeonvera-input]::before,
 body.aeonvera-overlay
