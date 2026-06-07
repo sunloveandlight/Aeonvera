@@ -170,4 +170,31 @@ body.aeonvera-overlay
   pointer-events: none;
   z-index: 9999;
   letter-spacing: 0.08em;
+}body.aeonvera-design-overlay * {
+  outline: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+body.aeonvera-design-overlay section {
+  outline: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+body.aeonvera-design-overlay [data-aeonvera-card] {
+  outline: 1px solid rgba(229, 228, 226, 0.25);
+}
+
+body.aeonvera-design-overlay [data-aeonvera-button] {
+  outline: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+body.aeonvera-design-overlay [data-aeonvera-input] {
+  outline: 1px solid rgba(180, 140, 60, 0.25);
+}
+
+body.aeonvera-design-overlay section::before {
+  content: "SECTION";
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
 }
