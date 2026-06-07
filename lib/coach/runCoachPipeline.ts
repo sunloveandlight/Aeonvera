@@ -7,10 +7,10 @@ const supabase = createClient(
 );
 
 /**
- * FULL COACH PIPELINE
- * --------------------
+ * FULL COACH PIPELINE (V2 UPGRADE)
+ * ---------------------------------
  * 1. Fetch health state
- * 2. Run coaching engine
+ * 2. Run coaching engine using REAL intelligence (no reconstruction)
  * 3. Store alerts
  */
 export async function runCoachPipeline(userId: string) {
@@ -30,46 +30,53 @@ export async function runCoachPipeline(userId: string) {
   }
 
   /**
-   * 2. RECONSTRUCT METRICS (from state baseline)
-   * NOTE: V1 simplification — later we use full time-series memory
+   * 2. TRANSFORM HEALTH STATE → COACH INPUT
+   * (NO MORE fakeMetrics)
    */
-  const fakeMetrics = Object.entries(state.baseline).map(
-    ([key, value]) => ({
+  const enrichedMetrics = [
+    // convert baseline signals
+    ...Object.entries(state.baseline || {}).map(([key, value]) => ({
       userId,
       metricName: key,
       value: Number(value),
-      timestamp: new Date().toISOString(),
-    })
-  );
+      timestamp: state.updated_at,
+    })),
+
+    // add risk scores as pseudo-metrics (important signal layer)
+    ...Object.entries(state.risk_scores || {}).map(([key, value]) => ({
+      userId,
+      metricName: `risk_${key}`,
+      value: Number(value),
+      timestamp: state.updated_at,
+    })),
+  ];
 
   /**
    * 3. RUN COACH ENGINE
    */
-  const alerts = runLongevityCoach(fakeMetrics);
-
-  if (!alerts.length) {
-    return { success: true, alerts: [] };
-  }
+  const alerts = runLongevityCoach(enrichedMetrics);
 
   /**
    * 4. STORE ALERTS
    */
-  const { error: insertError } = await supabase
-    .from("health_alerts")
-    .insert(
-      alerts.map((a) => ({
-        user_id: userId,
-        type: a.type,
-        severity: a.severity,
-        title: a.title,
-        message: a.message,
-        recommendation: a.recommendation,
-        confidence: a.confidence,
-      }))
-    );
+  if (alerts.length > 0) {
+    const { error: insertError } = await supabase
+      .from("health_alerts")
+      .insert(
+        alerts.map((a) => ({
+          user_id: userId,
+          type: a.type,
+          severity: a.severity,
+          title: a.title,
+          message: a.message,
+          recommendation: a.recommendation,
+          confidence: a.confidence,
+        }))
+      );
 
-  if (insertError) {
-    throw new Error(insertError.message);
+    if (insertError) {
+      throw new Error(insertError.message);
+    }
   }
 
   return {
