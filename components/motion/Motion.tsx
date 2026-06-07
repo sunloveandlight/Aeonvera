@@ -1,89 +1,100 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState, ReactNode } from "react";
 
-export const FadeIn = ({
+type MotionProps = {
+  children: ReactNode;
+  intensity?: "subtle" | "medium" | "strong";
+  type?: "fade" | "rise" | "scale" | "parallax";
+  className?: string;
+};
+
+export default function Motion({
   children,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-}) => {
+  intensity = "subtle",
+  type = "fade",
+  className = "",
+}: MotionProps) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const intensityMap = {
+    subtle: 0.08,
+    medium: 0.15,
+    strong: 0.25,
+  };
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setVisible(entry.isIntersecting);
+      },
+      {
+        threshold: 0.15,
+      }
+    );
+
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!ref.current) return;
+
+      const rect = ref.current.getBoundingClientRect();
+      const windowHeight = window.innerHeight;
+
+      const visibleProgress =
+        1 - Math.min(Math.max(rect.top / windowHeight, 0), 1);
+
+      setProgress(visibleProgress);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const opacity = visible ? 1 : 0;
+
+  const transform = (() => {
+    const intensityFactor = intensityMap[intensity];
+
+    switch (type) {
+      case "fade":
+        return `translateY(${(1 - progress) * 20 * intensityFactor}px)`;
+      case "rise":
+        return `translateY(${(1 - progress) * -30 * intensityFactor}px)`;
+      case "scale":
+        return `scale(${0.96 + progress * intensityFactor})`;
+      case "parallax":
+        return `translateY(${(1 - progress) * 40 * intensityFactor}px)`;
+      default:
+        return "none";
+    }
+  })();
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.6,
-        delay,
-        ease: [0.2, 0.8, 0.2, 1],
+    <div
+      ref={ref}
+      className={`
+        transition-opacity duration-700 ease-out
+        ${className}
+      `}
+      style={{
+        opacity,
+        transform,
+        willChange: "transform, opacity",
       }}
     >
       {children}
-    </motion.div>
+    </div>
   );
-};
-
-export const FadeInStagger = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  return (
-    <motion.div
-      initial="hidden"
-      animate="show"
-      variants={{
-        hidden: {},
-        show: {
-          transition: {
-            staggerChildren: 0.08,
-          },
-        },
-      }}
-    >
-      {children}
-    </motion.div>
-  );
-};
-
-export const FadeInItem = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  return (
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 12 },
-        show: {
-          opacity: 1,
-          y: 0,
-          transition: {
-            duration: 0.5,
-            ease: [0.2, 0.8, 0.2, 1],
-          },
-        },
-      }}
-    >
-      {children}
-    </motion.div>
-  );
-};
-
-export const HoverLift = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  return (
-    <motion.div
-      whileHover={{
-        y: -4,
-        transition: { duration: 0.2 },
-      }}
-    >
-      {children}
-    </motion.div>
-  );
-};
+}
