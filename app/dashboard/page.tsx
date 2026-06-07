@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { isUserAllowed } from "@/lib/auth/permissions";
 
-import AppShell from "@/components/layout/AppShell";
 import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -140,131 +139,125 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <AppShell>
-        <div className="flex items-center justify-center min-h-[60vh] text-white/50 text-sm tracking-[0.25em] uppercase">
-          Initializing Intelligence System...
-        </div>
-      </AppShell>
+      <div className="flex items-center justify-center min-h-[60vh] text-white/50 text-sm tracking-[0.25em] uppercase">
+        Initializing Intelligence System...
+      </div>
     );
   }
 
   if (error) {
     return (
-      <AppShell>
-        <div className="flex items-center justify-center min-h-[60vh] text-red-400">
-          {error}
-        </div>
-      </AppShell>
+      <div className="flex items-center justify-center min-h-[60vh] text-red-400">
+        {error}
+      </div>
     );
   }
 
   return (
-    <AppShell>
-      <PageContainer>
-        <div className="py-16">
+    <PageContainer>
+      <div className="py-16">
 
-          {/* HEADER */}
-          <div className="mb-12">
-            <p className="text-xs tracking-[0.4em] text-white/40 uppercase mb-6">
-              LONGEVITY INTELLIGENCE
-            </p>
+        {/* HEADER */}
+        <div className="mb-12">
+          <p className="text-xs tracking-[0.4em] text-white/40 uppercase mb-6">
+            LONGEVITY INTELLIGENCE
+          </p>
 
-            <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">
-              Dashboard
-            </h1>
+          <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">
+            Dashboard
+          </h1>
 
-            <p className="mt-6 text-white/60 text-lg max-w-2xl">
-              Your biological intelligence layer, assessment status, reports, and subscription management.
-            </p>
+          <p className="mt-6 text-white/60 text-lg max-w-2xl">
+            Your biological intelligence layer, assessment status, reports, and subscription management.
+          </p>
+        </div>
+
+        {/* PRIMARY CARD */}
+        <Card label="DIGITAL TWIN STATUS">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+            {report ? (
+              <>
+                <div>
+                  <p className="text-white/60 mb-2">
+                    Intelligence Report Active
+                  </p>
+                  <h2 className="text-4xl font-semibold">
+                    {report.risk_score}
+                    <span className="text-white/40"> / 100</span>
+                  </h2>
+                </div>
+
+                <Button onClick={() => router.push("/report")}>
+                  Open Report
+                </Button>
+              </>
+            ) : hasAssessment ? (
+              <>
+                <p className="text-white/60">
+                  Assessment completed. Generate your AI longevity report.
+                </p>
+
+                <Button
+                  onClick={generateReport}
+                  disabled={generatingReport}
+                >
+                  {generatingReport ? "Processing..." : "Generate Report"}
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-white/60">
+                  No assessment detected. Begin your intelligence profile.
+                </p>
+
+                <Button onClick={() => router.push("/assessment")}>
+                  Start Assessment
+                </Button>
+              </>
+            )}
           </div>
+        </Card>
 
-          {/* PRIMARY CARD */}
-          <Card label="DIGITAL TWIN STATUS">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-              {report ? (
-                <>
-                  <div>
-                    <p className="text-white/60 mb-2">
-                      Intelligence Report Active
-                    </p>
-                    <h2 className="text-4xl font-semibold">
-                      {report.risk_score}
-                      <span className="text-white/40"> / 100</span>
-                    </h2>
-                  </div>
+        {/* GRID */}
+        <div className="grid md:grid-cols-2 gap-6 mt-6">
 
-                  <Button onClick={() => router.push("/report")}>
-                    Open Report
-                  </Button>
-                </>
-              ) : hasAssessment ? (
-                <>
-                  <p className="text-white/60">
-                    Assessment completed. Generate your AI longevity report.
-                  </p>
+          <Card label="SUBSCRIPTION">
+            <div className="flex flex-col gap-6">
+              <h3 className="text-2xl font-medium uppercase">
+                {profile?.plan || "core"}
+              </h3>
 
-                  <Button
-                    onClick={generateReport}
-                    disabled={generatingReport}
-                  >
-                    {generatingReport ? "Processing..." : "Generate Report"}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <p className="text-white/60">
-                    No assessment detected. Begin your intelligence profile.
-                  </p>
-
-                  <Button onClick={() => router.push("/assessment")}>
-                    Start Assessment
-                  </Button>
-                </>
-              )}
+              <Button
+                variant="secondary"
+                onClick={openBillingPortal}
+                disabled={openingPortal}
+              >
+                {openingPortal ? "Opening..." : "Manage Plan"}
+              </Button>
             </div>
           </Card>
 
-          {/* GRID */}
-          <div className="grid md:grid-cols-2 gap-6 mt-6">
-
-            <Card label="SUBSCRIPTION">
-              <div className="flex flex-col gap-6">
-                <h3 className="text-2xl font-medium uppercase">
-                  {profile?.plan || "core"}
-                </h3>
-
-                <Button
-                  variant="secondary"
-                  onClick={openBillingPortal}
-                  disabled={openingPortal}
-                >
-                  {openingPortal ? "Opening..." : "Manage Plan"}
+          <Card label="QUICK ACTIONS">
+            <div className="flex flex-wrap gap-3">
+              {!hasAssessment && (
+                <Button onClick={() => router.push("/assessment")}>
+                  Start Assessment
                 </Button>
-              </div>
-            </Card>
+              )}
 
-            <Card label="QUICK ACTIONS">
-              <div className="flex flex-wrap gap-3">
-                {!hasAssessment && (
-                  <Button onClick={() => router.push("/assessment")}>
-                    Start Assessment
-                  </Button>
-                )}
+              <Button variant="secondary" onClick={openBillingPortal}>
+                Billing
+              </Button>
 
-                <Button variant="secondary" onClick={openBillingPortal}>
-                  Billing
-                </Button>
-
-                <Button variant="secondary" onClick={() => router.push("/report")}>
-                  View Report
-                </Button>
-              </div>
-            </Card>
-
-          </div>
+              <Button variant="secondary" onClick={() => router.push("/report")}>
+                View Report
+              </Button>
+            </div>
+          </Card>
 
         </div>
-      </PageContainer>
-    </AppShell>
+
+      </div>
+    </PageContainer>
   );
 }

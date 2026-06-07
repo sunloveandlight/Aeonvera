@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 
-import AppShell from "@/components/layout/AppShell";
 import PageContainer from "@/components/ui/PageContainer";
 import Section from "@/components/ui/Section";
 import Card from "@/components/ui/Card";
@@ -95,122 +94,118 @@ export default function AssessmentPage() {
 
   if (loading) {
     return (
-      <AppShell>
-        <Section size="lg">
-          <PageContainer>
-            <div className="text-white/50 tracking-wide">
-              Initializing Aeonvera systems...
-            </div>
-          </PageContainer>
-        </Section>
-      </AppShell>
+      <Section size="lg">
+        <PageContainer>
+          <div className="text-white/50 tracking-wide">
+            Initializing Aeonvera systems...
+          </div>
+        </PageContainer>
+      </Section>
     );
   }
 
   const progress = ((step + 1) / steps.length) * 100;
 
   return (
-    <AppShell>
-      <Section size="lg">
-        <PageContainer className="max-w-3xl">
+    <Section size="lg">
+      <PageContainer className="max-w-3xl">
 
-          {/* HEADER */}
-          <div className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-white">
-              Longevity Assessment
-            </h1>
+        {/* HEADER */}
+        <div className="mb-8">
+          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-white">
+            Longevity Assessment
+          </h1>
 
-            <p className="text-white/50 mt-2">
-              Step {step + 1} of {steps.length} —{" "}
-              <span className="text-white/70">{steps[step]}</span>
-            </p>
+          <p className="text-white/50 mt-2">
+            Step {step + 1} of {steps.length} —{" "}
+            <span className="text-white/70">{steps[step]}</span>
+          </p>
 
-            {/* PROGRESS */}
-            <div className="w-full h-1 bg-white/10 mt-5 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
+          {/* PROGRESS */}
+          <div className="w-full h-1 bg-white/10 mt-5 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* CARD */}
+        <Card className="p-8">
+          {step === 0 && (
+            <div className="grid md:grid-cols-2 gap-6">
+              <Input label="Age" value={answers.age || ""} onChange={(v) => update("age", v)} />
+              <Input label="Sex" value={answers.sex || ""} onChange={(v) => update("sex", v)} />
+              <Input label="Height (cm)" value={answers.height_cm || ""} onChange={(v) => update("height_cm", v)} />
+              <Input label="Weight (kg)" value={answers.weight_kg || ""} onChange={(v) => update("weight_kg", v)} />
             </div>
-          </div>
+          )}
 
-          {/* CARD */}
-          <Card className="p-8">
-            {step === 0 && (
-              <div className="grid md:grid-cols-2 gap-6">
-                <Input label="Age" value={answers.age || ""} onChange={(v) => update("age", v)} />
-                <Input label="Sex" value={answers.sex || ""} onChange={(v) => update("sex", v)} />
-                <Input label="Height (cm)" value={answers.height_cm || ""} onChange={(v) => update("height_cm", v)} />
-                <Input label="Weight (kg)" value={answers.weight_kg || ""} onChange={(v) => update("weight_kg", v)} />
-              </div>
-            )}
+          {step === 1 && (
+            <div className="grid md:grid-cols-2 gap-6">
+              <Input label="Sleep hours" value={answers.sleep_hours || ""} onChange={(v) => update("sleep_hours", v)} />
+              <Input label="Sleep quality (1-10)" value={answers.sleep_quality || ""} onChange={(v) => update("sleep_quality", v)} />
+            </div>
+          )}
 
-            {step === 1 && (
-              <div className="grid md:grid-cols-2 gap-6">
-                <Input label="Sleep hours" value={answers.sleep_hours || ""} onChange={(v) => update("sleep_hours", v)} />
-                <Input label="Sleep quality (1-10)" value={answers.sleep_quality || ""} onChange={(v) => update("sleep_quality", v)} />
-              </div>
-            )}
+          {step === 2 && (
+            <div className="grid md:grid-cols-2 gap-6">
+              <Input label="Exercise days/week" value={answers.exercise_days || ""} onChange={(v) => update("exercise_days", v)} />
+              <Input label="Strength training (yes/no)" value={answers.strength_training || ""} onChange={(v) => update("strength_training", v)} />
+            </div>
+          )}
 
-            {step === 2 && (
-              <div className="grid md:grid-cols-2 gap-6">
-                <Input label="Exercise days/week" value={answers.exercise_days || ""} onChange={(v) => update("exercise_days", v)} />
-                <Input label="Strength training (yes/no)" value={answers.strength_training || ""} onChange={(v) => update("strength_training", v)} />
-              </div>
-            )}
+          {step === 3 && (
+            <div className="grid md:grid-cols-2 gap-6">
+              <Input label="Diet type" value={answers.diet_type || ""} onChange={(v) => update("diet_type", v)} />
+              <Input label="Alcohol use" value={answers.alcohol_use || ""} onChange={(v) => update("alcohol_use", v)} />
+              <Input label="Smoking" value={answers.smoking || ""} onChange={(v) => update("smoking", v)} />
+              <Input label="Stress level (1-10)" value={answers.stress_level || ""} onChange={(v) => update("stress_level", v)} />
+            </div>
+          )}
 
-            {step === 3 && (
-              <div className="grid md:grid-cols-2 gap-6">
-                <Input label="Diet type" value={answers.diet_type || ""} onChange={(v) => update("diet_type", v)} />
-                <Input label="Alcohol use" value={answers.alcohol_use || ""} onChange={(v) => update("alcohol_use", v)} />
-                <Input label="Smoking" value={answers.smoking || ""} onChange={(v) => update("smoking", v)} />
-                <Input label="Stress level (1-10)" value={answers.stress_level || ""} onChange={(v) => update("stress_level", v)} />
-              </div>
-            )}
+          {step === 4 && (
+            <Input
+              label="Primary goal"
+              value={answers.primary_goal || ""}
+              onChange={(v) => update("primary_goal", v)}
+            />
+          )}
+        </Card>
 
-            {step === 4 && (
-              <Input
-                label="Primary goal"
-                value={answers.primary_goal || ""}
-                onChange={(v) => update("primary_goal", v)}
-              />
-            )}
-          </Card>
+        {/* NAV */}
+        <div className="flex justify-between mt-8">
+          <button
+            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            className="px-5 py-2 rounded-xl border border-white/10 text-white/60 hover:text-white hover:border-white/30 transition"
+          >
+            Back
+          </button>
 
-          {/* NAV */}
-          <div className="flex justify-between mt-8">
+          {step < steps.length - 1 ? (
             <button
-              onClick={() => setStep((s) => Math.max(0, s - 1))}
-              className="px-5 py-2 rounded-xl border border-white/10 text-white/60 hover:text-white hover:border-white/30 transition"
+              onClick={() => setStep((s) => s + 1)}
+              className="px-5 py-2 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
             >
-              Back
+              Next
             </button>
+          ) : (
+            <button
+              onClick={submit}
+              disabled={saving}
+              className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-medium hover:opacity-90 transition disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Finish Assessment"}
+            </button>
+          )}
+        </div>
 
-            {step < steps.length - 1 ? (
-              <button
-                onClick={() => setStep((s) => s + 1)}
-                className="px-5 py-2 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
-              >
-                Next
-              </button>
-            ) : (
-              <button
-                onClick={submit}
-                disabled={saving}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-medium hover:opacity-90 transition disabled:opacity-50"
-              >
-                {saving ? "Saving..." : "Finish Assessment"}
-              </button>
-            )}
-          </div>
-
-        </PageContainer>
-      </Section>
-    </AppShell>
+      </PageContainer>
+    </Section>
   );
 }
 
-/* LOCAL INPUT (SAFE, STABLE, NO DEPENDENCIES) */
+/* LOCAL INPUT */
 function Input({
   label,
   value,
