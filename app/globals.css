@@ -2,22 +2,33 @@
 
 /* ================================
    AEONVERA DESIGN SYSTEM
-   GOLD & PLATINUM EDITION
+   REFINED REGAL INTELLIGENCE LAYER
 ================================ */
 
 :root {
   color-scheme: dark;
 
-  --background: #08070a;
+  --background: #07070a;
 
   --accent-gold: 212, 175, 55;
   --accent-platinum: 229, 228, 226;
   --accent-warm: 180, 140, 60;
-}
 
-/* ================================
-   BASE
-================================ */
+  /* ============================
+     TYPOGRAPHY SCALE (NEW)
+  ============================ */
+  --text-xs: 0.75rem;   /* 12px */
+  --text-sm: 0.875rem;  /* 14px */
+  --text-md: 1rem;      /* 16px */
+  --text-lg: 1.125rem;  /* 18px */
+  --text-xl: 1.25rem;   /* 20px */
+  --text-2xl: 1.5rem;   /* 24px */
+  --text-3xl: 2rem;     /* 32px */
+  --text-4xl: 2.75rem;  /* 44px */
+  --text-5xl: 3.5rem;   /* 56px */
+  --text-6xl: 4.5rem;   /* 72px */
+  --text-7xl: 6rem;     /* 96px */
+}
 
 html, body {
   height: 100%;
@@ -29,21 +40,58 @@ html, body {
 }
 
 /* ================================
-   TYPOGRAPHY
+   TYPOGRAPHY SYSTEM (CRITICAL FIX)
 ================================ */
 
-h1, h2, h3, h4, h5, h6 {
+h1 {
+  font-size: var(--text-6xl);
+  line-height: 1.05;
+  letter-spacing: -0.05em;
+  font-weight: 300;
   color: rgba(255, 255, 255, 0.92);
+}
+
+h2 {
+  font-size: var(--text-4xl);
+  line-height: 1.1;
   letter-spacing: -0.04em;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.90);
+}
+
+h3 {
+  font-size: var(--text-2xl);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 p {
-  color: rgba(255, 255, 255, 0.50);
-  line-height: 1.7;
+  font-size: var(--text-md);
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 /* ================================
-   BACKGROUND — GODLY GOLD GLOW
+   SMALL TYPOGRAPHY HELPERS
+================================ */
+
+.text-regal-eyebrow {
+  font-size: var(--text-xs);
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.text-regal-subtle {
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1.6;
+}
+
+/* ================================
+   BACKGROUND (SIMPLIFIED — LESS NOISE)
 ================================ */
 
 body::before {
@@ -55,28 +103,23 @@ body::before {
   background:
     radial-gradient(
       900px circle at 20% 0%,
-      rgba(212, 175, 55, 0.08),
+      rgba(212, 175, 55, 0.06),
       transparent 60%
     ),
     radial-gradient(
-      700px circle at 80% 10%,
-      rgba(229, 228, 226, 0.04),
+      800px circle at 80% 10%,
+      rgba(229, 228, 226, 0.03),
       transparent 55%
     ),
     radial-gradient(
-      800px circle at 50% 100%,
-      rgba(180, 140, 60, 0.06),
+      700px circle at 50% 100%,
+      rgba(180, 140, 60, 0.04),
       transparent 60%
-    ),
-    radial-gradient(
-      600px circle at 10% 80%,
-      rgba(212, 175, 55, 0.04),
-      transparent 50%
     );
 }
 
 /* ================================
-   GRID
+   GRID (REDUCED INTENSITY)
 ================================ */
 
 body::after {
@@ -86,11 +129,11 @@ body::after {
   pointer-events: none;
   z-index: -1;
   background-image:
-    linear-gradient(rgba(212, 175, 55, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(212, 175, 55, 0.025) 1px, transparent 1px);
-  background-size: 80px 80px;
-  opacity: 0.4;
-  mask-image: radial-gradient(circle at center, black 30%, transparent 75%);
+    linear-gradient(rgba(212, 175, 55, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 175, 55, 0.02) 1px, transparent 1px);
+  background-size: 90px 90px;
+  opacity: 0.25;
+  mask-image: radial-gradient(circle at center, black 35%, transparent 80%);
 }
 
 /* ================================
@@ -98,7 +141,7 @@ body::after {
 ================================ */
 
 ::selection {
-  background: rgba(212, 175, 55, 0.25);
+  background: rgba(212, 175, 55, 0.22);
   color: white;
 }
 
@@ -111,20 +154,20 @@ body::after {
 }
 
 ::-webkit-scrollbar-track {
-  background: #08070a;
+  background: #07070a;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.2);
+  background: rgba(212, 175, 55, 0.18);
   border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.35);
+  background: rgba(212, 175, 55, 0.3);
 }
 
 /* ================================
-   OVERLAY MODE
+   OVERLAY SYSTEM (UNCHANGED)
 ================================ */
 
 body.aeonvera-overlay * {
@@ -133,68 +176,16 @@ body.aeonvera-overlay * {
 
 body.aeonvera-overlay section {
   outline: 1px solid rgba(212, 175, 55, 0.22);
-  position: relative;
 }
 
 body.aeonvera-overlay [data-aeonvera-card] {
   outline: 1px solid rgba(229, 228, 226, 0.22);
-  position: relative;
-}
-
-body.aeonvera-overlay [data-aeonvera-input] {
-  outline: 1px solid rgba(180, 140, 60, 0.22);
 }
 
 body.aeonvera-overlay [data-aeonvera-button] {
   outline: 1px solid rgba(212, 175, 55, 0.22);
 }
 
-body.aeonvera-overlay
-[data-aeonvera-input]::before,
-body.aeonvera-overlay
-[data-aeonvera-button]::before,
-body.aeonvera-overlay
-section::before,
-body.aeonvera-overlay
-[data-aeonvera-card]::before {
-  content: attr(data-aeonvera-label);
-  position: absolute;
-  top: -10px;
-  left: 8px;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.65);
-  color: white;
-  opacity: 0.75;
-  pointer-events: none;
-  z-index: 9999;
-  letter-spacing: 0.08em;
-}body.aeonvera-design-overlay * {
-  outline: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-body.aeonvera-design-overlay section {
-  outline: 1px solid rgba(212, 175, 55, 0.25);
-}
-
-body.aeonvera-design-overlay [data-aeonvera-card] {
-  outline: 1px solid rgba(229, 228, 226, 0.25);
-}
-
-body.aeonvera-design-overlay [data-aeonvera-button] {
-  outline: 1px solid rgba(212, 175, 55, 0.25);
-}
-
-body.aeonvera-design-overlay [data-aeonvera-input] {
-  outline: 1px solid rgba(180, 140, 60, 0.25);
-}
-
-body.aeonvera-design-overlay section::before {
-  content: "SECTION";
-  position: absolute;
-  top: 0;
-  left: 0;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.3);
+body.aeonvera-overlay [data-aeonvera-input] {
+  outline: 1px solid rgba(180, 140, 60, 0.22);
 }
