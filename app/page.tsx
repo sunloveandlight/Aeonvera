@@ -11,95 +11,110 @@ import Motion from "@/components/motion/Motion";
 export default function HomePage() {
   return (
     <Page density="spacious">
-      {/* ================================
-          HERO (NO HEAVY MOTION — CONTROLLED PRESENCE)
-      ================================= */}
+
+      {/* ================= HERO ================= */}
       <Section intensity="high">
         <PageContainer>
           <Motion type="fade" intensity="subtle">
-            <div className="min-h-[85vh] flex flex-col items-center justify-center text-center">
-              
-              <p className="text-[10px] uppercase tracking-[0.6em] text-white/25 mb-10">
-                Private Longevity Intelligence
+            <div className="min-h-[90vh] flex flex-col items-center justify-center text-center">
+
+              <p className="text-[10px] uppercase tracking-[0.7em] text-white/20 mb-12">
+                PRIVATE SYSTEM ACCESS
               </p>
 
-              <h1 className="text-6xl md:text-8xl font-light tracking-[-0.04em] leading-[1.02] text-white/90">
+              <h1 className="text-6xl md:text-8xl font-light tracking-[-0.06em] leading-[1.05] text-white/90">
                 The Operating System
                 <br />
-                <span className="text-white/40 italic">for Human Longevity</span>
+                <span className="text-white/35 italic">
+                  for Human Longevity
+                </span>
               </h1>
 
-              <p className="mt-10 text-white/35 max-w-xl leading-relaxed font-light">
-                A continuously evolving biological intelligence layer built for long-term optimization.
-              </p>
+              <div className="mt-12 max-w-2xl">
+                <p className="text-white/30 leading-relaxed font-light">
+                  Aeonvera is a continuously evolving intelligence layer that models,
+                  interprets, and optimizes long-term biological performance.
+                </p>
+              </div>
 
               <div className="flex gap-4 mt-14">
                 <Button href="/login?mode=signup">
-                  Begin Assessment
+                  Request Access
                 </Button>
                 <Button href="/platform" variant="secondary">
-                  Explore Platform
+                  View System
                 </Button>
               </div>
+
             </div>
           </Motion>
         </PageContainer>
       </Section>
 
-      {/* ================================
-          SYSTEM STATS (CONTROLLED REVEAL)
-      ================================= */}
+      {/* ================= SIGNAL STRIP ================= */}
       <Section intensity="medium">
         <PageContainer>
-          <Motion type="rise" intensity="subtle">
-            <div className="grid md:grid-cols-3 gap-px bg-white/[0.06]">
-              {[
-                { value: "AI", label: "Intelligence Engine" },
-                { value: "Digital Twin", label: "Biological Model" },
-                { value: "Longevity", label: "Optimization System" },
-              ].map((item, i) => (
-                <Card key={i} hover>
-                  <div className="text-center py-10">
-                    <div className="text-2xl font-light text-white/80 tracking-[0.15em]">
-                      {item.value}
+          <div className="grid md:grid-cols-3 gap-6">
+
+            {[
+              {
+                title: "Intelligence Engine",
+                body: "Continuous biological inference system",
+              },
+              {
+                title: "Digital Model",
+                body: "Persistent human health representation",
+              },
+              {
+                title: "Optimization Layer",
+                body: "Adaptive long-term performance system",
+              },
+            ].map((item, i) => (
+              <Motion key={i} type="rise" intensity="subtle">
+                <Card hover>
+                  <div className="py-10 text-center">
+                    <div className="text-white/70 tracking-[0.2em] font-light">
+                      {item.title}
                     </div>
-                    <div className="text-[10px] uppercase tracking-[0.4em] text-white/25 mt-3">
-                      {item.label}
+                    <div className="text-[10px] uppercase tracking-[0.35em] text-white/25 mt-4">
+                      {item.body}
                     </div>
                   </div>
                 </Card>
-              ))}
-            </div>
-          </Motion>
+              </Motion>
+            ))}
+
+          </div>
         </PageContainer>
       </Section>
 
-      {/* ================================
-          PLATFORM (STRUCTURED REVEAL)
-      ================================= */}
+      {/* ================= CORE SYSTEM ================= */}
       <Section intensity="high">
         <PageContainer>
           <Motion type="fade" intensity="medium">
+
             <SectionTitle
-              eyebrow="Platform"
-              title="A biological intelligence infrastructure."
-              subtitle="Every data point contributes to a continuously evolving model of human health and performance."
+              eyebrow="System Architecture"
+              title="Designed for continuous biological understanding."
+              subtitle="A unified layer for tracking, interpreting, and evolving human health intelligence over time."
             />
+
           </Motion>
 
           <div className="mt-20 grid md:grid-cols-3 gap-6">
+
             {[
               {
-                title: "Biological Monitoring",
-                body: "Track biomarkers, sleep, recovery, and health metrics in a unified system.",
+                title: "Continuous Signal Capture",
+                body: "Aggregates biological, behavioral, and environmental data streams.",
               },
               {
-                title: "Adaptive Intelligence",
-                body: "Generate personalized insights and detect risk patterns automatically.",
+                title: "Adaptive Modeling",
+                body: "Updates personal health intelligence in real time.",
               },
               {
-                title: "Digital Twin",
-                body: "Build a persistent biological model that improves with time.",
+                title: "Predictive Layer",
+                body: "Identifies long-term risk and optimization opportunities.",
               },
             ].map((item, i) => (
               <Motion key={i} type="rise" intensity="subtle">
@@ -113,67 +128,72 @@ export default function HomePage() {
                 </Card>
               </Motion>
             ))}
+
           </div>
         </PageContainer>
       </Section>
 
-      {/* ================================
-          SCIENCE (SLOW REVEAL LAYER)
-      ================================= */}
+      {/* ================= PRINCIPLE SECTION ================= */}
       <Section intensity="medium">
         <PageContainer>
           <Motion type="fade" intensity="subtle">
+
             <div className="grid lg:grid-cols-2 gap-20 items-center">
-              
+
               <SectionTitle
-                eyebrow="Scientific Foundation"
-                title="Built for long-term biological optimization."
-                subtitle="Systems biology, AI modeling, and longitudinal data convergence."
+                eyebrow="Design Principle"
+                title="Built as a system, not a product."
+                subtitle="Every interaction contributes to a persistent model of human longevity intelligence."
               />
 
               <div className="space-y-4">
                 {[
-                  "Continuous Tracking",
-                  "Adaptive Intelligence",
-                  "Personalized Protocols",
+                  "Signal Ingestion",
+                  "Contextual Interpretation",
+                  "Adaptive Response",
                 ].map((item, i) => (
                   <Motion key={i} type="rise" intensity="subtle">
                     <Card>
-                      <div className="text-white/70 font-light">
+                      <div className="text-white/60 font-light tracking-wide">
                         {String(i + 1).padStart(2, "0")} — {item}
                       </div>
                     </Card>
                   </Motion>
                 ))}
               </div>
+
             </div>
+
           </Motion>
         </PageContainer>
       </Section>
 
-      {/* ================================
-          CTA (HIGH INTENSITY FOCUS MOMENT)
-      ================================= */}
+      {/* ================= FINAL CTA ================= */}
       <Section intensity="high">
         <PageContainer>
           <Motion type="scale" intensity="medium">
+
             <div className="text-center max-w-3xl mx-auto">
+
               <SectionTitle
                 align="center"
-                eyebrow="Begin"
-                title="Build your longevity intelligence layer."
-                subtitle="Start your assessment and generate your first biological model."
+                eyebrow="Access"
+                title="Begin your intelligence layer."
+                subtitle="Initialize your personal biological system and generate your first model."
               />
 
               <div className="mt-14">
                 <Button href="/login?mode=signup">
-                  Access Platform
+                  Request System Access
                 </Button>
               </div>
+
             </div>
+
           </Motion>
         </PageContainer>
       </Section>
+
     </Page>
   );
 }
