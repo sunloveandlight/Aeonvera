@@ -1,124 +1,106 @@
 "use client";
 
 import { ReactNode } from "react";
-import { HoverLift } from "@/components/motion/Motion";
 
 type CardProps = {
   children: ReactNode;
   className?: string;
-  title?: string;
-  label?: string;
+  hover?: boolean;
+  glow?: boolean;
 };
 
 export default function Card({
   children,
   className = "",
-  title,
-  label,
+  hover = true,
+  glow = false,
 }: CardProps) {
   return (
-    <HoverLift>
+    <div
+      data-aeonvera-card
+      className={`
+        relative
+        rounded-2xl
+        border border-white/[0.06]
+        bg-gradient-to-b from-white/[0.03] to-transparent
+        backdrop-blur-xl
+
+        shadow-[0_0_0_1px_rgba(255,255,255,0.03)]
+        overflow-hidden
+
+        transition-all duration-500
+
+        ${hover ? "hover:translate-y-[-2px] hover:border-white/10 hover:shadow-[0_20px_60px_rgba(0,0,0,0.6)]" : ""}
+
+        ${className}
+      `}
+    >
+      {/* ================================
+          LIGHT SHEEN LAYER (SURFACE REFLECTION)
+      ================================= */}
       <div
-        data-aeonvera-card
-        data-aeonvera-label="CARD"
-        className={`
-          group
-          relative
-          overflow-hidden
+        className="
+          absolute inset-0
+          opacity-0
+          hover:opacity-100
+          transition-opacity duration-700
+          bg-gradient-to-br
+          from-white/[0.06]
+          via-transparent
+          to-transparent
+          pointer-events-none
+        "
+      />
 
-          rounded-[28px]
-
-          border
-          border-white/10
-
-          bg-white/[0.035]
-          backdrop-blur-2xl
-
-          p-8
-
-          transition-all
-          duration-300
-
-          hover:border-white/15
-          hover:bg-white/[0.045]
-          hover:shadow-[0_18px_60px_rgba(0,0,0,0.35)]
-
-          ${className}
-        `}
-      >
-        {/* Top highlight */}
-
+      {/* ================================
+          GOLD ENERGY LAYER (OPTIONAL)
+      ================================= */}
+      {glow && (
         <div
           className="
-            absolute
-            inset-x-0
-            top-0
-            h-px
-            bg-white/20
-          "
-        />
-
-        {/* Ambient glow */}
-
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-0
+            absolute inset-0
             opacity-0
-            transition-opacity
-            duration-500
-
-            group-hover:opacity-100
-
-            bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.05),transparent_70%)]
+            hover:opacity-100
+            transition-opacity duration-700
+            bg-gradient-to-br
+            from-[rgba(212,175,55,0.08)]
+            via-transparent
+            to-transparent
+            pointer-events-none
           "
         />
+      )}
 
-        {label && (
-          <p
-            className="
-              mb-5
+      {/* ================================
+          TOP EDGE LIGHT (PHYSICAL MATERIAL HINT)
+      ================================= */}
+      <div
+        className="
+          absolute top-0 left-0 right-0
+          h-px
+          bg-gradient-to-r
+          from-transparent
+          via-white/15
+          to-transparent
+          opacity-60
+        "
+      />
 
-              text-[11px]
-              uppercase
-              tracking-[0.38em]
+      {/* ================================
+          DEPTH SHADOW CORE (INNER STRUCTURE)
+      ================================= */}
+      <div
+        className="
+          absolute inset-0
+          shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]
+          pointer-events-none
+        "
+      />
 
-              text-white/40
-            "
-          >
-            {label}
-          </p>
-        )}
-
-        {title && (
-          <h3
-            className="
-              mb-5
-
-              text-2xl
-              font-semibold
-              tracking-tight
-
-              text-white
-            "
-          >
-            {title}
-          </h3>
-        )}
-
-        <div
-          className="
-            relative
-            z-10
-
-            text-white/72
-            leading-7
-          "
-        >
-          {children}
-        </div>
+      {/* CONTENT */}
+      <div className="relative z-10 p-6">
+        {children}
       </div>
-    </HoverLift>
+    </div>
   );
 }
