@@ -157,7 +157,6 @@ export default function DashboardPage() {
     <PageContainer>
       <div className="py-16">
 
-        {/* HEADER */}
         <div className="mb-12">
           <p className="text-xs tracking-[0.4em] text-white/40 uppercase mb-6">
             LONGEVITY INTELLIGENCE
@@ -172,15 +171,12 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* PRIMARY CARD */}
         <Card label="DIGITAL TWIN STATUS">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
             {report ? (
               <>
                 <div>
-                  <p className="text-white/60 mb-2">
-                    Intelligence Report Active
-                  </p>
+                  <p className="text-white/60 mb-2">Intelligence Report Active</p>
                   <h2 className="text-4xl font-semibold">
                     {report.risk_score}
                     <span className="text-white/40"> / 100</span>
@@ -197,10 +193,7 @@ export default function DashboardPage() {
                   Assessment completed. Generate your AI longevity report.
                 </p>
 
-                <Button
-                  onClick={generateReport}
-                  disabled={generatingReport}
-                >
+                <Button onClick={generateReport} disabled={generatingReport}>
                   {generatingReport ? "Processing..." : "Generate Report"}
                 </Button>
               </>
@@ -218,9 +211,7 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* GRID */}
         <div className="grid md:grid-cols-2 gap-6 mt-6">
-
           <Card label="SUBSCRIPTION">
             <div className="flex flex-col gap-6">
               <h3 className="text-2xl font-medium uppercase">
@@ -254,9 +245,7 @@ export default function DashboardPage() {
               </Button>
             </div>
           </Card>
-
         </div>
-
       </div>
     </PageContainer>
   );
