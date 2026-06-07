@@ -1,15 +1,32 @@
 import { createClient } from "@supabase/supabase-js";
 
 /**
- * Server-only Supabase admin client
- * Used for cron jobs + backend automation
+ * Creates a server-side Supabase admin client.
+ * Safe for API routes, webhooks, cron jobs,
+ * and other backend-only operations.
  */
-export const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
+export function getSupabaseAdmin() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
+  }
+
+  if (!serviceRoleKey) {
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+  }
+
+  return createClient(url, serviceRoleKey, {
     auth: {
       persistSession: false,
+      autoRefreshToken: false,
     },
-  }
-);
+  });
+}
+
+/**
+ * Optional singleton export for places
+ * that prefer importing a ready-made client.
+ */
+export const supabase = getSupabaseAdmin();
