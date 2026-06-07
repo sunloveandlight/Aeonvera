@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ReactNode } from "react";
 
 type ButtonProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   href?: string;
   onClick?: () => void;
+  type?: "button" | "submit" | "reset";
   variant?: "primary" | "secondary";
+  size?: "sm" | "md" | "lg";
   className?: string;
   disabled?: boolean;
 };
@@ -16,52 +19,139 @@ export default function Button({
   children,
   href,
   onClick,
+  type = "button",
   variant = "primary",
+  size = "md",
   className = "",
   disabled = false,
 }: ButtonProps) {
-  const baseStyles =
-    "inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-medium relative overflow-hidden transition-all select-none";
+  const sizes = {
+    sm: "h-10 px-4 text-sm",
+    md: "h-12 px-6 text-sm",
+    lg: "h-14 px-8 text-base",
+  };
 
   const variants = {
     primary:
-      "bg-white text-black hover:bg-white/90 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]",
+      `
+      bg-white
+      text-black
+      border border-white/10
+
+      hover:bg-white/95
+      hover:shadow-[0_0_30px_rgba(255,255,255,0.12)]
+
+      active:scale-[0.985]
+      `,
+
     secondary:
-      "bg-white/[0.04] text-white border border-white/10 hover:border-white/20 hover:bg-white/[0.08]",
+      `
+      bg-white/[0.04]
+      text-white
+      border border-white/10
+
+      hover:bg-white/[0.07]
+      hover:border-white/20
+      hover:shadow-[0_0_25px_rgba(255,255,255,0.05)]
+
+      active:scale-[0.985]
+      `,
   };
 
-  const content = (
+  const inner = (
     <motion.div
       whileHover={disabled ? {} : { y: -1 }}
-      whileTap={disabled ? {} : { scale: 0.98 }}
-      transition={{ duration: 0.12, ease: "easeOut" }}
+      whileTap={disabled ? {} : { scale: 0.985 }}
+      transition={{
+        duration: 0.16,
+        ease: "easeOut",
+      }}
+      data-aeonvera-button
+      data-aeonvera-label="BUTTON"
       className={`
-        ${baseStyles}
+        group
+        relative
+        inline-flex
+        items-center
+        justify-center
+
+        rounded-2xl
+        overflow-hidden
+
+        font-medium
+        tracking-[0.01em]
+
+        transition-all
+        duration-300
+
+        select-none
+        cursor-pointer
+
+        ${sizes[size]}
         ${variants[variant]}
-        ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+
+        ${disabled ? "opacity-40 cursor-not-allowed" : ""}
+
         ${className}
       `}
-      data-aeonvera-button
     >
-      {/* glow layer (fixed: properly scoped) */}
-      <span className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-white/10 via-white/5 to-white/10" />
+      {/* glow */}
+
+      <span
+        className="
+          absolute
+          inset-0
+          opacity-0
+          group-hover:opacity-100
+          transition-opacity
+          duration-500
+
+          bg-gradient-to-r
+          from-transparent
+          via-white/10
+          to-transparent
+        "
+      />
+
+      {/* subtle top highlight */}
+
+      <span
+        className="
+          absolute
+          inset-x-0
+          top-0
+          h-px
+          bg-white/20
+        "
+      />
 
       {/* content */}
-      <span className="relative">{children}</span>
+
+      <span className="relative z-10">
+        {children}
+      </span>
     </motion.div>
   );
 
   if (href) {
     return (
-      <Link href={disabled ? "#" : href} className="inline-block">
-        {content}
+      <Link
+        href={disabled ? "#" : href}
+        className="inline-flex"
+      >
+        {inner}
       </Link>
     );
   }
 
   return (
-    <button onClick={onClick} disabled={disabled} className="inline-block">
-      {content}
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex"
+    >
+      {inner}
     </button>
   );
 }
