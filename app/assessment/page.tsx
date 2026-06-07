@@ -35,29 +35,46 @@ export default function AssessmentPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         router.replace("/login");
         return;
       }
+
       setLoading(false);
     };
+
     checkAuth();
   }, [router]);
 
   function update(field: keyof Answers, value: string) {
-    setAnswers((prev) => ({ ...prev, [field]: value }));
+    setAnswers((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   }
 
   async function submit() {
     try {
       setSaving(true);
-      const { data: { user } } = await supabase.auth.getUser();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) return;
 
-      const { error } = await supabase.from("longevity_assessments").insert([
-        { user_id: user.id, ...answers },
-      ]);
+      const { error } = await supabase
+        .from("longevity_assessments")
+        .insert([
+          {
+            user_id: user.id,
+            ...answers,
+          },
+        ]);
 
       if (error) {
         console.error(error);
@@ -73,7 +90,7 @@ export default function AssessmentPage() {
 
   if (loading) {
     return (
-      <Section size="lg">
+      <Section intensity="high">
         <PageContainer>
           <div className="text-white/30 tracking-[0.3em] text-sm uppercase">
             Initializing Aeonvera systems...
@@ -86,27 +103,28 @@ export default function AssessmentPage() {
   const progress = ((step + 1) / steps.length) * 100;
 
   return (
-    <Section size="lg">
+    <Section intensity="high">
       <PageContainer className="max-w-3xl">
-
         <div className="mb-10">
           <p className="text-[10px] uppercase tracking-[0.5em] text-white/25 mb-4">
             Longevity Assessment
           </p>
+
           <h1 className="text-4xl md:text-5xl font-light tracking-tight text-white/90">
             {steps[step]}
           </h1>
+
           <p className="text-white/30 mt-2 text-sm tracking-wide">
             Step {step + 1} of {steps.length}
           </p>
 
-          {/* GOLD PROGRESS BAR */}
           <div className="w-full h-px bg-white/[0.06] mt-6 overflow-hidden">
             <div
               className="h-full transition-all duration-500"
               style={{
                 width: `${progress}%`,
-                background: "linear-gradient(to right, rgba(180,140,60,0.6), rgba(212,175,55,0.9))",
+                background:
+                  "linear-gradient(to right, rgba(180,140,60,0.6), rgba(212,175,55,0.9))",
               }}
             />
           </div>
@@ -115,33 +133,89 @@ export default function AssessmentPage() {
         <Card className="p-8">
           {step === 0 && (
             <div className="grid md:grid-cols-2 gap-6">
-              <Input label="Age" value={answers.age || ""} onChange={(v) => update("age", v)} />
-              <Input label="Sex" value={answers.sex || ""} onChange={(v) => update("sex", v)} />
-              <Input label="Height (cm)" value={answers.height_cm || ""} onChange={(v) => update("height_cm", v)} />
-              <Input label="Weight (kg)" value={answers.weight_kg || ""} onChange={(v) => update("weight_kg", v)} />
+              <Input
+                label="Age"
+                value={answers.age || ""}
+                onChange={(v) => update("age", v)}
+              />
+
+              <Input
+                label="Sex"
+                value={answers.sex || ""}
+                onChange={(v) => update("sex", v)}
+              />
+
+              <Input
+                label="Height (cm)"
+                value={answers.height_cm || ""}
+                onChange={(v) => update("height_cm", v)}
+              />
+
+              <Input
+                label="Weight (kg)"
+                value={answers.weight_kg || ""}
+                onChange={(v) => update("weight_kg", v)}
+              />
             </div>
           )}
 
           {step === 1 && (
             <div className="grid md:grid-cols-2 gap-6">
-              <Input label="Sleep hours" value={answers.sleep_hours || ""} onChange={(v) => update("sleep_hours", v)} />
-              <Input label="Sleep quality (1-10)" value={answers.sleep_quality || ""} onChange={(v) => update("sleep_quality", v)} />
+              <Input
+                label="Sleep hours"
+                value={answers.sleep_hours || ""}
+                onChange={(v) => update("sleep_hours", v)}
+              />
+
+              <Input
+                label="Sleep quality (1-10)"
+                value={answers.sleep_quality || ""}
+                onChange={(v) => update("sleep_quality", v)}
+              />
             </div>
           )}
 
           {step === 2 && (
             <div className="grid md:grid-cols-2 gap-6">
-              <Input label="Exercise days / week" value={answers.exercise_days || ""} onChange={(v) => update("exercise_days", v)} />
-              <Input label="Strength training (yes / no)" value={answers.strength_training || ""} onChange={(v) => update("strength_training", v)} />
+              <Input
+                label="Exercise days / week"
+                value={answers.exercise_days || ""}
+                onChange={(v) => update("exercise_days", v)}
+              />
+
+              <Input
+                label="Strength training (yes / no)"
+                value={answers.strength_training || ""}
+                onChange={(v) => update("strength_training", v)}
+              />
             </div>
           )}
 
           {step === 3 && (
             <div className="grid md:grid-cols-2 gap-6">
-              <Input label="Diet type" value={answers.diet_type || ""} onChange={(v) => update("diet_type", v)} />
-              <Input label="Alcohol use" value={answers.alcohol_use || ""} onChange={(v) => update("alcohol_use", v)} />
-              <Input label="Smoking" value={answers.smoking || ""} onChange={(v) => update("smoking", v)} />
-              <Input label="Stress level (1-10)" value={answers.stress_level || ""} onChange={(v) => update("stress_level", v)} />
+              <Input
+                label="Diet type"
+                value={answers.diet_type || ""}
+                onChange={(v) => update("diet_type", v)}
+              />
+
+              <Input
+                label="Alcohol use"
+                value={answers.alcohol_use || ""}
+                onChange={(v) => update("alcohol_use", v)}
+              />
+
+              <Input
+                label="Smoking"
+                value={answers.smoking || ""}
+                onChange={(v) => update("smoking", v)}
+              />
+
+              <Input
+                label="Stress level (1-10)"
+                value={answers.stress_level || ""}
+                onChange={(v) => update("stress_level", v)}
+              />
             </div>
           )}
 
@@ -179,7 +253,6 @@ export default function AssessmentPage() {
             </button>
           )}
         </div>
-
       </PageContainer>
     </Section>
   );
@@ -199,6 +272,7 @@ function Input({
       <label className="text-[10px] uppercase tracking-[0.35em] text-white/30 mb-3">
         {label}
       </label>
+
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
