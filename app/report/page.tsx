@@ -60,7 +60,7 @@ export default function ReportPage() {
           return;
         }
 
-        setReport(data.report);
+        setReport(data.report as ReportData);
       } catch {
         setError("Failed to load report");
       } finally {
@@ -108,7 +108,6 @@ export default function ReportPage() {
   return (
     <PageContainer>
       <div className="py-16 space-y-8">
-
         <div>
           <p className="text-xs tracking-[0.4em] text-white/40 uppercase mb-4">
             Biological Intelligence Report
@@ -119,11 +118,13 @@ export default function ReportPage() {
           </h1>
         </div>
 
-        <Card label="System Risk Index">
+        <Card title="System Risk Index">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-
             <div>
-              <p className="text-white/50 text-sm">Overall Biological Risk</p>
+              <p className="text-white/50 text-sm">
+                Overall Biological Risk
+              </p>
+
               <p className={`text-6xl font-semibold mt-2 ${riskColor}`}>
                 {report.risk_score}
                 <span className="text-white/40 text-2xl"> / 100</span>
@@ -144,11 +145,10 @@ export default function ReportPage() {
                 />
               </div>
             </div>
-
           </div>
         </Card>
 
-        <Card label="Primary Objective">
+        <Card title="Primary Objective">
           <p className="text-2xl md:text-3xl font-light">
             {report.primary_goal}
           </p>
@@ -156,7 +156,7 @@ export default function ReportPage() {
 
         <div className="grid md:grid-cols-4 gap-6">
           {Object.entries(report.risk_profile).map(([key, value]) => (
-            <Card key={key} label={key.replace("_", " ")}>
+            <Card key={key} title={key.replace("_", " ")}>
               <p
                 className={
                   value === "low"
@@ -173,7 +173,7 @@ export default function ReportPage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <Card label="Strengths">
+          <Card title="Strengths">
             <div className="space-y-3">
               {report.strengths.map((item, i) => (
                 <div key={i} className="p-3 rounded-xl bg-green-500/10">
@@ -183,7 +183,7 @@ export default function ReportPage() {
             </div>
           </Card>
 
-          <Card label="Weaknesses">
+          <Card title="Weaknesses">
             <div className="space-y-3">
               {report.weaknesses.map((item, i) => (
                 <div key={i} className="p-3 rounded-xl bg-orange-500/10">
@@ -194,7 +194,7 @@ export default function ReportPage() {
           </Card>
         </div>
 
-        <Card label="Top Priorities">
+        <Card title="Top Priorities">
           <div className="space-y-3">
             {report.top_priorities.map((p, i) => (
               <div key={i} className="p-3 rounded-xl bg-white/5">
@@ -204,10 +204,13 @@ export default function ReportPage() {
           </div>
         </Card>
 
-        <Card label="90-Day Plan">
+        <Card title="90-Day Plan">
           <div className="space-y-4">
             {report["90_day_plan"].map((item, i) => (
-              <div key={i} className="flex justify-between items-center p-4 rounded-xl bg-white/5">
+              <div
+                key={i}
+                className="flex justify-between items-center p-4 rounded-xl bg-white/5"
+              >
                 <div>
                   <p className="font-medium">{item.category}</p>
                   <p className="text-white/60 text-sm">{item.action}</p>
@@ -221,16 +224,18 @@ export default function ReportPage() {
           </div>
         </Card>
 
-        <Card label="Behavioral Insights">
+        <Card title="Behavioral Insights">
           <div className="space-y-4">
             {report.behavioral_insights.map((insight, i) => (
-              <p key={i} className="text-white/70 border-l border-white/20 pl-4">
+              <p
+                key={i}
+                className="text-white/70 border-l border-white/20 pl-4"
+              >
                 {insight}
               </p>
             ))}
           </div>
         </Card>
-
       </div>
     </PageContainer>
   );
