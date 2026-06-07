@@ -1,25 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { buildHealthState } from "@/lib/state/healthStateEngine";
 
-/**
- * Supabase admin client (server-only)
- */
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-/**
- * POST /api/health/state
- * Body: { userId: string }
- *
- * 1. Fetch metrics
- * 2. Build health state
- * 3. Persist to Supabase
- * 4. Return state
- */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -32,13 +14,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const supabase = getSupabaseAdmin();
+
     /**
-     * 1. FETCH METRICS
+     * FETCH WEARABLE METRICS
+     *
+     * Schema:
+     * wearable_metrics
+     * - user_id
+     * - metric_name
+     * - metric_value
+     * - recorded_at
      */
     const { data: metrics, error } = await supabase
-      .from("metrics")
+      .from("wearable_metrics")
       .select("*")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .order("recorded_at", { ascending: true });
 
     if (error) {
       return NextResponse.json(
@@ -47,11 +39,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    /**
-     * 2. BUILD STATE
-     */
     const state = buildHealthState(
-      (metrics || []).map((m: any) => ({
+      (metrics || []).map((m) => ({
         userId: m.user_id,
         metricName: m.metric_name,
         value: Number(m.metric_value),
@@ -61,24 +50,26 @@ export async function POST(req: NextRequest) {
 
     if (!state) {
       return NextResponse.json(
-        { error: "No metrics found" },
+        { error: "No wearable metrics found" },
         { status: 404 }
       );
     }
 
-    /**
-     * 3. UPSERT STATE (single source of truth)
-     */
     const { error: upsertError } = await supabase
       .from("health_states")
-      .upsert({
-        user_id: userId,
-        baseline: state.baseline,
-        trends: state.trends,
-        risk_scores: state.riskScores,
-        insights: state.insights,
-        updated_at: state.updatedAt,
-      });
+      .upsert(
+        {
+          user_id: userId,
+          baseline: state.baseline,
+          trends: state.trends,
+          risk_scores: state.riskScores,
+          insights: state.insights,
+          updated_at: state.updatedAt,
+        },
+        {
+          onConflict: "user_id",
+        }
+      );
 
     if (upsertError) {
       return NextResponse.json(
@@ -87,16 +78,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    /**
-     * 4. RETURN STATE
-     */
     return NextResponse.json({
       success: true,
       state,
+      metricsProcessed: metrics?.length ?? 0,
     });
-  } catch (err: any) {
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Unknown error";
+
     return NextResponse.json(
-      { error: err.message ?? "Unknown error" },
+      { error: message },
       { status: 500 }
     );
   }
