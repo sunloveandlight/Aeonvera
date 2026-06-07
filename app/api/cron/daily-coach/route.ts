@@ -10,8 +10,12 @@ import { supabase } from "@/lib/supabase/admin";
  */
 export async function GET() {
   try {
+    /**
+     * STEP 1: GET USERS FROM HEALTH STATES (NOT METRICS)
+     * This ensures we only process users who have a computed health state.
+     */
     const { data: users, error } = await supabase
-      .from("metrics")
+      .from("health_states")
       .select("user_id");
 
     if (error) {
@@ -28,6 +32,9 @@ export async function GET() {
       });
     }
 
+    /**
+     * STEP 2: DEDUPLICATE USERS
+     */
     const uniqueUsers: string[] = [
       ...new Set(
         users
@@ -38,6 +45,9 @@ export async function GET() {
 
     let processed = 0;
 
+    /**
+     * STEP 3: RUN COACH PIPELINE PER USER
+     */
     for (const userId of uniqueUsers) {
       try {
         await runCoachPipeline(userId);
