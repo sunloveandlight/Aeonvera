@@ -110,7 +110,6 @@ export default function AssessmentPage() {
     <Section size="lg">
       <PageContainer className="max-w-3xl">
 
-        {/* HEADER */}
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-white">
             Longevity Assessment
@@ -121,7 +120,6 @@ export default function AssessmentPage() {
             <span className="text-white/70">{steps[step]}</span>
           </p>
 
-          {/* PROGRESS */}
           <div className="w-full h-1 bg-white/10 mt-5 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-300"
@@ -130,7 +128,6 @@ export default function AssessmentPage() {
           </div>
         </div>
 
-        {/* CARD */}
         <Card className="p-8">
           {step === 0 && (
             <div className="grid md:grid-cols-2 gap-6">
@@ -173,7 +170,6 @@ export default function AssessmentPage() {
           )}
         </Card>
 
-        {/* NAV */}
         <div className="flex justify-between mt-8">
           <button
             onClick={() => setStep((s) => Math.max(0, s - 1))}
@@ -205,7 +201,6 @@ export default function AssessmentPage() {
   );
 }
 
-/* LOCAL INPUT */
 function Input({
   label,
   value,
@@ -221,15 +216,7 @@ function Input({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="
-          w-full px-4 py-3 rounded-xl
-          bg-white/5 border border-white/10
-          text-white placeholder-white/30
-          focus:outline-none
-          focus:ring-2 focus:ring-cyan-400/30
-          focus:border-cyan-400/30
-          transition
-        "
+        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-cyan-400/30 focus:border-cyan-400/30 transition"
       />
     </div>
   );

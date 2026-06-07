@@ -218,11 +218,7 @@ export default function DashboardPage() {
                 {profile?.plan || "core"}
               </h3>
 
-              <Button
-                variant="secondary"
-                onClick={openBillingPortal}
-                disabled={openingPortal}
-              >
+              <Button variant="secondary" onClick={openBillingPortal} disabled={openingPortal}>
                 {openingPortal ? "Opening..." : "Manage Plan"}
               </Button>
             </div>
@@ -246,6 +242,7 @@ export default function DashboardPage() {
             </div>
           </Card>
         </div>
+
       </div>
     </PageContainer>
   );
