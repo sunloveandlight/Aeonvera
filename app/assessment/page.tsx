@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-
 import PageContainer from "@/components/ui/PageContainer";
 import Section from "@/components/ui/Section";
 import Card from "@/components/ui/Card";
@@ -13,19 +12,14 @@ type Answers = {
   sex?: string;
   height_cm?: string;
   weight_kg?: string;
-
   sleep_hours?: string;
   sleep_quality?: string;
-
   exercise_days?: string;
   strength_training?: string;
-
   diet_type?: string;
   alcohol_use?: string;
   smoking?: string;
-
   stress_level?: string;
-
   primary_goal?: string;
 };
 
@@ -41,43 +35,28 @@ export default function AssessmentPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.replace("/login");
         return;
       }
-
       setLoading(false);
     };
-
     checkAuth();
   }, [router]);
 
   function update(field: keyof Answers, value: string) {
-    setAnswers((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setAnswers((prev) => ({ ...prev, [field]: value }));
   }
 
   async function submit() {
     try {
       setSaving(true);
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { error } = await supabase.from("longevity_assessments").insert([
-        {
-          user_id: user.id,
-          ...answers,
-        },
+        { user_id: user.id, ...answers },
       ]);
 
       if (error) {
@@ -96,7 +75,7 @@ export default function AssessmentPage() {
     return (
       <Section size="lg">
         <PageContainer>
-          <div className="text-white/50 tracking-wide">
+          <div className="text-white/30 tracking-[0.3em] text-sm uppercase">
             Initializing Aeonvera systems...
           </div>
         </PageContainer>
@@ -110,20 +89,25 @@ export default function AssessmentPage() {
     <Section size="lg">
       <PageContainer className="max-w-3xl">
 
-        <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-white">
+        <div className="mb-10">
+          <p className="text-[10px] uppercase tracking-[0.5em] text-white/25 mb-4">
             Longevity Assessment
+          </p>
+          <h1 className="text-4xl md:text-5xl font-light tracking-tight text-white/90">
+            {steps[step]}
           </h1>
-
-          <p className="text-white/50 mt-2">
-            Step {step + 1} of {steps.length} —{" "}
-            <span className="text-white/70">{steps[step]}</span>
+          <p className="text-white/30 mt-2 text-sm tracking-wide">
+            Step {step + 1} of {steps.length}
           </p>
 
-          <div className="w-full h-1 bg-white/10 mt-5 rounded-full overflow-hidden">
+          {/* GOLD PROGRESS BAR */}
+          <div className="w-full h-px bg-white/[0.06] mt-6 overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-300"
-              style={{ width: `${progress}%` }}
+              className="h-full transition-all duration-500"
+              style={{
+                width: `${progress}%`,
+                background: "linear-gradient(to right, rgba(180,140,60,0.6), rgba(212,175,55,0.9))",
+              }}
             />
           </div>
         </div>
@@ -147,8 +131,8 @@ export default function AssessmentPage() {
 
           {step === 2 && (
             <div className="grid md:grid-cols-2 gap-6">
-              <Input label="Exercise days/week" value={answers.exercise_days || ""} onChange={(v) => update("exercise_days", v)} />
-              <Input label="Strength training (yes/no)" value={answers.strength_training || ""} onChange={(v) => update("strength_training", v)} />
+              <Input label="Exercise days / week" value={answers.exercise_days || ""} onChange={(v) => update("exercise_days", v)} />
+              <Input label="Strength training (yes / no)" value={answers.strength_training || ""} onChange={(v) => update("strength_training", v)} />
             </div>
           )}
 
@@ -173,7 +157,7 @@ export default function AssessmentPage() {
         <div className="flex justify-between mt-8">
           <button
             onClick={() => setStep((s) => Math.max(0, s - 1))}
-            className="px-5 py-2 rounded-xl border border-white/10 text-white/60 hover:text-white hover:border-white/30 transition"
+            className="px-6 py-3 rounded-full border border-white/[0.08] text-white/30 hover:text-white/60 hover:border-white/20 transition-all duration-300 text-[11px] uppercase tracking-[0.3em]"
           >
             Back
           </button>
@@ -181,7 +165,7 @@ export default function AssessmentPage() {
           {step < steps.length - 1 ? (
             <button
               onClick={() => setStep((s) => s + 1)}
-              className="px-5 py-2 rounded-xl bg-white text-black font-medium hover:opacity-90 transition"
+              className="px-6 py-3 rounded-full border border-[rgba(212,175,55,0.3)] text-[rgba(212,175,55,0.8)] hover:border-[rgba(212,175,55,0.6)] hover:text-[rgba(212,175,55,1)] transition-all duration-300 text-[11px] uppercase tracking-[0.3em]"
             >
               Next
             </button>
@@ -189,9 +173,9 @@ export default function AssessmentPage() {
             <button
               onClick={submit}
               disabled={saving}
-              className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-medium hover:opacity-90 transition disabled:opacity-50"
+              className="px-6 py-3 rounded-full border border-[rgba(212,175,55,0.3)] text-[rgba(212,175,55,0.8)] hover:border-[rgba(212,175,55,0.6)] hover:text-[rgba(212,175,55,1)] transition-all duration-300 text-[11px] uppercase tracking-[0.3em] disabled:opacity-30"
             >
-              {saving ? "Saving..." : "Finish Assessment"}
+              {saving ? "Saving..." : "Complete Assessment"}
             </button>
           )}
         </div>
@@ -212,11 +196,13 @@ function Input({
 }) {
   return (
     <div className="flex flex-col">
-      <label className="text-sm text-white/50 mb-2">{label}</label>
+      <label className="text-[10px] uppercase tracking-[0.35em] text-white/30 mb-3">
+        {label}
+      </label>
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-cyan-400/30 focus:border-cyan-400/30 transition"
+        className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white/80 placeholder-white/15 focus:outline-none focus:border-[rgba(212,175,55,0.3)] transition-all duration-300 text-sm"
       />
     </div>
   );
