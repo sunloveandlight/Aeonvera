@@ -205,3 +205,244 @@ p {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+@import "tailwindcss";
+
+/* ================================
+   AEONVERA DESIGN SYSTEM
+   REFINED REGAL INTELLIGENCE LAYER
+================================ */
+
+:root {
+  color-scheme: dark;
+
+  --background: #07070a;
+
+  --accent-gold: 212, 175, 55;
+  --accent-platinum: 229, 228, 226;
+  --accent-warm: 180, 140, 60;
+
+  /* ============================
+     TYPOGRAPHY SCALE (NEW)
+  ============================ */
+  --text-xs: 0.75rem;   /* 12px */
+  --text-sm: 0.875rem;  /* 14px */
+  --text-md: 1rem;      /* 16px */
+  --text-lg: 1.125rem;  /* 18px */
+  --text-xl: 1.25rem;   /* 20px */
+  --text-2xl: 1.5rem;   /* 24px */
+  --text-3xl: 2rem;     /* 32px */
+  --text-4xl: 2.75rem;  /* 44px */
+  --text-5xl: 3.5rem;   /* 56px */
+  --text-6xl: 4.5rem;   /* 72px */
+  --text-7xl: 6rem;     /* 96px */
+}
+
+html, body {
+  height: 100%;
+  background: var(--background);
+  color: rgba(255, 255, 255, 0.88);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ================================
+   TYPOGRAPHY SYSTEM (CRITICAL FIX)
+================================ */
+
+h1 {
+  font-size: var(--text-6xl);
+  line-height: 1.05;
+  letter-spacing: -0.05em;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+h2 {
+  font-size: var(--text-4xl);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.90);
+}
+
+h3 {
+  font-size: var(--text-2xl);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+p {
+  font-size: var(--text-md);
+  line-height: 1.75;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ================================
+   SMALL TYPOGRAPHY HELPERS
+================================ */
+
+.text-regal-eyebrow {
+  font-size: var(--text-xs);
+  letter-spacing: 0.45em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.text-regal-subtle {
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1.6;
+}
+
+/* ================================
+   BACKGROUND (SIMPLIFIED — LESS NOISE)
+================================ */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(
+      900px circle at 20% 0%,
+      rgba(212, 175, 55, 0.06),
+      transparent 60%
+    ),
+    radial-gradient(
+      800px circle at 80% 10%,
+      rgba(229, 228, 226, 0.03),
+      transparent 55%
+    ),
+    radial-gradient(
+      700px circle at 50% 100%,
+      rgba(180, 140, 60, 0.04),
+      transparent 60%
+    );
+}
+
+/* ================================
+   GRID (REDUCED INTENSITY)
+================================ */
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(212, 175, 55, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 175, 55, 0.02) 1px, transparent 1px);
+  background-size: 90px 90px;
+  opacity: 0.25;
+  mask-image: radial-gradient(circle at center, black 35%, transparent 80%);
+}
+
+/* ================================
+   SELECTION
+================================ */
+
+::selection {
+  background: rgba(212, 175, 55, 0.22);
+  color: white;
+}
+
+/* ================================
+   SCROLLBAR
+================================ */
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #07070a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.18);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.3);
+}
+
+/* ================================
+   OVERLAY SYSTEM (UNCHANGED)
+================================ */
+
+body.aeonvera-overlay * {
+  outline: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body.aeonvera-overlay section {
+  outline: 1px solid rgba(212, 175, 55, 0.22);
+}
+
+body.aeonvera-overlay [data-aeonvera-card] {
+  outline: 1px solid rgba(229, 228, 226, 0.22);
+}
+
+body.aeonvera-overlay [data-aeonvera-button] {
+  outline: 1px solid rgba(212, 175, 55, 0.22);
+}
+
+body.aeonvera-overlay [data-aeonvera-input] {
+  outline: 1px solid rgba(180, 140, 60, 0.22);
+}/* ================================
+   TYPOGRAPHY ENFORCEMENT LAYER
+================================ */
+
+h1, h2, h3 {
+  letter-spacing: -0.04em;
+  font-weight: 300;
+}
+
+p {
+  line-height: 1.7;
+}
+
+/* Prevent accidental visual chaos */
+* {
+  -webkit-tap-highlight-color: transparent;
+}/* ================================
+   AEONVERA IDENTITY SYSTEM LAYER
+================================ */
+
+[data-aeonvera-system] {
+  color: rgba(255,255,255,0.9);
+}
+
+[data-aeonvera-content] {
+  color: rgba(255,255,255,0.6);
+}
+
+[data-aeonvera-muted] {
+  color: rgba(255,255,255,0.35);
+}
+
+[data-aeonvera-action] {
+  color: rgba(212,175,55,0.9);
+}
+
+/* SYSTEM SURFACE CONSISTENCY */
+[data-aeonvera-surface="base"] {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+[data-aeonvera-surface="elevated"] {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+[data-aeonvera-surface="active"] {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
+}

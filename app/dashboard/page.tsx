@@ -28,9 +28,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [openingPortal, setOpeningPortal] = useState(false);
-  const [generatingReport, setGeneratingReport] = useState(false);
-
   const [profile, setProfile] = useState<Profile | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [hasAssessment, setHasAssessment] = useState(false);
@@ -42,10 +39,7 @@ export default function DashboardPage() {
           data: { user },
         } = await supabase.auth.getUser();
 
-        if (!user) {
-          router.replace("/login");
-          return;
-        }
+        if (!user) return router.replace("/login");
 
         const { data: profileData } = await supabase
           .from("profiles")
@@ -53,14 +47,10 @@ export default function DashboardPage() {
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (!profileData) {
-          router.replace("/onboarding");
-          return;
-        }
+        if (!profileData) return router.replace("/onboarding");
 
         if (!isUserAllowed(profileData.plan, profileData.subscription_status)) {
-          router.replace("/pricing");
-          return;
+          return router.replace("/pricing");
         }
 
         setProfile(profileData);
@@ -71,7 +61,7 @@ export default function DashboardPage() {
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(1)
-          .maybeSingle();
+          .single();
 
         if (existingReport) setReport(existingReport);
 
@@ -94,60 +84,17 @@ export default function DashboardPage() {
     run();
   }, [router]);
 
-  async function generateReport() {
-    try {
-      setGeneratingReport(true);
-
-      const res = await fetch("/api/longevity/report", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Failed to generate report");
-        return;
-      }
-
-      setReport(data.report);
-    } finally {
-      setGeneratingReport(false);
-    }
-  }
-
-  async function openBillingPortal() {
-    try {
-      setOpeningPortal(true);
-
-      const res = await fetch("/api/stripe/customer-portal", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error);
-
-      window.location.href = data.url;
-    } catch {
-      alert("Failed to open billing portal.");
-    } finally {
-      setOpeningPortal(false);
-    }
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white/40 tracking-[0.3em] text-xs uppercase">
-        Initializing Aeonvera Intelligence Layer...
+      <div className="min-h-[70vh] flex items-center justify-center text-white/40 text-xs tracking-[0.4em] uppercase">
+        INITIALIZING COMMAND SYSTEM
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-400">
+      <div className="min-h-[70vh] flex items-center justify-center text-red-400">
         {error}
       </div>
     );
@@ -155,123 +102,111 @@ export default function DashboardPage() {
 
   return (
     <PageContainer>
-      <div className="py-20 space-y-12">
 
-        {/* ================= HEADER ================= */}
-        <div className="space-y-6">
-          <p className="text-[10px] tracking-[0.5em] text-white/30 uppercase">
-            Aeonvera Command System
-          </p>
+      {/* ================= HEADER ================= */}
+      <div className="py-14 border-b border-white/5 mb-10">
+        <p className="text-[10px] tracking-[0.5em] uppercase text-white/25">
+          AEONVERA COMMAND CENTER
+        </p>
 
-          <h1 className="text-5xl md:text-6xl font-light tracking-tight text-white/90">
-            Dashboard
-          </h1>
+        <h1 className="text-5xl md:text-6xl font-light tracking-[-0.05em] mt-4 text-white/90">
+          Intelligence Overview
+        </h1>
 
-          <p className="text-white/40 max-w-2xl leading-relaxed">
-            Your biological intelligence layer. Monitor your system status, generate insights,
-            and manage your longevity profile.
-          </p>
-        </div>
+        <p className="mt-4 text-white/40 max-w-2xl leading-relaxed">
+          Your biological system state, reports, and active optimization pathways.
+        </p>
+      </div>
 
-        {/* ================= PRIMARY STATUS ================= */}
-        <Card title="SYSTEM STATUS" glow>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-10">
+      {/* ================= SYSTEM STATUS ================= */}
+      <div className="grid md:grid-cols-3 gap-6 mb-10">
 
-            <div>
-              {report ? (
-                <>
-                  <p className="text-white/40 text-sm mb-2">
-                    Active intelligence model
-                  </p>
-
-                  <div className="text-5xl font-light text-white">
-                    {report.risk_score}
-                    <span className="text-white/30 text-2xl"> / 100</span>
-                  </div>
-
-                  <p className="text-white/30 text-sm mt-3">
-                    Last updated {new Date(report.created_at).toLocaleDateString()}
-                  </p>
-                </>
-              ) : hasAssessment ? (
-                <>
-                  <p className="text-white/40 text-sm">
-                    Assessment complete. Your system is ready for analysis.
-                  </p>
-                  <p className="text-white/60 mt-2">
-                    Generate your longevity intelligence report.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-white/40 text-sm">
-                    No biological profile detected.
-                  </p>
-                  <p className="text-white/60 mt-2">
-                    Begin your assessment to initialize your system.
-                  </p>
-                </>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              {report ? (
-                <Button onClick={() => router.push("/report")}>
-                  Open Report
-                </Button>
-              ) : hasAssessment ? (
-                <Button onClick={generateReport} disabled={generatingReport}>
-                  {generatingReport ? "Processing..." : "Generate Report"}
-                </Button>
-              ) : (
-                <Button onClick={() => router.push("/assessment")}>
-                  Start Assessment
-                </Button>
-              )}
-            </div>
-
+        <Card title="SYSTEM STATUS">
+          <div className="space-y-2">
+            <p className="text-white/70 text-sm">
+              {profile?.display_name || "User"}
+            </p>
+            <p className="text-white/30 text-xs uppercase tracking-[0.3em]">
+              {profile?.plan || "CORE ACCESS"}
+            </p>
           </div>
         </Card>
 
-        {/* ================= SECONDARY GRID ================= */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <Card title="SUBSCRIPTION">
+          <p className="text-white/60 text-sm">
+            {profile?.subscription_status || "active"}
+          </p>
+        </Card>
 
-          <Card title="SUBSCRIPTION">
-            <div className="space-y-6">
-              <div>
-                <p className="text-white/40 text-sm">Current plan</p>
-                <h3 className="text-2xl font-light text-white uppercase mt-2">
-                  {profile?.plan || "core"}
-                </h3>
-              </div>
-
-              <Button variant="secondary" onClick={openBillingPortal} disabled={openingPortal}>
-                {openingPortal ? "Opening..." : "Manage Plan"}
-              </Button>
-            </div>
-          </Card>
-
-          <Card title="QUICK ACTIONS">
-            <div className="flex flex-col gap-3">
-              {!hasAssessment && (
-                <Button onClick={() => router.push("/assessment")}>
-                  Start Assessment
-                </Button>
-              )}
-
-              <Button variant="secondary" onClick={openBillingPortal}>
-                Billing
-              </Button>
-
-              <Button variant="secondary" onClick={() => router.push("/report")}>
-                View Report
-              </Button>
-            </div>
-          </Card>
-
-        </div>
+        <Card title="ASSESSMENT STATE">
+          <p className="text-white/60 text-sm">
+            {hasAssessment ? "COMPLETED" : "NOT INITIALIZED"}
+          </p>
+        </Card>
 
       </div>
+
+      {/* ================= CORE SIGNAL ================= */}
+      <Card title="CORE INTELLIGENCE SIGNAL" glow className="mb-10">
+        {report ? (
+          <div className="flex items-end justify-between">
+            <div>
+              <p className="text-white/40 text-sm mb-2">
+                Risk Model Score
+              </p>
+              <p className="text-5xl font-light text-white/80 tracking-[-0.04em]">
+                {report.risk_score}
+                <span className="text-white/30 text-2xl"> / 100</span>
+              </p>
+            </div>
+
+            <Button href="/report">
+              Open Model
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between">
+            <p className="text-white/40">
+              No active intelligence model generated.
+            </p>
+
+            <Button href="/assessment">
+              Initialize
+            </Button>
+          </div>
+        )}
+      </Card>
+
+      {/* ================= ACTION PANEL ================= */}
+      <div className="grid md:grid-cols-3 gap-6">
+
+        <Card title="ACTIONS">
+          <div className="space-y-3">
+            {!hasAssessment && (
+              <Button href="/assessment">
+                Start Assessment
+              </Button>
+            )}
+            <Button variant="secondary" href="/report">
+              View Report
+            </Button>
+          </div>
+        </Card>
+
+        <Card title="SYSTEM CONTROL">
+          <Button variant="secondary" href="/pricing">
+            Manage Plan
+          </Button>
+        </Card>
+
+        <Card title="INTELLIGENCE STATE">
+          <p className="text-white/40 text-sm">
+            Continuously evolving biological model.
+          </p>
+        </Card>
+
+      </div>
+
     </PageContainer>
   );
 }
