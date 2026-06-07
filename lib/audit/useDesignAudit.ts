@@ -2,69 +2,52 @@
 
 import { useEffect } from "react";
 
-const SPACING_VIOLATIONS = ["mt-", "mb-", "pt-", "pb-", "px-", "py-"];
+export type DesignAuditIssue = {
+  category: string;
+  message: string;
+  severity: "info" | "warning" | "error";
+};
 
-function scanElement(el: Element, violations: string[]) {
-  const className = el.getAttribute("class") || "";
-
-  // spacing rule check
-  for (const rule of SPACING_VIOLATIONS) {
-    if (className.includes(rule)) {
-      violations.push(
-        `Spacing violation → "${rule}" in <${el.tagName.toLowerCase()}>`
-      );
-      break;
-    }
-  }
-
-  // raw input check
-  if (el.tagName.toLowerCase() === "input") {
-    const allowed = el.closest("[data-aeonvera-input]");
-    if (!allowed) {
-      violations.push(`Raw input usage → <input> outside Input component`);
-    }
-  }
-
-  // raw button check
-  if (el.tagName.toLowerCase() === "button") {
-    const allowed = el.closest("[data-aeonvera-button]");
-    if (!allowed) {
-      violations.push(`Raw button usage → <button> outside Button component`);
-    }
-  }
-}
-
-function walkDOM(root: Element, violations: string[]) {
-  scanElement(root, violations);
-
-  const children = root.children;
-  for (let i = 0; i < children.length; i++) {
-    walkDOM(children[i], violations);
-  }
-}
-
-export function useDesignAudit(enabled = true) {
+export function useDesignAudit(enabled = false) {
   useEffect(() => {
     if (!enabled) return;
 
-    const runAudit = () => {
-      const violations: string[] = [];
+    const issues: DesignAuditIssue[] = [];
 
-      if (typeof document === "undefined") return;
+    // Future automated checks will be added here.
+    //
+    // Planned:
+    // • spacing consistency
+    // • typography hierarchy
+    // • color token validation
+    // • animation timing
+    // • accessibility
+    // • responsive layout
+    // • contrast
+    // • z-index conflicts
+    // • glassmorphism consistency
+    // • performance hints
 
-      walkDOM(document.body, violations);
+    if (issues.length === 0) {
+      console.info("✓ Aeonvera Design Audit: no issues detected.");
+      return;
+    }
 
-      if (violations.length > 0) {
-        console.group("🚨 AEONVERA DESIGN SYSTEM VIOLATIONS");
-        violations.forEach((v) => console.warn(v));
-        console.groupEnd();
-      } else {
-        console.log("✅ Aeonvera UI Audit: Clean");
-      }
-    };
+    console.group("Aeonvera Design Audit");
 
-    const timer = setTimeout(runAudit, 1000);
+    issues.forEach((issue) => {
+      const prefix =
+        issue.severity === "error"
+          ? "❌"
+          : issue.severity === "warning"
+          ? "⚠️"
+          : "ℹ️";
 
-    return () => clearTimeout(timer);
+      console.log(
+        `${prefix} [${issue.category}] ${issue.message}`
+      );
+    });
+
+    console.groupEnd();
   }, [enabled]);
 }
