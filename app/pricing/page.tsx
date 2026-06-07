@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import AppShell from "@/components/layout/AppShell";
 import PageContainer from "@/components/ui/PageContainer";
 
 type Plan = "core" | "elite" | "sovereign";
@@ -44,7 +43,7 @@ export default function PricingPage() {
   }
 
   return (
-    <AppShell>
+    <div>
       <section className="pt-32 pb-24">
         <PageContainer>
 
@@ -77,31 +76,24 @@ export default function PricingPage() {
           <div className="grid lg:grid-cols-3 gap-8">
 
             {/* CORE */}
-
             <div className="rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl p-8">
 
               <div className="mb-8">
-
                 <h2 className="text-2xl font-semibold">
                   Core
                 </h2>
-
                 <p className="mt-3 text-white/50">
                   Foundational longevity tracking.
                 </p>
-
               </div>
 
               <div className="mb-8">
-
                 <div className="text-5xl font-semibold">
                   $49
                 </div>
-
                 <div className="text-white/40 mt-2">
                   per month
                 </div>
-
               </div>
 
               <ul className="space-y-4 text-white/70 mb-10">
@@ -113,30 +105,16 @@ export default function PricingPage() {
               </ul>
 
               <button
-                onClick={() =>
-                  handleCheckout("core")
-                }
+                onClick={() => handleCheckout("core")}
                 disabled={loadingPlan !== null}
-                className="
-                  w-full
-                  h-12
-                  rounded-xl
-                  bg-white
-                  text-black
-                  font-medium
-                  transition
-                  hover:bg-zinc-200
-                "
+                className="w-full h-12 rounded-xl bg-white text-black font-medium transition hover:bg-zinc-200"
               >
-                {loadingPlan === "core"
-                  ? "Processing..."
-                  : "Get Core"}
+                {loadingPlan === "core" ? "Processing..." : "Get Core"}
               </button>
 
             </div>
 
             {/* ELITE */}
-
             <div className="rounded-[32px] border border-white/20 bg-white/[0.05] backdrop-blur-xl p-8 relative">
 
               <div className="absolute top-6 right-6 text-xs px-3 py-1 rounded-full bg-white text-black font-medium">
@@ -144,27 +122,21 @@ export default function PricingPage() {
               </div>
 
               <div className="mb-8">
-
                 <h2 className="text-2xl font-semibold">
                   Elite
                 </h2>
-
                 <p className="mt-3 text-white/50">
                   Full AI-powered optimization.
                 </p>
-
               </div>
 
               <div className="mb-8">
-
                 <div className="text-5xl font-semibold">
                   $199
                 </div>
-
                 <div className="text-white/40 mt-2">
                   per month
                 </div>
-
               </div>
 
               <ul className="space-y-4 text-white/70 mb-10">
@@ -177,54 +149,34 @@ export default function PricingPage() {
               </ul>
 
               <button
-                onClick={() =>
-                  handleCheckout("elite")
-                }
+                onClick={() => handleCheckout("elite")}
                 disabled={loadingPlan !== null}
-                className="
-                  w-full
-                  h-12
-                  rounded-xl
-                  bg-white
-                  text-black
-                  font-medium
-                  transition
-                  hover:bg-zinc-200
-                "
+                className="w-full h-12 rounded-xl bg-white text-black font-medium transition hover:bg-zinc-200"
               >
-                {loadingPlan === "elite"
-                  ? "Processing..."
-                  : "Get Elite"}
+                {loadingPlan === "elite" ? "Processing..." : "Get Elite"}
               </button>
 
             </div>
 
             {/* SOVEREIGN */}
-
             <div className="rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl p-8">
 
               <div className="mb-8">
-
                 <h2 className="text-2xl font-semibold">
                   Sovereign
                 </h2>
-
                 <p className="mt-3 text-white/50">
                   Private longevity intelligence.
                 </p>
-
               </div>
 
               <div className="mb-8">
-
                 <div className="text-5xl font-semibold">
                   $999
                 </div>
-
                 <div className="text-white/40 mt-2">
                   per month
                 </div>
-
               </div>
 
               <ul className="space-y-4 text-white/70 mb-10">
@@ -239,24 +191,11 @@ export default function PricingPage() {
               </ul>
 
               <button
-                onClick={() =>
-                  handleCheckout("sovereign")
-                }
+                onClick={() => handleCheckout("sovereign")}
                 disabled={loadingPlan !== null}
-                className="
-                  w-full
-                  h-12
-                  rounded-xl
-                  bg-white
-                  text-black
-                  font-medium
-                  transition
-                  hover:bg-zinc-200
-                "
+                className="w-full h-12 rounded-xl bg-white text-black font-medium transition hover:bg-zinc-200"
               >
-                {loadingPlan === "sovereign"
-                  ? "Processing..."
-                  : "Get Sovereign"}
+                {loadingPlan === "sovereign" ? "Processing..." : "Get Sovereign"}
               </button>
 
             </div>
@@ -265,6 +204,6 @@ export default function PricingPage() {
 
         </PageContainer>
       </section>
-    </AppShell>
+    </div>
   );
 }

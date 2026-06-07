@@ -3,247 +3,157 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { isUserAllowed } from "@/lib/auth/permissions";
-
 import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
-import Button from "@/components/ui/Button";
 
-type Profile = {
-  display_name: string | null;
-  plan: string | null;
-  subscription_status: string | null;
-};
-
-type Report = {
-  id: string;
-  risk_score: number;
-  primary_goal: string;
-  created_at: string;
-};
-
-export default function DashboardPage() {
+export default function OnboardingPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [openingPortal, setOpeningPortal] = useState(false);
-  const [generatingReport, setGeneratingReport] = useState(false);
-
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [report, setReport] = useState<Report | null>(null);
-  const [hasAssessment, setHasAssessment] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [entityName, setEntityName] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const run = async () => {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
 
-        if (!user) {
-          router.replace("/login");
-          return;
-        }
-
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("display_name, plan, subscription_status")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (!profileData) {
-          router.replace("/onboarding");
-          return;
-        }
-
-        if (!isUserAllowed(profileData.plan, profileData.subscription_status)) {
-          router.replace("/pricing");
-          return;
-        }
-
-        setProfile(profileData);
-
-        const { data: existingReport } = await supabase
-          .from("longevity_reports")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (existingReport) setReport(existingReport);
-
-        const { data: assessment } = await supabase
-          .from("longevity_assessments")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        setHasAssessment(!!assessment);
-
-        setLoading(false);
-      } catch (err) {
-        console.error(err);
-        setError("System failure. Please retry.");
-        setLoading(false);
-      }
-    };
-
-    run();
-  }, [router]);
-
-  async function generateReport() {
-    try {
-      setGeneratingReport(true);
-
-      const res = await fetch("/api/longevity/report", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Failed to generate report");
+      if (!session?.user) {
+        router.replace("/login");
         return;
       }
 
-      setReport(data.report);
-    } finally {
-      setGeneratingReport(false);
-    }
-  }
+      setUserId(session.user.id);
 
-  async function openBillingPortal() {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error(profileError);
+        return;
+      }
+
+      if (!profile) {
+        const { error } = await supabase.from("profiles").insert({
+          user_id: session.user.id,
+          plan: null,
+          subscription_status: "inactive",
+          onboarding_completed: false,
+          entity_state: "dormant",
+          life_stage: "initializing",
+        });
+        if (error) {
+          console.error(error);
+          return;
+        }
+      }
+
+      setLoading(false);
+    };
+
+    init();
+  }, [router]);
+
+  async function handleCompleteOnboarding() {
+    if (!userId) return;
+
     try {
-      setOpeningPortal(true);
+      setSaving(true);
 
-      const res = await fetch("/api/stripe/customer-portal", {
-        method: "POST",
-        credentials: "include",
-      });
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          display_name: displayName || "Entity",
+          entity_name: entityName || "Unnamed Entity",
+          onboarding_completed: true,
+          entity_state: "active",
+          life_stage: "initialized",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
 
-      const data = await res.json();
+      if (error) {
+        console.error(error);
+        alert("Failed to save onboarding.");
+        return;
+      }
 
-      if (!res.ok) throw new Error(data.error);
-
-      window.location.href = data.url;
-    } catch {
-      alert("Failed to open billing portal.");
+      router.replace("/pricing");
+    } catch (err) {
+      console.error(err);
+      alert("Onboarding failed.");
     } finally {
-      setOpeningPortal(false);
+      setSaving(false);
     }
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] text-white/50 text-sm tracking-[0.25em] uppercase">
-        Initializing Intelligence System...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh] text-red-400">
-        {error}
+      <div className="min-h-screen flex items-center justify-center text-white/40 text-sm tracking-[0.3em] uppercase">
+        Initializing...
       </div>
     );
   }
 
   return (
-    <PageContainer>
-      <div className="py-16">
-
-        <div className="mb-12">
-          <p className="text-xs tracking-[0.4em] text-white/40 uppercase mb-6">
-            LONGEVITY INTELLIGENCE
-          </p>
-
-          <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">
-            Dashboard
-          </h1>
-
-          <p className="mt-6 text-white/60 text-lg max-w-2xl">
-            Your biological intelligence layer, assessment status, reports, and subscription management.
-          </p>
-        </div>
-
-        <Card label="DIGITAL TWIN STATUS">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-            {report ? (
-              <>
-                <div>
-                  <p className="text-white/60 mb-2">Intelligence Report Active</p>
-                  <h2 className="text-4xl font-semibold">
-                    {report.risk_score}
-                    <span className="text-white/40"> / 100</span>
-                  </h2>
-                </div>
-
-                <Button onClick={() => router.push("/report")}>
-                  Open Report
-                </Button>
-              </>
-            ) : hasAssessment ? (
-              <>
-                <p className="text-white/60">
-                  Assessment completed. Generate your AI longevity report.
-                </p>
-
-                <Button onClick={generateReport} disabled={generatingReport}>
-                  {generatingReport ? "Processing..." : "Generate Report"}
-                </Button>
-              </>
-            ) : (
-              <>
-                <p className="text-white/60">
-                  No assessment detected. Begin your intelligence profile.
-                </p>
-
-                <Button onClick={() => router.push("/assessment")}>
-                  Start Assessment
-                </Button>
-              </>
-            )}
+    <>
+      <section className="pt-32 pb-24">
+        <PageContainer>
+          <div className="max-w-4xl mx-auto text-center">
+            <p className="text-xs uppercase tracking-[0.5em] text-white/40 mb-8">
+              Initialization
+            </p>
+            <h1 className="text-5xl md:text-7xl font-semibold tracking-tight leading-[0.95]">
+              Create Your
+              <br />
+              Longevity Identity
+            </h1>
+            <p className="mt-8 text-xl text-white/60 max-w-2xl mx-auto">
+              Configure the foundation of your biological intelligence system.
+            </p>
           </div>
-        </Card>
+        </PageContainer>
+      </section>
 
-        <div className="grid md:grid-cols-2 gap-6 mt-6">
-          <Card label="SUBSCRIPTION">
-            <div className="flex flex-col gap-6">
-              <h3 className="text-2xl font-medium uppercase">
-                {profile?.plan || "core"}
-              </h3>
-
-              <Button variant="secondary" onClick={openBillingPortal} disabled={openingPortal}>
-                {openingPortal ? "Opening..." : "Manage Plan"}
-              </Button>
-            </div>
-          </Card>
-
-          <Card label="QUICK ACTIONS">
-            <div className="flex flex-wrap gap-3">
-              {!hasAssessment && (
-                <Button onClick={() => router.push("/assessment")}>
-                  Start Assessment
-                </Button>
-              )}
-
-              <Button variant="secondary" onClick={openBillingPortal}>
-                Billing
-              </Button>
-
-              <Button variant="secondary" onClick={() => router.push("/report")}>
-                View Report
-              </Button>
-            </div>
-          </Card>
-        </div>
-
-      </div>
-    </PageContainer>
+      <section className="pb-32">
+        <PageContainer>
+          <div className="max-w-2xl mx-auto">
+            <Card className="p-10">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm text-white/50 mb-3">Display Name</label>
+                  <input
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="John Smith"
+                    className="w-full h-14 rounded-xl bg-black/50 border border-white/10 px-4 text-white outline-none focus:border-white/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-white/50 mb-3">Entity Name</label>
+                  <input
+                    value={entityName}
+                    onChange={(e) => setEntityName(e.target.value)}
+                    placeholder="Aeon Entity Alpha"
+                    className="w-full h-14 rounded-xl bg-black/50 border border-white/10 px-4 text-white outline-none focus:border-white/30"
+                  />
+                </div>
+                <button
+                  onClick={handleCompleteOnboarding}
+                  disabled={saving}
+                  className="w-full h-14 rounded-xl bg-white text-black font-medium transition hover:bg-zinc-200 disabled:opacity-50"
+                >
+                  {saving ? "Initializing..." : "Complete Setup"}
+                </button>
+              </div>
+            </Card>
+          </div>
+        </PageContainer>
+      </section>
+    </>
   );
 }
