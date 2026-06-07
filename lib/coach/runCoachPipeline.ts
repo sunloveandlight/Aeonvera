@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { runLongevityCoach } from "@/lib/coach/longevityCoach";
+import { runLongevityCoach } from "./longevityCoach";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
