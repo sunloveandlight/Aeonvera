@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-
-import AppShell from "@/components/layout/AppShell";
 import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 
@@ -13,10 +11,8 @@ export default function OnboardingPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
   const [entityName, setEntityName] = useState("");
   const [displayName, setDisplayName] = useState("");
-
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -110,50 +106,37 @@ export default function OnboardingPage() {
   }
 
   return (
-    <AppShell>
+    <div>
       <section className="pt-32 pb-24">
         <PageContainer>
-
           <div className="max-w-4xl mx-auto text-center">
-
             <p className="text-xs uppercase tracking-[0.5em] text-white/40 mb-8">
               Initialization
             </p>
-
             <h1 className="text-5xl md:text-7xl font-semibold tracking-tight leading-[0.95]">
               Create Your
               <br />
               Longevity Identity
             </h1>
-
             <p className="mt-8 text-xl text-white/60 max-w-2xl mx-auto">
               Configure the foundation of your biological intelligence system.
             </p>
-
           </div>
-
         </PageContainer>
       </section>
 
       <section className="pb-32">
         <PageContainer>
-
           <div className="max-w-2xl mx-auto">
-
             <Card className="p-10">
-
               <div className="space-y-6">
-
                 <div>
                   <label className="block text-sm text-white/50 mb-3">
                     Display Name
                   </label>
-
                   <input
                     value={displayName}
-                    onChange={(e) =>
-                      setDisplayName(e.target.value)
-                    }
+                    onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="John Smith"
                     className="
                       w-full
@@ -169,17 +152,13 @@ export default function OnboardingPage() {
                     "
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm text-white/50 mb-3">
                     Entity Name
                   </label>
-
                   <input
                     value={entityName}
-                    onChange={(e) =>
-                      setEntityName(e.target.value)
-                    }
+                    onChange={(e) => setEntityName(e.target.value)}
                     placeholder="Aeon Entity Alpha"
                     className="
                       w-full
@@ -195,7 +174,6 @@ export default function OnboardingPage() {
                     "
                   />
                 </div>
-
                 <button
                   onClick={handleCompleteOnboarding}
                   disabled={saving}
@@ -208,21 +186,16 @@ export default function OnboardingPage() {
                     font-medium
                     transition
                     hover:bg-zinc-200
+                    disabled:opacity-50
                   "
                 >
-                  {saving
-                    ? "Initializing..."
-                    : "Complete Setup"}
+                  {saving ? "Initializing..." : "Complete Setup"}
                 </button>
-
               </div>
-
             </Card>
-
           </div>
-
         </PageContainer>
       </section>
-    </AppShell>
+    </div>
   );
 }
