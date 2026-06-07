@@ -26,28 +26,27 @@ export default function Button({
   disabled = false,
 }: ButtonProps) {
   const sizes = {
-    sm: "h-10 px-5 text-[10px]",
-    md: "h-12 px-7 text-[10px]",
-    lg: "h-14 px-9 text-[11px]",
+    sm: "h-10 px-4 text-sm",
+    md: "h-12 px-6 text-sm",
+    lg: "h-14 px-8 text-base",
   };
 
   const variants = {
     primary: `
-      bg-gradient-to-b from-[rgba(212,175,55,0.15)] to-[rgba(180,140,60,0.08)]
-      text-[rgba(212,175,55,0.95)]
-      border border-[rgba(212,175,55,0.3)]
-      hover:border-[rgba(212,175,55,0.55)]
-      hover:from-[rgba(212,175,55,0.22)] hover:to-[rgba(180,140,60,0.12)]
-      hover:shadow-[0_0_35px_rgba(212,175,55,0.12)]
+      bg-white
+      text-black
+      border border-white/10
+      hover:bg-white/95
+      hover:shadow-[0_0_30px_rgba(255,255,255,0.12)]
       active:scale-[0.985]
     `,
     secondary: `
-      bg-transparent
-      text-white/40
-      border border-white/[0.08]
+      bg-white/[0.04]
+      text-white
+      border border-white/10
+      hover:bg-white/[0.07]
       hover:border-white/20
-      hover:text-white/60
-      hover:bg-white/[0.03]
+      hover:shadow-[0_0_25px_rgba(255,255,255,0.05)]
       active:scale-[0.985]
     `,
   };
@@ -65,22 +64,21 @@ export default function Button({
         inline-flex
         items-center
         justify-center
-        rounded-full
+        rounded-2xl
         overflow-hidden
-        font-light
-        tracking-[0.35em]
-        uppercase
+        font-medium
+        tracking-[0.01em]
         transition-all
         duration-300
         select-none
         cursor-pointer
         ${sizes[size]}
         ${variants[variant]}
-        ${disabled ? "opacity-30 cursor-not-allowed" : ""}
+        ${disabled ? "opacity-40 cursor-not-allowed" : ""}
         ${className}
       `}
     >
-      {/* gold shimmer on hover */}
+      {/* shimmer on hover */}
       <span
         className="
           absolute
@@ -88,10 +86,10 @@ export default function Button({
           opacity-0
           group-hover:opacity-100
           transition-opacity
-          duration-700
+          duration-500
           bg-gradient-to-r
           from-transparent
-          via-[rgba(212,175,55,0.08)]
+          via-white/10
           to-transparent
         "
       />
@@ -103,10 +101,7 @@ export default function Button({
           inset-x-0
           top-0
           h-px
-          bg-gradient-to-r
-          from-transparent
-          via-[rgba(212,175,55,0.4)]
-          to-transparent
+          bg-white/20
         "
       />
 
