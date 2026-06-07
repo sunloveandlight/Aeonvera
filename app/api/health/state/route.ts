@@ -17,20 +17,13 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabaseAdmin();
 
     /**
-     * FETCH WEARABLE METRICS
-     *
-     * Schema:
-     * wearable_metrics
-     * - user_id
-     * - metric_name
-     * - metric_value
-     * - recorded_at
+     * STEP 1: FETCH NORMALIZED HEALTH METRICS (NOT RAW WEARABLES)
      */
     const { data: metrics, error } = await supabase
-      .from("wearable_metrics")
+      .from("health_metrics")
       .select("*")
       .eq("user_id", userId)
-      .order("recorded_at", { ascending: true });
+      .order("measured_at", { ascending: true });
 
     if (error) {
       return NextResponse.json(
@@ -39,22 +32,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const state = buildHealthState(
-      (metrics || []).map((m) => ({
-        userId: m.user_id,
-        metricName: m.metric_name,
-        value: Number(m.metric_value),
-        timestamp: m.recorded_at,
-      }))
-    );
-
-    if (!state) {
+    if (!metrics || metrics.length === 0) {
       return NextResponse.json(
-        { error: "No wearable metrics found" },
+        { error: "No health metrics found" },
         { status: 404 }
       );
     }
 
+    /**
+     * STEP 2: MAP DB → ENGINE FORMAT
+     */
+    const formattedMetrics = metrics.map((m) => ({
+      userId: m.user_id,
+      metricName: m.metric,
+      value: Number(m.value),
+      timestamp: m.measured_at,
+    }));
+
+    /**
+     * STEP 3: BUILD HEALTH STATE
+     */
+    const state = buildHealthState(formattedMetrics);
+
+    if (!state) {
+      return NextResponse.json(
+        { error: "Failed to build health state" },
+        { status: 500 }
+      );
+    }
+
+    /**
+     * STEP 4: SAVE STATE
+     */
     const { error: upsertError } = await supabase
       .from("health_states")
       .upsert(
@@ -81,7 +90,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       state,
-      metricsProcessed: metrics?.length ?? 0,
+      metricsProcessed: formattedMetrics.length,
     });
   } catch (err) {
     const message =
