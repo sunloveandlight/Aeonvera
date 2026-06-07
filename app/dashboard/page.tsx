@@ -71,7 +71,7 @@ export default function DashboardPage() {
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (existingReport) setReport(existingReport);
 
@@ -139,15 +139,15 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] text-white/50 text-sm tracking-[0.25em] uppercase">
-        Initializing Intelligence System...
+      <div className="min-h-screen flex items-center justify-center text-white/40 tracking-[0.3em] text-xs uppercase">
+        Initializing Aeonvera Intelligence Layer...
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] text-red-400">
+      <div className="min-h-screen flex items-center justify-center text-red-400">
         {error}
       </div>
     );
@@ -155,86 +155,120 @@ export default function DashboardPage() {
 
   return (
     <PageContainer>
-      <div className="py-16">
+      <div className="py-20 space-y-12">
 
-        <div className="mb-12">
-          <p className="text-xs tracking-[0.4em] text-white/40 uppercase mb-6">
-            LONGEVITY INTELLIGENCE
+        {/* ================= HEADER ================= */}
+        <div className="space-y-6">
+          <p className="text-[10px] tracking-[0.5em] text-white/30 uppercase">
+            Aeonvera Command System
           </p>
 
-          <h1 className="text-5xl md:text-6xl font-semibold tracking-tight">
+          <h1 className="text-5xl md:text-6xl font-light tracking-tight text-white/90">
             Dashboard
           </h1>
 
-          <p className="mt-6 text-white/60 text-lg max-w-2xl">
-            Your biological intelligence layer, assessment status, reports, and subscription management.
+          <p className="text-white/40 max-w-2xl leading-relaxed">
+            Your biological intelligence layer. Monitor your system status, generate insights,
+            and manage your longevity profile.
           </p>
         </div>
 
-        <Card label="DIGITAL TWIN STATUS">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-            {report ? (
-              <>
-                <div>
-                  <p className="text-white/60 mb-2">Intelligence Report Active</p>
-                  <h2 className="text-4xl font-semibold">
+        {/* ================= PRIMARY STATUS ================= */}
+        <Card title="SYSTEM STATUS" glow>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-10">
+
+            <div>
+              {report ? (
+                <>
+                  <p className="text-white/40 text-sm mb-2">
+                    Active intelligence model
+                  </p>
+
+                  <div className="text-5xl font-light text-white">
                     {report.risk_score}
-                    <span className="text-white/40"> / 100</span>
-                  </h2>
-                </div>
+                    <span className="text-white/30 text-2xl"> / 100</span>
+                  </div>
+
+                  <p className="text-white/30 text-sm mt-3">
+                    Last updated {new Date(report.created_at).toLocaleDateString()}
+                  </p>
+                </>
+              ) : hasAssessment ? (
+                <>
+                  <p className="text-white/40 text-sm">
+                    Assessment complete. Your system is ready for analysis.
+                  </p>
+                  <p className="text-white/60 mt-2">
+                    Generate your longevity intelligence report.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-white/40 text-sm">
+                    No biological profile detected.
+                  </p>
+                  <p className="text-white/60 mt-2">
+                    Begin your assessment to initialize your system.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              {report ? (
                 <Button onClick={() => router.push("/report")}>
                   Open Report
                 </Button>
-              </>
-            ) : hasAssessment ? (
-              <>
-                <p className="text-white/60">
-                  Assessment completed. Generate your AI longevity report.
-                </p>
+              ) : hasAssessment ? (
                 <Button onClick={generateReport} disabled={generatingReport}>
                   {generatingReport ? "Processing..." : "Generate Report"}
                 </Button>
-              </>
-            ) : (
-              <>
-                <p className="text-white/60">
-                  No assessment detected. Begin your intelligence profile.
-                </p>
+              ) : (
                 <Button onClick={() => router.push("/assessment")}>
                   Start Assessment
                 </Button>
-              </>
-            )}
+              )}
+            </div>
+
           </div>
         </Card>
 
-        <div className="grid md:grid-cols-2 gap-6 mt-6">
-          <Card label="SUBSCRIPTION">
-            <div className="flex flex-col gap-6">
-              <h3 className="text-2xl font-medium uppercase">
-                {profile?.plan || "core"}
-              </h3>
+        {/* ================= SECONDARY GRID ================= */}
+        <div className="grid md:grid-cols-2 gap-6">
+
+          <Card title="SUBSCRIPTION">
+            <div className="space-y-6">
+              <div>
+                <p className="text-white/40 text-sm">Current plan</p>
+                <h3 className="text-2xl font-light text-white uppercase mt-2">
+                  {profile?.plan || "core"}
+                </h3>
+              </div>
+
               <Button variant="secondary" onClick={openBillingPortal} disabled={openingPortal}>
                 {openingPortal ? "Opening..." : "Manage Plan"}
               </Button>
             </div>
           </Card>
 
-          <Card label="QUICK ACTIONS">
-            <div className="flex flex-wrap gap-3">
+          <Card title="QUICK ACTIONS">
+            <div className="flex flex-col gap-3">
               {!hasAssessment && (
                 <Button onClick={() => router.push("/assessment")}>
                   Start Assessment
                 </Button>
               )}
+
               <Button variant="secondary" onClick={openBillingPortal}>
                 Billing
               </Button>
+
               <Button variant="secondary" onClick={() => router.push("/report")}>
                 View Report
               </Button>
             </div>
           </Card>
+
         </div>
 
       </div>
