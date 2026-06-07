@@ -25,13 +25,13 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.06] backdrop-blur-xl bg-[#05060a]/80">
+    <header className="sticky top-0 z-50 border-b border-white/[0.05] backdrop-blur-xl bg-[#08070a]/85">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
 
         {/* BRAND */}
         <Link
           href="/"
-          className="text-sm font-light tracking-[0.4em] text-white/80 hover:text-white transition-colors duration-300"
+          className="text-sm font-light tracking-[0.5em] text-white/70 hover:text-white transition-colors duration-500"
         >
           AEONVERA
         </Link>
@@ -40,7 +40,7 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-10">
           <Link
             href="/pricing"
-            className="text-[11px] uppercase tracking-[0.3em] text-white/35 hover:text-white/70 transition-colors duration-300"
+            className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
           >
             Pricing
           </Link>
@@ -48,19 +48,19 @@ export default function Header() {
             <>
               <Link
                 href="/dashboard"
-                className="text-[11px] uppercase tracking-[0.3em] text-white/35 hover:text-white/70 transition-colors duration-300"
+                className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
               >
                 Dashboard
               </Link>
               <Link
                 href="/assessment"
-                className="text-[11px] uppercase tracking-[0.3em] text-white/35 hover:text-white/70 transition-colors duration-300"
+                className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
               >
                 Assessment
               </Link>
               <Link
                 href="/report"
-                className="text-[11px] uppercase tracking-[0.3em] text-white/35 hover:text-white/70 transition-colors duration-300"
+                className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
               >
                 Report
               </Link>
@@ -73,7 +73,7 @@ export default function Header() {
           {authenticated ? (
             <button
               onClick={handleLogout}
-              className="text-[11px] uppercase tracking-[0.3em] text-white/35 hover:text-white/70 transition-colors duration-300"
+              className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
             >
               Sign Out
             </button>
@@ -81,13 +81,13 @@ export default function Header() {
             <>
               <Link
                 href="/login?mode=signin"
-                className="text-[11px] uppercase tracking-[0.3em] text-white/35 hover:text-white/70 transition-colors duration-300"
+                className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
               >
                 Sign In
               </Link>
               <Link
                 href="/login?mode=signup"
-                className="h-10 px-6 rounded-full border border-white/15 text-[11px] uppercase tracking-[0.3em] text-white/70 hover:border-white/30 hover:text-white flex items-center transition-all duration-300"
+                className="h-10 px-6 rounded-full border border-[rgba(212,175,55,0.25)] text-[10px] uppercase tracking-[0.35em] text-[rgba(212,175,55,0.7)] hover:border-[rgba(212,175,55,0.5)] hover:text-[rgba(212,175,55,1)] flex items-center transition-all duration-300"
               >
                 Begin
               </Link>
