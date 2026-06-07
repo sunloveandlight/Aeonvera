@@ -1,25 +1,15 @@
 import { NextResponse } from "next/server";
 import { runCoachPipeline } from "@/lib/coach/runCoachPipeline";
+import { supabase } from "@/lib/supabase/admin";
 
 /**
  * Aeonvera Daily Automation Job
  * -----------------------------
- * This runs without user interaction.
- *
- * Purpose:
- * - Scan all users
- * - Run health intelligence
- * - Generate alerts proactively
- *
- * This is the first step toward "AI that contacts users first"
+ * Runs automatically and generates coaching alerts
+ * for all users with health data.
  */
-
 export async function GET() {
   try {
-    // 1. Fetch all users with health data
-    // NOTE: In V1 we assume metrics table contains all user_ids
-    const supabase = (await import("@/lib/supabase/admin")).supabase;
-
     const { data: users, error } = await supabase
       .from("metrics")
       .select("user_id");
@@ -31,16 +21,23 @@ export async function GET() {
       );
     }
 
-    if (!users || users.length === 0) {
-      return NextResponse.json({ success: true, processed: 0 });
+    if (!users?.length) {
+      return NextResponse.json({
+        success: true,
+        processed: 0,
+      });
     }
 
-    // 2. Extract unique user IDs
-    const uniqueUsers = [...new Set(users.map((u) => u.user_id))];
+    const uniqueUsers: string[] = [
+      ...new Set(
+        users
+          .map((u) => u.user_id)
+          .filter((id): id is string => typeof id === "string")
+      ),
+    ];
 
     let processed = 0;
 
-    // 3. Run coach pipeline for each user
     for (const userId of uniqueUsers) {
       try {
         await runCoachPipeline(userId);
@@ -55,9 +52,12 @@ export async function GET() {
       processed,
       users: uniqueUsers.length,
     });
-  } catch (err: any) {
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Unknown error";
+
     return NextResponse.json(
-      { error: err.message ?? "Unknown error" },
+      { error: message },
       { status: 500 }
     );
   }
