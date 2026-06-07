@@ -1,38 +1,52 @@
 "use client";
 
-import { FadeIn } from "@/components/motion/Motion";
+import { ReactNode } from "react";
 
 type SectionProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
-  size?: "sm" | "md" | "lg" | "xl";
+  intensity?: "low" | "medium" | "high";
   id?: string;
-  label?: string;
-};
-
-const sizes = {
-  sm: "py-16",
-  md: "py-24",
-  lg: "py-32",
-  xl: "py-40",
 };
 
 export default function Section({
   children,
   className = "",
-  size = "lg",
+  intensity = "medium",
   id,
-  label,
 }: SectionProps) {
+  const spacing = {
+    low: "py-24 md:py-28",
+    medium: "py-32 md:py-40",
+    high: "py-40 md:py-56",
+  };
+
   return (
     <section
       id={id}
-      data-aeonvera-label={label || "Section"}
-      className={`w-full ${sizes[size]} ${className}`}
+      data-aeonvera-section
+      className={`
+        relative w-full
+        ${spacing[intensity]}
+        ${className}
+      `}
     >
-      <div className="mx-auto max-w-7xl px-6">
-        <FadeIn>{children}</FadeIn>
+      {/* ================================
+          SOFT TOP FADE (SCROLL TRANSITION)
+      ================================= */}
+      <div className="pointer-events-none absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/40 to-transparent" />
+
+      {/* ================================
+          CONTENT WRAPPER
+      ================================= */}
+      <div className="relative z-10 w-full">
+        {children}
       </div>
+
+      {/* ================================
+          BOTTOM FADE (VISUAL CONTINUITY)
+      ================================= */}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/40 to-transparent" />
     </section>
   );
 }

@@ -1,37 +1,62 @@
+"use client";
+
+import { ReactNode } from "react";
+
 type SectionTitleProps = {
-  eyebrow: string;
-  title: string;
-  description?: string;
+  eyebrow?: string;
+  title: ReactNode;
+  subtitle?: ReactNode;
   align?: "left" | "center";
+  className?: string;
 };
 
 export default function SectionTitle({
   eyebrow,
   title,
-  description,
+  subtitle,
   align = "left",
+  className = "",
 }: SectionTitleProps) {
   return (
     <div
+      data-aeonvera-card
       className={`
-        max-w-4xl
+        relative
+        max-w-3xl
         ${align === "center" ? "mx-auto text-center" : ""}
+        ${className}
       `}
     >
-      {/* EYEBROW (SYSTEM LABEL LAYER) */}
-      <p className="text-xs uppercase tracking-[0.45em] text-white/40 mb-5">
-        {eyebrow}
-      </p>
+      {/* ================================
+          EYEBROW (SYSTEM LABEL)
+      ================================= */}
+      {eyebrow && (
+        <p className="text-[10px] uppercase tracking-[0.6em] text-white/25 mb-6">
+          {eyebrow}
+        </p>
+      )}
 
-      {/* TITLE (LOCKED HIERARCHY SIZE) */}
-      <h2 className="text-4xl md:text-5xl font-semibold tracking-tight leading-[1.1]">
+      {/* ================================
+          MAIN TITLE (FOCAL INTELLIGENCE)
+      ================================= */}
+      <h2
+        className="
+          text-4xl md:text-5xl lg:text-6xl
+          font-light
+          tracking-[-0.04em]
+          leading-[1.05]
+          text-white/90
+        "
+      >
         {title}
       </h2>
 
-      {/* DESCRIPTION (SOFT CONTEXT LAYER) */}
-      {description && (
-        <p className="mt-5 text-lg md:text-xl text-white/60 leading-relaxed max-w-3xl">
-          {description}
+      {/* ================================
+          SUBTITLE (CONTEXT LAYER)
+      ================================= */}
+      {subtitle && (
+        <p className="mt-6 text-white/35 leading-relaxed font-light text-base md:text-lg">
+          {subtitle}
         </p>
       )}
     </div>
