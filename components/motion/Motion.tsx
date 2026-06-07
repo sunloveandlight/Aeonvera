@@ -1,100 +1,46 @@
 "use client";
 
-import { useEffect, useRef, useState, ReactNode } from "react";
+import { motion } from "framer-motion";
+import { ReactNode } from "react";
 
-type MotionProps = {
+type Props = {
   children: ReactNode;
-  intensity?: "subtle" | "medium" | "strong";
-  type?: "fade" | "rise" | "scale" | "parallax";
-  className?: string;
+  type?: "fade" | "rise" | "scale";
+  intensity?: "subtle" | "medium";
 };
 
 export default function Motion({
   children,
-  intensity = "subtle",
   type = "fade",
-  className = "",
-}: MotionProps) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const [visible, setVisible] = useState(false);
-  const [progress, setProgress] = useState(0);
+  intensity = "subtle",
+}: Props) {
+  const distance = intensity === "subtle" ? 10 : 20;
 
-  const intensityMap = {
-    subtle: 0.08,
-    medium: 0.15,
-    strong: 0.25,
+  const variants = {
+    fade: {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+    },
+    rise: {
+      initial: { opacity: 0, y: distance },
+      animate: { opacity: 1, y: 0 },
+    },
+    scale: {
+      initial: { opacity: 0, scale: 0.98 },
+      animate: { opacity: 1, scale: 1 },
+    },
   };
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setVisible(entry.isIntersecting);
-      },
-      {
-        threshold: 0.15,
-      }
-    );
-
-    observer.observe(el);
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!ref.current) return;
-
-      const rect = ref.current.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-
-      const visibleProgress =
-        1 - Math.min(Math.max(rect.top / windowHeight, 0), 1);
-
-      setProgress(visibleProgress);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const opacity = visible ? 1 : 0;
-
-  const transform = (() => {
-    const intensityFactor = intensityMap[intensity];
-
-    switch (type) {
-      case "fade":
-        return `translateY(${(1 - progress) * 20 * intensityFactor}px)`;
-      case "rise":
-        return `translateY(${(1 - progress) * -30 * intensityFactor}px)`;
-      case "scale":
-        return `scale(${0.96 + progress * intensityFactor})`;
-      case "parallax":
-        return `translateY(${(1 - progress) * 40 * intensityFactor}px)`;
-      default:
-        return "none";
-    }
-  })();
-
   return (
-    <div
-      ref={ref}
-      className={`
-        transition-opacity duration-700 ease-out
-        ${className}
-      `}
-      style={{
-        opacity,
-        transform,
-        willChange: "transform, opacity",
+    <motion.div
+      initial={variants[type].initial}
+      animate={variants[type].animate}
+      transition={{
+        duration: 0.6,
+        ease: [0.16, 1, 0.3, 1],
       }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
