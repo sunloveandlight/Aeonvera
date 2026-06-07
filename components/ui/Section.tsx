@@ -1,43 +1,19 @@
 import { ReactNode } from "react";
+import { space } from "@/lib/design/tokens";
 
-type SectionProps = {
+type Props = {
   children: ReactNode;
   className?: string;
-
-  // backward compatibility (old system)
-  size?: "sm" | "md" | "lg" | "xl";
-
-  // new design system (landing page)
-  intensity?: "low" | "medium" | "high";
+  size?: keyof typeof space.section;
 };
 
 export default function Section({
   children,
   className = "",
-  size,
-  intensity,
-}: SectionProps) {
-  // PRIORITY: intensity overrides size if provided
-  const value = intensity ?? "md";
-
-  const sizeMap = {
-    sm: "py-16",
-    md: "py-24",
-    lg: "py-32",
-    xl: "py-40",
-  };
-
-  const intensityMap = {
-    low: "py-20",
-    medium: "py-28",
-    high: "py-40",
-  };
-
-  const padding =
-    intensity ? intensityMap[intensity] : sizeMap[(size as keyof typeof sizeMap) || "md"];
-
+  size = "md",
+}: Props) {
   return (
-    <section className={`${padding} ${className}`}>
+    <section className={`${space.section[size]} ${className}`}>
       {children}
     </section>
   );

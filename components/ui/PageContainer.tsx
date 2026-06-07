@@ -1,16 +1,19 @@
-type PageContainerProps = {
-  children: React.ReactNode;
+import { ReactNode } from "react";
+import { space } from "@/lib/design/tokens";
+
+type Props = {
+  children: ReactNode;
   className?: string;
+  variant?: "page" | "narrow";
 };
 
 export default function PageContainer({
   children,
   className = "",
-}: PageContainerProps) {
+  variant = "page",
+}: Props) {
   return (
-    <div
-      className={`max-w-7xl mx-auto px-6 lg:px-8 ${className}`}
-    >
+    <div className={`${space.container[variant]} ${className}`}>
       {children}
     </div>
   );

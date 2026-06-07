@@ -188,4 +188,20 @@ body.aeonvera-overlay [data-aeonvera-button] {
 
 body.aeonvera-overlay [data-aeonvera-input] {
   outline: 1px solid rgba(180, 140, 60, 0.22);
+}/* ================================
+   TYPOGRAPHY ENFORCEMENT LAYER
+================================ */
+
+h1, h2, h3 {
+  letter-spacing: -0.04em;
+  font-weight: 300;
+}
+
+p {
+  line-height: 1.7;
+}
+
+/* Prevent accidental visual chaos */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
