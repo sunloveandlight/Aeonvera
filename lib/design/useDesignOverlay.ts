@@ -6,23 +6,31 @@ export function useDesignOverlay() {
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("aeonvera-design-overlay");
-    if (stored === "true") setEnabled(true);
+    const saved = localStorage.getItem("aeonvera-overlay");
+    if (saved === "true") {
+      setEnabled(true);
+      document.body.classList.add("aeonvera-design-overlay");
+    }
   }, []);
 
-  useEffect(() => {
-    const root = document.documentElement;
+  const toggle = () => {
+    setEnabled((prev) => {
+      const next = !prev;
 
-    if (enabled) {
-      root.classList.add("aeonvera-design-overlay");
-      localStorage.setItem("aeonvera-design-overlay", "true");
-    } else {
-      root.classList.remove("aeonvera-design-overlay");
-      localStorage.setItem("aeonvera-design-overlay", "false");
-    }
-  }, [enabled]);
+      if (next) {
+        document.body.classList.add("aeonvera-design-overlay");
+        localStorage.setItem("aeonvera-overlay", "true");
+      } else {
+        document.body.classList.remove("aeonvera-design-overlay");
+        localStorage.setItem("aeonvera-overlay", "false");
+      }
 
-  const toggle = () => setEnabled((v) => !v);
+      return next;
+    });
+  };
 
-  return { enabled, toggle };
+  return {
+    enabled,
+    toggle,
+  };
 }
