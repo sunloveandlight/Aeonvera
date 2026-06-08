@@ -9,10 +9,9 @@ type Cookie = {
   options?: CookieOptions;
 };
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Always allow API routes
   if (pathname.startsWith("/api")) {
     return NextResponse.next();
   }
@@ -23,7 +22,7 @@ export async function middleware(req: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn("Missing Supabase env vars in middleware");
+    console.warn("Missing Supabase env vars in proxy");
     return res;
   }
 
@@ -32,7 +31,6 @@ export async function middleware(req: NextRequest) {
       getAll() {
         return req.cookies.getAll();
       },
-
       setAll(cookies: Cookie[]) {
         cookies.forEach(({ name, value, options }) => {
           res.cookies.set(name, value, options);
@@ -41,10 +39,6 @@ export async function middleware(req: NextRequest) {
     },
   });
 
-  /**
-   * FIXED AUTH STRATEGY:
-   * getUser() is more stable in middleware than getSession()
-   */
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -54,12 +48,10 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/onboarding");
 
-  // 🔒 Protect private routes
   if (!user && isProtected) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // 🔁 Redirect logged-in users away from login
   if (user && isAuthPage) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
