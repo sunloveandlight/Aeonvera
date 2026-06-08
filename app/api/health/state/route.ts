@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { buildHealthState } from "@/lib/state/healthStateEngine";
+import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,41 +18,86 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabaseAdmin();
 
     /**
-     * STEP 1: FETCH NORMALIZED HEALTH METRICS (NOT RAW WEARABLES)
+     * STEP 1: FETCH RAW WEARABLE DATA
      */
-    const { data: metrics, error } = await supabase
-      .from("health_metrics")
+    const { data: rawMetrics, error: rawError } = await supabase
+      .from("wearable_metrics")
       .select("*")
       .eq("user_id", userId)
-      .order("measured_at", { ascending: true });
+      .order("recorded_at", { ascending: true });
 
-    if (error) {
+    if (rawError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: rawError.message },
         { status: 500 }
       );
     }
 
-    if (!metrics || metrics.length === 0) {
+    if (!rawMetrics || rawMetrics.length === 0) {
       return NextResponse.json(
-        { error: "No health metrics found" },
+        { error: "No wearable metrics found" },
         { status: 404 }
       );
     }
 
     /**
-     * STEP 2: MAP DB → ENGINE FORMAT
+     * STEP 2: NORMALIZE RAW → CANONICAL
      */
-    const formattedMetrics = metrics.map((m) => ({
+    const normalized = normalizeHealthMetrics(
+      rawMetrics.map((m) => ({
+        userId: m.user_id,
+        source: m.provider,
+        metricName: m.metric_name,
+        value: Number(m.metric_value),
+        timestamp: m.recorded_at,
+      }))
+    );
+
+    if (!normalized.length) {
+      return NextResponse.json(
+        { error: "No valid normalized metrics" },
+        { status: 400 }
+      );
+    }
+
+    /**
+     * STEP 3: WRITE INTO health_metrics TABLE
+     */
+    const { error: insertError } = await supabase
+      .from("health_metrics")
+      .upsert(
+        normalized.map((m) => ({
+          user_id: m.userId,
+          metric: m.metric,
+          value: m.value,
+          measured_at: m.measured_at,
+          source: m.source,
+        }))
+      );
+
+    if (insertError) {
+      return NextResponse.json(
+        { error: insertError.message },
+        { status: 500 }
+      );
+    }
+
+    /**
+     * STEP 4: BUILD HEALTH STATE FROM CANONICAL DATA
+     */
+    const { data: canonicalMetrics } = await supabase
+      .from("health_metrics")
+      .select("*")
+      .eq("user_id", userId)
+      .order("measured_at", { ascending: true });
+
+    const formattedMetrics = (canonicalMetrics || []).map((m) => ({
       userId: m.user_id,
       metricName: m.metric,
       value: Number(m.value),
       timestamp: m.measured_at,
     }));
 
-    /**
-     * STEP 3: BUILD HEALTH STATE
-     */
     const state = buildHealthState(formattedMetrics);
 
     if (!state) {
@@ -62,9 +108,9 @@ export async function POST(req: NextRequest) {
     }
 
     /**
-     * STEP 4: SAVE STATE
+     * STEP 5: SAVE HEALTH STATE
      */
-    const { error: upsertError } = await supabase
+    const { error: stateError } = await supabase
       .from("health_states")
       .upsert(
         {
@@ -80,17 +126,17 @@ export async function POST(req: NextRequest) {
         }
       );
 
-    if (upsertError) {
+    if (stateError) {
       return NextResponse.json(
-        { error: upsertError.message },
+        { error: stateError.message },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
       success: true,
+      normalizedCount: normalized.length,
       state,
-      metricsProcessed: formattedMetrics.length,
     });
   } catch (err) {
     const message =
