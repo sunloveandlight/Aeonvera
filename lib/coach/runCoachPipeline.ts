@@ -1,20 +1,17 @@
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { runLongevityCoach } from "./longevityCoach";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 /**
  * FULL COACH PIPELINE (V2 UPGRADE)
  * ---------------------------------
  * 1. Fetch health state
- * 2. Run coaching engine using REAL intelligence (no reconstruction)
+ * 2. Run coaching engine using REAL intelligence
  * 3. Store alerts
  */
 export async function runCoachPipeline(userId: string) {
   if (!userId) throw new Error("Missing userId");
+
+  const supabase = getSupabaseAdmin();
 
   /**
    * 1. FETCH HEALTH STATE
@@ -31,18 +28,14 @@ export async function runCoachPipeline(userId: string) {
 
   /**
    * 2. TRANSFORM HEALTH STATE → COACH INPUT
-   * (NO MORE fakeMetrics)
    */
   const enrichedMetrics = [
-    // convert baseline signals
     ...Object.entries(state.baseline || {}).map(([key, value]) => ({
       userId,
       metricName: key,
       value: Number(value),
       timestamp: state.updated_at,
     })),
-
-    // add risk scores as pseudo-metrics (important signal layer)
     ...Object.entries(state.risk_scores || {}).map(([key, value]) => ({
       userId,
       metricName: `risk_${key}`,

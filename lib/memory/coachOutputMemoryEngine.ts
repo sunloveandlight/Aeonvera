@@ -1,10 +1,4 @@
-/**
- * Aeonvera — Coach Output Memory Engine (STEP 23)
- * -----------------------------------------------
- * Persists all JARVIS decisions into long-term system memory.
- */
-
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import type { JarvisMessage } from "@/lib/voice/jarvisResponseEngine";
 
 export type CoachOutputRecord = {
@@ -21,6 +15,8 @@ export type CoachOutputRecord = {
  * MAIN ENTRY
  */
 export async function storeCoachOutput(record: CoachOutputRecord) {
+  const supabase = getSupabaseAdmin();
+
   const { error } = await supabase.from("coach_outputs").insert({
     user_id: record.userId,
     mode: record.mode,

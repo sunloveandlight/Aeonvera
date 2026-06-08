@@ -1,35 +1,21 @@
-/**
- * Aeonvera — Unified Learning Ingestor (STEP 35)
- * ---------------------------------------------
- * SINGLE SOURCE OF TRUTH for all learning signals
- */
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
-import { supabase } from "@/lib/supabase/client";
-
-/**
- * =========================
- * CORE EVENT TYPE
- * =========================
- */
 export type LearningEvent = {
   userId: string;
   domain: string;
   action: string;
-
   outcome: "success" | "failure" | "unknown";
   confidence: number;
-
   source: "execution" | "manual" | "system";
-
   timestamp: string;
 };
 
 /**
- * =========================
  * MAIN ENTRY
- * =========================
  */
 export async function ingestLearningEvent(event: LearningEvent) {
+  const supabase = getSupabaseAdmin();
+
   /**
    * STEP 1 — WRITE TO CANONICAL TABLE
    */

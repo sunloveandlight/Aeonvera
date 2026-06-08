@@ -1,21 +1,10 @@
-/**
- * Aeonvera — Adaptive Personality Engine (STEP 29 EVOLUTION LOOP)
- * ---------------------------------------------------------------
- * NOW FULLY LEARNING-BASED:
- * - consumes intervention outcomes
- * - adapts strictness / empathy / proactivity over time
- * - closes behavioral intelligence loop
- */
-
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export type PersonalityState = {
   userId: string;
-
   strictness: number;
   empathy: number;
   proactivity: number;
-
   lastUpdated: string;
 };
 
@@ -26,9 +15,7 @@ type LearningSignal = {
 };
 
 /**
- * =========================
  * MAIN ENTRY
- * =========================
  */
 export async function updatePersonalityState(params: {
   userId: string;
@@ -45,8 +32,10 @@ export async function updatePersonalityState(params: {
     engagementScore,
   } = params;
 
-  const previous = await getPreviousState(userId);
-  const learning = await getLearningSignal(userId);
+  const supabase = getSupabaseAdmin();
+
+  const previous = await getPreviousState(supabase, userId);
+  const learning = await getLearningSignal(supabase, userId);
 
   const strictness = computeStrictness({
     healthState,
@@ -90,126 +79,58 @@ export async function updatePersonalityState(params: {
 }
 
 /**
- * =========================
  * STRICTNESS EVOLUTION
- * =========================
  */
-function computeStrictness({
-  healthState,
-  engagementScore,
-  previous,
-  learning,
-}: any) {
+function computeStrictness({ healthState, engagementScore, previous, learning }: any) {
   const baseRisk =
     (healthState?.riskScores?.sleep ?? 0) +
     (healthState?.riskScores?.activity ?? 0);
 
   let strictness = baseRisk / 2;
 
-  /**
-   * LEARNING LOOP:
-   * if advice is ignored → increase strictness
-   */
-  if (learning.successRate < 0.4) {
-    strictness += 15;
-  }
-
-  /**
-   * if user responds well → reduce forcefulness
-   */
-  if (learning.successRate > 0.7) {
-    strictness -= 10;
-  }
-
+  if (learning.successRate < 0.4) strictness += 15;
+  if (learning.successRate > 0.7) strictness -= 10;
   if (engagementScore < 0.3) strictness += 10;
 
   return clamp(strictness, 0, 100);
 }
 
 /**
- * =========================
  * EMPATHY EVOLUTION
- * =========================
  */
-function computeEmpathy({
-  memory,
-  healthState,
-  engagementScore,
-  previous,
-  learning,
-}: any) {
+function computeEmpathy({ memory, healthState, engagementScore, previous, learning }: any) {
   let empathy = 50;
 
-  if (memory?.dominantEmotionalTone === "negative") {
-    empathy += 20;
-  }
-
-  if ((healthState?.riskScores?.sleep ?? 0) > 70) {
-    empathy += 10;
-  }
-
-  if (engagementScore < 0.4) {
-    empathy += 10;
-  }
-
-  /**
-   * LEARNING LOOP:
-   * if interventions fail → increase empathy
-   */
-  if (learning.successRate < 0.4) {
-    empathy += 10;
-  }
-
-  /**
-   * if interventions succeed → stabilize tone
-   */
-  if (learning.successRate > 0.7) {
-    empathy -= 5;
-  }
+  if (memory?.dominantEmotionalTone === "negative") empathy += 20;
+  if ((healthState?.riskScores?.sleep ?? 0) > 70) empathy += 10;
+  if (engagementScore < 0.4) empathy += 10;
+  if (learning.successRate < 0.4) empathy += 10;
+  if (learning.successRate > 0.7) empathy -= 5;
 
   return clamp(empathy, 0, 100);
 }
 
 /**
- * =========================
  * PROACTIVITY EVOLUTION
- * =========================
  */
-function computeProactivity({
-  engagementScore,
-  memory,
-  previous,
-  learning,
-}: any) {
+function computeProactivity({ engagementScore, memory, previous, learning }: any) {
   let p = 50;
 
   if (engagementScore < 0.4) p += 20;
   if (memory?.recurringTopics?.length > 2) p += 10;
-
-  /**
-   * LEARNING LOOP:
-   * high success → system allowed to be more proactive
-   */
-  if (learning.successRate > 0.7) {
-    p += 15;
-  }
-
-  /**
-   * low success → reduce interruptions
-   */
-  if (learning.successRate < 0.4) {
-    p -= 10;
-  }
+  if (learning.successRate > 0.7) p += 15;
+  if (learning.successRate < 0.4) p -= 10;
 
   return clamp(p, 0, 100);
 }
 
 /**
- * =========================
  * LEARNING SIGNAL FETCH
- * =========================
  */
-async function getLearningSignal(userId: string): Promise<LearningSignal> {
+async function getLearningSignal(
+  supabase: ReturnType<typeof import("@/lib/supabase/admin").getSupabaseAdmin>,
+  userId: string
+): Promise<LearningSignal> {
   const { data } = await supabase
     .from("intervention_outcomes")
     .select("*")
@@ -229,7 +150,6 @@ async function getLearningSignal(userId: string): Promise<LearningSignal> {
     if (!domainEffectiveness[o.domain]) {
       domainEffectiveness[o.domain] = 0;
     }
-
     domainEffectiveness[o.domain] += o.success ? 1 : -1;
   }
 
@@ -241,11 +161,12 @@ async function getLearningSignal(userId: string): Promise<LearningSignal> {
 }
 
 /**
- * =========================
  * PREVIOUS STATE
- * =========================
  */
-async function getPreviousState(userId: string) {
+async function getPreviousState(
+  supabase: ReturnType<typeof import("@/lib/supabase/admin").getSupabaseAdmin>,
+  userId: string
+) {
   const { data } = await supabase
     .from("user_personality_state")
     .select("*")
@@ -256,9 +177,7 @@ async function getPreviousState(userId: string) {
 }
 
 /**
- * =========================
  * UTILITY
- * =========================
  */
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));

@@ -1,10 +1,4 @@
-/**
- * Aeonvera — Event Feedback Loop Binding (STEP 34)
- * -------------------------------------------------
- * Connects execution → outcomes → learning → personality evolution
- */
-
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { recordInterventionOutcome } from "@/lib/learning/feedbackLoopEngine";
 
 export type ExecutionEvent = {
@@ -16,21 +10,14 @@ export type ExecutionEvent = {
 };
 
 /**
- * =========================
  * MAIN ENTRY
- * =========================
  */
 export async function processExecutionFeedback(params: {
   execution: ExecutionEvent;
-  /**
-   * Outcome can be:
-   * - success (user followed advice / system improved)
-   * - failure (ignored / no change)
-   * - unknown (no signal yet)
-   */
   outcome: "success" | "failure" | "unknown";
   confidence?: number;
 }) {
+  const supabase = getSupabaseAdmin();
   const { execution, outcome, confidence = 0.5 } = params;
 
   /**
@@ -58,7 +45,7 @@ export async function processExecutionFeedback(params: {
   });
 
   /**
-   * STEP 3 — OPTIONAL META SIGNAL LOGGING
+   * STEP 3 — RETURN RESULT
    */
   return {
     processed: true,
@@ -67,9 +54,7 @@ export async function processExecutionFeedback(params: {
 }
 
 /**
- * =========================
  * IMPACT SCORING
- * =========================
  */
 function computeImpact(
   outcome: "success" | "failure" | "unknown",

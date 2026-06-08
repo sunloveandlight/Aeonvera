@@ -1,10 +1,4 @@
-/**
- * Aeonvera — Adaptive Feedback Loop Engine (STEP 28)
- * ---------------------------------------------------
- * Closes the intelligence loop by learning from user behavior
- */
-
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export type InterventionOutcome = {
   userId: string;
@@ -16,13 +10,13 @@ export type InterventionOutcome = {
 };
 
 /**
- * =========================
  * RECORD OUTCOME
- * =========================
  */
 export async function recordInterventionOutcome(
   outcome: InterventionOutcome
 ) {
+  const supabase = getSupabaseAdmin();
+
   const { error } = await supabase.from("intervention_outcomes").insert({
     user_id: outcome.userId,
     action: outcome.action,
@@ -40,11 +34,11 @@ export async function recordInterventionOutcome(
 }
 
 /**
- * =========================
  * FETCH USER LEARNING SIGNAL
- * =========================
  */
 export async function getUserLearningProfile(userId: string) {
+  const supabase = getSupabaseAdmin();
+
   const { data } = await supabase
     .from("intervention_outcomes")
     .select("*")
@@ -65,7 +59,6 @@ export async function getUserLearningProfile(userId: string) {
     if (!domainEffectiveness[o.domain]) {
       domainEffectiveness[o.domain] = 0;
     }
-
     domainEffectiveness[o.domain] += o.success ? 1 : -1;
   }
 

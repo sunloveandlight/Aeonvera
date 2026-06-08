@@ -1,18 +1,9 @@
-/**
- * Aeonvera — Conversation Memory Fusion Engine (STEP 24)
- * ------------------------------------------------------
- * Builds a unified intelligence snapshot combining:
- * - coach outputs
- * - conversation history
- * - health state
- */
-
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export type ConversationEvent = {
   userId: string;
   role: "user" | "assistant" | "system";
-  message: string;
+  content: string;
   tone?: string;
   linkedCoachOutputId?: string;
   timestamp: string;
@@ -20,16 +11,12 @@ export type ConversationEvent = {
 
 export type UserMemorySnapshot = {
   userId: string;
-
   recentConversation: ConversationEvent[];
   recentCoachOutputs: any[];
   latestHealthState: any;
-
   dominantEmotionalTone: string;
   recurringTopics: string[];
-
   summary: string;
-
   updatedAt: string;
 };
 
@@ -37,10 +24,12 @@ export type UserMemorySnapshot = {
  * MAIN ENTRY — builds fused memory snapshot
  */
 export async function buildUserMemorySnapshot(userId: string) {
+  const supabase = getSupabaseAdmin();
+
   const [conversation, coachOutputs, healthState] = await Promise.all([
-    getConversation(userId),
-    getCoachOutputs(userId),
-    getLatestHealthState(userId),
+    getConversation(supabase, userId),
+    getCoachOutputs(supabase, userId),
+    getLatestHealthState(supabase, userId),
   ]);
 
   const dominantTone = computeDominantTone(conversation);
@@ -62,8 +51,12 @@ export async function buildUserMemorySnapshot(userId: string) {
 
 /**
  * FETCH CONVERSATION HISTORY
+ * FIXED: maps `content` field correctly (was `message`)
  */
-async function getConversation(userId: string): Promise<ConversationEvent[]> {
+async function getConversation(
+  supabase: ReturnType<typeof import("@/lib/supabase/admin").getSupabaseAdmin>,
+  userId: string
+): Promise<ConversationEvent[]> {
   const { data } = await supabase
     .from("conversation_events")
     .select("*")
@@ -75,7 +68,7 @@ async function getConversation(userId: string): Promise<ConversationEvent[]> {
     data?.map((d) => ({
       userId,
       role: d.role,
-      message: d.message,
+      content: d.content,
       tone: d.tone,
       linkedCoachOutputId: d.linked_coach_output_id,
       timestamp: d.timestamp,
@@ -86,7 +79,10 @@ async function getConversation(userId: string): Promise<ConversationEvent[]> {
 /**
  * FETCH COACH OUTPUTS
  */
-async function getCoachOutputs(userId: string) {
+async function getCoachOutputs(
+  supabase: ReturnType<typeof import("@/lib/supabase/admin").getSupabaseAdmin>,
+  userId: string
+) {
   const { data } = await supabase
     .from("coach_outputs")
     .select("*")
@@ -100,7 +96,10 @@ async function getCoachOutputs(userId: string) {
 /**
  * FETCH HEALTH STATE
  */
-async function getLatestHealthState(userId: string) {
+async function getLatestHealthState(
+  supabase: ReturnType<typeof import("@/lib/supabase/admin").getSupabaseAdmin>,
+  userId: string
+) {
   const { data } = await supabase
     .from("health_states")
     .select("*")
@@ -126,13 +125,12 @@ function computeDominantTone(conversation: ConversationEvent[]) {
     frequency[t!] = (frequency[t!] || 0) + 1;
   }
 
-  return Object.entries(frequency).sort(
-    (a, b) => b[1] - a[1]
-  )[0][0];
+  return Object.entries(frequency).sort((a, b) => b[1] - a[1])[0][0];
 }
 
 /**
- * TOPIC EXTRACTION (simple V1)
+ * TOPIC EXTRACTION
+ * FIXED: uses `content` instead of `message`
  */
 function extractTopics(
   conversation: ConversationEvent[],
@@ -141,10 +139,10 @@ function extractTopics(
   const keywords = new Set<string>();
 
   for (const c of conversation) {
-    if (c.message.includes("sleep")) keywords.add("sleep");
-    if (c.message.includes("energy")) keywords.add("energy");
-    if (c.message.includes("stress")) keywords.add("stress");
-    if (c.message.includes("workout")) keywords.add("activity");
+    if (c.content.includes("sleep")) keywords.add("sleep");
+    if (c.content.includes("energy")) keywords.add("energy");
+    if (c.content.includes("stress")) keywords.add("stress");
+    if (c.content.includes("workout")) keywords.add("activity");
   }
 
   for (const c of coachOutputs) {
@@ -168,7 +166,7 @@ function buildSummary(
 User shows a ${tone} emotional tone.
 Key focus areas: ${topics.join(", ") || "none detected"}.
 Latest health state indicates:
-- Sleep risk: ${healthState?.state?.riskScores?.sleep ?? "unknown"}
-- Activity risk: ${healthState?.state?.riskScores?.activity ?? "unknown"}
+- Sleep risk: ${healthState?.risk_scores?.sleep ?? "unknown"}
+- Activity risk: ${healthState?.risk_scores?.activity ?? "unknown"}
   `.trim();
 }

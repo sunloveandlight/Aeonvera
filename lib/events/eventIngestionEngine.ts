@@ -1,10 +1,4 @@
-/**
- * Aeonvera — Event Ingestion Engine (STEP 22 REBUILD)
- * ----------------------------------------------------
- * Now fully connected to Supabase + triggers downstream systems
- */
-
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { buildHealthState } from "@/lib/state/healthStateEngine";
 import { runCoachRuntime } from "@/lib/runtime/coachRuntimeEngine";
 
@@ -28,34 +22,30 @@ export type AeonveraEvent = {
  * MAIN ENTRY
  */
 export async function ingestEvent(event: AeonveraEvent) {
-  // 1. ALWAYS log event first
   await logEvent(event);
 
   switch (event.type) {
     case "wearable.metric":
       return handleWearableMetric(event);
-
     case "user.login":
       return handleUserLogin(event);
-
     case "user.assessment_completed":
       return handleAssessment(event);
-
     case "cron.daily_coach":
       return handleDailyCoach(event);
-
     case "system.tick":
       return handleSystemTick(event);
-
     default:
       return { status: "ignored", reason: "unknown_event_type" };
   }
 }
 
 /**
- * LOG ALL EVENTS (source of truth)
+ * LOG ALL EVENTS
  */
 async function logEvent(event: AeonveraEvent) {
+  const supabase = getSupabaseAdmin();
+
   const { error } = await supabase.from("aeonvera_events").insert({
     user_id: event.userId,
     type: event.type,
@@ -72,13 +62,13 @@ async function logEvent(event: AeonveraEvent) {
  * WEARABLE METRIC
  */
 async function handleWearableMetric(event: AeonveraEvent) {
+  const supabase = getSupabaseAdmin();
   const { metricName, value } = event.payload || {};
 
   if (!metricName) {
     return { status: "error", reason: "missing_metric" };
   }
 
-  // 1. Store metric
   await supabase.from("wearable_metrics").insert({
     user_id: event.userId,
     metric_name: metricName,
@@ -86,7 +76,6 @@ async function handleWearableMetric(event: AeonveraEvent) {
     recorded_at: event.timestamp,
   });
 
-  // 2. Fetch recent metrics for recompute
   const { data } = await supabase
     .from("wearable_metrics")
     .select("*")
@@ -96,7 +85,6 @@ async function handleWearableMetric(event: AeonveraEvent) {
 
   if (!data) return { status: "error", reason: "no_metrics" };
 
-  // 3. Build health state
   const state = buildHealthState(
     data.map((m) => ({
       userId: m.user_id,
@@ -108,14 +96,12 @@ async function handleWearableMetric(event: AeonveraEvent) {
 
   if (!state) return { status: "error", reason: "state_failed" };
 
-  // 4. Store health state
   await supabase.from("health_states").insert({
     user_id: event.userId,
     state: state,
     updated_at: state.updatedAt,
   });
 
-  // 5. Trigger runtime brain
   const runtime = await runCoachRuntime({
     state,
     predictions: {},
