@@ -1,9 +1,21 @@
+/**
+ * Aeonvera — Memory-Integrated Longevity Report Engine (V2)
+ * ---------------------------------------------------------
+ * Now includes:
+ * - Health state
+ * - Behavior memory
+ * - Conversation memory
+ * - Adaptive weights
+ * - Predictive risks
+ */
+
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import OpenAI from "openai";
 import { cookies } from "next/headers";
-import { predictHealthRisks } from "@/lib/prediction/riskPredictionEngine";
+
 import { computeAdaptiveWeights } from "@/lib/personalization/adaptiveWeightEngine";
+import { buildConversationMemory } from "@/lib/memory/conversationMemoryEngine";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -21,19 +33,9 @@ async function getSupabase() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet: any) {
-          cookiesToSet.forEach(
-            ({
-              name,
-              value,
-              options,
-            }: {
-              name: string;
-              value: string;
-              options?: any;
-            }) => {
-              cookieStore.set(name, value, options);
-            }
-          );
+          cookiesToSet.forEach(({ name, value, options }: any) => {
+            cookieStore.set(name, value, options);
+          });
         },
       },
     }
@@ -56,7 +58,7 @@ export async function POST(request: Request) {
     const userId = user.id;
 
     /**
-     * STEP 1 — PROFILE + ASSESSMENT
+     * STEP 1 — CORE DATA
      */
     const { data: profile } = await supabase
       .from("profiles")
@@ -72,15 +74,8 @@ export async function POST(request: Request) {
       .limit(1)
       .single();
 
-    if (!assessment) {
-      return NextResponse.json(
-        { error: "No assessment found" },
-        { status: 400 }
-      );
-    }
-
     /**
-     * STEP 2 — HEALTH STATE (FOR PREDICTION + PERSONALIZATION)
+     * STEP 2 — HEALTH STATE
      */
     const { data: state } = await supabase
       .from("health_states")
@@ -89,7 +84,7 @@ export async function POST(request: Request) {
       .single();
 
     /**
-     * STEP 3 — BEHAVIOR EVENTS (FOR PERSONALIZATION)
+     * STEP 3 — BEHAVIOR MEMORY
      */
     const { data: behaviorEvents } = await supabase
       .from("behavior_events")
@@ -107,56 +102,75 @@ export async function POST(request: Request) {
     );
 
     /**
-     * STEP 4 — PREDICTION ENGINE
+     * STEP 4 — CONVERSATION MEMORY (NEW)
      */
-    const predictedRisks = state
-      ? predictHealthRisks({
-          userId,
-          baseline: state.baseline,
-          trends: state.trends,
-          riskScores: state.risk_scores,
-          insights: state.insights,
-          updatedAt: state.updated_at,
-        })
-      : null;
+    const { data: conversationEvents } = await supabase
+      .from("conversation_events")
+      .select("*")
+      .eq("user_id", userId)
+      .order("timestamp", { ascending: true })
+      .limit(50);
+
+    const conversationMemory = buildConversationMemory(
+      (conversationEvents || []).map((c) => ({
+        userId,
+        role: c.role,
+        content: c.content,
+        timestamp: c.timestamp,
+        tags: c.tags,
+      }))
+    );
 
     /**
-     * STEP 5 — 🔥 PERSONALIZED AI PROMPT (NEW CORE LOGIC)
+     * STEP 5 — PROMPT (NOW MEMORY-AWARE)
      */
     const prompt = `
-You are Aeonvera, a longevity intelligence engine.
+You are Aeonvera, a longevity intelligence system.
 
-You analyze human biological + lifestyle data and produce structured optimization intelligence.
+You are now FULLY MEMORY-AWARE.
 
-You are now PERSONALIZED per-user.
+You maintain continuity across time.
 
-## PERSONALIZATION WEIGHTS (IMPORTANT)
-These weights indicate what this user responds to best:
+---
 
+## CONVERSATION MEMORY (CRITICAL CONTEXT)
+${JSON.stringify(conversationMemory, null, 2)}
+
+---
+
+## BEHAVIOR ADAPTATION SIGNALS
 ${JSON.stringify(adaptiveWeights, null, 2)}
 
-## INTERPRETATION RULE:
-- Higher weight = prioritize this domain more in recommendations
-- Lower weight = deprioritize or avoid overfocusing
+---
 
-## PREDICTIVE CONTEXT:
-${JSON.stringify(predictedRisks, null, 2)}
-
-## USER PROFILE:
+## USER PROFILE
 ${JSON.stringify(profile, null, 2)}
 
-## ASSESSMENT:
+---
+
+## HEALTH STATE
+${JSON.stringify(state, null, 2)}
+
+---
+
+## ASSESSMENT
 ${JSON.stringify(assessment, null, 2)}
 
-IMPORTANT RULES:
-- Do NOT give medical diagnoses
-- Focus on actionable optimization
-- Tailor reasoning to user responsiveness patterns
-- Be structured and concise
-- Output must be valid JSON only
+---
 
-OUTPUT FORMAT:
-Return ONLY valid JSON:
+IMPORTANT RULES:
+
+- You are not generating a one-off report.
+- You are continuing an ongoing relationship with the user.
+- You MUST remain consistent with prior emotional tone and context.
+- You MUST adapt recommendations based on:
+  - behavior adherence
+  - conversation history
+  - health trends
+
+---
+
+OUTPUT FORMAT (JSON ONLY):
 
 {
   "risk_score": number,
@@ -182,7 +196,7 @@ Return ONLY valid JSON:
 `;
 
     /**
-     * STEP 6 — OPENAI CALL
+     * STEP 6 — AI CALL
      */
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -190,7 +204,7 @@ Return ONLY valid JSON:
         {
           role: "system",
           content:
-            "You are a precise personalized health intelligence engine. Adapt outputs to user-specific behavior patterns.",
+            "You are a persistent adaptive longevity intelligence. Memory is core to your reasoning.",
         },
         {
           role: "user",
@@ -204,10 +218,7 @@ Return ONLY valid JSON:
     const content = completion.choices?.[0]?.message?.content?.trim();
 
     if (!content) {
-      return NextResponse.json(
-        { error: "No AI response" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "No AI response" }, { status: 500 });
     }
 
     let report;
@@ -236,10 +247,7 @@ Return ONLY valid JSON:
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     /**
@@ -248,11 +256,10 @@ Return ONLY valid JSON:
     return NextResponse.json({
       success: true,
       report: data,
-      predicted_risks: predictedRisks,
+      memory: conversationMemory,
       adaptive_weights: adaptiveWeights,
     });
   } catch (err: any) {
-    console.error("AI Report Error:", err);
     return NextResponse.json(
       { error: err.message || "Server error" },
       { status: 500 }
