@@ -1,13 +1,13 @@
 /**
- * Aeonvera — Coaching Runtime Engine (V1)
- * --------------------------------------
- * Fixed imports + aligned with actual engine exports
+ * Aeonvera — Coaching Runtime Engine (STEP 23 UPDATED)
+ * ----------------------------------------------------
+ * Now persists ALL JARVIS outputs into system memory.
  */
 
 import { evaluateCoachTrigger } from "@/lib/coach/triggerEngine";
 import { generateInterventions } from "@/lib/intervention/interventionDecisionEngine";
 import { generateJarvisMessage } from "@/lib/voice/jarvisResponseEngine";
-import { buildHealthState } from "@/lib/state/healthStateEngine";
+import { storeCoachOutput } from "@/lib/memory/coachOutputMemoryEngine";
 
 export type RuntimeResult = {
   triggered: boolean;
@@ -26,6 +26,8 @@ export async function runCoachRuntime(params: {
   timeOfDay: number;
   lastInteractionMinutesAgo: number;
   engagementScore: number;
+  userId?: string;
+  source?: "runtime" | "cron" | "assessment" | "system";
 }) {
   const {
     state,
@@ -34,6 +36,8 @@ export async function runCoachRuntime(params: {
     timeOfDay,
     lastInteractionMinutesAgo,
     engagementScore,
+    userId,
+    source = "runtime",
   } = params;
 
   /**
@@ -79,7 +83,22 @@ export async function runCoachRuntime(params: {
   });
 
   /**
-   * STEP 4 — OUTPUT
+   * STEP 4 — PERSIST OUTPUT (NEW)
+   */
+  if (userId) {
+    await storeCoachOutput({
+      userId,
+      mode: jarvis.mode,
+      tone: jarvis.tone,
+      message: jarvis.message,
+      actions: jarvis.actions,
+      source,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  /**
+   * STEP 5 — OUTPUT
    */
   return {
     triggered: true,
