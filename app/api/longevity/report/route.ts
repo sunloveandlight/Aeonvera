@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import OpenAI from "openai";
 import { cookies } from "next/headers";
 import { predictHealthRisks } from "@/lib/prediction/riskPredictionEngine";
+import { computeAdaptiveWeights } from "@/lib/personalization/adaptiveWeightEngine";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -54,14 +55,15 @@ export async function POST(request: Request) {
 
     const userId = user.id;
 
-    // Get latest profile
+    /**
+     * STEP 1 — PROFILE + ASSESSMENT
+     */
     const { data: profile } = await supabase
       .from("profiles")
       .select("*")
       .eq("user_id", userId)
       .single();
 
-    // Get latest assessment
     const { data: assessment } = await supabase
       .from("longevity_assessments")
       .select("*")
@@ -72,34 +74,86 @@ export async function POST(request: Request) {
 
     if (!assessment) {
       return NextResponse.json(
-        {
-          error:
-            "No assessment found. Please complete the longevity assessment first.",
-        },
+        { error: "No assessment found" },
         { status: 400 }
       );
     }
 
     /**
-     * STEP 1 — AI REPORT (UNCHANGED CORE LOGIC)
+     * STEP 2 — HEALTH STATE (FOR PREDICTION + PERSONALIZATION)
+     */
+    const { data: state } = await supabase
+      .from("health_states")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    /**
+     * STEP 3 — BEHAVIOR EVENTS (FOR PERSONALIZATION)
+     */
+    const { data: behaviorEvents } = await supabase
+      .from("behavior_events")
+      .select("*")
+      .eq("user_id", userId);
+
+    const adaptiveWeights = computeAdaptiveWeights(
+      (behaviorEvents || []).map((e) => ({
+        userId,
+        eventType: e.event_type,
+        reference: e.reference,
+        outcome: e.outcome,
+        timestamp: e.created_at,
+      }))
+    );
+
+    /**
+     * STEP 4 — PREDICTION ENGINE
+     */
+    const predictedRisks = state
+      ? predictHealthRisks({
+          userId,
+          baseline: state.baseline,
+          trends: state.trends,
+          riskScores: state.risk_scores,
+          insights: state.insights,
+          updatedAt: state.updated_at,
+        })
+      : null;
+
+    /**
+     * STEP 5 — 🔥 PERSONALIZED AI PROMPT (NEW CORE LOGIC)
      */
     const prompt = `
 You are Aeonvera, a longevity intelligence engine.
 
-You analyze human biological + lifestyle data and produce structured, non-medical optimization intelligence.
+You analyze human biological + lifestyle data and produce structured optimization intelligence.
+
+You are now PERSONALIZED per-user.
+
+## PERSONALIZATION WEIGHTS (IMPORTANT)
+These weights indicate what this user responds to best:
+
+${JSON.stringify(adaptiveWeights, null, 2)}
+
+## INTERPRETATION RULE:
+- Higher weight = prioritize this domain more in recommendations
+- Lower weight = deprioritize or avoid overfocusing
+
+## PREDICTIVE CONTEXT:
+${JSON.stringify(predictedRisks, null, 2)}
+
+## USER PROFILE:
+${JSON.stringify(profile, null, 2)}
+
+## ASSESSMENT:
+${JSON.stringify(assessment, null, 2)}
 
 IMPORTANT RULES:
 - Do NOT give medical diagnoses
-- Do NOT claim certainty
-- Focus on risk patterns and optimization opportunities
+- Focus on actionable optimization
+- Tailor reasoning to user responsiveness patterns
 - Be structured and concise
-- Output MUST be valid JSON only
-
-USER PROFILE:
-${JSON.stringify(profile, null, 2)}
-
-ASSESSMENT DATA:
-${JSON.stringify(assessment, null, 2)}
+- Output must be valid JSON only
 
 OUTPUT FORMAT:
 Return ONLY valid JSON:
@@ -127,15 +181,21 @@ Return ONLY valid JSON:
 }
 `;
 
+    /**
+     * STEP 6 — OPENAI CALL
+     */
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
           content:
-            "You are a precise structured health intelligence engine. Return only valid JSON.",
+            "You are a precise personalized health intelligence engine. Adapt outputs to user-specific behavior patterns.",
         },
-        { role: "user", content: prompt },
+        {
+          role: "user",
+          content: prompt,
+        },
       ],
       temperature: 0.3,
       max_tokens: 1200,
@@ -161,30 +221,7 @@ Return ONLY valid JSON:
     }
 
     /**
-     * STEP 2 — LOAD HEALTH STATE FOR PREDICTION
-     * (NEW ADDITION — does NOT change existing flow)
-     */
-    const { data: state } = await supabase
-      .from("health_states")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-
-    let predictedRisks = null;
-
-    if (state) {
-      predictedRisks = predictHealthRisks({
-        userId,
-        baseline: state.baseline,
-        trends: state.trends,
-        riskScores: state.risk_scores,
-        insights: state.insights,
-        updatedAt: state.updated_at,
-      });
-    }
-
-    /**
-     * STEP 3 — SAVE REPORT (UNCHANGED DB LOGIC)
+     * STEP 7 — SAVE REPORT
      */
     const { data, error } = await supabase
       .from("longevity_reports")
@@ -206,12 +243,13 @@ Return ONLY valid JSON:
     }
 
     /**
-     * STEP 4 — RETURN ENHANCED RESPONSE (NEW ADDITION)
+     * STEP 8 — RESPONSE
      */
     return NextResponse.json({
       success: true,
       report: data,
-      predicted_risks: predictedRisks, // ← NEW LAYER ADDED
+      predicted_risks: predictedRisks,
+      adaptive_weights: adaptiveWeights,
     });
   } catch (err: any) {
     console.error("AI Report Error:", err);
