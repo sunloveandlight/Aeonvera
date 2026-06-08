@@ -1,14 +1,3 @@
-/**
- * Aeonvera — Memory-Integrated Longevity Report Engine (V2)
- * ---------------------------------------------------------
- * Now includes:
- * - Health state
- * - Behavior memory
- * - Conversation memory
- * - Adaptive weights
- * - Predictive risks
- */
-
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import OpenAI from "openai";
@@ -102,7 +91,7 @@ export async function POST(request: Request) {
     );
 
     /**
-     * STEP 4 — CONVERSATION MEMORY (NEW)
+     * STEP 4 — CONVERSATION MEMORY
      */
     const { data: conversationEvents } = await supabase
       .from("conversation_events")
@@ -122,7 +111,7 @@ export async function POST(request: Request) {
     );
 
     /**
-     * STEP 5 — PROMPT (NOW MEMORY-AWARE)
+     * STEP 5 — PROMPT
      */
     const prompt = `
 You are Aeonvera, a longevity intelligence system.
@@ -170,7 +159,7 @@ IMPORTANT RULES:
 
 ---
 
-OUTPUT FORMAT (JSON ONLY):
+OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
 
 {
   "risk_score": number,
@@ -204,7 +193,7 @@ OUTPUT FORMAT (JSON ONLY):
         {
           role: "system",
           content:
-            "You are a persistent adaptive longevity intelligence. Memory is core to your reasoning.",
+            "You are a persistent adaptive longevity intelligence. Memory is core to your reasoning. Always respond with raw JSON only — no markdown fences, no extra text.",
         },
         {
           role: "user",
@@ -215,30 +204,40 @@ OUTPUT FORMAT (JSON ONLY):
       max_tokens: 1200,
     });
 
-    const content = completion.choices?.[0]?.message?.content?.trim();
+    const raw = completion.choices?.[0]?.message?.content?.trim();
 
-    if (!content) {
+    if (!raw) {
       return NextResponse.json({ error: "No AI response" }, { status: 500 });
     }
 
+    /**
+     * STEP 7 — STRIP MARKDOWN FENCES BEFORE PARSING
+     * GPT models sometimes wrap JSON in ```json ... ``` blocks
+     */
+    const cleaned = raw
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/```\s*$/i, "")
+      .trim();
+
     let report;
     try {
-      report = JSON.parse(content);
+      report = JSON.parse(cleaned);
     } catch (e) {
       return NextResponse.json(
-        { error: "Invalid AI JSON output", raw: content },
+        { error: "Invalid AI JSON output", raw: cleaned },
         { status: 500 }
       );
     }
 
     /**
-     * STEP 7 — SAVE REPORT
+     * STEP 8 — SAVE REPORT
      */
     const { data, error } = await supabase
       .from("longevity_reports")
       .insert({
         user_id: userId,
-        assessment_id: assessment.id,
+        assessment_id: assessment?.id,
         report,
         risk_score: report.risk_score,
         primary_goal: report.primary_goal,
@@ -251,7 +250,7 @@ OUTPUT FORMAT (JSON ONLY):
     }
 
     /**
-     * STEP 8 — RESPONSE
+     * STEP 9 — RESPONSE
      */
     return NextResponse.json({
       success: true,

@@ -6,14 +6,8 @@ type CheckoutPlan = "core" | "elite" | "sovereign";
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
-
-  if (!key) {
-    throw new Error("Missing STRIPE_SECRET_KEY");
-  }
-
-  return new Stripe(key, {
-    apiVersion: "2026-05-27.dahlia",
-  });
+  if (!key) throw new Error("Missing STRIPE_SECRET_KEY");
+  return new Stripe(key, { apiVersion: "2026-05-27.dahlia" });
 }
 
 export async function POST(req: NextRequest) {
@@ -43,15 +37,17 @@ export async function POST(req: NextRequest) {
       }
     );
 
+    /**
+     * FIXED: use getUser() instead of getSession()
+     * getSession() is spoofable — getUser() verifies with Supabase server
+     */
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "Unauthorized." },
-        { status: 401 }
-      );
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
     }
 
     const body = await req.json();
@@ -63,8 +59,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    const user = session.user;
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -108,7 +102,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: sessionStripe.url });
   } catch (error) {
     console.error("Stripe Checkout Error:", error);
-
     return NextResponse.json(
       { error: "Internal server error." },
       { status: 500 }

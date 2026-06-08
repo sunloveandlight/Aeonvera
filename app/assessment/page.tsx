@@ -25,13 +25,25 @@ type Answers = {
 
 const steps = ["Basics", "Sleep", "Exercise", "Lifestyle", "Goals"];
 
+/**
+ * Required fields per step
+ * Used for validation before allowing Next / Submit
+ */
+const REQUIRED_PER_STEP: (keyof Answers)[][] = [
+  ["age", "sex", "height_cm", "weight_kg"],
+  ["sleep_hours", "sleep_quality"],
+  ["exercise_days", "strength_training"],
+  ["diet_type", "stress_level"],
+  ["primary_goal"],
+];
+
 export default function AssessmentPage() {
   const router = useRouter();
-
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [answers, setAnswers] = useState<Answers>({});
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -51,13 +63,40 @@ export default function AssessmentPage() {
   }, [router]);
 
   function update(field: keyof Answers, value: string) {
-    setAnswers((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setAnswers((prev) => ({ ...prev, [field]: value }));
+    setValidationError(null);
+  }
+
+  /**
+   * VALIDATION — checks required fields for current step
+   */
+  function validateCurrentStep(): boolean {
+    const required = REQUIRED_PER_STEP[step];
+    const missing = required.filter(
+      (field) => !answers[field] || answers[field]!.trim() === ""
+    );
+
+    if (missing.length > 0) {
+      setValidationError(
+        `Please fill in: ${missing
+          .map((f) => f.replace(/_/g, " "))
+          .join(", ")}`
+      );
+      return false;
+    }
+
+    setValidationError(null);
+    return true;
+  }
+
+  function handleNext() {
+    if (!validateCurrentStep()) return;
+    setStep((s) => s + 1);
   }
 
   async function submit() {
+    if (!validateCurrentStep()) return;
+
     try {
       setSaving(true);
 
@@ -69,16 +108,11 @@ export default function AssessmentPage() {
 
       const { error } = await supabase
         .from("longevity_assessments")
-        .insert([
-          {
-            user_id: user.id,
-            ...answers,
-          },
-        ]);
+        .insert([{ user_id: user.id, ...answers }]);
 
       if (error) {
         console.error(error);
-        alert("Failed to save assessment");
+        setValidationError("Failed to save assessment. Please try again.");
         return;
       }
 
@@ -109,11 +143,9 @@ export default function AssessmentPage() {
           <p className="text-[10px] uppercase tracking-[0.5em] text-white/25 mb-4">
             Longevity Assessment
           </p>
-
           <h1 className="text-4xl md:text-5xl font-light tracking-tight text-white/90">
             {steps[step]}
           </h1>
-
           <p className="text-white/30 mt-2 text-sm tracking-wide">
             Step {step + 1} of {steps.length}
           </p>
@@ -133,89 +165,33 @@ export default function AssessmentPage() {
         <Card className="p-8">
           {step === 0 && (
             <div className="grid md:grid-cols-2 gap-6">
-              <Input
-                label="Age"
-                value={answers.age || ""}
-                onChange={(v) => update("age", v)}
-              />
-
-              <Input
-                label="Sex"
-                value={answers.sex || ""}
-                onChange={(v) => update("sex", v)}
-              />
-
-              <Input
-                label="Height (cm)"
-                value={answers.height_cm || ""}
-                onChange={(v) => update("height_cm", v)}
-              />
-
-              <Input
-                label="Weight (kg)"
-                value={answers.weight_kg || ""}
-                onChange={(v) => update("weight_kg", v)}
-              />
+              <Input label="Age" value={answers.age || ""} onChange={(v) => update("age", v)} />
+              <Input label="Sex" value={answers.sex || ""} onChange={(v) => update("sex", v)} />
+              <Input label="Height (cm)" value={answers.height_cm || ""} onChange={(v) => update("height_cm", v)} />
+              <Input label="Weight (kg)" value={answers.weight_kg || ""} onChange={(v) => update("weight_kg", v)} />
             </div>
           )}
 
           {step === 1 && (
             <div className="grid md:grid-cols-2 gap-6">
-              <Input
-                label="Sleep hours"
-                value={answers.sleep_hours || ""}
-                onChange={(v) => update("sleep_hours", v)}
-              />
-
-              <Input
-                label="Sleep quality (1-10)"
-                value={answers.sleep_quality || ""}
-                onChange={(v) => update("sleep_quality", v)}
-              />
+              <Input label="Sleep hours" value={answers.sleep_hours || ""} onChange={(v) => update("sleep_hours", v)} />
+              <Input label="Sleep quality (1-10)" value={answers.sleep_quality || ""} onChange={(v) => update("sleep_quality", v)} />
             </div>
           )}
 
           {step === 2 && (
             <div className="grid md:grid-cols-2 gap-6">
-              <Input
-                label="Exercise days / week"
-                value={answers.exercise_days || ""}
-                onChange={(v) => update("exercise_days", v)}
-              />
-
-              <Input
-                label="Strength training (yes / no)"
-                value={answers.strength_training || ""}
-                onChange={(v) => update("strength_training", v)}
-              />
+              <Input label="Exercise days / week" value={answers.exercise_days || ""} onChange={(v) => update("exercise_days", v)} />
+              <Input label="Strength training (yes / no)" value={answers.strength_training || ""} onChange={(v) => update("strength_training", v)} />
             </div>
           )}
 
           {step === 3 && (
             <div className="grid md:grid-cols-2 gap-6">
-              <Input
-                label="Diet type"
-                value={answers.diet_type || ""}
-                onChange={(v) => update("diet_type", v)}
-              />
-
-              <Input
-                label="Alcohol use"
-                value={answers.alcohol_use || ""}
-                onChange={(v) => update("alcohol_use", v)}
-              />
-
-              <Input
-                label="Smoking"
-                value={answers.smoking || ""}
-                onChange={(v) => update("smoking", v)}
-              />
-
-              <Input
-                label="Stress level (1-10)"
-                value={answers.stress_level || ""}
-                onChange={(v) => update("stress_level", v)}
-              />
+              <Input label="Diet type" value={answers.diet_type || ""} onChange={(v) => update("diet_type", v)} />
+              <Input label="Alcohol use" value={answers.alcohol_use || ""} onChange={(v) => update("alcohol_use", v)} />
+              <Input label="Smoking" value={answers.smoking || ""} onChange={(v) => update("smoking", v)} />
+              <Input label="Stress level (1-10)" value={answers.stress_level || ""} onChange={(v) => update("stress_level", v)} />
             </div>
           )}
 
@@ -226,11 +202,21 @@ export default function AssessmentPage() {
               onChange={(v) => update("primary_goal", v)}
             />
           )}
+
+          {/* VALIDATION ERROR */}
+          {validationError && (
+            <div className="mt-6 px-4 py-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-xs tracking-wide">
+              {validationError}
+            </div>
+          )}
         </Card>
 
         <div className="flex justify-between mt-8">
           <button
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            onClick={() => {
+              setValidationError(null);
+              setStep((s) => Math.max(0, s - 1));
+            }}
             className="px-6 py-3 rounded-full border border-white/[0.08] text-white/30 hover:text-white/60 hover:border-white/20 transition-all duration-300 text-[11px] uppercase tracking-[0.3em]"
           >
             Back
@@ -238,7 +224,7 @@ export default function AssessmentPage() {
 
           {step < steps.length - 1 ? (
             <button
-              onClick={() => setStep((s) => s + 1)}
+              onClick={handleNext}
               className="px-6 py-3 rounded-full border border-[rgba(212,175,55,0.3)] text-[rgba(212,175,55,0.8)] hover:border-[rgba(212,175,55,0.6)] hover:text-[rgba(212,175,55,1)] transition-all duration-300 text-[11px] uppercase tracking-[0.3em]"
             >
               Next
@@ -272,7 +258,6 @@ function Input({
       <label className="text-[10px] uppercase tracking-[0.35em] text-white/30 mb-3">
         {label}
       </label>
-
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}

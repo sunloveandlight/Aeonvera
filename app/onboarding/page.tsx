@@ -17,23 +17,27 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const init = async () => {
+      /**
+       * FIXED: use getUser() instead of getSession()
+       * getSession() is spoofable on the client side
+       */
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
 
-      if (!session?.user) {
+      if (userError || !user) {
         router.replace("/login");
         return;
       }
 
-      setUserId(session.user.id);
+      setUserId(user.id);
 
-      const { data: profile, error: profileError } =
-        await supabase
-          .from("profiles")
-          .select("user_id")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
       if (profileError) {
         console.error(profileError);
@@ -41,16 +45,14 @@ export default function OnboardingPage() {
       }
 
       if (!profile) {
-        const { error } = await supabase
-          .from("profiles")
-          .insert({
-            user_id: session.user.id,
-            plan: "free",
-            subscription_status: "inactive",
-            onboarding_completed: false,
-            entity_state: "dormant",
-            life_stage: "initializing",
-          });
+        const { error } = await supabase.from("profiles").insert({
+          user_id: user.id,
+          plan: "free",
+          subscription_status: "inactive",
+          onboarding_completed: false,
+          entity_state: "dormant",
+          life_stage: "initializing",
+        });
 
         if (error) {
           console.error(error);
@@ -138,18 +140,7 @@ export default function OnboardingPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="John Smith"
-                    className="
-                      w-full
-                      h-14
-                      rounded-xl
-                      bg-black/50
-                      border
-                      border-white/10
-                      px-4
-                      text-white
-                      outline-none
-                      focus:border-white/30
-                    "
+                    className="w-full h-14 rounded-xl bg-black/50 border border-white/10 px-4 text-white outline-none focus:border-white/30"
                   />
                 </div>
                 <div>
@@ -160,34 +151,13 @@ export default function OnboardingPage() {
                     value={entityName}
                     onChange={(e) => setEntityName(e.target.value)}
                     placeholder="Aeon Entity Alpha"
-                    className="
-                      w-full
-                      h-14
-                      rounded-xl
-                      bg-black/50
-                      border
-                      border-white/10
-                      px-4
-                      text-white
-                      outline-none
-                      focus:border-white/30
-                    "
+                    className="w-full h-14 rounded-xl bg-black/50 border border-white/10 px-4 text-white outline-none focus:border-white/30"
                   />
                 </div>
                 <button
                   onClick={handleCompleteOnboarding}
                   disabled={saving}
-                  className="
-                    w-full
-                    h-14
-                    rounded-xl
-                    bg-white
-                    text-black
-                    font-medium
-                    transition
-                    hover:bg-zinc-200
-                    disabled:opacity-50
-                  "
+                  className="w-full h-14 rounded-xl bg-white text-black font-medium transition hover:bg-zinc-200 disabled:opacity-50"
                 >
                   {saving ? "Initializing..." : "Complete Setup"}
                 </button>

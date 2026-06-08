@@ -1,35 +1,56 @@
 import { NextResponse } from "next/server";
 import { runCoachPipeline } from "@/lib/coach/runCoachPipeline";
-import { supabase } from "@/lib/supabase/admin";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 /**
  * Aeonvera Daily Automation Job
  * -----------------------------
- * Runs automatically and generates coaching alerts
- * for all users with health data.
+ * Runs automatically via Vercel cron at 9am UTC daily.
+ *
+ * SECURITY: requires CRON_SECRET header to prevent
+ * unauthorized triggering of the pipeline.
  */
-export async function GET() {
+export async function GET(req: Request) {
+  /**
+   * STEP 0 — VERIFY CRON SECRET
+   * Add CRON_SECRET to your environment variables.
+   * Vercel automatically sends this header for cron jobs
+   * when configured in vercel.json.
+   */
+  const authHeader = req.headers.get("authorization");
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret) {
+    console.error("[Cron] CRON_SECRET environment variable is not set.");
+    return NextResponse.json(
+      { error: "Cron not configured" },
+      { status: 500 }
+    );
+  }
+
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      { status: 401 }
+    );
+  }
+
   try {
+    const supabase = getSupabaseAdmin();
+
     /**
-     * STEP 1: GET USERS FROM HEALTH STATES (NOT METRICS)
-     * This ensures we only process users who have a computed health state.
+     * STEP 1: GET USERS FROM HEALTH STATES
      */
     const { data: users, error } = await supabase
       .from("health_states")
       .select("user_id");
 
     if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     if (!users?.length) {
-      return NextResponse.json({
-        success: true,
-        processed: 0,
-      });
+      return NextResponse.json({ success: true, processed: 0 });
     }
 
     /**
@@ -63,12 +84,7 @@ export async function GET() {
       users: uniqueUsers.length,
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Unknown error";
-
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
