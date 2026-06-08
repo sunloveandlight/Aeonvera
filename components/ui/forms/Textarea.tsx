@@ -1,11 +1,9 @@
 "use client";
-
 import React, { forwardRef } from "react";
 
-export type TextareaProps =
-  React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
-    error?: boolean;
-  };
+export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  error?: boolean;
+};
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className = "", error, ...props }, ref) => {
@@ -20,16 +18,16 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           rounded-lg
           border
           text-sm
-          bg-white
-          text-neutral-900
-          placeholder:text-neutral-400
+          bg-white/[0.03]
+          text-white/80
+          placeholder:text-white/20
           transition
           resize-y
           focus:outline-none
-          focus:ring-2
-          focus:ring-black/10
-          focus:border-black
-          ${error ? "border-red-500" : "border-neutral-200"}
+          focus:ring-1
+          focus:ring-[rgba(212,175,55,0.3)]
+          focus:border-[rgba(212,175,55,0.3)]
+          ${error ? "border-red-500/50" : "border-white/[0.08]"}
           ${className}
         `}
         {...props}
@@ -39,5 +37,4 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 );
 
 Textarea.displayName = "Textarea";
-
 export default Textarea;

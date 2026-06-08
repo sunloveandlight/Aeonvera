@@ -1,5 +1,4 @@
 "use client";
-
 import React, { forwardRef } from "react";
 
 export type SelectOption = {
@@ -7,11 +6,10 @@ export type SelectOption = {
   value: string;
 };
 
-export type SelectProps =
-  React.SelectHTMLAttributes<HTMLSelectElement> & {
-    options: SelectOption[];
-    error?: boolean;
-  };
+export type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
+  options: SelectOption[];
+  error?: boolean;
+};
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ options, className = "", error, ...props }, ref) => {
@@ -25,20 +23,24 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           rounded-lg
           border
           text-sm
-          bg-white
-          text-neutral-900
+          bg-white/[0.03]
+          text-white/80
           transition
           focus:outline-none
-          focus:ring-2
-          focus:ring-black/10
-          focus:border-black
-          ${error ? "border-red-500" : "border-neutral-200"}
+          focus:ring-1
+          focus:ring-[rgba(212,175,55,0.3)]
+          focus:border-[rgba(212,175,55,0.3)]
+          ${error ? "border-red-500/50" : "border-white/[0.08]"}
           ${className}
         `}
         {...props}
       >
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <option
+            key={opt.value}
+            value={opt.value}
+            className="bg-[#07070a] text-white/80"
+          >
             {opt.label}
           </option>
         ))}
@@ -48,5 +50,4 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
 );
 
 Select.displayName = "Select";
-
 export default Select;

@@ -1,10 +1,14 @@
 import { ReactNode } from "react";
-import { space } from "@/lib/design/tokens";
 
 type Props = {
   children: ReactNode;
   className?: string;
   variant?: "page" | "narrow";
+};
+
+const containerVariants = {
+  page: "max-w-7xl mx-auto px-6 lg:px-8",
+  narrow: "max-w-3xl mx-auto px-6 lg:px-8",
 };
 
 export default function PageContainer({
@@ -13,7 +17,7 @@ export default function PageContainer({
   variant = "page",
 }: Props) {
   return (
-    <div className={`${space.container[variant]} ${className}`}>
+    <div className={`${containerVariants[variant]} ${className}`}>
       {children}
     </div>
   );

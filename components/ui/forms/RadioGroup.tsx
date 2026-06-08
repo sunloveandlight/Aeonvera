@@ -1,5 +1,4 @@
 "use client";
-
 import React from "react";
 
 type Option = {
@@ -21,11 +20,11 @@ export default function RadioGroup({
   name,
 }: RadioGroupProps) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {options.map((opt) => (
         <label
           key={opt.value}
-          className="flex items-center gap-2 text-sm text-neutral-900 cursor-pointer"
+          className="flex items-center gap-3 text-sm text-white/60 cursor-pointer"
         >
           <input
             type="radio"
@@ -33,7 +32,7 @@ export default function RadioGroup({
             value={opt.value}
             checked={value === opt.value}
             onChange={() => onChange?.(opt.value)}
-            className="accent-black"
+            className="accent-[rgba(212,175,55,0.8)]"
           />
           {opt.label}
         </label>

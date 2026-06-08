@@ -1,11 +1,9 @@
 "use client";
-
 import React, { useState, forwardRef } from "react";
 
-export type PasswordInputProps =
-  React.InputHTMLAttributes<HTMLInputElement> & {
-    error?: boolean;
-  };
+export type PasswordInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+  error?: boolean;
+};
 
 const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ className = "", error, ...props }, ref) => {
@@ -24,25 +22,24 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             rounded-lg
             border
             text-sm
-            bg-white
-            text-neutral-900
-            placeholder:text-neutral-400
+            bg-white/[0.03]
+            text-white/80
+            placeholder:text-white/20
             transition
             focus:outline-none
-            focus:ring-2
-            focus:ring-black/10
-            focus:border-black
+            focus:ring-1
+            focus:ring-[rgba(212,175,55,0.3)]
+            focus:border-[rgba(212,175,55,0.3)]
             active:scale-[0.99]
-            ${error ? "border-red-500" : "border-neutral-200"}
+            ${error ? "border-red-500/50" : "border-white/[0.08]"}
             ${className}
           `}
           {...props}
         />
-
         <button
           type="button"
           onClick={() => setShow(!show)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-neutral-500 hover:text-neutral-900 transition"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white/60 transition"
         >
           {show ? "Hide" : "Show"}
         </button>
@@ -52,5 +49,4 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
 );
 
 PasswordInput.displayName = "PasswordInput";
-
 export default PasswordInput;

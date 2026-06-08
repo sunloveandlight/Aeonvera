@@ -1,5 +1,4 @@
 "use client";
-
 import React from "react";
 
 type SubmitButtonProps = {
@@ -7,10 +6,7 @@ type SubmitButtonProps = {
   loading?: boolean;
 };
 
-export default function SubmitButton({
-  children,
-  loading,
-}: SubmitButtonProps) {
+export default function SubmitButton({ children, loading }: SubmitButtonProps) {
   return (
     <button
       type="submit"
@@ -20,17 +16,20 @@ export default function SubmitButton({
         h-10
         rounded-lg
         text-sm
-        font-medium
-        transition
+        font-light
+        tracking-[0.15em]
+        uppercase
+        transition-all
+        duration-300
         active:scale-[0.98]
         ${
           loading
-            ? "bg-neutral-300 text-neutral-500"
-            : "bg-black text-white hover:opacity-90"
+            ? "bg-white/10 text-white/30 cursor-not-allowed"
+            : "border border-[rgba(212,175,55,0.3)] text-[rgba(212,175,55,0.8)] hover:border-[rgba(212,175,55,0.6)] hover:text-[rgba(212,175,55,1)]"
         }
       `}
     >
-      {loading ? "Loading..." : children}
+      {loading ? "Processing..." : children}
     </button>
   );
 }

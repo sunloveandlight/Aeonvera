@@ -1,5 +1,4 @@
 "use client";
-
 import React, { forwardRef } from "react";
 
 export type TextInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
@@ -18,18 +17,18 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
           rounded-lg
           border
           text-sm
-          bg-white
-          text-neutral-900
-          placeholder:text-neutral-400
+          bg-white/[0.03]
+          text-white/80
+          placeholder:text-white/20
           transition
           focus:outline-none
-          focus:ring-2
-          focus:ring-black/10
-          focus:border-black
+          focus:ring-1
+          focus:ring-[rgba(212,175,55,0.3)]
+          focus:border-[rgba(212,175,55,0.3)]
           active:scale-[0.99]
           disabled:opacity-50
           disabled:cursor-not-allowed
-          ${error ? "border-red-500" : "border-neutral-200"}
+          ${error ? "border-red-500/50" : "border-white/[0.08]"}
           ${className}
         `}
         {...props}
@@ -39,5 +38,4 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
 );
 
 TextInput.displayName = "TextInput";
-
 export default TextInput;

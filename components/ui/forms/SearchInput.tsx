@@ -1,12 +1,10 @@
 "use client";
-
 import React, { forwardRef } from "react";
 
-export type SearchInputProps =
-  React.InputHTMLAttributes<HTMLInputElement> & {
-    onClear?: () => void;
-    error?: boolean;
-  };
+export type SearchInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+  onClear?: () => void;
+  error?: boolean;
+};
 
 const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
   ({ className = "", onClear, error, ...props }, ref) => {
@@ -23,29 +21,27 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             rounded-lg
             border
             text-sm
-            bg-white
-            text-neutral-900
-            placeholder:text-neutral-400
+            bg-white/[0.03]
+            text-white/80
+            placeholder:text-white/20
             transition
             focus:outline-none
-            focus:ring-2
-            focus:ring-black/10
-            focus:border-black
-            ${error ? "border-red-500" : "border-neutral-200"}
+            focus:ring-1
+            focus:ring-[rgba(212,175,55,0.3)]
+            focus:border-[rgba(212,175,55,0.3)]
+            ${error ? "border-red-500/50" : "border-white/[0.08]"}
             ${className}
           `}
           {...props}
         />
-
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-          🔍
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-xs">
+          ⌕
         </div>
-
         {onClear && (
           <button
             type="button"
             onClick={onClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-900"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition text-xs"
           >
             ✕
           </button>
@@ -56,5 +52,4 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 );
 
 SearchInput.displayName = "SearchInput";
-
 export default SearchInput;

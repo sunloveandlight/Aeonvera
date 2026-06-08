@@ -1,23 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { isUserAllowed } from "@/lib/auth/permissions";
 
 export default function SuccessPage() {
   const router = useRouter();
+  const [status, setStatus] = useState("Finalizing account access...");
 
-  const [status, setStatus] = useState(
-    "Finalizing account access..."
-  );
+  /**
+   * FIXED: use ref to track cancellation and timeout
+   * so cleanup is reliable on unmount or redirect
+   */
+  const cancelledRef = useRef(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    cancelledRef.current = false;
     let attempts = 0;
-    let cancelled = false;
 
     const checkStatus = async () => {
-      if (cancelled) return;
+      if (cancelledRef.current) return;
 
       attempts++;
 
@@ -42,19 +46,16 @@ export default function SuccessPage() {
         }
 
         const allowed =
-          profile &&
-          isUserAllowed(
-            profile.plan,
-            profile.subscription_status
-          );
+          profile && isUserAllowed(profile.plan, profile.subscription_status);
 
         if (allowed) {
+          cancelledRef.current = true;
           router.replace("/dashboard");
           return;
         }
 
         if (attempts < 20) {
-          setTimeout(checkStatus, 1500);
+          timeoutRef.current = setTimeout(checkStatus, 1500);
         } else {
           setStatus(
             "We're still waiting for Stripe confirmation. Please refresh this page in a few moments."
@@ -63,8 +64,8 @@ export default function SuccessPage() {
       } catch (err) {
         console.error("Success page sync error:", err);
 
-        if (attempts < 20) {
-          setTimeout(checkStatus, 1500);
+        if (!cancelledRef.current && attempts < 20) {
+          timeoutRef.current = setTimeout(checkStatus, 1500);
         } else {
           setStatus(
             "Synchronization is taking longer than expected. Please refresh the page shortly."
@@ -76,7 +77,10 @@ export default function SuccessPage() {
     checkStatus();
 
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, [router]);
 
@@ -87,17 +91,13 @@ export default function SuccessPage() {
           AEONVERA
         </p>
 
-        <h1 className="text-5xl font-light mb-6">
-          Subscription Activated
-        </h1>
+        <h1 className="text-5xl font-light mb-6">Subscription Activated</h1>
 
         <div className="flex justify-center mb-8">
           <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full" />
         </div>
 
-        <p className="text-zinc-400">
-          {status}
-        </p>
+        <p className="text-zinc-400">{status}</p>
       </div>
     </main>
   );

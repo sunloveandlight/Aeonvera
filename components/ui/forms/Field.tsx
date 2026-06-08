@@ -1,5 +1,4 @@
 "use client";
-
 import React from "react";
 
 type FieldProps = {
@@ -22,20 +21,17 @@ export default function Field({
   return (
     <div className={`w-full flex flex-col gap-1 ${className}`}>
       {label && (
-        <label className="text-sm font-medium text-neutral-900 flex items-center gap-1">
+        <label className="text-[10px] uppercase tracking-[0.35em] text-white/30 mb-2 flex items-center gap-1">
           {label}
-          {required && <span className="text-red-500">*</span>}
+          {required && <span className="text-red-400">*</span>}
         </label>
       )}
-
       {children}
-
       {hint && !error && (
-        <p className="text-xs text-neutral-500">{hint}</p>
+        <p className="text-xs text-white/25 mt-1">{hint}</p>
       )}
-
       {error && (
-        <p className="text-xs text-red-500 animate-pulse">{error}</p>
+        <p className="text-xs text-red-400 mt-1">{error}</p>
       )}
     </div>
   );

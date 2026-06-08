@@ -1,8 +1,8 @@
-import type { CoachTrigger } from "@/lib/types/coachTypes";
+import type { CoachTrigger, CoachMode } from "@/lib/types/coachTypes";
 import type { Intervention } from "@/lib/intervention/interventionDecisionEngine";
 
 export type JarvisMessage = {
-  mode: "silent" | "dashboard" | "notification" | "conversation";
+  mode: CoachMode;
   tone: "neutral" | "supportive" | "direct" | "urgent";
   message: string;
   actions: string[];
@@ -18,9 +18,6 @@ export function generateJarvisMessage(params: {
 }): JarvisMessage {
   const { trigger, interventions, userName } = params;
 
-  /**
-   * ✅ FIX: silent mode guard (prevents invalid logic)
-   */
   if (trigger.intensity === "silent" || !trigger.shouldTrigger) {
     return {
       mode: "silent",
@@ -31,16 +28,8 @@ export function generateJarvisMessage(params: {
   }
 
   const top = interventions[0];
-
   const tone = selectTone(trigger.intensity, top?.domain);
-
-  const message = buildMessage({
-    tone,
-    trigger,
-    interventions,
-    userName,
-  });
-
+  const message = buildMessage({ tone, trigger, interventions, userName });
   const actions = interventions.slice(0, 3).map((i) => i.action);
 
   return {
@@ -74,20 +63,16 @@ function buildMessage(params: {
   userName?: string;
 }) {
   const { tone, interventions, userName } = params;
-
   const name = userName ? `${userName}, ` : "";
   const top = interventions[0];
 
   switch (tone) {
     case "urgent":
       return `${name}Critical pattern detected in ${top?.domain}. Immediate attention required. ${top?.reason || ""}`;
-
     case "direct":
       return `${name}Focus area: ${top?.domain}. ${top?.reason}.`;
-
     case "supportive":
-      return `${name}I’m seeing stress in ${top?.domain}, but nothing critical.`;
-
+      return `${name}I'm seeing stress in ${top?.domain}, but nothing critical.`;
     default:
       return `${name}Current optimization focus: ${top?.domain}.`;
   }
