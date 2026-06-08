@@ -1,46 +1,30 @@
-/**
- * Aeonvera — J.A.R.V.I.S Response Engine (STEP 27 FULL PIPELINE)
- * -------------------------------------------------------------
- * Now fully integrated with:
- * - personality
- * - memory
- * - language modulation engine
- */
-
-import { modulateMessage } from "@/lib/voice/languageModulationEngine";
+import type { CoachTrigger } from "@/lib/types/coachTypes";
 import type { Intervention } from "@/lib/intervention/interventionDecisionEngine";
-import type { PersonalityState } from "@/lib/personality/adaptivePersonalityEngine";
-
-export type CoachTrigger = {
-  shouldTrigger: boolean;
-  mode: "silent" | "dashboard" | "notification" | "conversation";
-  intensity: "low" | "medium" | "high";
-};
 
 export type JarvisMessage = {
   mode: "silent" | "dashboard" | "notification" | "conversation";
-  tone: "strict" | "balanced" | "empathetic";
+  tone: "neutral" | "supportive" | "direct" | "urgent";
   message: string;
   actions: string[];
 };
 
+/**
+ * MAIN ENTRY
+ */
 export function generateJarvisMessage(params: {
   trigger: CoachTrigger;
   interventions: Intervention[];
+  userName?: string;
+}): JarvisMessage {
+  const { trigger, interventions, userName } = params;
 
   /**
-   * STEP 27 ADDITIONS
+   * ✅ FIX: silent mode guard (prevents invalid logic)
    */
-  personality?: PersonalityState | null;
-  memory?: any;
-  state?: any;
-}): JarvisMessage {
-  const { trigger, interventions, personality, memory, state } = params;
-
-  if (!trigger.shouldTrigger) {
+  if (trigger.intensity === "silent" || !trigger.shouldTrigger) {
     return {
       mode: "silent",
-      tone: "balanced",
+      tone: "neutral",
       message: "",
       actions: [],
     };
@@ -48,48 +32,63 @@ export function generateJarvisMessage(params: {
 
   const top = interventions[0];
 
-  /**
-   * =========================
-   * BASE INTENT MESSAGE
-   * =========================
-   */
-  const baseReason = top?.reason || "Optimization opportunity detected";
+  const tone = selectTone(trigger.intensity, top?.domain);
 
-  /**
-   * =========================
-   * LANGUAGE MODULATION (STEP 26)
-   * =========================
-   */
-  const modulated = modulateMessage({
-    domain: top?.domain ?? "general",
-    baseReason,
-    context: {
-      personality: {
-        strictness: personality?.strictness ?? 50,
-        empathy: personality?.empathy ?? 50,
-        proactivity: personality?.proactivity ?? 50,
-      },
-      state: state ?? {},
-      memory: memory ?? {},
-    },
+  const message = buildMessage({
+    tone,
+    trigger,
+    interventions,
+    userName,
   });
 
-  /**
-   * =========================
-   * ACTION EXTRACTION
-   * =========================
-   */
   const actions = interventions.slice(0, 3).map((i) => i.action);
 
-  /**
-   * =========================
-   * FINAL OUTPUT
-   * =========================
-   */
   return {
     mode: trigger.mode,
-    tone: modulated.tone,
-    message: modulated.message,
+    tone,
+    message,
     actions,
   };
+}
+
+/**
+ * TONE ENGINE
+ */
+function selectTone(
+  intensity: CoachTrigger["intensity"],
+  domain?: string
+): JarvisMessage["tone"] {
+  if (intensity === "high") return "urgent";
+  if (intensity === "medium") return "direct";
+  if (domain === "sleep") return "supportive";
+  return "neutral";
+}
+
+/**
+ * MESSAGE BUILDER
+ */
+function buildMessage(params: {
+  tone: JarvisMessage["tone"];
+  trigger: CoachTrigger;
+  interventions: Intervention[];
+  userName?: string;
+}) {
+  const { tone, interventions, userName } = params;
+
+  const name = userName ? `${userName}, ` : "";
+  const top = interventions[0];
+
+  switch (tone) {
+    case "urgent":
+      return `${name}Critical pattern detected in ${top?.domain}. Immediate attention required. ${top?.reason || ""}`;
+
+    case "direct":
+      return `${name}Focus area: ${top?.domain}. ${top?.reason}.`;
+
+    case "supportive":
+      return `${name}I’m seeing stress in ${top?.domain}, but nothing critical.`;
+
+    default:
+      return `${name}Current optimization focus: ${top?.domain}.`;
+  }
 }
