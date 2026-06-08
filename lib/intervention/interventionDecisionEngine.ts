@@ -1,11 +1,30 @@
 /**
- * Aeonvera — Intervention Decision Engine (STEP 24 UPDATED)
- * ---------------------------------------------------------
- * Now memory-aware, backward compatible, and TypeScript-safe.
+ * Aeonvera — Intervention Decision Engine (STEP 25 NULL-SAFE FIX)
+ * ----------------------------------------------------------------
+ * FIXES:
+ * - personality.empathy possibly undefined
+ * - personality.strictness unsafe comparisons
+ * - ensures deterministic runtime-safe defaults
  */
 
 import type { UserMemorySnapshot } from "@/lib/memory/conversationMemoryFusionEngine";
+import type { PersonalityState } from "@/lib/personality/adaptivePersonalityEngine";
 
+/**
+ * =========================
+ * CONTEXT TYPE
+ * =========================
+ */
+export type InterventionContext = {
+  memory?: UserMemorySnapshot | null;
+  personality?: PersonalityState | null;
+};
+
+/**
+ * =========================
+ * INTERVENTION TYPE
+ * =========================
+ */
 export type Intervention = {
   domain: string;
   action: string;
@@ -13,28 +32,32 @@ export type Intervention = {
   priority: number;
 };
 
-export type InterventionContext = {
-  memory?: UserMemorySnapshot | null;
-};
+/**
+ * =========================
+ * SAFE PERSONALITY NORMALIZER
+ * =========================
+ */
+function normalizePersonality(personality?: PersonalityState | null) {
+  return {
+    strictness: personality?.strictness ?? 50,
+    empathy: personality?.empathy ?? 50,
+    proactivity: personality?.proactivity ?? 50,
+  };
+}
 
 /**
- * MAIN ENTRY (STEP 24 SAFE SIGNATURE)
- * -----------------------------------
- * Supports both:
- * - v1: 3 args (legacy)
- * - v2: 4 args (memory-aware)
+ * =========================
+ * MAIN ENTRY
+ * =========================
  */
 export function generateInterventions(
   state: any,
   predictions: any,
   adaptiveWeights: any,
-  memoryOrContext?: UserMemorySnapshot | InterventionContext | null
+  context?: InterventionContext
 ): Intervention[] {
-  // Normalize memory input (supports both calling styles)
-  const memory: UserMemorySnapshot | null =
-    (memoryOrContext as InterventionContext)?.memory ??
-    (memoryOrContext as UserMemorySnapshot) ??
-    null;
+  const memory = context?.memory ?? null;
+  const personality = normalizePersonality(context?.personality);
 
   const interventions: Intervention[] = [];
 
@@ -47,9 +70,12 @@ export function generateInterventions(
     interventions.push({
       domain: "sleep",
       action: "improve_sleep_quality",
-      reason: memory?.summary
-        ? "Sleep risk elevated (memory-aware pattern detected)"
-        : "Sleep risk elevated based on current state",
+      reason:
+        personality.strictness > 70
+          ? "Sleep risk is critical — immediate correction required."
+          : memory?.summary
+          ? "Sleep risk elevated (based on historical + current patterns)"
+          : "Sleep risk elevated based on current state",
       priority: 10,
     });
   }
@@ -63,7 +89,10 @@ export function generateInterventions(
     interventions.push({
       domain: "recovery",
       action: "improve_recovery",
-      reason: "Recovery capacity is under strain",
+      reason:
+        personality.empathy > 70
+          ? "Your recovery system needs support — let's stabilize it gently."
+          : "Recovery capacity is under strain",
       priority: 9,
     });
   }
@@ -78,7 +107,7 @@ export function generateInterventions(
       domain: "activity",
       action: "increase_movement",
       reason: memory?.recurringTopics?.includes("activity")
-        ? "Repeated inactivity pattern detected in historical behavior"
+        ? "Repeated inactivity pattern detected in behavioral history"
         : "Low activity detected in current state",
       priority: 8,
     });
@@ -86,21 +115,25 @@ export function generateInterventions(
 
   /**
    * =========================
-   * MEMORY ENHANCEMENT LAYER
+   * EMOTIONAL LAYER
    * =========================
-   * This is where Aeonvera starts becoming adaptive
    */
   if (memory?.dominantEmotionalTone === "negative") {
     interventions.push({
       domain: "emotional",
       action: "support_emotional_state",
-      reason: "User shows sustained negative emotional tone in conversation history",
+      reason:
+        personality.empathy > 75
+          ? "You’ve been under emotional strain — I’m here to support you through it."
+          : "Negative emotional pattern detected in conversation history",
       priority: 7,
     });
   }
 
   /**
+   * =========================
    * FALLBACK
+   * =========================
    */
   if (interventions.length === 0) {
     interventions.push({
@@ -111,8 +144,5 @@ export function generateInterventions(
     });
   }
 
-  /**
-   * Sort by priority (highest first)
-   */
   return interventions.sort((a, b) => b.priority - a.priority);
 }
