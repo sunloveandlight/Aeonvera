@@ -1,8 +1,12 @@
 /**
- * Aeonvera — Event Ingestion Engine (V1)
- * --------------------------------------
- * Converts all external/internal actions into structured intelligence events.
+ * Aeonvera — Event Ingestion Engine (STEP 22 REBUILD)
+ * ----------------------------------------------------
+ * Now fully connected to Supabase + triggers downstream systems
  */
+
+import { supabase } from "@/lib/supabase/client";
+import { buildHealthState } from "@/lib/state/healthStateEngine";
+import { runCoachRuntime } from "@/lib/runtime/coachRuntimeEngine";
 
 export type AeonveraEventType =
   | "wearable.metric"
@@ -22,28 +26,21 @@ export type AeonveraEvent = {
 
 /**
  * MAIN ENTRY
- * All system inputs go through here
  */
 export async function ingestEvent(event: AeonveraEvent) {
+  // 1. ALWAYS log event first
+  await logEvent(event);
+
   switch (event.type) {
-    /**
-     * WEARABLE DATA ARRIVES
-     */
     case "wearable.metric":
       return handleWearableMetric(event);
 
-    /**
-     * USER ACTIONS
-     */
     case "user.login":
       return handleUserLogin(event);
 
     case "user.assessment_completed":
       return handleAssessment(event);
 
-    /**
-     * SYSTEM EVENTS
-     */
     case "cron.daily_coach":
       return handleDailyCoach(event);
 
@@ -51,29 +48,92 @@ export async function ingestEvent(event: AeonveraEvent) {
       return handleSystemTick(event);
 
     default:
-      return {
-        status: "ignored",
-        reason: "unknown_event_type",
-      };
+      return { status: "ignored", reason: "unknown_event_type" };
   }
 }
 
 /**
- * WEARABLE METRIC EVENT
+ * LOG ALL EVENTS (source of truth)
+ */
+async function logEvent(event: AeonveraEvent) {
+  const { error } = await supabase.from("aeonvera_events").insert({
+    user_id: event.userId,
+    type: event.type,
+    payload: event.payload,
+    created_at: event.timestamp,
+  });
+
+  if (error) {
+    console.error("Event log failed:", error.message);
+  }
+}
+
+/**
+ * WEARABLE METRIC
  */
 async function handleWearableMetric(event: AeonveraEvent) {
-  // Example payload:
-  // { metricName, value }
+  const { metricName, value } = event.payload || {};
+
+  if (!metricName) {
+    return { status: "error", reason: "missing_metric" };
+  }
+
+  // 1. Store metric
+  await supabase.from("wearable_metrics").insert({
+    user_id: event.userId,
+    metric_name: metricName,
+    value,
+    recorded_at: event.timestamp,
+  });
+
+  // 2. Fetch recent metrics for recompute
+  const { data } = await supabase
+    .from("wearable_metrics")
+    .select("*")
+    .eq("user_id", event.userId)
+    .order("recorded_at", { ascending: true })
+    .limit(200);
+
+  if (!data) return { status: "error", reason: "no_metrics" };
+
+  // 3. Build health state
+  const state = buildHealthState(
+    data.map((m) => ({
+      userId: m.user_id,
+      metricName: m.metric_name,
+      value: m.value,
+      timestamp: m.recorded_at,
+    }))
+  );
+
+  if (!state) return { status: "error", reason: "state_failed" };
+
+  // 4. Store health state
+  await supabase.from("health_states").insert({
+    user_id: event.userId,
+    state: state,
+    updated_at: state.updatedAt,
+  });
+
+  // 5. Trigger runtime brain
+  const runtime = await runCoachRuntime({
+    state,
+    predictions: {},
+    adaptiveWeights: {},
+    timeOfDay: new Date().getHours(),
+    lastInteractionMinutesAgo: 0,
+    engagementScore: 0.5,
+  });
 
   return {
     status: "processed",
-    next: "update_health_state",
-    event,
+    next: "runtime_executed",
+    runtime,
   };
 }
 
 /**
- * USER LOGIN EVENT
+ * USER LOGIN
  */
 async function handleUserLogin(event: AeonveraEvent) {
   return {
@@ -84,7 +144,7 @@ async function handleUserLogin(event: AeonveraEvent) {
 }
 
 /**
- * ASSESSMENT COMPLETED
+ * ASSESSMENT
  */
 async function handleAssessment(event: AeonveraEvent) {
   return {
@@ -95,7 +155,7 @@ async function handleAssessment(event: AeonveraEvent) {
 }
 
 /**
- * DAILY COACH CRON
+ * DAILY COACH
  */
 async function handleDailyCoach(event: AeonveraEvent) {
   return {
@@ -106,7 +166,7 @@ async function handleDailyCoach(event: AeonveraEvent) {
 }
 
 /**
- * SYSTEM TICK (heartbeat loop)
+ * SYSTEM TICK
  */
 async function handleSystemTick(event: AeonveraEvent) {
   return {
