@@ -1,8 +1,8 @@
-// app/api/longevity/report/route.ts
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import OpenAI from "openai";
 import { cookies } from "next/headers";
+import { predictHealthRisks } from "@/lib/prediction/riskPredictionEngine";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -21,7 +21,15 @@ async function getSupabase() {
         },
         setAll(cookiesToSet: any) {
           cookiesToSet.forEach(
-            ({ name, value, options }: { name: string; value: string; options?: any }) => {
+            ({
+              name,
+              value,
+              options,
+            }: {
+              name: string;
+              value: string;
+              options?: any;
+            }) => {
               cookieStore.set(name, value, options);
             }
           );
@@ -64,11 +72,17 @@ export async function POST(request: Request) {
 
     if (!assessment) {
       return NextResponse.json(
-        { error: "No assessment found. Please complete the longevity assessment first." },
+        {
+          error:
+            "No assessment found. Please complete the longevity assessment first.",
+        },
         { status: 400 }
       );
     }
 
+    /**
+     * STEP 1 — AI REPORT (UNCHANGED CORE LOGIC)
+     */
     const prompt = `
 You are Aeonvera, a longevity intelligence engine.
 
@@ -114,16 +128,14 @@ Return ONLY valid JSON:
 `;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",           // ← Fixed model name
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "You are a precise structured health intelligence engine. Return only valid JSON.",
+          content:
+            "You are a precise structured health intelligence engine. Return only valid JSON.",
         },
-        {
-          role: "user",
-          content: prompt,
-        },
+        { role: "user", content: prompt },
       ],
       temperature: 0.3,
       max_tokens: 1200,
@@ -132,7 +144,10 @@ Return ONLY valid JSON:
     const content = completion.choices?.[0]?.message?.content?.trim();
 
     if (!content) {
-      return NextResponse.json({ error: "No AI response" }, { status: 500 });
+      return NextResponse.json(
+        { error: "No AI response" },
+        { status: 500 }
+      );
     }
 
     let report;
@@ -145,7 +160,32 @@ Return ONLY valid JSON:
       );
     }
 
-    // Save report
+    /**
+     * STEP 2 — LOAD HEALTH STATE FOR PREDICTION
+     * (NEW ADDITION — does NOT change existing flow)
+     */
+    const { data: state } = await supabase
+      .from("health_states")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    let predictedRisks = null;
+
+    if (state) {
+      predictedRisks = predictHealthRisks({
+        userId,
+        baseline: state.baseline,
+        trends: state.trends,
+        riskScores: state.risk_scores,
+        insights: state.insights,
+        updatedAt: state.updated_at,
+      });
+    }
+
+    /**
+     * STEP 3 — SAVE REPORT (UNCHANGED DB LOGIC)
+     */
     const { data, error } = await supabase
       .from("longevity_reports")
       .insert({
@@ -159,12 +199,19 @@ Return ONLY valid JSON:
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
     }
 
+    /**
+     * STEP 4 — RETURN ENHANCED RESPONSE (NEW ADDITION)
+     */
     return NextResponse.json({
       success: true,
       report: data,
+      predicted_risks: predictedRisks, // ← NEW LAYER ADDED
     });
   } catch (err: any) {
     console.error("AI Report Error:", err);
