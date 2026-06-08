@@ -1,33 +1,46 @@
 /**
- * Aeonvera — J.A.R.V.I.S. Response Engine (V1)
- * -------------------------------------------
- * Converts structured interventions into natural conversational output.
+ * Aeonvera — J.A.R.V.I.S Response Engine (STEP 27 FULL PIPELINE)
+ * -------------------------------------------------------------
+ * Now fully integrated with:
+ * - personality
+ * - memory
+ * - language modulation engine
  */
 
-import { Intervention } from "@/lib/intervention/interventionDecisionEngine";
-import { CoachTrigger } from "@/lib/coach/triggerEngine";
+import { modulateMessage } from "@/lib/voice/languageModulationEngine";
+import type { Intervention } from "@/lib/intervention/interventionDecisionEngine";
+import type { PersonalityState } from "@/lib/personality/adaptivePersonalityEngine";
+
+export type CoachTrigger = {
+  shouldTrigger: boolean;
+  mode: "silent" | "dashboard" | "notification" | "conversation";
+  intensity: "low" | "medium" | "high";
+};
 
 export type JarvisMessage = {
   mode: "silent" | "dashboard" | "notification" | "conversation";
-  tone: "neutral" | "supportive" | "direct" | "urgent";
+  tone: "strict" | "balanced" | "empathetic";
   message: string;
   actions: string[];
 };
 
-/**
- * MAIN ENTRY
- */
 export function generateJarvisMessage(params: {
   trigger: CoachTrigger;
   interventions: Intervention[];
-  userName?: string;
+
+  /**
+   * STEP 27 ADDITIONS
+   */
+  personality?: PersonalityState | null;
+  memory?: any;
+  state?: any;
 }): JarvisMessage {
-  const { trigger, interventions, userName } = params;
+  const { trigger, interventions, personality, memory, state } = params;
 
   if (!trigger.shouldTrigger) {
     return {
       mode: "silent",
-      tone: "neutral",
+      tone: "balanced",
       message: "",
       actions: [],
     };
@@ -35,69 +48,48 @@ export function generateJarvisMessage(params: {
 
   const top = interventions[0];
 
-  const tone = selectTone(trigger.intensity, top?.domain);
+  /**
+   * =========================
+   * BASE INTENT MESSAGE
+   * =========================
+   */
+  const baseReason = top?.reason || "Optimization opportunity detected";
 
-  const message = buildMessage({
-    tone,
-    trigger,
-    interventions,
-    userName,
+  /**
+   * =========================
+   * LANGUAGE MODULATION (STEP 26)
+   * =========================
+   */
+  const modulated = modulateMessage({
+    domain: top?.domain ?? "general",
+    baseReason,
+    context: {
+      personality: {
+        strictness: personality?.strictness ?? 50,
+        empathy: personality?.empathy ?? 50,
+        proactivity: personality?.proactivity ?? 50,
+      },
+      state: state ?? {},
+      memory: memory ?? {},
+    },
   });
 
+  /**
+   * =========================
+   * ACTION EXTRACTION
+   * =========================
+   */
   const actions = interventions.slice(0, 3).map((i) => i.action);
 
+  /**
+   * =========================
+   * FINAL OUTPUT
+   * =========================
+   */
   return {
     mode: trigger.mode,
-    tone,
-    message,
+    tone: modulated.tone,
+    message: modulated.message,
     actions,
   };
-}
-
-/**
- * TONE ENGINE
- */
-function selectTone(
-  intensity: CoachTrigger["intensity"],
-  domain?: string
-): JarvisMessage["tone"] {
-  if (intensity === "high") return "urgent";
-  if (intensity === "medium") return "direct";
-
-  if (domain === "sleep") return "supportive";
-
-  return "neutral";
-}
-
-/**
- * MESSAGE BUILDER
- */
-function buildMessage(params: {
-  tone: JarvisMessage["tone"];
-  trigger: CoachTrigger;
-  interventions: Intervention[];
-  userName?: string;
-}): string {
-  const { tone, trigger, interventions, userName } = params;
-
-  const name = userName ? `${userName}, ` : "";
-
-  const top = interventions[0];
-
-  switch (tone) {
-    case "urgent":
-      return `${name}I’m seeing a significant risk pattern in your ${top?.domain} system. This needs attention now. ${
-        top?.reason || ""
-      }`;
-
-    case "direct":
-      return `${name}Your current priority is ${top?.domain}. ${top?.reason}. I recommend we address this first.`;
-
-    case "supportive":
-      return `${name}I’m noticing a pattern in your ${top?.domain}. Nothing critical, but improving this will noticeably help your recovery.`;
-
-    case "neutral":
-    default:
-      return `${name}Here’s your current optimization focus: ${top?.domain}.`;
-  }
 }
