@@ -1,20 +1,33 @@
 import { createClient } from "@supabase/supabase-js";
 
 /**
- * Creates a server-side Supabase admin client.
- * Safe for API routes, webhooks, cron jobs,
- * and other backend-only operations.
+ * Aeonvera — Supabase Admin Client Factory
+ * -----------------------------------------
+ * EXPLICIT FACTORY PATTERN (no singleton).
+ *
+ * Always call getSupabaseAdmin() directly.
+ * Never import a pre-built instance.
+ *
+ * This ensures:
+ * - fresh client per call
+ * - clear error messages if env vars are missing
+ * - no module-load-time side effects
+ * - safe for serverless / edge environments
  */
 export function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL");
+    throw new Error(
+      "[Aeonvera] Missing NEXT_PUBLIC_SUPABASE_URL — check your environment variables."
+    );
   }
 
   if (!serviceRoleKey) {
-    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY");
+    throw new Error(
+      "[Aeonvera] Missing SUPABASE_SERVICE_ROLE_KEY — check your environment variables."
+    );
   }
 
   return createClient(url, serviceRoleKey, {
@@ -24,9 +37,3 @@ export function getSupabaseAdmin() {
     },
   });
 }
-
-/**
- * Optional singleton export for places
- * that prefer importing a ready-made client.
- */
-export const supabase = getSupabaseAdmin();
