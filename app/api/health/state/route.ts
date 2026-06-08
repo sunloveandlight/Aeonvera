@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     /**
-     * STEP 3: NORMALIZE
+     * STEP 3: NORMALIZE RAW → CANONICAL
      */
     const normalized = normalizeHealthMetrics(
       rawMetrics.map((m) => ({
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     );
 
     /**
-     * STEP 5: BUILD STATE FROM UPDATED DATA ONLY
+     * STEP 5: BUILD STATE FROM CANONICAL DATA
      */
     const { data: canonicalMetrics } = await supabase
       .from("health_metrics")
@@ -109,13 +109,20 @@ export async function POST(req: NextRequest) {
     }
 
     /**
-     * STEP 6: SAVE STATE + UPDATE PROCESSING CURSOR
+     * STEP 6: SAFE LATEST TIMESTAMP (FIXED)
      */
     const latestTimestamp =
       rawMetrics.length > 0
-        ? rawMetrics[rawMetrics.length - 1].recorded_at
+        ? rawMetrics
+            .map((m) => m.recorded_at)
+            .reduce((max, cur) =>
+              new Date(cur) > new Date(max) ? cur : max
+            )
         : new Date().toISOString();
 
+    /**
+     * STEP 7: SAVE STATE + UPDATE PROCESSING CURSOR
+     */
     const { error: stateError } = await supabase
       .from("health_states")
       .upsert(
