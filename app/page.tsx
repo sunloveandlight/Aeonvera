@@ -135,20 +135,20 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="text-white">
+    <div className="text-[var(--ink)]">
       <section className="px-6 pb-24 pt-24 lg:px-8 lg:pb-32 lg:pt-28">
         <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-2 lg:items-center">
           <div>
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/60">
+            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-[rgba(36,50,74,0.12)] bg-white/75 px-4 py-2 text-sm text-[rgba(38,51,73,0.68)]">
               <ShieldCheck size={16} className="royal-text" />
               Private longevity intelligence
             </div>
 
-            <h1 className="max-w-4xl text-5xl font-semibold leading-[1.04] text-white md:text-6xl xl:text-7xl">
+            <h1 className="max-w-4xl text-5xl font-semibold leading-[1.04] text-[var(--ink)] md:text-6xl xl:text-7xl">
               Know your biological age. Improve it with precision.
             </h1>
 
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-white/60 md:text-xl">
+            <p className="mt-7 max-w-2xl text-lg leading-8 text-[rgba(38,51,73,0.68)] md:text-xl">
               Aeonvera gives you a decision-ready view of your healthspan:
               biological age, domain signals, risk context, and a practical plan.
             </p>
@@ -156,14 +156,14 @@ export default function HomePage() {
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <Link
                 href={authenticated ? "/dashboard" : "/login?mode=signup"}
-                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full royal-gradient px-6 text-sm font-medium text-white transition hover:opacity-90 sm:w-auto"
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md royal-gradient px-6 text-sm font-medium text-white transition hover:opacity-95 sm:w-auto"
               >
                 {authenticated ? "Open dashboard" : "Start assessment"}
                 <ArrowRight size={16} />
               </Link>
               <Link
                 href="/pricing"
-                className="inline-flex h-12 w-full items-center justify-center rounded-full border border-white/15 px-6 text-sm font-medium text-white/75 transition hover:border-white/25 hover:text-white sm:w-auto"
+                className="inline-flex h-12 w-full items-center justify-center rounded-md border border-[rgba(36,50,74,0.14)] bg-white/60 px-6 text-sm font-medium text-[rgba(16,24,39,0.78)] transition hover:border-[rgba(55,38,103,0.24)] hover:text-[var(--ink)] sm:w-auto"
               >
                 View plans
               </Link>
@@ -175,16 +175,16 @@ export default function HomePage() {
       </section>
 
       <section className="px-6 pb-24 lg:px-8">
-        <div className="mx-auto max-w-6xl rounded-lg border border-white/10 bg-[#151517] p-6 md:p-8">
+        <div className="premium-surface mx-auto max-w-6xl rounded-lg p-6 md:p-8">
           <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
             <div>
-              <div className="mb-6 flex size-12 items-center justify-center rounded-lg bg-white text-black">
+              <div className="mb-6 flex size-12 items-center justify-center rounded-lg bg-[var(--navy)] text-white">
                 <Activity size={22} />
               </div>
               <h2 className="max-w-xl text-3xl font-semibold leading-tight md:text-5xl">
                 A healthspan dashboard that stays out of your way.
               </h2>
-              <p className="mt-5 max-w-xl text-base leading-7 text-white/55">
+              <p className="mt-5 max-w-xl text-base leading-7 text-[rgba(38,51,73,0.64)]">
                 No decorative complexity. No noisy wellness feed. Just the
                 numbers that matter, the domains behind them, and what to do next.
               </p>
@@ -192,9 +192,9 @@ export default function HomePage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               {METRICS.map(([value, label]) => (
-                <div key={label} className="rounded-lg bg-white/[0.055] p-5 transition duration-300 hover:bg-white/[0.08]">
-                  <p className="text-4xl font-semibold leading-none text-white">{value}</p>
-                  <p className="mt-3 text-sm text-white/50">{label}</p>
+                <div key={label} className="rounded-lg border border-[rgba(36,50,74,0.1)] bg-white/70 p-5 transition duration-300 hover:bg-white">
+                  <p className="text-4xl font-semibold leading-none text-[var(--navy)]">{value}</p>
+                  <p className="mt-3 text-sm text-[rgba(38,51,73,0.58)]">{label}</p>
                 </div>
               ))}
             </div>
@@ -202,7 +202,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-t border-white/8 px-6 py-24 lg:px-8">
+      <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
@@ -213,7 +213,7 @@ export default function HomePage() {
             </div>
             <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
               {DOMAINS.map((domain) => (
-                <div key={domain} className="border-b border-white/10 pb-4 text-base text-white/70">
+                <div key={domain} className="border-b border-[rgba(36,50,74,0.12)] pb-4 text-base text-[rgba(16,24,39,0.72)]">
                   {domain}
                 </div>
               ))}
@@ -222,7 +222,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-t border-white/8 px-6 py-24 lg:px-8">
+      <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-3xl">
             <p className="text-sm font-medium royal-text">Platform</p>
@@ -233,17 +233,17 @@ export default function HomePage() {
 
           <div className="grid gap-6 md:grid-cols-3">
             {CAPABILITIES.map((item) => (
-              <div key={item.title} className="rounded-lg bg-[#151517] p-7 transition duration-300 hover:-translate-y-1 hover:bg-[#1d1d20]">
-                <Dna size={24} className="mb-8 text-white/70" />
-                <h3 className="text-xl font-semibold text-white">{item.title}</h3>
-                <p className="mt-4 text-sm leading-7 text-white/55">{item.body}</p>
+              <div key={item.title} className="premium-surface rounded-lg p-7 transition duration-300 hover:-translate-y-1">
+                <Dna size={24} className="mb-8 text-[rgb(var(--royal))]" />
+                <h3 className="text-xl font-semibold text-[var(--ink)]">{item.title}</h3>
+                <p className="mt-4 text-sm leading-7 text-[rgba(38,51,73,0.62)]">{item.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="border-t border-white/8 px-6 py-24 lg:px-8">
+      <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
@@ -254,11 +254,11 @@ export default function HomePage() {
             </div>
             <div className="space-y-6">
               {STEPS.map(([title, body], index) => (
-                <div key={title} className="grid gap-4 border-b border-white/10 pb-6 sm:grid-cols-[72px_1fr]">
-                  <p className="text-sm text-white/40">{String(index + 1).padStart(2, "0")}</p>
+                <div key={title} className="grid gap-4 border-b border-[rgba(36,50,74,0.12)] pb-6 sm:grid-cols-[72px_1fr]">
+                  <p className="text-sm text-[rgba(55,38,103,0.48)]">{String(index + 1).padStart(2, "0")}</p>
                   <div>
-                    <h3 className="text-xl font-semibold text-white">{title}</h3>
-                    <p className="mt-2 text-sm leading-7 text-white/55">{body}</p>
+                    <h3 className="text-xl font-semibold text-[var(--ink)]">{title}</h3>
+                    <p className="mt-2 text-sm leading-7 text-[rgba(38,51,73,0.62)]">{body}</p>
                   </div>
                 </div>
               ))}
@@ -267,7 +267,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-t border-white/8 px-6 py-24 lg:px-8">
+      <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
@@ -283,11 +283,11 @@ export default function HomePage() {
 
           <div className="grid gap-4 lg:grid-cols-3">
             {PLANS.map(([name, price, body]) => (
-              <div key={name} className="rounded-lg bg-[#151517] p-7 transition duration-300 hover:-translate-y-1 hover:bg-[#1d1d20]">
+              <div key={name} className="premium-surface rounded-lg p-7 transition duration-300 hover:-translate-y-1">
                 <h3 className="text-xl font-semibold">{name}</h3>
                 <p className="mt-6 text-4xl font-semibold">{price}</p>
-                <p className="mt-4 text-sm leading-7 text-white/55">{body}</p>
-                <div className="mt-8 flex items-center gap-2 text-sm text-white/60">
+                <p className="mt-4 text-sm leading-7 text-[rgba(38,51,73,0.62)]">{body}</p>
+                <div className="mt-8 flex items-center gap-2 text-sm text-[rgba(38,51,73,0.64)]">
                   <Check size={16} />
                   Monthly membership
                 </div>
@@ -297,17 +297,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-t border-white/8 px-6 py-24 lg:px-8">
+      <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-4xl font-semibold leading-tight md:text-6xl">
             Start with the number that changes the conversation.
           </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/55">
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-[rgba(38,51,73,0.62)]">
             Your biological age is the baseline. Aeonvera helps you make it useful.
           </p>
           <Link
             href={authenticated ? "/assessment" : "/login?mode=signup"}
-            className="mt-9 inline-flex h-12 items-center justify-center gap-2 rounded-full royal-gradient px-6 text-sm font-medium text-white transition hover:opacity-90"
+            className="mt-9 inline-flex h-12 items-center justify-center gap-2 rounded-md royal-gradient px-6 text-sm font-medium text-white transition hover:opacity-95"
           >
             {authenticated ? "Update assessment" : "Get started"}
             <ArrowRight size={16} />

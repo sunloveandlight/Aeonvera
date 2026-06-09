@@ -87,7 +87,7 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="text-white">
+    <div className="text-[var(--ink)]">
       <section className="px-6 py-24 lg:px-8">
         <PageContainer>
           <div className="mx-auto max-w-4xl text-center">
@@ -95,7 +95,7 @@ export default function PricingPage() {
             <h1 className="mt-5 text-5xl font-semibold leading-[1.05] md:text-6xl">
               Choose the right level of longevity intelligence.
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/55">
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[rgba(38,51,73,0.64)]">
               Start with a reliable baseline. Move into deeper support as your
               data, goals, and decision-making needs grow.
             </p>
@@ -111,8 +111,8 @@ export default function PricingPage() {
                 key={plan.id}
                 className={`rounded-lg border p-7 ${
                   plan.recommended
-                    ? "royal-border bg-[#151517]"
-                    : "border-white/10 bg-[#151517]"
+                    ? "royal-border royal-gradient-soft"
+                    : "border-[rgba(36,50,74,0.12)] bg-white/75"
                 }`}
               >
                 <div className="min-h-[112px]">
@@ -124,20 +124,20 @@ export default function PricingPage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-4 text-sm leading-6 text-white/55">
+                  <p className="mt-4 text-sm leading-6 text-[rgba(38,51,73,0.62)]">
                     {plan.summary}
                   </p>
                 </div>
 
                 <p className="mt-8 text-5xl font-semibold">
                   {plan.price}
-                  <span className="text-base font-normal text-white/40"> / month</span>
+                  <span className="text-base font-normal text-[rgba(38,51,73,0.46)]"> / month</span>
                 </p>
 
                 <div className="mt-8 space-y-4">
                   {plan.features.map((feature) => (
-                    <div key={feature} className="flex gap-3 text-sm leading-6 text-white/70">
-                      <Check size={17} className="mt-1 shrink-0 text-white/60" />
+                    <div key={feature} className="flex gap-3 text-sm leading-6 text-[rgba(16,24,39,0.72)]">
+                      <Check size={17} className="mt-1 shrink-0 text-[rgb(var(--royal))]" />
                       <span>{feature}</span>
                     </div>
                   ))}
@@ -148,8 +148,8 @@ export default function PricingPage() {
                   disabled={loadingPlan !== null}
                   className={`mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
                     plan.recommended
-                      ? "royal-gradient text-white hover:opacity-90"
-                      : "border border-white/15 text-white/80 hover:border-white/30 hover:text-white"
+                      ? "royal-gradient text-white hover:opacity-95"
+                      : "border border-[rgba(36,50,74,0.16)] bg-white/60 text-[rgba(16,24,39,0.78)] hover:border-[rgba(55,38,103,0.24)] hover:text-[var(--ink)]"
                   }`}
                 >
                   {loadingPlan === plan.id ? "Processing..." : `Get ${plan.name}`}

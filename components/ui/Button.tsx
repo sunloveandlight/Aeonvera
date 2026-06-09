@@ -29,12 +29,12 @@ export default function Button({
   const styles = {
     primary: `
       premium-button-primary
-      hover:opacity-90
+      hover:opacity-95
       active:scale-[0.985]
     `,
     secondary: `
       premium-button-secondary
-      hover:border-white/20
+      hover:border-[rgba(55,38,103,0.22)]
       active:scale-[0.985]
     `,
   };

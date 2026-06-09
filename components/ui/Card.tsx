@@ -25,7 +25,7 @@ export default function Card({
 
         transition-all duration-500
 
-        ${hover ? "hover:translate-y-[-2px] hover:border-white/15" : ""}
+        ${hover ? "hover:translate-y-[-2px] hover:border-[rgba(55,38,103,0.22)]" : ""}
 
         ${className}
       `}
@@ -34,8 +34,8 @@ export default function Card({
       <div className="relative z-10 p-6">
 
         {title && (
-          <div className="mb-4 pb-3 border-b border-white/5">
-            <p className="text-[10px] uppercase tracking-normal text-white/30">
+          <div className="mb-4 pb-3 border-b border-[rgba(36,50,74,0.1)]">
+            <p className="text-[10px] uppercase tracking-normal text-[rgba(55,38,103,0.58)]">
               {title}
             </p>
           </div>
