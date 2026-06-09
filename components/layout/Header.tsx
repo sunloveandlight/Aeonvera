@@ -74,7 +74,7 @@ export default function Header() {
         </nav>
 
         {/* AUTH */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={() => setMobileOpen((open) => !open)}
             className="inline-flex size-10 items-center justify-center rounded-md border border-white/10 text-white/60 md:hidden"
@@ -103,7 +103,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/login?mode=signup"
-                className="premium-button-primary flex h-10 items-center rounded-md px-4 text-xs font-medium transition hover:opacity-95"
+                className="premium-nav-action px-4 text-xs font-medium transition"
               >
                 Begin
               </Link>

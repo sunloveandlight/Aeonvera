@@ -434,6 +434,32 @@ body::after {
     inset 0 1px 0 rgba(255, 255, 255, 0.09);
 }
 
+.premium-nav-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  border: 1px solid rgba(232, 234, 238, 0.18);
+  border-radius: 0.42rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.026)),
+    rgba(18, 19, 22, 0.58);
+  color: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.22),
+    0 0 12px rgba(232, 234, 238, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+}
+
+.premium-nav-action:hover {
+  border-color: rgba(232, 234, 238, 0.26);
+  color: rgba(255, 255, 255, 0.96);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.032)),
+    rgba(18, 19, 22, 0.68);
+}
+
 .premium-action-ghost {
   color: rgba(218, 220, 224, 0.52);
   transition: color 240ms ease;
