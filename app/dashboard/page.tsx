@@ -459,9 +459,15 @@ export default function DashboardPage() {
 
             {/* SYSTEM STATUS INDICATOR */}
             <div className="flex flex-col items-end gap-2">
-              <div className="premium-status-neutral flex items-center gap-2 rounded-md px-4 py-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-white/55 shadow-[0_0_16px_rgba(255,255,255,0.18)]" />
-                <span className="text-[9px] uppercase tracking-normal text-white/68">
+              <div className={`premium-status-neutral flex items-center gap-2 rounded-md px-4 py-2 ${
+                systemStatus === "STABLE" ? "system-status-stable" : ""
+              }`}>
+                <div className={`h-1.5 w-1.5 rounded-full ${
+                  systemStatus === "STABLE"
+                    ? "system-status-stable-dot"
+                    : "bg-white/55 shadow-[0_0_16px_rgba(255,255,255,0.18)]"
+                }`} />
+                <span className="text-[9px] uppercase tracking-normal text-white/78">
                   {systemStatus}
                 </span>
               </div>

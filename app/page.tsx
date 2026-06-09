@@ -44,11 +44,28 @@ const STEPS = [
   ["Improve", "Follow a focused plan and update the model as data changes."],
 ];
 
+type Plan = "core" | "elite" | "sovereign";
+
 const PLANS = [
-  ["Core", "$49", "Biological age, assessment, dashboard, and first report."],
-  ["Elite", "$199", "Advanced biomarker analysis, alerts, and deeper reporting."],
-  ["Sovereign", "$999", "Unlimited analysis, exports, and concierge-level support."],
-];
+  {
+    id: "core",
+    name: "Core",
+    price: "$49",
+    body: "Biological age, assessment, dashboard, and first report.",
+  },
+  {
+    id: "elite",
+    name: "Elite",
+    price: "$199",
+    body: "Advanced biomarker analysis, alerts, and deeper reporting.",
+  },
+  {
+    id: "sovereign",
+    name: "Sovereign",
+    price: "$999",
+    body: "Unlimited analysis, exports, and concierge-level support.",
+  },
+] satisfies Array<{ id: Plan; name: string; price: string; body: string }>;
 
 function HeroVisual() {
   return (
@@ -119,6 +136,7 @@ function HeroVisual() {
 
 export default function HomePage() {
   const [authenticated, setAuthenticated] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -133,6 +151,32 @@ export default function HomePage() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  async function handleCheckout(plan: Plan) {
+    if (!authenticated) {
+      window.location.assign("/login?mode=signup");
+      return;
+    }
+
+    try {
+      setLoadingPlan(plan);
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Checkout failed");
+      window.location.assign(data.url);
+    } catch (err) {
+      console.error(err);
+      window.location.assign("/pricing");
+    } finally {
+      setLoadingPlan(null);
+    }
+  }
 
   return (
     <div className="text-white">
@@ -213,7 +257,7 @@ export default function HomePage() {
             </div>
             <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
               {DOMAINS.map((domain) => (
-                <div key={domain} className="border-b border-[rgba(36,50,74,0.12)] pb-4 text-base text-[rgba(16,24,39,0.72)]">
+                <div key={domain} className="border-b border-white/[0.08] pb-4 text-base text-white/64">
                   {domain}
                 </div>
               ))}
@@ -233,7 +277,7 @@ export default function HomePage() {
 
           <div className="grid gap-6 md:grid-cols-3">
             {CAPABILITIES.map((item) => (
-              <div key={item.title} className="premium-surface rounded-lg p-7 transition duration-300 hover:-translate-y-1">
+              <div key={item.title} className="premium-surface rounded-lg p-7">
                 <Dna size={24} className="mb-8 text-[rgb(var(--royal))]" />
                 <h3 className="text-xl font-semibold text-white">{item.title}</h3>
                 <p className="mt-4 text-sm leading-7 text-white/55">{item.body}</p>
@@ -254,8 +298,8 @@ export default function HomePage() {
             </div>
             <div className="space-y-6">
               {STEPS.map(([title, body], index) => (
-                <div key={title} className="grid gap-4 border-b border-[rgba(36,50,74,0.12)] pb-6 sm:grid-cols-[72px_1fr]">
-                  <p className="text-sm text-[rgba(55,38,103,0.48)]">{String(index + 1).padStart(2, "0")}</p>
+                <div key={title} className="grid gap-4 border-b border-white/[0.08] pb-6 sm:grid-cols-[72px_1fr]">
+                  <p className="text-sm text-white/35">{String(index + 1).padStart(2, "0")}</p>
                   <div>
                     <h3 className="text-xl font-semibold text-white">{title}</h3>
                     <p className="mt-2 text-sm leading-7 text-white/55">{body}</p>
@@ -282,16 +326,26 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            {PLANS.map(([name, price, body]) => (
-              <div key={name} className="premium-surface rounded-lg p-7 transition duration-300 hover:-translate-y-1">
-                <h3 className="text-xl font-semibold">{name}</h3>
-                <p className="mt-6 text-4xl font-semibold">{price}</p>
-                <p className="mt-4 text-sm leading-7 text-white/55">{body}</p>
+            {PLANS.map((plan) => (
+              <button
+                key={plan.id}
+                type="button"
+                onClick={() => handleCheckout(plan.id)}
+                disabled={loadingPlan !== null}
+                className="pricing-plan-card premium-surface cursor-pointer rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <h3 className="text-xl font-semibold">{plan.name}</h3>
+                <p className="mt-6 text-4xl font-semibold">{plan.price}</p>
+                <p className="mt-4 text-sm leading-7 text-white/55">{plan.body}</p>
                 <div className="mt-8 flex items-center gap-2 text-sm text-white/60">
                   <Check size={16} />
                   Monthly membership
                 </div>
-              </div>
+                <div className="premium-action mt-7 inline-flex w-full items-center justify-center gap-2 rounded-md px-5 text-sm font-medium">
+                  {loadingPlan === plan.id ? "Opening checkout" : `Choose ${plan.name}`}
+                  {loadingPlan !== plan.id && <ArrowRight size={16} />}
+                </div>
+              </button>
             ))}
           </div>
         </div>

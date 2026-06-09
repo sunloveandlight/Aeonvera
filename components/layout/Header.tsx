@@ -74,7 +74,7 @@ export default function Header() {
         </nav>
 
         {/* AUTH */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex h-9 items-center gap-3">
           <button
             onClick={() => setMobileOpen((open) => !open)}
             className="inline-flex size-10 items-center justify-center rounded-md border border-white/10 text-white/60 md:hidden"
@@ -85,11 +85,11 @@ export default function Header() {
             {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
           {!authChecked ? (
-            <div className="hidden h-10 w-24 rounded-md border border-white/10 bg-white/[0.035] sm:block" />
+            <div className="hidden h-9 w-24 rounded-md border border-white/10 bg-white/[0.035] sm:block" />
           ) : authenticated ? (
             <button
               onClick={handleLogout}
-              className="hidden text-xs font-medium text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
+              className="hidden h-9 items-center text-xs font-medium leading-none text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
             >
               Sign Out
             </button>
@@ -97,13 +97,13 @@ export default function Header() {
             <>
               <Link
                 href="/login?mode=signin"
-                className="hidden text-xs font-medium text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
+                className="hidden h-9 items-center text-xs font-medium leading-none text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
               >
                 Sign In
               </Link>
               <Link
                 href="/login?mode=signup"
-                className="premium-nav-action px-4 text-xs font-medium transition"
+                className="premium-nav-action px-4 text-xs font-medium leading-none transition"
               >
                 Begin
               </Link>
