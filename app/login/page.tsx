@@ -91,7 +91,7 @@ function LoginInner() {
           <h1 className="mt-4 text-4xl font-semibold leading-tight">
             {isSignUpMode ? "Create your account." : "Welcome back."}
           </h1>
-          <p className="mt-4 text-sm leading-6 text-white/54">
+          <p className="mt-4 text-sm leading-6 text-white/55">
             {isSignUpMode
               ? "Start your biological age assessment and build your healthspan baseline."
               : "Sign in to continue to your dashboard and reports."}
@@ -104,7 +104,7 @@ function LoginInner() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="h-12 w-full rounded-xl border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/32 focus:border-[#2997ff]"
+            className="h-12 w-full rounded-lg border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#2997ff]"
             required
           />
 
@@ -113,7 +113,7 @@ function LoginInner() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="h-12 w-full rounded-xl border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/32 focus:border-[#2997ff]"
+            className="h-12 w-full rounded-lg border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#2997ff]"
             required
           />
 
@@ -128,12 +128,12 @@ function LoginInner() {
         </form>
 
         {message && (
-          <div className="mt-4 rounded-xl border border-white/12 bg-[#151517] p-4 text-sm text-white/62">
+          <div className="mt-4 rounded-lg border border-white/12 bg-[#151517] p-4 text-sm text-white/60">
             {message}
           </div>
         )}
 
-        <div className="mt-8 text-center text-sm text-white/48">
+        <div className="mt-8 text-center text-sm text-white/50">
           {isSignUpMode ? (
             <p>
               Already have an account?{" "}

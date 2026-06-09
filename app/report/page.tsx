@@ -316,7 +316,7 @@ export default function ReportPage() {
               {bioAge ? (
                 <>
                   <div className="flex items-end gap-6 mb-4">
-                    <p className={`text-6xl md:text-5xl md:text-6xl font-light tracking-normal leading-none ${bioAgeColor}`}>
+                    <p className={`text-6xl md:text-6xl font-light tracking-normal leading-none ${bioAgeColor}`}>
                       {bioAge}
                       <span className="text-white/20 text-3xl ml-2">yrs</span>
                     </p>
@@ -366,7 +366,7 @@ export default function ReportPage() {
           {/* RISK SCORE */}
           <Card title="SYSTEM RISK INDEX">
             <div className="pt-2">
-              <p className={`text-6xl md:text-5xl md:text-6xl font-light tracking-normal leading-none mb-4 ${riskColor}`}>
+              <p className={`text-6xl md:text-6xl font-light tracking-normal leading-none mb-4 ${riskColor}`}>
                 {report.risk_score}
                 <span className="text-white/20 text-3xl ml-2">/ 100</span>
               </p>

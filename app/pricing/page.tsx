@@ -92,10 +92,10 @@ export default function PricingPage() {
         <PageContainer>
           <div className="mx-auto max-w-4xl text-center">
             <p className="text-sm font-medium text-[#2997ff]">Pricing</p>
-            <h1 className="mt-5 text-5xl font-semibold leading-[1.05] md:text-5xl md:text-6xl">
+            <h1 className="mt-5 text-5xl font-semibold leading-[1.05] md:text-6xl">
               Choose the right level of longevity intelligence.
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/56">
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/55">
               Start with a reliable baseline. Move into deeper support as your
               data, goals, and decision-making needs grow.
             </p>
@@ -109,7 +109,7 @@ export default function PricingPage() {
             {PLANS.map((plan) => (
               <div
                 key={plan.id}
-                className={`rounded-[24px] border p-7 ${
+                className={`rounded-lg border p-7 ${
                   plan.recommended
                     ? "border-[#2997ff]/50 bg-[#151517]"
                     : "border-white/10 bg-[#151517]"
@@ -124,20 +124,20 @@ export default function PricingPage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-4 text-sm leading-6 text-white/54">
+                  <p className="mt-4 text-sm leading-6 text-white/55">
                     {plan.summary}
                   </p>
                 </div>
 
                 <p className="mt-8 text-5xl font-semibold">
                   {plan.price}
-                  <span className="text-base font-normal text-white/38"> / month</span>
+                  <span className="text-base font-normal text-white/40"> / month</span>
                 </p>
 
                 <div className="mt-8 space-y-4">
                   {plan.features.map((feature) => (
-                    <div key={feature} className="flex gap-3 text-sm leading-6 text-white/68">
-                      <Check size={17} className="mt-1 shrink-0 text-white/58" />
+                    <div key={feature} className="flex gap-3 text-sm leading-6 text-white/70">
+                      <Check size={17} className="mt-1 shrink-0 text-white/60" />
                       <span>{feature}</span>
                     </div>
                   ))}

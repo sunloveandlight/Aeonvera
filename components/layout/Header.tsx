@@ -30,13 +30,13 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#050507]/82 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-black/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
 
         {/* BRAND */}
         <Link
           href="/"
-          className="text-sm font-semibold tracking-normal text-white/82 transition-colors duration-300 hover:text-white"
+          className="text-sm font-semibold tracking-normal text-white/80 transition-colors duration-300 hover:text-white"
         >
           AEONVERA
         </Link>

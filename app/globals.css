@@ -115,6 +115,46 @@ body::after {
   content: none;
 }
 
+.hero-stage {
+  background:
+    linear-gradient(135deg, rgba(41, 151, 255, 0.16), transparent 34%),
+    linear-gradient(225deg, rgba(255, 255, 255, 0.1), transparent 34%),
+    #151517;
+}
+
+.hero-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.035) 0,
+      rgba(255, 255, 255, 0.035) 1px,
+      transparent 1px,
+      transparent 80px
+    );
+  opacity: 0.36;
+}
+
+.hero-pulse {
+  animation: hero-pulse 5s ease-in-out infinite;
+}
+
+@keyframes hero-pulse {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scaleX(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
 /* =====================================================
    SELECTION
 ===================================================== */

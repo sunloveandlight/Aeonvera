@@ -115,7 +115,7 @@ export default function OnboardingPage() {
             <p className="mb-8 text-xs uppercase tracking-normal text-white/50">
               Initialization
             </p>
-            <h1 className="text-5xl font-semibold leading-[1.04] tracking-normal md:text-5xl md:text-6xl">
+            <h1 className="text-5xl font-semibold leading-[1.04] tracking-normal md:text-6xl">
               Create Your
               <br />
               Longevity Identity
