@@ -11,15 +11,15 @@
   /* =========================
      CORE BACKGROUND SYSTEM
   ========================= */
-  --background: #e8e3d8;
+  --background: #070b14;
   --ink: #07111f;
   --ink-soft: #172238;
   --slate: #24324a;
   --slate-soft: #dce3ec;
   --navy: #0d1b2f;
   --cream: #fbfaf7;
-  --pearl: #eee8dc;
-  --line: #d0c7b8;
+  --pearl: #f6f3ec;
+  --line: #d9d4ca;
 
   /* =========================
      ACCENT SYSTEM
@@ -121,10 +121,10 @@ body::before {
   pointer-events: none;
 
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.48), transparent 28%),
-    radial-gradient(circle at 8% 0%, rgba(var(--royal), 0.13), transparent 28%),
-    radial-gradient(circle at 86% 6%, rgba(var(--gold), 0.14), transparent 30%),
-    linear-gradient(135deg, rgba(13, 27, 47, 0.1), transparent 42%),
+    radial-gradient(circle at 10% 0%, rgba(var(--royal), 0.22), transparent 30%),
+    radial-gradient(circle at 86% 4%, rgba(var(--gold), 0.13), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 24%),
+    linear-gradient(135deg, rgba(24, 34, 58, 0.72), transparent 46%),
     var(--background);
 }
 
@@ -227,7 +227,7 @@ body::after {
   overflow: hidden;
   border: 1px solid rgba(36, 50, 74, 0.11);
   background: rgba(var(--surface), 0.9);
-  box-shadow: 0 22px 76px rgba(13, 27, 47, 0.12);
+  box-shadow: 0 26px 90px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(18px);
 }
 
@@ -251,7 +251,7 @@ body::after {
 }
 
 .premium-button-primary {
-  background: linear-gradient(135deg, var(--navy), rgb(var(--royal)) 58%, rgb(var(--gold)));
+  background: linear-gradient(135deg, #07111f, rgb(var(--royal)) 66%, rgb(var(--gold)));
   color: #ffffff;
   box-shadow: 0 14px 36px rgba(55, 38, 103, 0.18);
 }
@@ -264,7 +264,7 @@ body::after {
 }
 
 .royal-gradient {
-  background: linear-gradient(135deg, var(--navy), rgb(var(--royal)) 62%, rgb(var(--gold)));
+  background: linear-gradient(135deg, #07111f, rgb(var(--royal)) 68%, rgb(var(--gold)));
   color: #ffffff;
 }
 
@@ -360,14 +360,20 @@ body.aeonvera-overlay [data-aeonvera-input] {
   color: var(--ink) !important;
 }
 
-.bg-black,
-.bg-black\/80,
+.bg-black {
+  background-color: var(--background) !important;
+}
+
+.bg-black\/80 {
+  background-color: rgba(251, 250, 247, 0.92) !important;
+}
+
 .bg-black\/60,
 .bg-black\/35,
 .bg-black\/30,
 .bg-black\/25,
 .bg-black\/20 {
-  background-color: rgba(251, 250, 247, 0.88) !important;
+  background-color: rgba(255, 255, 255, 0.84) !important;
 }
 
 .bg-white,
