@@ -92,7 +92,7 @@ function LoginInner() {
     <main className="flex min-h-screen items-center justify-center px-6 py-16 text-white">
       <div className="premium-surface grid w-full max-w-5xl rounded-lg md:grid-cols-[0.9fr_1.1fr]">
         <div className="hidden border-r border-white/10 bg-black/20 p-8 md:block">
-          <div className="flex size-11 items-center justify-center rounded-md bg-white text-black shadow-[0_0_30px_rgba(255,255,255,0.14)]">
+          <div className="flex size-11 items-center justify-center rounded-md bg-[rgb(236,220,184)] text-black">
             <LockKeyhole size={20} />
           </div>
           <h1 className="mt-10 text-4xl font-semibold tracking-normal text-white">
@@ -101,8 +101,8 @@ function LoginInner() {
           <p className="mt-5 text-sm leading-7 text-white/52">
             Access your biological age model, assessment history, and generated longevity reports.
           </p>
-          <div className="mt-10 rounded-md border border-emerald-400/18 bg-emerald-400/[0.065] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-            <p className="text-sm font-medium text-emerald-200">Protected workspace</p>
+          <div className="mt-10 rounded-md border border-[rgba(236,220,184,0.14)] bg-[rgba(236,220,184,0.035)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+            <p className="text-sm font-medium text-[rgba(236,220,184,0.72)]">Protected workspace</p>
             <p className="mt-1 text-sm text-white/50">
               Authentication is handled through Supabase with account-specific profile routing.
             </p>
@@ -111,7 +111,7 @@ function LoginInner() {
 
         <div className="p-6 sm:p-10">
 
-        <p className="mb-4 text-xs uppercase tracking-normal text-[#d4af37]/75">
+        <p className="mb-4 text-xs uppercase tracking-normal text-[rgba(236,220,184,0.72)]">
           Aeonvera
         </p>
 
@@ -125,7 +125,7 @@ function LoginInner() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="h-12 w-full rounded-md border border-white/10 bg-black/30 px-4 text-sm text-white/85 placeholder-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition focus:border-[#d4af37]/45 focus:outline-none"
+            className="h-12 w-full rounded-md border border-white/10 bg-black/30 px-4 text-sm text-white/85 placeholder-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition focus:border-[rgba(212,175,55,0.38)] focus:outline-none"
             required
           />
 
@@ -134,7 +134,7 @@ function LoginInner() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="h-12 w-full rounded-md border border-white/10 bg-black/30 px-4 text-sm text-white/85 placeholder-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition focus:border-[#d4af37]/45 focus:outline-none"
+            className="h-12 w-full rounded-md border border-white/10 bg-black/30 px-4 text-sm text-white/85 placeholder-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition focus:border-[rgba(212,175,55,0.38)] focus:outline-none"
             required
           />
 

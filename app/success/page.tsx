@@ -87,7 +87,7 @@ export default function SuccessPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 text-white">
       <div className="premium-surface max-w-xl rounded-lg p-8 text-center">
-        <p className="mb-6 text-xs uppercase tracking-normal text-[#d4af37]/75">
+        <p className="mb-6 text-xs uppercase tracking-normal text-[rgba(236,220,184,0.72)]">
           AEONVERA
         </p>
 

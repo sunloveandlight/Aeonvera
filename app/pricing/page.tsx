@@ -93,7 +93,7 @@ export default function PricingPage() {
           <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
             <div>
               <div className="premium-chip mb-5 rounded-full px-3 py-1.5 text-xs">
-                <ShieldCheck size={14} className="text-[#d4af37]" />
+                <ShieldCheck size={14} className="text-[rgba(212,175,55,0.72)]" />
                 Membership
               </div>
               <h1 className="max-w-3xl text-5xl font-semibold leading-[1.04] tracking-normal text-white md:text-7xl">
@@ -116,7 +116,7 @@ export default function PricingPage() {
                 key={plan.id}
                 className={`premium-surface flex min-h-[560px] flex-col rounded-lg p-6 ${
                   plan.featured
-                    ? "border-[#d4af37]/40"
+                    ? "border-[rgba(212,175,55,0.28)]"
                     : ""
                 }`}
               >
@@ -131,7 +131,7 @@ export default function PricingPage() {
                   </div>
                   {plan.featured && (
                     <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-black">
-                      Flagship
+                      Preferred
                     </span>
                   )}
                 </div>
@@ -146,7 +146,7 @@ export default function PricingPage() {
                 <div className="mt-8 flex-1 space-y-3">
                   {plan.features.map((feature) => (
                     <div key={feature} className="flex items-start gap-3 text-sm leading-6 text-white/58">
-                      <Check size={16} className="mt-1 shrink-0 text-emerald-300/80" />
+                      <Check size={16} className="mt-1 shrink-0 text-[rgba(236,220,184,0.62)]" />
                       <span>{feature}</span>
                     </div>
                   ))}
