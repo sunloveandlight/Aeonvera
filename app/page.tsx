@@ -2,23 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  Activity,
-  ArrowRight,
-  Brain,
-  CircleCheck,
-  Dna,
-  HeartPulse,
-  LineChart,
-  ShieldCheck,
-} from "lucide-react";
+import { Activity, ArrowRight, Check, Dna, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
-const STATS = [
-  { value: "47+", label: "health inputs" },
-  { value: "8", label: "clinical domains" },
-  { value: "90", label: "day protocol" },
-  { value: "24/7", label: "trend monitoring" },
+const METRICS = [
+  ["47+", "inputs"],
+  ["8", "domains"],
+  ["90", "day plan"],
+  ["24/7", "monitoring"],
 ];
 
 const DOMAINS = [
@@ -32,170 +23,35 @@ const DOMAINS = [
   "Genetics",
 ];
 
-const FEATURES = [
+const CAPABILITIES = [
   {
-    icon: Dna,
-    title: "Biological Age Engine",
-    status: "Available",
-    body: "Compute biological age from lifestyle, lab, wearable, and family-history data with accuracy scoring.",
+    title: "Biological age model",
+    body: "A structured assessment turns biometrics, lifestyle data, and optional labs into a clear biological age estimate.",
   },
   {
-    icon: Brain,
-    title: "AI Longevity Report",
-    status: "Available",
-    body: "Translate your assessment into priorities, risk context, strengths, weaknesses, and a practical protocol.",
+    title: "Clinical-domain scoring",
+    body: "Eight health domains are evaluated independently so you can see what is driving the result.",
   },
   {
-    icon: LineChart,
-    title: "Trend Intelligence",
-    status: "Next",
-    body: "Track movement across each domain so the system can identify drift before it becomes a health setback.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Private Health Workspace",
-    status: "Now",
-    body: "Keep sensitive health data in a focused dashboard built for decisions, not endless generic wellness content.",
+    title: "Decision-ready report",
+    body: "Your report prioritizes the highest-leverage changes and converts them into a practical 90-day plan.",
   },
 ];
 
-const PROCESS = [
-  {
-    step: "01",
-    title: "Complete the assessment",
-    body: "Start with core biometrics, lifestyle inputs, and optional labs or wearable metrics.",
-  },
-  {
-    step: "02",
-    title: "Review your age model",
-    body: "See biological age, chronological delta, risk score, and how complete your data is.",
-  },
-  {
-    step: "03",
-    title: "Act on the protocol",
-    body: "Follow a prioritized 90-day plan and refresh your profile as your metrics improve.",
-  },
+const STEPS = [
+  ["Assess", "Complete a guided profile across core healthspan inputs."],
+  ["Understand", "Review biological age, risk context, and confidence."],
+  ["Improve", "Follow a focused plan and update the model as data changes."],
 ];
 
 const PLANS = [
-  {
-    name: "Core",
-    price: "$49",
-    body: "For a clear baseline and a complete first report.",
-    features: ["Biological age computation", "Full assessment", "AI longevity report"],
-  },
-  {
-    name: "Elite",
-    price: "$199",
-    body: "For ongoing optimization and deeper intelligence.",
-    features: ["Everything in Core", "Advanced biomarker analysis", "Daily intelligence alerts"],
-    featured: true,
-  },
-  {
-    name: "Sovereign",
-    price: "$999",
-    body: "For private, executive-level health intelligence.",
-    features: ["Everything in Elite", "Unlimited AI analysis", "Physician-ready exports"],
-  },
+  ["Core", "$49", "Biological age, assessment, dashboard, and first report."],
+  ["Elite", "$199", "Advanced biomarker analysis, alerts, and deeper reporting."],
+  ["Sovereign", "$999", "Unlimited analysis, exports, and concierge-level support."],
 ];
 
-function ProductPreview() {
-  return (
-    <div className="premium-surface relative min-h-[480px] rounded-lg p-4">
-      <div className="premium-gold-line absolute left-8 right-8 top-0 h-px" />
-      <div className="relative grid h-full gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-        <aside className="rounded-md border border-white/10 bg-black/28 p-4">
-          <div className="mb-8 flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-md bg-[rgb(236,220,184)] text-black">
-              <Activity size={18} />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-white/80">Aeonvera</p>
-              <p className="text-xs text-white/35">Private health desk</p>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {["Overview", "Assessment", "Report", "Protocol"].map((item, index) => (
-              <div
-                key={item}
-                className={`rounded-md px-3 py-2 text-sm ${
-                  index === 0
-                    ? "bg-[rgb(236,220,184)] text-black"
-                    : "border border-white/8 bg-white/[0.018] text-white/45"
-                }`}
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              ["Biological age", "37.8", "2.2 yrs younger"],
-              ["Risk score", "28", "Low risk"],
-              ["Accuracy", "84%", "High confidence"],
-            ].map(([label, value, note]) => (
-              <div key={label} className="rounded-md border border-white/10 bg-white/[0.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-                <p className="text-xs text-white/35">{label}</p>
-                <p className="mt-3 text-3xl font-semibold tracking-normal text-white">{value}</p>
-                <p className="mt-1 text-xs text-[rgba(236,220,184,0.62)]">{note}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="rounded-md border border-white/10 bg-white/[0.035] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-white/80">Domain signal</p>
-                <p className="text-xs text-white/35">Eight-system biological coverage</p>
-              </div>
-              <HeartPulse className="text-[rgba(212,175,55,0.72)]" size={20} />
-            </div>
-            <div className="space-y-3">
-              {[
-                ["Cardio", "86%"],
-                ["Metabolic", "72%"],
-                ["Sleep", "64%"],
-                ["Movement", "91%"],
-              ].map(([label, width]) => (
-                <div key={label}>
-                  <div className="mb-1 flex justify-between text-xs text-white/40">
-                    <span>{label}</span>
-                    <span>{width}</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-white/8">
-                    <div className="h-full rounded-full bg-[rgba(212,175,55,0.62)]" style={{ width }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-md border border-[rgba(236,220,184,0.14)] bg-[rgba(236,220,184,0.035)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-            <p className="text-sm font-medium text-[rgba(236,220,184,0.72)]">Next priority</p>
-            <p className="mt-1 text-sm text-white/55">
-              Improve sleep consistency to raise recovery score over the next 30 days.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function HomePage() {
-  const [activeFeature, setActiveFeature] = useState(0);
   const [authenticated, setAuthenticated] = useState(false);
-  const ActiveIcon = FEATURES[activeFeature].icon;
-
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % FEATURES.length);
-    }, 5000);
-    return () => window.clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -212,184 +68,157 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div>
-      <section className="relative overflow-hidden px-6 py-20 lg:px-8 lg:py-24">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.9fr_1.1fr]">
-          <div>
-            <div className="premium-chip mb-6 rounded-full px-3 py-1.5 text-xs">
-              <ShieldCheck size={14} className="text-[rgba(212,175,55,0.72)]" />
-              Private longevity intelligence
+    <div className="text-white">
+      <section className="px-6 pb-24 pt-24 lg:px-8 lg:pb-32 lg:pt-28">
+        <div className="mx-auto max-w-6xl text-center">
+          <div className="mx-auto mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/64">
+            <ShieldCheck size={16} className="text-[#2997ff]" />
+            Private longevity intelligence
+          </div>
+
+          <h1 className="mx-auto max-w-5xl text-5xl font-semibold leading-[1.04] text-white md:text-5xl md:text-6xl lg:text-6xl md:text-5xl md:text-6xl">
+            Know your biological age. Improve it with precision.
+          </h1>
+
+          <p className="mx-auto mt-7 max-w-3xl text-lg leading-8 text-white/58 md:text-xl">
+            Aeonvera gives you a clean, decision-ready view of your healthspan:
+            biological age, domain signals, risk context, and a practical plan.
+          </p>
+
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              href={authenticated ? "/dashboard" : "/login?mode=signup"}
+              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#2997ff] px-6 text-sm font-medium text-white transition hover:bg-[#147ce5] sm:w-auto"
+            >
+              {authenticated ? "Open dashboard" : "Start assessment"}
+              <ArrowRight size={16} />
+            </Link>
+            <Link
+              href="/pricing"
+              className="inline-flex h-12 w-full items-center justify-center rounded-full border border-white/15 px-6 text-sm font-medium text-white/75 transition hover:border-white/25 hover:text-white sm:w-auto"
+            >
+              View plans
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 pb-24 lg:px-8">
+        <div className="mx-auto max-w-6xl rounded-[28px] border border-white/10 bg-[#151517] p-6 md:p-8">
+          <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+            <div>
+              <div className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-white text-black">
+                <Activity size={22} />
+              </div>
+              <h2 className="max-w-xl text-3xl font-semibold leading-tight md:text-5xl">
+                A healthspan dashboard that stays out of your way.
+              </h2>
+              <p className="mt-5 max-w-xl text-base leading-7 text-white/56">
+                No decorative complexity. No noisy wellness feed. Just the
+                numbers that matter, the domains behind them, and what to do next.
+              </p>
             </div>
-            <h1 className="max-w-3xl text-5xl font-semibold leading-[1.04] tracking-normal text-white md:text-7xl">
-              Measure your biological age. Then move it.
-            </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/58">
-              Aeonvera turns health data into a focused longevity dashboard:
-              biological age, risk context, domain scoring, and a 90-day plan
-              you can actually act on.
-            </p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href={authenticated ? "/dashboard" : "/login?mode=signup"}
-                className="premium-button-primary inline-flex h-12 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium transition hover:brightness-95"
-              >
-                {authenticated ? "Open dashboard" : "Start assessment"} <ArrowRight size={16} />
-              </Link>
-              <Link
-                href="/pricing"
-                className="premium-button-secondary inline-flex h-12 items-center justify-center rounded-md px-5 text-sm font-medium transition hover:border-white/25 hover:text-white"
-              >
-                Compare plans
-              </Link>
-            </div>
-            <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {STATS.map((stat) => (
-                <div key={stat.label} className="premium-surface rounded-md p-4">
-                  <p className="text-2xl font-semibold tracking-normal text-white">{stat.value}</p>
-                  <p className="mt-1 text-xs uppercase tracking-normal text-white/35">{stat.label}</p>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {METRICS.map(([value, label]) => (
+                <div key={label} className="rounded-2xl bg-white/[0.055] p-5">
+                  <p className="text-4xl font-semibold leading-none text-white">{value}</p>
+                  <p className="mt-3 text-sm text-white/48">{label}</p>
                 </div>
               ))}
             </div>
           </div>
-
-          <ProductPreview />
         </div>
       </section>
 
-      <section className="border-t border-white/8 px-6 py-18 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-9 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+      <section className="border-t border-white/8 px-6 py-24 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-10 lg:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-normal text-[rgba(236,220,184,0.72)]">Clinical coverage</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white md:text-5xl">
-                Eight domains in one age model.
+              <p className="text-sm font-medium text-[#2997ff]">Coverage</p>
+              <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
+                One model across eight clinical domains.
               </h2>
             </div>
-            <p className="max-w-xl text-sm leading-7 text-white/50">
-              Most trackers isolate signals. Aeonvera combines the systems that
-              determine healthspan and shows which ones deserve attention first.
-            </p>
+            <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+              {DOMAINS.map((domain) => (
+                <div key={domain} className="border-b border-white/10 pb-4 text-base text-white/72">
+                  {domain}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {DOMAINS.map((domain) => (
-              <div key={domain} className="premium-surface rounded-md p-4 text-sm text-white/70">
-                {domain}
+        </div>
+      </section>
+
+      <section className="border-t border-white/8 px-6 py-24 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-12 max-w-3xl">
+            <p className="text-sm font-medium text-[#2997ff]">Platform</p>
+            <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
+              Professional health intelligence, reduced to essentials.
+            </h2>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {CAPABILITIES.map((item) => (
+              <div key={item.title} className="rounded-[24px] bg-[#151517] p-7">
+                <Dna size={24} className="mb-8 text-white/68" />
+                <h3 className="text-xl font-semibold text-white">{item.title}</h3>
+                <p className="mt-4 text-sm leading-7 text-white/54">{item.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="border-t border-white/8 px-6 py-18 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.85fr_1.15fr]">
-          <div>
-            <p className="text-xs uppercase tracking-normal text-[rgba(236,220,184,0.72)]">Platform</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white md:text-5xl">
-              Built for action, not passive tracking.
-            </h2>
-            <p className="mt-5 text-sm leading-7 text-white/50">
-              Select an intelligence layer to see how the system turns raw
-              inputs into a concrete next move.
-            </p>
-          </div>
-          <div className="grid gap-4 md:grid-cols-[0.9fr_1.1fr]">
-            <div className="space-y-2">
-              {FEATURES.map((feature, index) => {
-                const Icon = feature.icon;
-                return (
-                  <button
-                    key={feature.title}
-                    onClick={() => setActiveFeature(index)}
-                    className={`flex w-full items-center gap-3 rounded-md border p-4 text-left transition ${
-                      activeFeature === index
-                        ? "border-[rgba(212,175,55,0.28)] bg-[rgba(212,175,55,0.055)] shadow-[inset_0_1px_0_rgba(255,255,255,0.09)]"
-                        : "border-white/10 bg-white/[0.025] hover:border-white/18 hover:bg-white/[0.04]"
-                    }`}
-                  >
-                    <Icon size={18} className={activeFeature === index ? "text-[rgba(212,175,55,0.72)]" : "text-white/35"} />
-                    <span className="text-sm text-white/75">{feature.title}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="premium-surface rounded-lg p-6">
-              <div className="mb-6 flex size-11 items-center justify-center rounded-md bg-[rgb(236,220,184)] text-black">
-                <ActiveIcon size={21} />
-              </div>
-              <div className="premium-chip mb-3 rounded-full px-2.5 py-1 text-xs">
-                {FEATURES[activeFeature].status}
-              </div>
-              <h3 className="text-2xl font-semibold tracking-normal text-white">
-                {FEATURES[activeFeature].title}
-              </h3>
-              <p className="mt-4 text-sm leading-7 text-white/52">
-                {FEATURES[activeFeature].body}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-t border-white/8 px-6 py-18 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-9">
-            <p className="text-xs uppercase tracking-normal text-[rgba(236,220,184,0.72)]">Workflow</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white md:text-5xl">
-              A clearer path from data to decisions.
-            </h2>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {PROCESS.map((item) => (
-              <div key={item.step} className="premium-surface rounded-md p-6">
-                <p className="text-xs uppercase tracking-normal text-[rgba(212,175,55,0.72)]/65">{item.step}</p>
-                <h3 className="mt-8 text-xl font-semibold tracking-normal text-white">{item.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-white/48">{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-t border-white/8 px-6 py-18 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-9 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+      <section className="border-t border-white/8 px-6 py-24 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-10 lg:grid-cols-2">
             <div>
-              <p className="text-xs uppercase tracking-normal text-[rgba(236,220,184,0.72)]">Membership</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white md:text-5xl">
-                Pick the operating depth.
+              <p className="text-sm font-medium text-[#2997ff]">Workflow</p>
+              <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
+                Built for repeatable progress.
               </h2>
             </div>
-            <Link href="/pricing" className="inline-flex items-center gap-2 text-sm font-medium text-white/65 hover:text-white">
+            <div className="space-y-6">
+              {STEPS.map(([title, body], index) => (
+                <div key={title} className="grid gap-4 border-b border-white/10 pb-6 sm:grid-cols-[80px_1fr]">
+                  <p className="text-sm text-white/38">{String(index + 1).padStart(2, "0")}</p>
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">{title}</h3>
+                    <p className="mt-2 text-sm leading-7 text-white/54">{body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-white/8 px-6 py-24 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div>
+              <p className="text-sm font-medium text-[#2997ff]">Membership</p>
+              <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
+                Choose your level of support.
+              </h2>
+            </div>
+            <Link href="/pricing" className="inline-flex items-center gap-2 text-sm font-medium text-[#2997ff]">
               Full pricing <ArrowRight size={16} />
             </Link>
           </div>
+
           <div className="grid gap-4 lg:grid-cols-3">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={`premium-surface rounded-md p-6 ${
-                  plan.featured
-                    ? "border-[rgba(212,175,55,0.28)]"
-                    : ""
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h3 className="text-xl font-semibold tracking-normal text-white">{plan.name}</h3>
-                    <p className="mt-2 text-sm leading-6 text-white/48">{plan.body}</p>
-                  </div>
-                  {plan.featured && <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-black">Preferred</span>}
-                </div>
-                <p className="mt-8 text-4xl font-semibold tracking-normal text-white">
-                  {plan.price}<span className="text-sm font-normal text-white/35"> / mo</span>
-                </p>
-                <div className="mt-6 space-y-3">
-                  {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3 text-sm text-white/58">
-                      <CircleCheck size={16} className="text-[rgba(236,220,184,0.62)]" />
-                      {feature}
-                    </div>
-                  ))}
+            {PLANS.map(([name, price, body]) => (
+              <div key={name} className="rounded-[24px] bg-[#151517] p-7">
+                <h3 className="text-xl font-semibold">{name}</h3>
+                <p className="mt-6 text-4xl font-semibold">{price}</p>
+                <p className="mt-4 text-sm leading-7 text-white/54">{body}</p>
+                <div className="mt-8 flex items-center gap-2 text-sm text-white/64">
+                  <Check size={16} />
+                  Monthly membership
                 </div>
               </div>
             ))}
@@ -397,22 +226,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-t border-white/8 px-6 py-18 lg:px-8">
-        <div className="premium-surface mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 rounded-lg p-8 md:flex-row md:items-center">
-          <div>
-            <p className="text-xs uppercase tracking-normal text-[rgba(236,220,184,0.72)]">Begin</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-normal text-white">
-              Get your first biological age readout.
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/50">
-              Start with the assessment, then generate a report when your baseline is ready.
-            </p>
-          </div>
+      <section className="border-t border-white/8 px-6 py-24 lg:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="text-4xl font-semibold leading-tight md:text-6xl">
+            Start with the number that changes the conversation.
+          </h2>
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/56">
+            Your biological age is the baseline. Aeonvera helps you make it useful.
+          </p>
           <Link
             href={authenticated ? "/assessment" : "/login?mode=signup"}
-            className="premium-button-primary inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium transition hover:brightness-95"
+            className="mt-9 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#2997ff] px-6 text-sm font-medium text-white transition hover:bg-[#147ce5]"
           >
-            {authenticated ? "Update assessment" : "Create account"} <ArrowRight size={16} />
+            {authenticated ? "Update assessment" : "Get started"}
+            <ArrowRight size={16} />
           </Link>
         </div>
       </section>

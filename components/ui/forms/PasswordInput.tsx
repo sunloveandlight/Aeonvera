@@ -28,8 +28,8 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
             transition
             focus:outline-none
             focus:ring-1
-            focus:ring-[rgba(212,175,55,0.3)]
-            focus:border-[rgba(212,175,55,0.3)]
+            focus:ring-[#2997ff]/25
+            focus:border-[#2997ff]/30
             active:scale-[0.99]
             ${error ? "border-red-500/50" : "border-white/[0.08]"}
             ${className}

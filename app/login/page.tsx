@@ -1,16 +1,16 @@
 "use client";
 
-import { FormEvent, useState, Suspense } from "react";
+import { FormEvent, Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, LockKeyhole } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
+import { ArrowRight } from "lucide-react";
 import { ensureProfile } from "@/lib/auth/ensureProfile";
 import { isUserAllowed } from "@/lib/auth/permissions";
+import { supabase } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#08070a]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
       <LoginInner />
     </Suspense>
   );
@@ -19,9 +19,7 @@ export default function LoginPage() {
 function LoginInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const mode = searchParams.get("mode");
-  const isSignUpMode = mode === "signup";
+  const isSignUpMode = searchParams.get("mode") === "signup";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +44,6 @@ function LoginInner() {
           await ensureProfile(data.user.id);
         }
 
-        setMessage("Account created successfully!");
         router.replace("/onboarding");
         return;
       }
@@ -71,8 +68,6 @@ function LoginInner() {
         .eq("user_id", data.user.id)
         .maybeSingle();
 
-      setMessage("Login successful. Redirecting...");
-
       if (!profile?.onboarding_completed) {
         router.replace("/onboarding");
       } else if (isUserAllowed(profile.plan, profile.subscription_status)) {
@@ -90,34 +85,18 @@ function LoginInner() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-16 text-white">
-      <div className="premium-surface grid w-full max-w-5xl rounded-lg md:grid-cols-[0.9fr_1.1fr]">
-        <div className="hidden border-r border-white/10 bg-black/20 p-8 md:block">
-          <div className="flex size-11 items-center justify-center rounded-md bg-[rgb(236,220,184)] text-black">
-            <LockKeyhole size={20} />
-          </div>
-          <h1 className="mt-10 text-4xl font-semibold tracking-normal text-white">
-            {isSignUpMode ? "Create your private health workspace." : "Welcome back to Aeonvera."}
+      <div className="w-full max-w-md">
+        <div className="mb-10 text-center">
+          <p className="text-sm font-medium text-[#2997ff]">Aeonvera</p>
+          <h1 className="mt-4 text-4xl font-semibold leading-tight">
+            {isSignUpMode ? "Create your account." : "Welcome back."}
           </h1>
-          <p className="mt-5 text-sm leading-7 text-white/52">
-            Access your biological age model, assessment history, and generated longevity reports.
+          <p className="mt-4 text-sm leading-6 text-white/54">
+            {isSignUpMode
+              ? "Start your biological age assessment and build your healthspan baseline."
+              : "Sign in to continue to your dashboard and reports."}
           </p>
-          <div className="mt-10 rounded-md border border-[rgba(236,220,184,0.14)] bg-[rgba(236,220,184,0.035)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-            <p className="text-sm font-medium text-[rgba(236,220,184,0.72)]">Protected workspace</p>
-            <p className="mt-1 text-sm text-white/50">
-              Authentication is handled through Supabase with account-specific profile routing.
-            </p>
-          </div>
         </div>
-
-        <div className="p-6 sm:p-10">
-
-        <p className="mb-4 text-xs uppercase tracking-normal text-[rgba(236,220,184,0.72)]">
-          Aeonvera
-        </p>
-
-        <h2 className="mb-8 text-3xl font-semibold tracking-normal text-white">
-          {isSignUpMode ? "Create Account" : "Welcome Back"}
-        </h2>
 
         <form onSubmit={handleAuth} className="space-y-4">
           <input
@@ -125,7 +104,7 @@ function LoginInner() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="h-12 w-full rounded-md border border-white/10 bg-black/30 px-4 text-sm text-white/85 placeholder-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition focus:border-[rgba(212,175,55,0.38)] focus:outline-none"
+            className="h-12 w-full rounded-xl border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/32 focus:border-[#2997ff]"
             required
           />
 
@@ -134,44 +113,42 @@ function LoginInner() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="h-12 w-full rounded-md border border-white/10 bg-black/30 px-4 text-sm text-white/85 placeholder-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition focus:border-[rgba(212,175,55,0.38)] focus:outline-none"
+            className="h-12 w-full rounded-xl border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/32 focus:border-[#2997ff]"
             required
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="premium-button-primary inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition hover:brightness-95 disabled:opacity-45"
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#2997ff] text-sm font-medium text-white transition hover:bg-[#147ce5] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? "Processing..." : isSignUpMode ? "Create Account" : "Sign In"}
+            {loading ? "Processing..." : isSignUpMode ? "Create account" : "Sign in"}
             {!loading && <ArrowRight size={16} />}
           </button>
         </form>
 
         {message && (
-          <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-3 text-sm text-white/55">
+          <div className="mt-4 rounded-xl border border-white/12 bg-[#151517] p-4 text-sm text-white/62">
             {message}
           </div>
         )}
 
-        <div className="mt-8 text-center text-sm text-white/45">
+        <div className="mt-8 text-center text-sm text-white/48">
           {isSignUpMode ? (
             <p>
               Already have an account?{" "}
-              <Link href="/login" className="text-white/75 transition-colors duration-300 hover:text-white">
+              <Link href="/login" className="font-medium text-[#2997ff]">
                 Sign in
               </Link>
             </p>
           ) : (
             <p>
               Don&apos;t have an account?{" "}
-              <Link href="/login?mode=signup" className="text-white/75 transition-colors duration-300 hover:text-white">
+              <Link href="/login?mode=signup" className="font-medium text-[#2997ff]">
                 Create one
               </Link>
             </p>
           )}
-        </div>
-
         </div>
       </div>
     </main>

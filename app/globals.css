@@ -2,7 +2,7 @@
 
 /* =====================================================
    AEONVERA DESIGN SYSTEM
-   Regal private-health interface with restrained luxury.
+   Professional product interface with Apple-like restraint.
 ===================================================== */
 
 :root {
@@ -11,17 +11,16 @@
   /* =========================
      CORE BACKGROUND SYSTEM
   ========================= */
-  --background: #060507;
+  --background: #000000;
 
   /* =========================
      ACCENT SYSTEM
   ========================= */
-  --gold: 212, 175, 55;
-  --platinum: 229, 228, 226;
-  --champagne: 236, 220, 184;
-  --oxblood: 73, 25, 32;
-  --green: 74, 137, 109;
-  --onyx: 12, 13, 18;
+  --surface: 29, 29, 31;
+  --surface-soft: 245, 245, 247;
+  --muted: 134, 134, 139;
+  --accent: 41, 151, 255;
+  --success: 48, 209, 88;
 
   /* =========================
      TYPOGRAPHY SCALE
@@ -102,10 +101,6 @@ p {
   color: rgba(255, 255, 255, 0.25);
 }
 
-/* =====================================================
-   BACKGROUND (LUXURY LIGHT LAYERS)
-===================================================== */
-
 body::before {
   content: "";
   position: fixed;
@@ -113,32 +108,11 @@ body::before {
   z-index: -1;
   pointer-events: none;
 
-  background:
-    linear-gradient(135deg, rgba(var(--champagne), 0.055), transparent 32%),
-    linear-gradient(245deg, rgba(var(--oxblood), 0.12), transparent 38%),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.025), transparent 22%),
-    var(--background);
+  background: var(--background);
 }
 
-/* =====================================================
-   GRID (VERY SUBTLE — DO NOT OVERPOWER UI)
-===================================================== */
-
 body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
-
-  background-size: 92px 92px;
-  opacity: 0.08;
-
-  mask-image: linear-gradient(to bottom, black, transparent 82%);
+  content: none;
 }
 
 /* =====================================================
@@ -146,7 +120,7 @@ body::after {
 ===================================================== */
 
 ::selection {
-  background: rgba(var(--gold), 0.25);
+  background: rgba(var(--accent), 0.28);
   color: white;
 }
 
@@ -163,12 +137,12 @@ body::after {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(var(--gold), 0.2);
+  background: rgba(255, 255, 255, 0.22);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--gold), 0.35);
+  background: rgba(255, 255, 255, 0.36);
 }
 
 /* =====================================================
@@ -193,24 +167,13 @@ body::after {
 .premium-surface {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(var(--champagne), 0.12);
-  background:
-    linear-gradient(145deg, rgba(var(--champagne), 0.055), rgba(255, 255, 255, 0.014) 48%),
-    rgba(var(--onyx), 0.82);
-  box-shadow:
-    inset 0 1px 0 rgba(var(--champagne), 0.09),
-    0 18px 54px rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgb(var(--surface));
+  box-shadow: none;
 }
 
 .premium-surface::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(90deg, rgba(var(--champagne), 0.035), transparent 22%, transparent 78%, rgba(var(--champagne), 0.025)),
-    linear-gradient(to bottom, rgba(var(--champagne), 0.045), transparent 28%);
-  opacity: 0.62;
+  content: none;
 }
 
 .premium-surface > * {
@@ -222,37 +185,23 @@ body::after {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid rgba(var(--champagne), 0.14);
-  background: rgba(var(--champagne), 0.035);
-  color: rgba(var(--champagne), 0.68);
-  box-shadow: inset 0 1px 0 rgba(var(--champagne), 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(245, 245, 247, 0.68);
+  box-shadow: none;
 }
 
 .premium-button-primary {
-  background:
-    linear-gradient(135deg, rgb(241, 232, 210), rgb(199, 174, 116));
-  color: #090706;
-  box-shadow:
-    0 12px 34px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  background: rgb(var(--accent));
+  color: #ffffff;
+  box-shadow: none;
 }
 
 .premium-button-secondary {
-  border: 1px solid rgba(var(--champagne), 0.15);
-  background:
-    linear-gradient(135deg, rgba(var(--champagne), 0.045), rgba(255, 255, 255, 0.012));
-  color: rgba(var(--champagne), 0.76);
-  box-shadow: inset 0 1px 0 rgba(var(--champagne), 0.07);
-}
-
-.premium-gold-line {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(var(--champagne), 0.34),
-    rgba(var(--gold), 0.42),
-    transparent
-  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(245, 245, 247, 0.78);
+  box-shadow: none;
 }
 
 /* =====================================================
@@ -264,7 +213,7 @@ body.aeonvera-overlay * {
 }
 
 body.aeonvera-overlay section {
-  outline: 1px solid rgba(var(--gold), 0.2);
+  outline: 1px solid rgba(var(--accent), 0.2);
 }
 
 body.aeonvera-overlay [data-aeonvera-card] {
@@ -272,11 +221,11 @@ body.aeonvera-overlay [data-aeonvera-card] {
 }
 
 body.aeonvera-overlay [data-aeonvera-button] {
-  outline: 1px solid rgba(var(--gold), 0.25);
+  outline: 1px solid rgba(var(--accent), 0.25);
 }
 
 body.aeonvera-overlay [data-aeonvera-input] {
-  outline: 1px solid rgba(var(--green), 0.25);
+  outline: 1px solid rgba(var(--accent), 0.25);
 }
 
 /* =====================================================

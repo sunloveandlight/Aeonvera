@@ -103,7 +103,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/login?mode=signup"
-                className="premium-button-primary flex h-10 items-center rounded-md px-4 text-xs font-medium transition hover:brightness-95"
+                className="premium-button-primary flex h-10 items-center rounded-md px-4 text-xs font-medium transition hover:opacity-90"
               >
                 Begin
               </Link>

@@ -14,7 +14,6 @@ export default function Card({
   children,
   className = "",
   title,
-  glow = false,
   hover = true,
 }: CardProps) {
   return (
@@ -31,11 +30,6 @@ export default function Card({
         ${className}
       `}
     >
-      {/* GOLD FIELD (CONTROLLED ENERGY) */}
-      {glow && (
-        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(212,175,55,0.7),rgba(143,184,255,0.45),transparent)]" />
-      )}
-
       {/* CONTENT */}
       <div className="relative z-10 p-6">
 

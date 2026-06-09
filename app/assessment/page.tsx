@@ -695,14 +695,14 @@ export default function AssessmentPage() {
           <div className="flex justify-center mb-10">
             <div className="relative w-24 h-24">
               <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
-              <div className="absolute inset-0 rounded-full border-t border-[rgba(212,175,55,0.7)] animate-spin" />
+              <div className="absolute inset-0 rounded-full border-t border-[#2997ff]/50 animate-spin" />
               <div className="absolute inset-4 rounded-full border border-white/[0.04]" />
               <div
-                className="absolute inset-4 rounded-full border-t border-[rgba(212,175,55,0.4)] animate-spin"
+                className="absolute inset-4 rounded-full border-t border-[#2997ff]/35 animate-spin"
                 style={{ animationDuration: "1.5s" }}
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-[rgba(212,175,55,0.6)]" />
+                <div className="w-2 h-2 rounded-full bg-[#2997ff]" />
               </div>
             </div>
           </div>
@@ -719,7 +719,7 @@ export default function AssessmentPage() {
             {[0, 1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="w-1 h-1 rounded-full bg-[rgba(212,175,55,0.3)] animate-pulse"
+                className="w-1 h-1 rounded-full bg-[#2997ff]/40 animate-pulse"
                 style={{ animationDelay: `${i * 0.2}s` }}
               />
             ))}
@@ -732,7 +732,7 @@ export default function AssessmentPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-6 h-6 rounded-full border-t border-[rgba(212,175,55,0.5)] animate-spin" />
+        <div className="w-6 h-6 rounded-full border-t border-[#2997ff]/40 animate-spin" />
       </div>
     );
   }
@@ -784,7 +784,7 @@ export default function AssessmentPage() {
                 style={{
                   width: `${progress}%`,
                   background:
-                    "linear-gradient(to right, rgba(180,140,60,0.5), rgba(212,175,55,0.9))",
+                    "linear-gradient(to right, rgba(41,151,255,0.35), rgba(41,151,255,0.9))",
                 }}
               />
             </div>
@@ -797,9 +797,9 @@ export default function AssessmentPage() {
                 key={s.id}
                 className={`h-1 rounded-full transition-all duration-500 ${
                   i < step
-                    ? "bg-[rgba(212,175,55,0.6)]"
+                    ? "bg-[#2997ff]"
                     : i === step
-                    ? "bg-[rgba(212,175,55,0.9)]"
+                    ? "bg-[#2997ff]"
                     : "bg-white/[0.06]"
                 }`}
                 style={{ width: `${100 / STEPS.length - 1}%` }}
@@ -810,9 +810,9 @@ export default function AssessmentPage() {
 
         {/* OPTIONAL BADGE */}
         {!currentStep.required && (
-          <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[rgba(212,175,55,0.2)] bg-[rgba(212,175,55,0.05)]">
-            <div className="w-1.5 h-1.5 rounded-full bg-[rgba(212,175,55,0.6)]" />
-            <span className="text-[10px] uppercase tracking-normal text-[rgba(212,175,55,0.7)]">
+          <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/12 bg-white/[0.04]">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#2997ff]" />
+            <span className="text-[10px] uppercase tracking-normal text-[#2997ff]">
               Optional — improves accuracy
             </span>
           </div>
@@ -872,14 +872,14 @@ export default function AssessmentPage() {
             {step < STEPS.length - 1 ? (
               <button
                 onClick={handleNext}
-                className="px-7 py-3 rounded-full border border-[rgba(212,175,55,0.3)] text-[rgba(212,175,55,0.8)] hover:border-[rgba(212,175,55,0.7)] hover:text-[rgba(212,175,55,1)] transition-all duration-300 text-[11px] uppercase tracking-normal"
+                className="px-7 py-3 rounded-full border border-[#2997ff]/30 text-[#2997ff] hover:border-[#2997ff]/50 hover:text-[#2997ff] transition-all duration-300 text-[11px] uppercase tracking-normal"
               >
                 Continue
               </button>
             ) : (
               <button
                 onClick={submit}
-                className="px-8 py-3 rounded-full border border-[rgba(212,175,55,0.4)] text-[rgba(212,175,55,0.9)] hover:border-[rgba(212,175,55,0.8)] hover:text-[rgba(212,175,55,1)] bg-[rgba(212,175,55,0.06)] transition-all duration-300 text-[11px] uppercase tracking-normal"
+                className="px-8 py-3 rounded-full border border-[#2997ff]/35 text-[#2997ff] hover:border-[#2997ff]/60 hover:text-[#2997ff] bg-[#2997ff]/[0.08] transition-all duration-300 text-[11px] uppercase tracking-normal"
               >
                 Analyze My Biology
               </button>
@@ -919,7 +919,7 @@ function InputField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl text-white/80 placeholder-white/10 focus:outline-none focus:border-[rgba(212,175,55,0.3)] focus:bg-white/[0.03] transition-all duration-300 text-sm"
+          className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl text-white/80 placeholder-white/10 focus:outline-none focus:border-[#2997ff]/30 focus:bg-white/[0.03] transition-all duration-300 text-sm"
         />
         {field.unit && (
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-xs">
@@ -955,7 +955,7 @@ function SelectField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl text-white/80 focus:outline-none focus:border-[rgba(212,175,55,0.3)] focus:bg-white/[0.03] transition-all duration-300 text-sm appearance-none cursor-pointer"
+        className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl text-white/80 focus:outline-none focus:border-[#2997ff]/30 focus:bg-white/[0.03] transition-all duration-300 text-sm appearance-none cursor-pointer"
         style={{ backgroundColor: "rgba(7,7,10,0.95)" }}
       >
         <option value="" className="bg-[#07070a] text-white/30">

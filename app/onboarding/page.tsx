@@ -112,10 +112,10 @@ export default function OnboardingPage() {
       <section className="pt-32 pb-24">
         <PageContainer>
           <div className="mx-auto max-w-4xl text-center">
-            <p className="mb-8 text-xs uppercase tracking-normal text-[rgba(236,220,184,0.72)]">
+            <p className="mb-8 text-xs uppercase tracking-normal text-white/50">
               Initialization
             </p>
-            <h1 className="text-5xl font-semibold leading-[1.04] tracking-normal md:text-7xl">
+            <h1 className="text-5xl font-semibold leading-[1.04] tracking-normal md:text-5xl md:text-6xl">
               Create Your
               <br />
               Longevity Identity
@@ -140,7 +140,7 @@ export default function OnboardingPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="John Smith"
-                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] outline-none focus:border-[rgba(212,175,55,0.38)]"
+                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#2997ff]/50"
                   />
                 </div>
                 <div>
@@ -151,13 +151,13 @@ export default function OnboardingPage() {
                     value={entityName}
                     onChange={(e) => setEntityName(e.target.value)}
                     placeholder="Aeon Entity Alpha"
-                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] outline-none focus:border-[rgba(212,175,55,0.38)]"
+                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#2997ff]/50"
                   />
                 </div>
                 <button
                   onClick={handleCompleteOnboarding}
                   disabled={saving}
-                  className="premium-button-primary h-14 w-full rounded-md font-medium transition hover:brightness-95 disabled:opacity-50"
+                  className="premium-button-primary h-14 w-full rounded-md font-medium transition hover:opacity-90 disabled:opacity-50"
                 >
                   {saving ? "Initializing..." : "Complete Setup"}
                 </button>

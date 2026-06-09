@@ -29,7 +29,7 @@ export default function Button({
   const styles = {
     primary: `
       premium-button-primary
-      hover:brightness-95
+      hover:opacity-90
       active:scale-[0.985]
     `,
     secondary: `

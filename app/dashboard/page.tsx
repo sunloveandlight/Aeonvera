@@ -165,7 +165,7 @@ export default function DashboardPage() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-6">
         <div className="relative w-12 h-12">
           <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
-          <div className="absolute inset-0 rounded-full border-t border-[rgba(212,175,55,0.5)] animate-spin" />
+          <div className="absolute inset-0 rounded-full border-t border-[#2997ff]/40 animate-spin" />
         </div>
         <p className="text-white/20 text-[10px] tracking-normal uppercase">Initializing</p>
       </div>
@@ -263,7 +263,7 @@ export default function DashboardPage() {
             {bioAge ? (
               <div>
                 <div className="flex items-end gap-4 mb-3">
-                  <p className={`text-7xl font-light tracking-normal leading-none ${bioAgeColor}`}>
+                  <p className={`text-5xl md:text-6xl font-light tracking-normal leading-none ${bioAgeColor}`}>
                     {bioAge}
                     <span className="text-white/15 text-2xl ml-2">yrs</span>
                   </p>
@@ -304,7 +304,7 @@ export default function DashboardPage() {
                   {accuracyScore < 70 && (
                     <button
                       onClick={() => router.push("/assessment")}
-                      className="mt-2 text-[9px] uppercase tracking-normal text-[rgba(212,175,55,0.4)] hover:text-[rgba(212,175,55,0.7)] transition-colors duration-300"
+                      className="mt-2 text-[9px] uppercase tracking-normal text-[#2997ff] hover:text-[#2997ff] transition-colors duration-300"
                     >
                       Add lab data to improve →
                     </button>
@@ -313,7 +313,7 @@ export default function DashboardPage() {
               </div>
             ) : hasAssessment ? (
               <div className="flex items-center gap-4">
-                <div className="w-6 h-6 rounded-full border-t border-[rgba(212,175,55,0.5)] animate-spin shrink-0" />
+                <div className="w-6 h-6 rounded-full border-t border-[#2997ff]/40 animate-spin shrink-0" />
                 <p className="text-white/25 text-sm">Computing your biological age...</p>
               </div>
             ) : (
@@ -331,7 +331,7 @@ export default function DashboardPage() {
             {report ? (
               <div>
                 <div className="flex items-end gap-3 mb-3">
-                  <p className={`text-7xl font-light tracking-normal leading-none ${
+                  <p className={`text-5xl md:text-6xl font-light tracking-normal leading-none ${
                     report.risk_score <= 35 ? "text-green-400"
                     : report.risk_score <= 65 ? "text-yellow-400"
                     : "text-red-400"
@@ -360,7 +360,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3 border-t border-white/[0.04] pt-4">
                   <button
                     onClick={() => router.push("/report")}
-                    className="px-4 py-2 rounded-full border border-[rgba(212,175,55,0.25)] text-[rgba(212,175,55,0.7)] hover:border-[rgba(212,175,55,0.5)] hover:text-[rgba(212,175,55,1)] transition-all duration-300 text-[10px] uppercase tracking-normal"
+                    className="px-4 py-2 rounded-full border border-[#2997ff]/30 text-[#2997ff] hover:border-[#2997ff]/40 hover:text-[#2997ff] transition-all duration-300 text-[10px] uppercase tracking-normal"
                   >
                     Open Report
                   </button>
@@ -384,7 +384,7 @@ export default function DashboardPage() {
                   <button
                     onClick={handleGenerateReport}
                     disabled={generatingReport}
-                    className="px-6 py-2.5 rounded-full border border-[rgba(212,175,55,0.3)] text-[rgba(212,175,55,0.8)] hover:border-[rgba(212,175,55,0.6)] hover:text-[rgba(212,175,55,1)] transition-all duration-300 text-[10px] uppercase tracking-normal disabled:opacity-30"
+                    className="px-6 py-2.5 rounded-full border border-[#2997ff]/30 text-[#2997ff] hover:border-[#2997ff]/50 hover:text-[#2997ff] transition-all duration-300 text-[10px] uppercase tracking-normal disabled:opacity-30"
                   >
                     {generatingReport ? "Generating..." : "Generate Intelligence Report"}
                   </button>
@@ -453,7 +453,7 @@ export default function DashboardPage() {
             <p className="text-white/60 text-sm font-light">
               {hasAssessment ? "Update your assessment data" : "Start your assessment"}
             </p>
-            <p className="text-[rgba(212,175,55,0.4)] text-[10px] uppercase tracking-normal mt-3">
+            <p className="text-[#2997ff] text-[10px] uppercase tracking-normal mt-3">
               {hasAssessment ? "Retake →" : "Start →"}
             </p>
           </button>
@@ -468,7 +468,7 @@ export default function DashboardPage() {
             <p className="text-white/60 text-sm font-light">
               View your full biological profile and 90-day protocol
             </p>
-            <p className="text-[rgba(212,175,55,0.4)] text-[10px] uppercase tracking-normal mt-3">
+            <p className="text-[#2997ff] text-[10px] uppercase tracking-normal mt-3">
               Open report →
             </p>
           </button>
@@ -483,7 +483,7 @@ export default function DashboardPage() {
             <p className="text-white/60 text-sm font-light">
               {profile?.plan ? `${profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)} plan · ${profile.subscription_status}` : "Manage subscription"}
             </p>
-            <p className="text-[rgba(212,175,55,0.4)] text-[10px] uppercase tracking-normal mt-3">
+            <p className="text-[#2997ff] text-[10px] uppercase tracking-normal mt-3">
               Manage →
             </p>
           </button>
