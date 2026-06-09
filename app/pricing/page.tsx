@@ -118,7 +118,7 @@ export default function PricingPage() {
         <PageContainer>
           <div className="grid gap-5 lg:grid-cols-3">
             {PLANS.map((plan) => (
-              <Motion key={plan.id} type="rise">
+              <Motion key={plan.id} type="rise" className="h-full">
                 <PricingPlanCard
                   plan={plan}
                   loadingPlan={loadingPlan}

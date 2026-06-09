@@ -39,7 +39,7 @@ export default function PricingPlanCard({
           onCheckout(plan.id);
         }
       }}
-      className={`pricing-plan-card cursor-pointer rounded-lg border p-7 ${
+      className={`pricing-plan-card flex h-full min-h-[34rem] cursor-pointer flex-col rounded-lg border p-7 ${
         disabled ? "pointer-events-none opacity-60" : ""
       } ${
         plan.recommended
@@ -64,7 +64,7 @@ export default function PricingPlanCard({
         <span className="text-base font-normal text-white/40"> / month</span>
       </p>
 
-      <div className="mt-8 space-y-4">
+      <div className="mt-8 flex-1 space-y-4">
         {plan.features.map((feature) => (
           <div key={feature} className="flex gap-3 text-sm leading-6 text-white/70">
             <Check size={17} className="mt-1 shrink-0 royal-text" />

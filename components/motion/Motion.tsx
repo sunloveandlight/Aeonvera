@@ -7,12 +7,14 @@ type Props = {
   children: ReactNode;
   type?: "fade" | "rise" | "scale";
   intensity?: "subtle" | "medium";
+  className?: string;
 };
 
 export default function Motion({
   children,
   type = "fade",
   intensity = "subtle",
+  className = "",
 }: Props) {
   const distance = intensity === "subtle" ? 10 : 20;
 
@@ -33,6 +35,7 @@ export default function Motion({
 
   return (
     <motion.div
+      className={className}
       initial={variants[type].initial}
       animate={variants[type].animate}
       transition={{
