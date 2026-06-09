@@ -784,7 +784,7 @@ export default function AssessmentPage() {
       <div className="min-h-screen flex flex-col items-center justify-center px-6">
         <div className="text-center max-w-lg">
           <p className="text-[10px] uppercase tracking-[0.14em] text-white/20 mb-10">
-            AEONVERA INTELLIGENCE ENGINE
+            AEONVERA
           </p>
 
           <div className="flex justify-center mb-10">
@@ -841,7 +841,7 @@ export default function AssessmentPage() {
 
   if (!showForm && requiredComplete) {
     return (
-      <div className="min-h-screen py-20">
+      <div className="min-h-screen py-16">
         <PageContainer className="max-w-6xl">
           <div className="space-y-6">
             <div className="executive-panel rounded-lg p-6 md:p-8">
@@ -933,7 +933,7 @@ export default function AssessmentPage() {
   }
 
   return (
-    <div className="min-h-screen py-20">
+    <div className="min-h-screen py-16">
       <PageContainer className="max-w-4xl">
         <div className="executive-panel rounded-lg p-6 md:p-8">
 
@@ -1019,7 +1019,7 @@ export default function AssessmentPage() {
 
         {/* VALIDATION ERROR */}
         {validationError && (
-          <div className="mb-6 px-5 py-3 rounded-xl border border-red-500/20 bg-red-500/[0.06] text-red-400 text-xs tracking-wide">
+          <div className="mb-6 px-5 py-3 rounded-lg border border-red-500/20 bg-red-500/[0.06] text-red-400 text-xs tracking-wide">
             {validationError}
           </div>
         )}
@@ -1056,7 +1056,7 @@ export default function AssessmentPage() {
                 onClick={submit}
                 className="premium-action px-8 py-3 rounded-md transition-all duration-300 text-[11px] uppercase tracking-[0.14em]"
               >
-                Analyze My Biology
+                Build my profile
               </button>
             )}
           </div>
@@ -1094,7 +1094,7 @@ function InputField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className={`executive-input w-full rounded-xl py-3 pl-4 text-sm ${
+          className={`executive-input w-full rounded-lg py-3 pl-4 text-sm ${
             field.unit ? "pr-20" : "pr-4"
           }`}
         />
@@ -1133,7 +1133,7 @@ function SelectField({
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="executive-input w-full rounded-xl py-3 pl-4 pr-12 text-sm appearance-none cursor-pointer"
+          className="executive-input w-full rounded-lg py-3 pl-4 pr-12 text-sm appearance-none cursor-pointer"
           style={{ backgroundColor: "rgba(7,7,10,0.95)" }}
         >
           <option value="" className="bg-[#07070a] text-white/30">

@@ -75,8 +75,8 @@ export default function OnboardingPage() {
       const { error } = await supabase
         .from("profiles")
         .update({
-          display_name: displayName || "Entity",
-          entity_name: entityName || "Unnamed Entity",
+          display_name: displayName || "You",
+          entity_name: entityName || "Personal",
           onboarding_completed: true,
           entity_state: "active",
           life_stage: "initialized",
@@ -102,32 +102,32 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        Initializing...
+        Loading...
       </div>
     );
   }
 
   return (
     <div>
-      <section className="pt-32 pb-24">
+      <section className="pt-24 pb-16">
         <PageContainer>
           <div className="mx-auto max-w-4xl text-center">
             <p className="mb-8 text-eyebrow">
               Initialization
             </p>
             <h1 className="text-5xl font-light leading-[1.04] tracking-tight md:text-6xl">
-              Create Your
+              Create your
               <br />
-              Longevity Identity
+              longevity profile
             </h1>
             <p className="mx-auto mt-8 max-w-2xl text-xl text-white/60">
-              Configure the foundation of your biological intelligence system.
+              Set up the basics of your profile to get started.
             </p>
           </div>
         </PageContainer>
       </section>
 
-      <section className="pb-32">
+      <section className="pb-24">
         <PageContainer>
           <div className="max-w-2xl mx-auto">
             <Card className="p-10" hover={false} glow>
@@ -140,26 +140,26 @@ export default function OnboardingPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="John Smith"
-                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#c4a969]"
+                    className="h-12 w-full rounded-lg border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#c4a969]"
                   />
                 </div>
                 <div>
                   <label className="block text-sm text-white/50 mb-3">
-                    Entity Name
+                    Profile Name
                   </label>
                   <input
                     value={entityName}
                     onChange={(e) => setEntityName(e.target.value)}
-                    placeholder="Aeon Entity Alpha"
-                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#c4a969]"
+                    placeholder="e.g. Personal"
+                    className="h-12 w-full rounded-lg border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#c4a969]"
                   />
                 </div>
                 <button
                   onClick={handleCompleteOnboarding}
                   disabled={saving}
-                  className="premium-action h-14 w-full rounded-md font-medium transition hover:opacity-90 disabled:opacity-50"
+                  className="premium-action h-12 w-full rounded-md font-medium transition hover:opacity-90 disabled:opacity-50"
                 >
-                  {saving ? "Initializing..." : "Complete Setup"}
+                  {saving ? "Setting up..." : "Complete Setup"}
                 </button>
               </div>
             </Card>

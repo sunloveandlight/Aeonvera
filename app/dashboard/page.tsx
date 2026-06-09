@@ -380,7 +380,7 @@ export default function DashboardPage() {
           <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
           <div className="absolute inset-0 rounded-full border-t royal-border animate-spin" />
         </div>
-        <p className="text-white/20 text-[10px] tracking-[0.14em] uppercase">Initializing</p>
+        <p className="text-white/20 text-[10px] tracking-[0.14em] uppercase">Loading</p>
       </div>
     );
   }
@@ -425,7 +425,7 @@ export default function DashboardPage() {
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   const systemStatus =
-    !hasAssessment ? "UNINITIALIZED"
+    !hasAssessment ? "NOT STARTED"
     : !bioAge ? "COMPUTING"
     : ageDelta !== null && ageDelta <= 0 ? "STABLE"
     : ageDelta !== null && ageDelta <= 4 ? "NEEDS REVIEW"
@@ -452,8 +452,8 @@ export default function DashboardPage() {
                 </span>
               </h1>
               <p className="mt-5 max-w-xl text-sm leading-7 text-white/40">
-                Your biological operating system is{" "}
-                {hasAssessment ? "active and monitoring." : "waiting for initialization."}
+                Your healthspan baseline is{" "}
+                {hasAssessment ? "active and up to date." : "ready when you are."}
               </p>
             </div>
 
@@ -553,7 +553,7 @@ export default function DashboardPage() {
                 <p className="text-white/25 text-sm leading-relaxed">
                   Complete your assessment to compute your biological age across all domains.
                 </p>
-                <Button href="/assessment">Initialize Assessment</Button>
+                <Button href="/assessment">Start assessment</Button>
               </div>
             )}
           </Card>
@@ -586,7 +586,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3 border-t border-white/[0.06] pt-5">
                   <button
                     onClick={() => router.push("/report")}
-                    className="premium-action-secondary px-4 py-2 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em]"
+                    className="premium-action-secondary inline-flex h-9 items-center justify-center px-4 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em]"
                   >
                     Open Report
                   </button>
@@ -610,7 +610,7 @@ export default function DashboardPage() {
                   <button
                     onClick={handleGenerateReport}
                     disabled={generatingReport}
-                    className="premium-action px-6 py-2.5 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em] disabled:opacity-30"
+                    className="premium-action inline-flex h-9 items-center justify-center px-6 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em] disabled:opacity-30"
                   >
                     {generatingReport ? "Generating..." : "Generate Intelligence Report"}
                   </button>
@@ -634,7 +634,7 @@ export default function DashboardPage() {
                 <p className="text-sm font-medium text-white/80">
                   {firstReportPrompt && !report
                     ? "Your assessment is complete"
-                    : "Phase 1 intelligence loop"}
+                    : "Latest intelligence"}
                 </p>
                 <p className="mt-1 text-sm leading-6 text-white/50">
                   {generationMessage ||
@@ -661,7 +661,7 @@ export default function DashboardPage() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-xl">
               <p className="micro-label">
-                Phase 2 · Wearable Intelligence
+                Wearables
               </p>
               <h2 className="mt-3 text-2xl font-light tracking-tight text-white/80">
                 Continuous health state
@@ -757,7 +757,7 @@ export default function DashboardPage() {
                   value={applePayload}
                   onChange={(event) => setApplePayload(event.target.value)}
                   placeholder='{"records":[{"type":"HKQuantityTypeIdentifierStepCount","value":8400}]}'
-                  className="executive-input mt-4 h-16 w-full resize-none rounded-md p-3 text-xs leading-5 placeholder:text-white/16"
+                  className="executive-input mt-4 h-16 w-full resize-none rounded-lg p-3 text-xs leading-5 placeholder:text-white/16"
                 />
               </div>
               <button

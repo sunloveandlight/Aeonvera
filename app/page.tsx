@@ -180,8 +180,8 @@ export default function HomePage() {
 
   return (
     <div className="text-white">
-      <section className="px-6 pb-24 pt-24 lg:px-8 lg:pb-32 lg:pt-28">
-        <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-2 lg:items-center">
+      <section className="px-6 pt-24 pb-24 lg:px-8">
+        <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-2 lg:items-center">
           <div>
             <div className="premium-status mb-8 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm">
               <ShieldCheck size={16} className="royal-text" />
@@ -341,7 +341,7 @@ export default function HomePage() {
                   <Check size={16} />
                   Monthly membership
                 </div>
-                <div className="premium-action mt-7 inline-flex w-full items-center justify-center gap-2 rounded-md px-5 text-sm font-medium">
+                <div className="premium-action mt-7 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md px-5 text-sm font-medium">
                   {loadingPlan === plan.id ? "Opening checkout" : `Choose ${plan.name}`}
                   {loadingPlan !== plan.id && <ArrowRight size={16} />}
                 </div>

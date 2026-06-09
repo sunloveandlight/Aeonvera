@@ -281,7 +281,7 @@ export default function ReportPage() {
               <button
                 onClick={handleRegenerate}
                 disabled={regenerating}
-                className="premium-action-secondary px-5 py-2 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em] disabled:opacity-20"
+                className="premium-action-secondary inline-flex h-9 items-center justify-center px-5 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em] disabled:opacity-20"
               >
                 {regenerating ? "Regenerating..." : "Regenerate Report"}
               </button>
@@ -350,7 +350,7 @@ export default function ReportPage() {
           </Card>
 
           {/* RISK SCORE */}
-          <Card title="SYSTEM RISK INDEX">
+          <Card title="RISK INDEX">
             <div className="pt-2">
               <p className={`text-6xl md:text-6xl font-light tracking-tight leading-none mb-4 ${riskColor}`}>
                 {report.risk_score}
