@@ -19,7 +19,10 @@
   --surface: 29, 29, 31;
   --surface-soft: 245, 245, 247;
   --muted: 134, 134, 139;
-  --accent: 41, 151, 255;
+  --royal: 126, 87, 194;
+  --gold: 214, 183, 101;
+  --silver: 229, 231, 235;
+  --accent: var(--royal);
   --success: 48, 209, 88;
 
   /* =========================
@@ -117,8 +120,9 @@ body::after {
 
 .hero-stage {
   background:
-    linear-gradient(135deg, rgba(41, 151, 255, 0.16), transparent 34%),
-    linear-gradient(225deg, rgba(255, 255, 255, 0.1), transparent 34%),
+    radial-gradient(circle at 18% 18%, rgba(var(--royal), 0.32), transparent 32%),
+    linear-gradient(135deg, rgba(var(--gold), 0.16), transparent 36%),
+    linear-gradient(225deg, rgba(255, 255, 255, 0.09), transparent 34%),
     #151517;
 }
 
@@ -128,7 +132,7 @@ body::after {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent),
+    linear-gradient(90deg, transparent, rgba(var(--gold), 0.16), transparent),
     repeating-linear-gradient(
       90deg,
       rgba(255, 255, 255, 0.035) 0,
@@ -232,7 +236,7 @@ body::after {
 }
 
 .premium-button-primary {
-  background: rgb(var(--accent));
+  background: linear-gradient(135deg, rgb(var(--royal)), rgb(var(--gold)));
   color: #ffffff;
   box-shadow: none;
 }
@@ -242,6 +246,22 @@ body::after {
   background: rgba(255, 255, 255, 0.04);
   color: rgba(245, 245, 247, 0.78);
   box-shadow: none;
+}
+
+.royal-gradient {
+  background: linear-gradient(135deg, rgb(var(--royal)), rgb(var(--gold)));
+}
+
+.royal-gradient-soft {
+  background: linear-gradient(135deg, rgba(var(--royal), 0.14), rgba(var(--gold), 0.1));
+}
+
+.royal-text {
+  color: rgb(var(--gold));
+}
+
+.royal-border {
+  border-color: rgba(var(--royal), 0.42);
 }
 
 /* =====================================================

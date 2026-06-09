@@ -191,7 +191,7 @@ export default function ReportPage() {
       <div className="min-h-screen flex flex-col items-center justify-center gap-6">
         <div className="relative w-16 h-16">
           <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
-          <div className="absolute inset-0 rounded-full border-t border-[#2997ff]/50 animate-spin" />
+          <div className="absolute inset-0 rounded-full border-t royal-border animate-spin" />
         </div>
         <p className="text-white/20 text-[10px] tracking-normal uppercase">
           Loading Intelligence Report
@@ -451,7 +451,7 @@ export default function ReportPage() {
           <div className="space-y-3">
             {report.top_priorities.map((p, i) => (
               <div key={i} className="flex items-start gap-5 p-4 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition-colors duration-300">
-                <span className="text-[#2997ff] text-sm font-light shrink-0 mt-0.5 tabular-nums">
+                <span className="royal-text text-sm font-light shrink-0 mt-0.5 tabular-nums">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <p className="text-white/60 text-sm leading-relaxed">{p}</p>
@@ -468,7 +468,7 @@ export default function ReportPage() {
             {report["90_day_plan"].map((item, i) => (
               <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.07] transition-colors duration-300 gap-4">
                 <div className="flex-1">
-                  <p className="text-[9px] uppercase tracking-normal text-[#2997ff] mb-1.5">
+                  <p className="text-[9px] uppercase tracking-normal royal-text mb-1.5">
                     {item.category}
                   </p>
                   <p className="text-white/60 text-sm leading-relaxed">{item.action}</p>

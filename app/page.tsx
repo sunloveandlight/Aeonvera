@@ -59,7 +59,7 @@ function HeroVisual() {
             <p className="text-sm font-medium text-white">Healthspan overview</p>
             <p className="mt-1 text-sm text-white/50">Updated from your latest assessment</p>
           </div>
-          <div className="rounded-full bg-[#30d158]/15 px-3 py-1 text-sm font-medium text-[#30d158]">
+          <div className="rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white/70">
             Optimal
           </div>
         </div>
@@ -90,7 +90,7 @@ function HeroVisual() {
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="hero-pulse h-full origin-left rounded-full bg-[#2997ff]"
+                    className="hero-pulse h-full origin-left rounded-full royal-gradient"
                     style={{ width }}
                   />
                 </div>
@@ -140,7 +140,7 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-2 lg:items-center">
           <div>
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/60">
-              <ShieldCheck size={16} className="text-[#2997ff]" />
+              <ShieldCheck size={16} className="royal-text" />
               Private longevity intelligence
             </div>
 
@@ -156,7 +156,7 @@ export default function HomePage() {
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <Link
                 href={authenticated ? "/dashboard" : "/login?mode=signup"}
-                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#2997ff] px-6 text-sm font-medium text-white transition hover:bg-[#147ce5] sm:w-auto"
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full royal-gradient px-6 text-sm font-medium text-white transition hover:opacity-90 sm:w-auto"
               >
                 {authenticated ? "Open dashboard" : "Start assessment"}
                 <ArrowRight size={16} />
@@ -192,7 +192,7 @@ export default function HomePage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               {METRICS.map(([value, label]) => (
-                <div key={label} className="rounded-lg bg-white/[0.055] p-5">
+                <div key={label} className="rounded-lg bg-white/[0.055] p-5 transition duration-300 hover:bg-white/[0.08]">
                   <p className="text-4xl font-semibold leading-none text-white">{value}</p>
                   <p className="mt-3 text-sm text-white/50">{label}</p>
                 </div>
@@ -206,7 +206,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
-              <p className="text-sm font-medium text-[#2997ff]">Coverage</p>
+              <p className="text-sm font-medium royal-text">Coverage</p>
               <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
                 One model across eight clinical domains.
               </h2>
@@ -225,7 +225,7 @@ export default function HomePage() {
       <section className="border-t border-white/8 px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-3xl">
-            <p className="text-sm font-medium text-[#2997ff]">Platform</p>
+            <p className="text-sm font-medium royal-text">Platform</p>
             <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
               Professional health intelligence, reduced to essentials.
             </h2>
@@ -233,7 +233,7 @@ export default function HomePage() {
 
           <div className="grid gap-6 md:grid-cols-3">
             {CAPABILITIES.map((item) => (
-              <div key={item.title} className="rounded-lg bg-[#151517] p-7">
+              <div key={item.title} className="rounded-lg bg-[#151517] p-7 transition duration-300 hover:-translate-y-1 hover:bg-[#1d1d20]">
                 <Dna size={24} className="mb-8 text-white/70" />
                 <h3 className="text-xl font-semibold text-white">{item.title}</h3>
                 <p className="mt-4 text-sm leading-7 text-white/55">{item.body}</p>
@@ -247,7 +247,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
-              <p className="text-sm font-medium text-[#2997ff]">Workflow</p>
+              <p className="text-sm font-medium royal-text">Workflow</p>
               <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
                 Built for repeatable progress.
               </h2>
@@ -271,19 +271,19 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
-              <p className="text-sm font-medium text-[#2997ff]">Membership</p>
+              <p className="text-sm font-medium royal-text">Membership</p>
               <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
                 Choose your level of support.
               </h2>
             </div>
-            <Link href="/pricing" className="inline-flex items-center gap-2 text-sm font-medium text-[#2997ff]">
+            <Link href="/pricing" className="inline-flex items-center gap-2 text-sm font-medium royal-text">
               Full pricing <ArrowRight size={16} />
             </Link>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
             {PLANS.map(([name, price, body]) => (
-              <div key={name} className="rounded-lg bg-[#151517] p-7">
+              <div key={name} className="rounded-lg bg-[#151517] p-7 transition duration-300 hover:-translate-y-1 hover:bg-[#1d1d20]">
                 <h3 className="text-xl font-semibold">{name}</h3>
                 <p className="mt-6 text-4xl font-semibold">{price}</p>
                 <p className="mt-4 text-sm leading-7 text-white/55">{body}</p>
@@ -307,7 +307,7 @@ export default function HomePage() {
           </p>
           <Link
             href={authenticated ? "/assessment" : "/login?mode=signup"}
-            className="mt-9 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#2997ff] px-6 text-sm font-medium text-white transition hover:bg-[#147ce5]"
+            className="mt-9 inline-flex h-12 items-center justify-center gap-2 rounded-full royal-gradient px-6 text-sm font-medium text-white transition hover:opacity-90"
           >
             {authenticated ? "Update assessment" : "Get started"}
             <ArrowRight size={16} />

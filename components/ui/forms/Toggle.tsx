@@ -19,7 +19,7 @@ export default function Toggle({ enabled, onChange, label }: ToggleProps) {
         className={`
           w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300
           ${enabled
-            ? "bg-[#2997ff] border border-[#2997ff]/30"
+            ? "royal-gradient border royal-border"
             : "bg-white/[0.06] border border-white/[0.08]"
           }
         `}

@@ -91,7 +91,7 @@ export default function PricingPage() {
       <section className="px-6 py-24 lg:px-8">
         <PageContainer>
           <div className="mx-auto max-w-4xl text-center">
-            <p className="text-sm font-medium text-[#2997ff]">Pricing</p>
+            <p className="text-sm font-medium royal-text">Pricing</p>
             <h1 className="mt-5 text-5xl font-semibold leading-[1.05] md:text-6xl">
               Choose the right level of longevity intelligence.
             </h1>
@@ -111,7 +111,7 @@ export default function PricingPage() {
                 key={plan.id}
                 className={`rounded-lg border p-7 ${
                   plan.recommended
-                    ? "border-[#2997ff]/50 bg-[#151517]"
+                    ? "royal-border bg-[#151517]"
                     : "border-white/10 bg-[#151517]"
                 }`}
               >
@@ -119,7 +119,7 @@ export default function PricingPage() {
                   <div className="flex items-start justify-between gap-4">
                     <h2 className="text-2xl font-semibold">{plan.name}</h2>
                     {plan.recommended && (
-                      <span className="shrink-0 rounded-full bg-[#2997ff] px-3 py-1 text-xs font-medium text-white">
+                      <span className="shrink-0 rounded-full royal-gradient px-3 py-1 text-xs font-medium text-white">
                         Recommended
                       </span>
                     )}
@@ -148,7 +148,7 @@ export default function PricingPage() {
                   disabled={loadingPlan !== null}
                   className={`mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
                     plan.recommended
-                      ? "bg-[#2997ff] text-white hover:bg-[#147ce5]"
+                      ? "royal-gradient text-white hover:opacity-90"
                       : "border border-white/15 text-white/80 hover:border-white/30 hover:text-white"
                   }`}
                 >

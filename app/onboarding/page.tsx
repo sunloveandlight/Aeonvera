@@ -140,7 +140,7 @@ export default function OnboardingPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="John Smith"
-                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#2997ff]/50"
+                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#d6b765]"
                   />
                 </div>
                 <div>
@@ -151,7 +151,7 @@ export default function OnboardingPage() {
                     value={entityName}
                     onChange={(e) => setEntityName(e.target.value)}
                     placeholder="Aeon Entity Alpha"
-                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#2997ff]/50"
+                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#d6b765]"
                   />
                 </div>
                 <button

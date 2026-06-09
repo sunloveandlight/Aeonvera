@@ -94,7 +94,7 @@ export default function SuccessPage() {
         <h1 className="mb-6 text-5xl font-semibold tracking-normal">Subscription Activated</h1>
 
         <div className="mb-8 flex justify-center">
-          <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-[#2997ff]" />
+          <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-[#d6b765]" />
         </div>
 
         <p className="text-white/55">{status}</p>

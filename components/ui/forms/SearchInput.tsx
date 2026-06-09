@@ -27,8 +27,8 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             transition
             focus:outline-none
             focus:ring-1
-            focus:ring-[#2997ff]/25
-            focus:border-[#2997ff]/30
+            focus:ring-[#8b5cf6]/25
+            focus:border-[#d6b765]
             ${error ? "border-red-500/50" : "border-white/[0.08]"}
             ${className}
           `}

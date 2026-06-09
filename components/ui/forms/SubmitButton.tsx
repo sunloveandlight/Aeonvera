@@ -25,7 +25,7 @@ export default function SubmitButton({ children, loading }: SubmitButtonProps) {
         ${
           loading
             ? "bg-white/10 text-white/30 cursor-not-allowed"
-            : "border border-[#2997ff]/30 text-[#2997ff] hover:border-[#2997ff]/50 hover:text-[#2997ff]"
+            : "border royal-border royal-text hover:royal-border hover:royal-text"
         }
       `}
     >

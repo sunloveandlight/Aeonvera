@@ -32,7 +32,7 @@ export default function RadioGroup({
             value={opt.value}
             checked={value === opt.value}
             onChange={() => onChange?.(opt.value)}
-            className="accent-[#2997ff]"
+            className="accent-[#8b5cf6]"
           />
           {opt.label}
         </label>

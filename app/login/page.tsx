@@ -87,7 +87,7 @@ function LoginInner() {
     <main className="flex min-h-screen items-center justify-center px-6 py-16 text-white">
       <div className="w-full max-w-md">
         <div className="mb-10 text-center">
-          <p className="text-sm font-medium text-[#2997ff]">Aeonvera</p>
+          <p className="text-sm font-medium royal-text">Aeonvera</p>
           <h1 className="mt-4 text-4xl font-semibold leading-tight">
             {isSignUpMode ? "Create your account." : "Welcome back."}
           </h1>
@@ -104,7 +104,7 @@ function LoginInner() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="h-12 w-full rounded-lg border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#2997ff]"
+            className="h-12 w-full rounded-lg border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#d6b765]"
             required
           />
 
@@ -113,14 +113,14 @@ function LoginInner() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="h-12 w-full rounded-lg border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#2997ff]"
+            className="h-12 w-full rounded-lg border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#d6b765]"
             required
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#2997ff] text-sm font-medium text-white transition hover:bg-[#147ce5] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full royal-gradient text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Processing..." : isSignUpMode ? "Create account" : "Sign in"}
             {!loading && <ArrowRight size={16} />}
@@ -137,14 +137,14 @@ function LoginInner() {
           {isSignUpMode ? (
             <p>
               Already have an account?{" "}
-              <Link href="/login" className="font-medium text-[#2997ff]">
+              <Link href="/login" className="font-medium royal-text">
                 Sign in
               </Link>
             </p>
           ) : (
             <p>
               Don&apos;t have an account?{" "}
-              <Link href="/login?mode=signup" className="font-medium text-[#2997ff]">
+              <Link href="/login?mode=signup" className="font-medium royal-text">
                 Create one
               </Link>
             </p>
