@@ -7,15 +7,18 @@ import { supabase } from "@/lib/supabase/client";
 
 export default function Header() {
   const [authenticated, setAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setAuthenticated(!!data.user);
+      setAuthChecked(true);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setAuthenticated(!!session?.user);
+      setAuthChecked(true);
     });
 
     return () => subscription.unsubscribe();
@@ -81,7 +84,9 @@ export default function Header() {
           >
             {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
-          {authenticated ? (
+          {!authChecked ? (
+            <div className="hidden h-10 w-24 rounded-md border border-white/8 bg-white/[0.03] sm:block" />
+          ) : authenticated ? (
             <button
               onClick={handleLogout}
               className="hidden text-xs font-medium text-white/45 transition-colors duration-300 hover:text-white/75 sm:inline-flex"
@@ -118,7 +123,7 @@ export default function Header() {
             >
               Pricing
             </Link>
-            {authenticated ? (
+            {!authChecked ? null : authenticated ? (
               <>
                 <Link
                   href="/dashboard"

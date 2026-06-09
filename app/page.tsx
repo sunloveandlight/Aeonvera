@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
 
 const STATS = [
   { value: "47+", label: "health inputs" },
@@ -187,6 +188,7 @@ function ProductPreview() {
 
 export default function HomePage() {
   const [activeFeature, setActiveFeature] = useState(0);
+  const [authenticated, setAuthenticated] = useState(false);
   const ActiveIcon = FEATURES[activeFeature].icon;
 
   useEffect(() => {
@@ -194,6 +196,20 @@ export default function HomePage() {
       setActiveFeature((prev) => (prev + 1) % FEATURES.length);
     }, 5000);
     return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setAuthenticated(!!data.user);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_, session) => {
+      setAuthenticated(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
@@ -215,10 +231,10 @@ export default function HomePage() {
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/login?mode=signup"
+                href={authenticated ? "/dashboard" : "/login?mode=signup"}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-white px-5 text-sm font-medium text-black transition hover:bg-white/90"
               >
-                Start assessment <ArrowRight size={16} />
+                {authenticated ? "Open dashboard" : "Start assessment"} <ArrowRight size={16} />
               </Link>
               <Link
                 href="/pricing"
@@ -394,10 +410,10 @@ export default function HomePage() {
             </p>
           </div>
           <Link
-            href="/login?mode=signup"
+            href={authenticated ? "/assessment" : "/login?mode=signup"}
             className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-md bg-white px-5 text-sm font-medium text-black transition hover:bg-white/90"
           >
-            Create account <ArrowRight size={16} />
+            {authenticated ? "Update assessment" : "Create account"} <ArrowRight size={16} />
           </Link>
         </div>
       </section>
