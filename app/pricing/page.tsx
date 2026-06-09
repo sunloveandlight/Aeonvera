@@ -119,7 +119,7 @@ export default function PricingPage() {
                   <div className="flex items-start justify-between gap-4">
                     <h2 className="text-2xl font-semibold">{plan.name}</h2>
                     {plan.recommended && (
-                      <span className="shrink-0 rounded-full royal-gradient px-3 py-1 text-xs font-medium text-white">
+                      <span className="shrink-0 rounded-md royal-gradient px-3 py-1 text-xs font-medium text-white">
                         Recommended
                       </span>
                     )}
@@ -136,8 +136,8 @@ export default function PricingPage() {
 
                 <div className="mt-8 space-y-4">
                   {plan.features.map((feature) => (
-                    <div key={feature} className="flex gap-3 text-sm leading-6 text-[rgba(16,24,39,0.72)]">
-                      <Check size={17} className="mt-1 shrink-0 text-[rgb(var(--royal))]" />
+                    <div key={feature} className="flex gap-3 text-sm leading-6 text-white/70">
+                      <Check size={17} className="mt-1 shrink-0 royal-text" />
                       <span>{feature}</span>
                     </div>
                   ))}
@@ -146,7 +146,7 @@ export default function PricingPage() {
                 <button
                   onClick={() => handleCheckout(plan.id)}
                   disabled={loadingPlan !== null}
-                  className={`mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                  className={`mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
                     plan.recommended
                       ? "royal-gradient text-white hover:opacity-95"
                       : "border border-white/15 text-white/80 hover:border-white/30 hover:text-white"

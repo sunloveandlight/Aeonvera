@@ -793,7 +793,7 @@ export default function AssessmentPage() {
 
         {/* OPTIONAL BADGE */}
         {!currentStep.required && (
-          <div className="executive-panel-soft mb-6 inline-flex items-center gap-2 rounded-full px-4 py-2">
+          <div className="executive-panel-soft mb-6 inline-flex items-center gap-2 rounded-md px-4 py-2">
             <div className="w-1.5 h-1.5 rounded-full royal-gradient" />
             <span className="text-[10px] uppercase tracking-normal royal-text">
               Optional — improves accuracy
@@ -837,7 +837,7 @@ export default function AssessmentPage() {
           <button
             onClick={handleBack}
             disabled={step === 0}
-            className="px-6 py-3 rounded-full border border-white/[0.08] text-white/35 hover:text-white/65 hover:border-white/20 transition-all duration-300 text-[11px] uppercase tracking-normal disabled:opacity-0"
+            className="px-6 py-3 rounded-md border border-white/[0.08] text-white/35 hover:text-white/65 hover:border-white/20 transition-all duration-300 text-[11px] uppercase tracking-normal disabled:opacity-0"
           >
             Back
           </button>
@@ -855,14 +855,14 @@ export default function AssessmentPage() {
             {step < STEPS.length - 1 ? (
               <button
                 onClick={handleNext}
-                className="px-7 py-3 rounded-full border royal-border royal-text hover:border-white/25 hover:text-white/80 transition-all duration-300 text-[11px] uppercase tracking-normal"
+                className="px-7 py-3 rounded-md border royal-border royal-text hover:border-white/25 hover:text-white/80 transition-all duration-300 text-[11px] uppercase tracking-normal"
               >
                 Continue
               </button>
             ) : (
               <button
                 onClick={submit}
-                className="px-8 py-3 rounded-full royal-gradient transition-all duration-300 text-[11px] uppercase tracking-normal"
+                className="px-8 py-3 rounded-md royal-gradient transition-all duration-300 text-[11px] uppercase tracking-normal"
               >
                 Analyze My Biology
               </button>
@@ -902,10 +902,12 @@ function InputField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className="executive-input w-full rounded-xl px-4 py-3 text-sm"
+          className={`executive-input w-full rounded-xl py-3 pl-4 text-sm ${
+            field.unit ? "pr-20" : "pr-4"
+          }`}
         />
         {field.unit && (
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 text-xs">
+          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/35 text-xs">
             {field.unit}
           </span>
         )}
@@ -935,25 +937,30 @@ function SelectField({
           </span>
         )}
       </div>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="executive-input w-full rounded-xl px-4 py-3 text-sm appearance-none cursor-pointer"
-        style={{ backgroundColor: "rgba(7,7,10,0.95)" }}
-      >
-        <option value="" className="bg-[#07070a] text-white/30">
-          Select...
-        </option>
-        {field.options?.map((opt) => (
-          <option
-            key={opt.value}
-            value={opt.value}
-            className="bg-[#07070a] text-white/80"
-          >
-            {opt.label}
+      <div className="relative">
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="executive-input w-full rounded-xl py-3 pl-4 pr-12 text-sm appearance-none cursor-pointer"
+          style={{ backgroundColor: "rgba(7,7,10,0.95)" }}
+        >
+          <option value="" className="bg-[#07070a] text-white/30">
+            Select...
           </option>
-        ))}
-      </select>
+          {field.options?.map((opt) => (
+            <option
+              key={opt.value}
+              value={opt.value}
+              className="bg-[#07070a] text-white/80"
+            >
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-white/35">
+          ↓
+        </span>
+      </div>
     </div>
   );
 }

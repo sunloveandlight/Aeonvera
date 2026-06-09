@@ -592,7 +592,7 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3 border-t border-white/[0.06] pt-5">
                   <button
                     onClick={() => router.push("/report")}
-                    className="px-4 py-2 rounded-full border royal-border royal-text transition-all duration-300 text-[10px] uppercase tracking-normal hover:border-white/25 hover:text-white/80"
+                    className="px-4 py-2 rounded-md border royal-border royal-text transition-all duration-300 text-[10px] uppercase tracking-normal hover:border-white/25 hover:text-white/80"
                   >
                     Open Report
                   </button>
@@ -616,7 +616,7 @@ export default function DashboardPage() {
                   <button
                     onClick={handleGenerateReport}
                     disabled={generatingReport}
-                    className="px-6 py-2.5 rounded-full border royal-border royal-text hover:royal-border hover:royal-text transition-all duration-300 text-[10px] uppercase tracking-normal disabled:opacity-30"
+                    className="px-6 py-2.5 rounded-md border royal-border royal-text hover:royal-border hover:royal-text transition-all duration-300 text-[10px] uppercase tracking-normal disabled:opacity-30"
                   >
                     {generatingReport ? "Generating..." : "Generate Intelligence Report"}
                   </button>
@@ -652,7 +652,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleGenerateReport}
                 disabled={!hasAssessment || generatingReport}
-                className="inline-flex h-11 items-center justify-center rounded-full royal-gradient px-5 text-sm font-medium transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex h-11 items-center justify-center rounded-md royal-gradient px-5 text-sm font-medium transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {generatingReport ? "Generating..." : report ? "Refresh intelligence" : "Generate report"}
               </button>
@@ -750,7 +750,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => handleWearableSync("apple")}
                   disabled={Boolean(wearableSyncing)}
-                  className="rounded-full royal-gradient px-4 py-2 text-[10px] uppercase tracking-normal disabled:cursor-not-allowed disabled:opacity-45"
+                  className="rounded-md royal-gradient px-4 py-2 text-[10px] uppercase tracking-normal disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   {wearableSyncing === "apple" ? "Importing" : "Import"}
                 </button>

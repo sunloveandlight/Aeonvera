@@ -59,7 +59,7 @@ function HeroVisual() {
             <p className="text-sm font-medium text-white">Healthspan overview</p>
             <p className="mt-1 text-sm text-white/50">Updated from your latest assessment</p>
           </div>
-          <div className="rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white/70">
+          <div className="rounded-md bg-white/10 px-3 py-1 text-sm font-medium text-white/70">
             Optimal
           </div>
         </div>
