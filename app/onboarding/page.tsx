@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
+import { Checkbox, Field, Form, SubmitButton, TextInput } from "@/components/ui/forms";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -14,6 +15,8 @@ export default function OnboardingPage() {
   const [entityName, setEntityName] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [acknowledged, setAcknowledged] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -41,6 +44,8 @@ export default function OnboardingPage() {
 
       if (profileError) {
         console.error(profileError);
+        setMessage("Profile setup could not be loaded. Please retry.");
+        setLoading(false);
         return;
       }
 
@@ -56,6 +61,8 @@ export default function OnboardingPage() {
 
         if (error) {
           console.error(error);
+          setMessage("Profile setup could not be created. Please retry.");
+          setLoading(false);
           return;
         }
       }
@@ -68,9 +75,14 @@ export default function OnboardingPage() {
 
   async function handleCompleteOnboarding() {
     if (!userId) return;
+    if (!acknowledged) {
+      setMessage("Confirm the health intelligence acknowledgement to continue.");
+      return;
+    }
 
     try {
       setSaving(true);
+      setMessage(null);
 
       const { error } = await supabase
         .from("profiles")
@@ -86,14 +98,14 @@ export default function OnboardingPage() {
 
       if (error) {
         console.error(error);
-        alert("Failed to save onboarding.");
+        setMessage("Failed to save onboarding. Please try again.");
         return;
       }
 
       router.replace("/assessment");
     } catch (err) {
       console.error(err);
-      alert("Onboarding failed.");
+      setMessage("Onboarding failed. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -131,37 +143,35 @@ export default function OnboardingPage() {
         <PageContainer>
           <div className="max-w-2xl mx-auto">
             <Card className="p-10" hover={false} glow>
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm text-white/50 mb-3">
-                    Display Name
-                  </label>
-                  <input
+              <Form onSubmit={handleCompleteOnboarding} className="space-y-6">
+                {message && (
+                  <div className="rounded-lg border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-sm leading-6 text-red-200/80">
+                    {message}
+                  </div>
+                )}
+                <Field label="Display Name">
+                  <TextInput
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="John Smith"
-                    className="h-12 w-full rounded-lg border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#c4a969]"
+                    className="h-12 bg-black/30 px-4"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm text-white/50 mb-3">
-                    Profile Name
-                  </label>
-                  <input
+                </Field>
+                <Field label="Profile Name">
+                  <TextInput
                     value={entityName}
                     onChange={(e) => setEntityName(e.target.value)}
                     placeholder="e.g. Personal"
-                    className="h-12 w-full rounded-lg border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#c4a969]"
+                    className="h-12 bg-black/30 px-4"
                   />
-                </div>
-                <button
-                  onClick={handleCompleteOnboarding}
-                  disabled={saving}
-                  className="premium-action h-12 w-full rounded-md font-medium transition hover:opacity-90 disabled:opacity-50"
-                >
-                  {saving ? "Setting up..." : "Complete Setup"}
-                </button>
-              </div>
+                </Field>
+                <Checkbox
+                  checked={acknowledged}
+                  onChange={setAcknowledged}
+                  label="I understand Aeonvera provides health intelligence, not emergency medical care."
+                />
+                <SubmitButton loading={saving}>Complete Setup</SubmitButton>
+              </Form>
             </Card>
           </div>
         </PageContainer>

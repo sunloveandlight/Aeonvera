@@ -70,27 +70,27 @@ h1,
 h2,
 h3,
 h4 {
-  letter-spacing: -0.01em;
-  font-weight: 300;
+  letter-spacing: 0;
+  font-weight: 350;
   color: rgba(247, 247, 244, 0.94);
 }
 
 h1 {
   font-size: var(--text-6xl);
   line-height: 1.05;
-  letter-spacing: -0.022em;
+  letter-spacing: -0.012em;
 }
 
 h2 {
   font-size: var(--text-4xl);
   line-height: 1.1;
-  letter-spacing: -0.018em;
+  letter-spacing: -0.008em;
 }
 
 h3 {
   font-size: var(--text-2xl);
   line-height: 1.2;
-  letter-spacing: -0.012em;
+  letter-spacing: 0;
 }
 
 p {

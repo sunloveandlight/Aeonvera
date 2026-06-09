@@ -1,19 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Check } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
+import Page from "@/components/ui/Page";
+import Section from "@/components/ui/Section";
+import SectionTitle from "@/components/ui/SectionTitle";
+import Text from "@/components/ui/Text";
+import Motion from "@/components/motion/Motion";
+import PricingPlanCard, { type PricingPlan } from "@/components/pricing/PricingPlanCard";
 
 type Plan = "core" | "elite" | "sovereign";
 
-const PLANS: Array<{
-  id: Plan;
-  name: string;
-  price: string;
-  summary: string;
-  features: string[];
-  recommended?: boolean;
-}> = [
+const PLANS: PricingPlan[] = [
   {
     id: "core",
     name: "Core",
@@ -59,10 +57,12 @@ const PLANS: Array<{
 
 export default function PricingPage() {
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
+  const [checkoutMessage, setCheckoutMessage] = useState<string | null>(null);
 
   async function handleCheckout(plan: Plan) {
     try {
       setLoadingPlan(plan);
+      setCheckoutMessage(null);
 
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -80,95 +80,55 @@ export default function PricingPage() {
       window.location.assign(data.url);
     } catch (err) {
       console.error(err);
-      alert("Failed to start checkout.");
+      setCheckoutMessage(
+        err instanceof Error
+          ? err.message
+          : "Failed to start checkout. Please try again."
+      );
     } finally {
       setLoadingPlan(null);
     }
   }
 
   return (
-    <div className="text-white">
-      <section className="px-6 py-24 lg:px-8">
+    <Page className="text-white" density="compact">
+      <Section className="px-6 lg:px-8" intensity="low">
         <PageContainer>
-          <div className="mx-auto max-w-4xl text-center">
-            <p className="text-eyebrow">Pricing</p>
-            <h1 className="mt-5 text-5xl font-light leading-[1.05] md:text-6xl">
-              Choose the right level of longevity intelligence.
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/55">
+          <SectionTitle
+            eyebrow="Pricing"
+            title="Choose the right level of longevity intelligence."
+            align="center"
+          />
+          <Text
+            variant="secondary"
+            className="mx-auto mt-6 block max-w-2xl text-center text-lg leading-8"
+          >
               Start with a reliable baseline. Move into deeper support as your
               data, goals, and decision-making needs grow.
-            </p>
-          </div>
+          </Text>
+            {checkoutMessage && (
+              <div className="mx-auto mt-6 max-w-xl rounded-lg border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-sm leading-6 text-red-200/80">
+                {checkoutMessage}
+              </div>
+            )}
         </PageContainer>
-      </section>
+      </Section>
 
-      <section className="px-6 pb-24 lg:px-8">
+      <Section className="px-6 pb-24 lg:px-8" intensity="low">
         <PageContainer>
           <div className="grid gap-5 lg:grid-cols-3">
             {PLANS.map((plan) => (
-              <div
-                key={plan.id}
-                role="button"
-                tabIndex={loadingPlan === null ? 0 : -1}
-                aria-disabled={loadingPlan !== null}
-                onClick={() => {
-                  if (loadingPlan === null) handleCheckout(plan.id);
-                }}
-                onKeyDown={(event) => {
-                  if (loadingPlan !== null) return;
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    handleCheckout(plan.id);
-                  }
-                }}
-                className={`pricing-plan-card cursor-pointer rounded-lg border p-7 ${
-                  loadingPlan !== null ? "pointer-events-none opacity-60" : ""
-                } ${
-                  plan.recommended
-                    ? "pricing-plan-card-featured"
-                    : "border-white/10 bg-[#151517]"
-                }`}
-              >
-                <div className="min-h-[112px]">
-                  <div className="flex items-start justify-between gap-4">
-                    <h2 className="text-2xl font-light">{plan.name}</h2>
-                    {plan.recommended && (
-                      <span className="premium-status shrink-0 rounded-md px-3 py-1 text-xs font-medium">
-                        Recommended
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-4 text-sm leading-6 text-white/55">
-                    {plan.summary}
-                  </p>
-                </div>
-
-                <p className="mt-8 text-5xl font-light">
-                  {plan.price}
-                  <span className="text-base font-normal text-white/40"> / month</span>
-                </p>
-
-                <div className="mt-8 space-y-4">
-                  {plan.features.map((feature) => (
-                    <div key={feature} className="flex gap-3 text-sm leading-6 text-white/70">
-                      <Check size={17} className="mt-1 shrink-0 royal-text" />
-                      <span>{feature}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div
-                  className="premium-action mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {loadingPlan === plan.id ? "Processing..." : `Get ${plan.name}`}
-                  {loadingPlan !== plan.id && <ArrowRight size={16} />}
-                </div>
-              </div>
+              <Motion key={plan.id} type="rise">
+                <PricingPlanCard
+                  plan={plan}
+                  loadingPlan={loadingPlan}
+                  onCheckout={handleCheckout}
+                />
+              </Motion>
             ))}
           </div>
         </PageContainer>
-      </section>
-    </div>
+      </Section>
+    </Page>
   );
 }

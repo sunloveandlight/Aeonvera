@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import PageContainer from "@/components/ui/PageContainer";
+import {
+  Field as FormField,
+  NumberInput,
+  RadioGroup,
+  SearchInput,
+  Select as FormSelect,
+  Textarea,
+  Toggle,
+} from "@/components/ui/forms";
 
 type Answers = {
   // BASICS
@@ -75,7 +84,7 @@ type Step = {
 type Field = {
   key: keyof Answers;
   label: string;
-  type: "number" | "select" | "text";
+  type: "number" | "select" | "text" | "textarea";
   placeholder?: string;
   options?: { label: string; value: string }[];
   unit?: string;
@@ -430,14 +439,9 @@ const STEPS: Step[] = [
       {
         key: "supplements",
         label: "Key Supplements",
-        type: "select",
+        type: "textarea",
+        placeholder: "Vitamin D, magnesium, creatine...",
         optional: true,
-        options: [
-          { label: "None", value: "none" },
-          { label: "Basic (Vitamin D, Omega-3, Magnesium)", value: "vitamin d omega magnesium" },
-          { label: "Advanced (Creatine, NMN, Resveratrol)", value: "creatine nmn resveratrol" },
-          { label: "Comprehensive longevity stack", value: "nmn nad resveratrol rapamycin" },
-        ],
       },
     ],
   },
@@ -644,6 +648,7 @@ export default function AssessmentPage() {
   const [latestReport, setLatestReport] = useState<LatestReport | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [summarySearch, setSummarySearch] = useState("");
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -838,8 +843,23 @@ export default function AssessmentPage() {
   // Compute live completion percentage
   const completionPct = assessmentAccuracy(answers);
   const requiredComplete = isAssessmentComplete(answers);
+  const normalizedSummarySearch = summarySearch.trim().toLowerCase();
 
   if (!showForm && requiredComplete) {
+    const visibleSummaryGroups = SUMMARY_FIELDS.map((group) => ({
+      ...group,
+      fields: group.fields.filter((key) => {
+        if (!normalizedSummarySearch) return true;
+        return (
+          group.label.toLowerCase().includes(normalizedSummarySearch) ||
+          fieldLabel(key).toLowerCase().includes(normalizedSummarySearch) ||
+          String(displayValue(key, answers[key]) || "")
+            .toLowerCase()
+            .includes(normalizedSummarySearch)
+        );
+      }),
+    })).filter((group) => group.fields.length > 0);
+
     return (
       <div className="min-h-screen py-16">
         <PageContainer className="max-w-6xl">
@@ -905,8 +925,16 @@ export default function AssessmentPage() {
               </div>
             </div>
 
+            <SearchInput
+              value={summarySearch}
+              onChange={(event) => setSummarySearch(event.target.value)}
+              onClear={() => setSummarySearch("")}
+              placeholder="Search saved assessment"
+              className="h-11"
+            />
+
             <div className="grid gap-4 lg:grid-cols-5">
-              {SUMMARY_FIELDS.map((group) => (
+              {visibleSummaryGroups.map((group) => (
                 <div key={group.label} className="executive-panel-soft rounded-lg p-5">
                   <p className="micro-label mb-4">{group.label}</p>
                   <div className="space-y-3">
@@ -1000,7 +1028,7 @@ export default function AssessmentPage() {
               key={field.key}
               className={field.type === "select" && !field.options ? "md:col-span-2" : ""}
             >
-              {field.type === "select" ? (
+              {field.type === "select" || field.type === "textarea" ? (
                 <SelectField
                   field={field}
                   value={answers[field.key] || ""}
@@ -1089,8 +1117,7 @@ function InputField({
         )}
       </div>
       <div className="relative">
-        <input
-          type="number"
+        <NumberInput
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
@@ -1117,6 +1144,52 @@ function SelectField({
   value: string;
   onChange: (v: string) => void;
 }) {
+  if (field.key === "sex") {
+    return (
+      <FormField
+        label={field.label}
+        required={!field.optional}
+        className="gap-2"
+      >
+        <RadioGroup
+          name={field.key}
+          value={value}
+          onChange={onChange}
+          options={field.options || []}
+        />
+      </FormField>
+    );
+  }
+
+  if (field.key === "strength_training") {
+    return (
+      <FormField
+        label={field.label}
+        hint={value === "yes" ? "Resistance training is counted in your exercise profile." : undefined}
+        required
+      >
+        <Toggle
+          enabled={value === "yes"}
+          onChange={(enabled) => onChange(enabled ? "yes" : "no")}
+          label={value === "yes" ? "Regular strength training" : "No regular strength training"}
+        />
+      </FormField>
+    );
+  }
+
+  if (field.type === "textarea") {
+    return (
+      <FormField label={field.label} required={!field.optional}>
+        <Textarea
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={field.placeholder}
+          className="executive-input min-h-24 resize-none rounded-lg p-4 text-sm"
+        />
+      </FormField>
+    );
+  }
+
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between mb-3">
@@ -1130,25 +1203,16 @@ function SelectField({
         )}
       </div>
       <div className="relative">
-        <select
+        <FormSelect
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          options={[
+            { label: "Select...", value: "" },
+            ...(field.options || []),
+          ]}
           className="executive-input w-full rounded-lg py-3 pl-4 pr-12 text-sm appearance-none cursor-pointer"
           style={{ backgroundColor: "rgba(7,7,10,0.95)" }}
-        >
-          <option value="" className="bg-[#07070a] text-white/30">
-            Select...
-          </option>
-          {field.options?.map((opt) => (
-            <option
-              key={opt.value}
-              value={opt.value}
-              className="bg-[#07070a] text-white/80"
-            >
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        />
         <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-white/35">
           ↓
         </span>

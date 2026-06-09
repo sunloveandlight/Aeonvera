@@ -46,7 +46,10 @@ export async function proxy(req: NextRequest) {
   const isAuthPage = pathname.startsWith("/login");
   const isProtected =
     pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/onboarding");
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/assessment") ||
+    pathname.startsWith("/report") ||
+    pathname.startsWith("/success");
 
   if (!user && isProtected) {
     return NextResponse.redirect(new URL("/login", req.url));
@@ -60,5 +63,12 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/onboarding/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/login",
+    "/onboarding/:path*",
+    "/assessment/:path*",
+    "/report/:path*",
+    "/success",
+  ],
 };

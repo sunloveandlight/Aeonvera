@@ -6,9 +6,21 @@ import { cookies } from "next/headers";
 import { computeAdaptiveWeights } from "@/lib/personalization/adaptiveWeightEngine";
 import { buildConversationMemory } from "@/lib/memory/conversationMemoryEngine";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAI() {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("Missing OPENAI_API_KEY");
+  }
+
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey });
+  }
+
+  return openaiClient;
+}
 
 async function getSupabase() {
   const cookieStore = await cookies();
@@ -187,7 +199,7 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
     /**
      * STEP 6 — AI CALL
      */
-    const completion = await openai.chat.completions.create({
+    const completion = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {

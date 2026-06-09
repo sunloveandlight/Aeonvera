@@ -1,12 +1,18 @@
 "use client";
 
-import { FormEvent, Suspense, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import { ensureProfile } from "@/lib/auth/ensureProfile";
 import { isUserAllowed } from "@/lib/auth/permissions";
 import { supabase } from "@/lib/supabase/client";
+import {
+  Form,
+  FormField,
+  PasswordInput,
+  SubmitButton,
+  TextInput,
+} from "@/components/ui/forms";
 
 export default function LoginPage() {
   return (
@@ -26,8 +32,7 @@ function LoginInner() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  async function handleAuth(e: FormEvent) {
-    e.preventDefault();
+  async function handleAuth() {
     setLoading(true);
     setMessage(null);
 
@@ -98,34 +103,42 @@ function LoginInner() {
           </p>
         </div>
 
-        <form onSubmit={handleAuth} className="space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="h-12 w-full rounded-lg border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#c4a969]"
-            required
-          />
+        <Form onSubmit={handleAuth} className="space-y-4">
+          <FormField name="email" label="Email" required>
+            {({ value, onChange }) => (
+              <TextInput
+                type="email"
+                value={(value as string) ?? email}
+                onChange={(e) => {
+                  onChange(e.target.value);
+                  setEmail(e.target.value);
+                }}
+                placeholder="Email"
+                className="h-12 bg-[#151517] px-4 placeholder:text-white/30"
+                required
+              />
+            )}
+          </FormField>
 
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="h-12 w-full rounded-lg border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#c4a969]"
-            required
-          />
+          <FormField name="password" label="Password" required>
+            {({ value, onChange }) => (
+              <PasswordInput
+                value={(value as string) ?? password}
+                onChange={(e) => {
+                  onChange(e.target.value);
+                  setPassword(e.target.value);
+                }}
+                placeholder="Password"
+                className="h-12 bg-[#151517] px-4 placeholder:text-white/30"
+                required
+              />
+            )}
+          </FormField>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="premium-action inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? "Processing..." : isSignUpMode ? "Create account" : "Sign in"}
-            {!loading && <ArrowRight size={16} />}
-          </button>
-        </form>
+          <SubmitButton loading={loading}>
+            {isSignUpMode ? "Create account" : "Sign in"}
+          </SubmitButton>
+        </Form>
 
         {message && (
           <div className="mt-4 rounded-lg border border-white/12 bg-[#151517] p-4 text-sm text-white/60">
