@@ -84,14 +84,14 @@ function LoginInner() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-16 text-[var(--ink)]">
+    <main className="flex min-h-screen items-center justify-center px-6 py-16 text-white">
       <div className="premium-surface w-full max-w-md rounded-lg p-8">
         <div className="mb-10 text-center">
           <p className="text-sm font-medium royal-text">Aeonvera</p>
           <h1 className="mt-4 text-4xl font-semibold leading-tight">
             {isSignUpMode ? "Create your account." : "Welcome back."}
           </h1>
-          <p className="mt-4 text-sm leading-6 text-[rgba(38,51,73,0.62)]">
+          <p className="mt-4 text-sm leading-6 text-white/55">
             {isSignUpMode
               ? "Start your biological age assessment and build your healthspan baseline."
               : "Sign in to continue to your dashboard and reports."}
@@ -104,7 +104,7 @@ function LoginInner() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="h-12 w-full rounded-lg border border-[rgba(36,50,74,0.14)] bg-white/80 px-4 text-sm text-[var(--ink)] outline-none transition placeholder:text-[rgba(38,51,73,0.38)] focus:border-[#b18e4e]"
+            className="h-12 w-full rounded-lg border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#c4a969]"
             required
           />
 
@@ -113,7 +113,7 @@ function LoginInner() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="h-12 w-full rounded-lg border border-[rgba(36,50,74,0.14)] bg-white/80 px-4 text-sm text-[var(--ink)] outline-none transition placeholder:text-[rgba(38,51,73,0.38)] focus:border-[#b18e4e]"
+            className="h-12 w-full rounded-lg border border-white/12 bg-[#151517] px-4 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#c4a969]"
             required
           />
 
@@ -128,12 +128,12 @@ function LoginInner() {
         </form>
 
         {message && (
-          <div className="mt-4 rounded-lg border border-[rgba(36,50,74,0.12)] bg-white/75 p-4 text-sm text-[rgba(38,51,73,0.66)]">
+          <div className="mt-4 rounded-lg border border-white/12 bg-[#151517] p-4 text-sm text-white/60">
             {message}
           </div>
         )}
 
-        <div className="mt-8 text-center text-sm text-[rgba(38,51,73,0.58)]">
+        <div className="mt-8 text-center text-sm text-white/50">
           {isSignUpMode ? (
             <p>
               Already have an account?{" "}

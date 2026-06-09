@@ -460,18 +460,21 @@ body.aeonvera-overlay [data-aeonvera-input] {
 }
 
 .focus\:bg-white\/\[0\.03\]:focus {
-  background-color: rgba(255, 255, 255, 0.92) !important;
+  background-color: rgba(255, 255, 255, 0.055) !important;
 }
 
-.royal-gradient,
-.royal-gradient *,
-.premium-button-primary,
-.premium-button-primary *,
 .hero-stage,
 .hero-stage *,
 .bg-red-500\/\[0\.04\],
 .bg-yellow-500\/\[0\.04\] {
   color: #ffffff !important;
+}
+
+.royal-gradient,
+.royal-gradient *,
+.premium-button-primary,
+.premium-button-primary * {
+  color: #06070a !important;
 }
 
 .hero-stage .text-white\/70,
@@ -487,7 +490,7 @@ body.aeonvera-overlay [data-aeonvera-input] {
 .h-px.bg-white\/\[0\.04\],
 .h-1\.5.bg-white\/\[0\.04\],
 .h-2.bg-white\/10 {
-  background-color: rgba(36, 50, 74, 0.12) !important;
+  background-color: rgba(218, 220, 224, 0.1) !important;
 }
 
 .bg-green-400,
