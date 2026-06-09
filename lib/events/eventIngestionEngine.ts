@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { buildHealthState } from "@/lib/state/healthStateEngine";
+import { ingestWearableMetrics } from "@/lib/wearables/ingestWearableMetrics";
 import { runCoachRuntime } from "@/lib/runtime/coachRuntimeEngine";
+import type { WearableProvider } from "@/lib/wearables/types";
 
 export type AeonveraEventType =
   | "wearable.metric"
@@ -63,47 +64,31 @@ async function logEvent(event: AeonveraEvent) {
  */
 async function handleWearableMetric(event: AeonveraEvent) {
   const supabase = getSupabaseAdmin();
-  const { metricName, value } = event.payload || {};
+  const { provider = "manual", metricName, value } = event.payload || {};
 
   if (!metricName) {
     return { status: "error", reason: "missing_metric" };
   }
 
-  await supabase.from("wearable_metrics").insert({
-    user_id: event.userId,
-    metric_name: metricName,
-    value,
-    recorded_at: event.timestamp,
+  if (!["oura", "apple", "whoop"].includes(provider)) {
+    return { status: "error", reason: "unsupported_provider" };
+  }
+
+  const result = await ingestWearableMetrics({
+    supabase,
+    userId: event.userId,
+    provider: provider as WearableProvider,
+    metrics: [{
+      metricName,
+      value: Number(value),
+      timestamp: event.timestamp,
+    }],
   });
 
-  const { data } = await supabase
-    .from("wearable_metrics")
-    .select("*")
-    .eq("user_id", event.userId)
-    .order("recorded_at", { ascending: true })
-    .limit(200);
-
-  if (!data) return { status: "error", reason: "no_metrics" };
-
-  const state = buildHealthState(
-    data.map((m) => ({
-      userId: m.user_id,
-      metricName: m.metric_name,
-      value: m.value,
-      timestamp: m.recorded_at,
-    }))
-  );
-
-  if (!state) return { status: "error", reason: "state_failed" };
-
-  await supabase.from("health_states").insert({
-    user_id: event.userId,
-    state: state,
-    updated_at: state.updatedAt,
-  });
+  if (!result.state) return { status: "error", reason: "state_failed" };
 
   const runtime = await runCoachRuntime({
-    state,
+    state: result.state,
     predictions: {},
     adaptiveWeights: {},
     timeOfDay: new Date().getHours(),
@@ -114,6 +99,7 @@ async function handleWearableMetric(event: AeonveraEvent) {
   return {
     status: "processed",
     next: "runtime_executed",
+    ingestion: result,
     runtime,
   };
 }

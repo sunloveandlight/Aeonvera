@@ -63,9 +63,9 @@ export async function POST(req: NextRequest) {
     const normalized = normalizeHealthMetrics(
       rawMetrics.map((m) => ({
         userId: m.user_id,
-        source: m.provider,
+        source: m.provider || m.source || "manual",
         metricName: m.metric_name,
-        value: Number(m.metric_value),
+        value: Number(m.metric_value ?? m.value),
         timestamp: m.recorded_at,
       }))
     );

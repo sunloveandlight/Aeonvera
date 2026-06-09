@@ -42,6 +42,18 @@ type Alert = {
   created_at: string;
 };
 
+type HealthState = {
+  baseline?: Record<string, number>;
+  risk_scores?: Record<string, number>;
+  insights?: string[];
+  updated_at?: string;
+};
+
+type WearableMetricRow = {
+  provider?: string | null;
+  recorded_at?: string | null;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
 
@@ -55,6 +67,11 @@ export default function DashboardPage() {
   const [accuracyScore, setAccuracyScore] = useState<number>(40);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [generationMessage, setGenerationMessage] = useState<string | null>(null);
+  const [healthState, setHealthState] = useState<HealthState | null>(null);
+  const [wearableRows, setWearableRows] = useState<WearableMetricRow[]>([]);
+  const [wearableSyncing, setWearableSyncing] = useState<string | null>(null);
+  const [wearableMessage, setWearableMessage] = useState<string | null>(null);
+  const [applePayload, setApplePayload] = useState("");
   const [firstReportPrompt, setFirstReportPrompt] = useState(() => {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("firstReport") === "1";
@@ -85,7 +102,7 @@ export default function DashboardPage() {
 
         setProfile(profileData);
 
-        const [reportRes, assessmentRes, alertsRes] = await Promise.all([
+        const [reportRes, assessmentRes, alertsRes, stateRes, wearableRes] = await Promise.all([
           supabase
             .from("longevity_reports")
             .select("id, risk_score, primary_goal, created_at, report")
@@ -108,6 +125,21 @@ export default function DashboardPage() {
             .eq("user_id", user.id)
             .order("created_at", { ascending: false })
             .limit(3),
+
+          supabase
+            .from("health_states")
+            .select("baseline, risk_scores, insights, updated_at")
+            .eq("user_id", user.id)
+            .order("updated_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+
+          supabase
+            .from("wearable_metrics")
+            .select("provider, recorded_at")
+            .eq("user_id", user.id)
+            .order("recorded_at", { ascending: false })
+            .limit(50),
         ]);
 
         if (reportRes.data) setReport(reportRes.data);
@@ -150,6 +182,8 @@ export default function DashboardPage() {
         }
 
         if (alertsRes.data) setAlerts(alertsRes.data);
+        if (stateRes.data) setHealthState(stateRes.data);
+        if (wearableRes.data) setWearableRows(wearableRes.data);
 
         setLoading(false);
       } catch (err) {
@@ -218,6 +252,87 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleWearableSync(provider: "oura" | "whoop" | "apple") {
+    try {
+      setWearableSyncing(provider);
+      setWearableMessage(
+        provider === "apple" ? "Importing Apple Health..." : `Syncing ${provider.toUpperCase()}...`
+      );
+
+      const endpoint =
+        provider === "oura"
+          ? "/api/wearables/oura/sync"
+          : provider === "whoop"
+          ? "/api/wearables/whoop/sync"
+          : "/api/wearables/apple/import";
+
+      const body =
+        provider === "apple"
+          ? applePayload.trim()
+            ? JSON.parse(applePayload)
+            : null
+          : {};
+
+      if (provider === "apple" && !body) {
+        throw new Error("Paste Apple Health JSON before importing.");
+      }
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Wearable sync failed.");
+      }
+
+      if (data.state) {
+        setHealthState({
+          baseline: data.state.baseline,
+          risk_scores: data.state.riskScores,
+          insights: data.state.insights,
+          updated_at: data.state.updatedAt,
+        });
+      }
+
+      setWearableRows((prev) => [
+        ...Array.from({ length: data.inserted || 0 }, () => ({
+          provider,
+          recorded_at: new Date().toISOString(),
+        })),
+        ...prev,
+      ].slice(0, 50));
+
+      setAlerts((prev) => [
+        {
+          id: `${provider}-${Date.now()}`,
+          type: "wearable_sync",
+          severity: "low",
+          title: "Wearable data synced",
+          message: `${provider} data updated.`,
+          recommendation: "Your dashboard has been rebuilt from the latest wearable metrics.",
+          created_at: new Date().toISOString(),
+        },
+        ...prev,
+      ].slice(0, 3));
+
+      setWearableMessage(
+        `${provider.toUpperCase()} synced ${data.inserted} metrics and updated health state.`
+      );
+      if (provider === "apple") setApplePayload("");
+    } catch (err) {
+      console.error(err);
+      setWearableMessage(
+        err instanceof Error ? err.message : "Wearable sync failed."
+      );
+    } finally {
+      setWearableSyncing(null);
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6">
@@ -242,6 +357,16 @@ export default function DashboardPage() {
   const ageDelta = bioAge && assessmentAge ? bioAge - assessmentAge : null;
   const latestPriority =
     report?.report?.top_priorities?.[0] || report?.primary_goal || null;
+  const connectedProviders = Array.from(
+    new Set(wearableRows.map((row) => row.provider).filter(Boolean))
+  );
+  const latestWearableAt = wearableRows
+    .map((row) => row.recorded_at)
+    .filter(Boolean)
+    .sort()
+    .at(-1);
+  const wearableRisk = healthState?.risk_scores || {};
+  const wearableBaselines = healthState?.baseline || {};
 
   const bioAgeColor =
     ageDelta === null ? "text-white/70"
@@ -487,6 +612,136 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* ═══════════════════════════════════════
+            PHASE 2 — WEARABLE DATA
+        ═══════════════════════════════════════ */}
+        <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="max-w-xl">
+              <p className="text-[10px] uppercase tracking-normal text-white/20">
+                Phase 2 · Wearable Intelligence
+              </p>
+              <h2 className="mt-2 text-2xl font-light tracking-normal text-white/80">
+                Continuous health state
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-white/35">
+                Connect a device once, then let Aeonvera rebuild sleep, recovery,
+                activity, and cardiovascular state as new data arrives.
+              </p>
+              {wearableMessage && (
+                <p className="mt-3 text-sm leading-6 royal-text">{wearableMessage}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 text-right">
+              <div>
+                <p className="text-[9px] uppercase tracking-normal text-white/18">Sources</p>
+                <p className="mt-1 text-xl font-light text-white/70">
+                  {connectedProviders.length || 0}
+                </p>
+              </div>
+              <div>
+                <p className="text-[9px] uppercase tracking-normal text-white/18">Metrics</p>
+                <p className="mt-1 text-xl font-light text-white/70">
+                  {wearableRows.length}
+                </p>
+              </div>
+              <div>
+                <p className="text-[9px] uppercase tracking-normal text-white/18">Updated</p>
+                <p className="mt-1 text-sm font-light text-white/55">
+                  {latestWearableAt
+                    ? new Date(latestWearableAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })
+                    : "None"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_1fr_1.2fr]">
+            {(["oura", "whoop"] as const).map((provider) => (
+              <button
+                key={provider}
+                onClick={() => handleWearableSync(provider)}
+                disabled={Boolean(wearableSyncing)}
+                className="rounded-lg border border-white/[0.06] bg-[#151517] p-4 text-left transition hover:border-white/14 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                <p className="text-[10px] uppercase tracking-normal text-white/20">
+                  {provider === "oura" ? "Oura Ring" : "WHOOP"}
+                </p>
+                <p className="mt-2 text-sm text-white/65">
+                  {wearableSyncing === provider ? "Syncing..." : "Sync latest data"}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-white/30">
+                  Pulls sleep, recovery, strain, and activity metrics into health state.
+                </p>
+              </button>
+            ))}
+
+            <div className="rounded-lg border border-white/[0.06] bg-[#151517] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-normal text-white/20">
+                    Apple Health
+                  </p>
+                  <p className="mt-2 text-sm text-white/65">Import export JSON</p>
+                </div>
+                <button
+                  onClick={() => handleWearableSync("apple")}
+                  disabled={Boolean(wearableSyncing)}
+                  className="rounded-full royal-gradient px-4 py-2 text-[10px] uppercase tracking-normal text-white disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  {wearableSyncing === "apple" ? "Importing" : "Import"}
+                </button>
+              </div>
+              <textarea
+                value={applePayload}
+                onChange={(event) => setApplePayload(event.target.value)}
+                placeholder='{"records":[{"type":"HKQuantityTypeIdentifierStepCount","value":8400,"endDate":"2026-06-09T08:00:00Z"}]}'
+                className="mt-3 h-24 w-full resize-none rounded-md border border-white/[0.06] bg-black/20 p-3 text-xs leading-5 text-white/55 outline-none transition placeholder:text-white/16 focus:border-white/16"
+              />
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-4">
+            {[
+              ["Sleep", wearableRisk.sleep, wearableBaselines.sleep_hours ? `${wearableBaselines.sleep_hours}h` : "—"],
+              ["Recovery", wearableRisk.recovery, wearableBaselines.recovery_score ?? "—"],
+              ["Activity", wearableRisk.activity, wearableBaselines.daily_steps ? `${wearableBaselines.daily_steps}` : "—"],
+              ["Metabolic", wearableRisk.metabolic, wearableBaselines.blood_glucose ?? "—"],
+            ].map(([label, risk, baseline]) => (
+              <div
+                key={label}
+                className="rounded-lg border border-white/[0.05] bg-white/[0.018] p-4"
+              >
+                <p className="text-[9px] uppercase tracking-normal text-white/18">
+                  {label}
+                </p>
+                <div className="mt-2 flex items-end justify-between gap-3">
+                  <p className="text-xl font-light text-white/70">
+                    {typeof risk === "number" ? risk : "—"}
+                  </p>
+                  <p className="text-xs text-white/25">{baseline}</p>
+                </div>
+                <div className="mt-3 h-px bg-white/[0.06]">
+                  <div
+                    className="h-full royal-gradient"
+                    style={{ width: `${typeof risk === "number" ? risk : 0}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {healthState?.insights?.[0] && (
+            <p className="mt-4 text-xs leading-6 text-white/34">
+              {healthState.insights[0]}
+            </p>
+          )}
+        </div>
 
         {/* ═══════════════════════════════════════
             COACH ALERTS

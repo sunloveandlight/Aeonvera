@@ -64,6 +64,8 @@ function mapMetricName(
       switch (metricName) {
         case "sleep_duration":
           return "sleep_hours";
+        case "sleep_efficiency":
+          return "sleep_efficiency";
         case "readiness":
           return "recovery_score";
         case "activity_score":
@@ -87,6 +89,8 @@ function mapMetricName(
           return "sleep_hours";
         case "resting_heart_rate":
           return "resting_hr";
+        case "vo2max":
+          return "vo2max";
         default:
           return null;
       }
@@ -117,6 +121,10 @@ function mapMetricName(
           return "strain_score";
         case "sleep":
           return "sleep_hours";
+        case "resting_heart_rate":
+          return "resting_hr";
+        case "heart_rate_variability":
+          return "heart_rate_variability";
         default:
           return null;
       }
