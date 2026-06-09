@@ -299,15 +299,23 @@ export default function ReportPage() {
             <div className="pt-2">
               {bioAge ? (
                 <>
-                  <div className="flex items-end gap-6 mb-4">
-                    <p className={`text-6xl md:text-6xl font-light tracking-normal leading-none ${bioAgeColor}`}>
-                      {bioAge}
-                      <span className="text-white/20 text-3xl ml-2">yrs</span>
-                    </p>
+                  <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-6">
+                    <div>
+                      <p className="micro-label mb-2">Biological</p>
+                      <div className="flex items-baseline gap-3">
+                        <p className={`text-6xl font-light tracking-normal leading-none ${bioAgeColor}`}>
+                          {bioAge}
+                        </p>
+                        <span className="text-2xl font-light leading-none text-white/24">yrs</span>
+                      </div>
+                    </div>
                     {chronologicalAge && (
-                      <div className="mb-1">
-                        <p className="text-[9px] uppercase tracking-normal text-white/20 mb-1">Chronological</p>
-                        <p className="text-white/40 text-2xl font-light">{chronologicalAge}<span className="text-white/20 text-sm ml-1">yrs</span></p>
+                      <div className="min-w-[7rem] border-l border-white/[0.07] pl-5">
+                        <p className="micro-label mb-2">Chronological</p>
+                        <div className="flex items-baseline gap-2">
+                          <p className="text-3xl font-light leading-none text-white/58">{chronologicalAge}</p>
+                          <span className="text-sm leading-none text-white/24">yrs</span>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -424,7 +432,7 @@ export default function ReportPage() {
         <Card title="TOP INTERVENTION PRIORITIES">
           <div className="space-y-3">
             {report.top_priorities.map((p, i) => (
-              <div key={i} className="flex items-start gap-5 p-4 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition-colors duration-300">
+              <div key={i} className="flex items-start gap-5 rounded-lg border border-white/[0.04] bg-white/[0.02] p-4 transition-colors duration-300 hover:border-white/[0.08]">
                 <span className="royal-text text-sm font-light shrink-0 mt-0.5 tabular-nums">
                   {String(i + 1).padStart(2, "0")}
                 </span>
@@ -440,7 +448,7 @@ export default function ReportPage() {
         <Card title="90-DAY OPTIMIZATION PROTOCOL">
           <div className="space-y-3">
             {report["90_day_plan"].map((item, i) => (
-              <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.07] transition-colors duration-300 gap-4">
+              <div key={i} className="flex items-center justify-between gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] p-4 transition-colors duration-300 hover:border-white/[0.07]">
                 <div className="flex-1">
                   <p className="text-[9px] uppercase tracking-normal royal-text mb-1.5">
                     {item.category}

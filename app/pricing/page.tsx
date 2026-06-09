@@ -126,7 +126,7 @@ export default function PricingPage() {
                   loadingPlan !== null ? "pointer-events-none opacity-60" : ""
                 } ${
                   plan.recommended
-                    ? "border-white/20 royal-gradient-soft"
+                    ? "pricing-plan-card-featured"
                     : "border-white/10 bg-[#151517]"
                 }`}
               >

@@ -483,15 +483,23 @@ export default function DashboardPage() {
             {bioAge ? (
               <div className="flex h-full flex-col justify-between">
                 <div>
-                <div className="flex items-end gap-5 mb-4">
-                  <p className={`metric-display text-7xl md:text-8xl font-light tracking-normal leading-none ${bioAgeColor}`}>
-                    {bioAge}
-                    <span className="text-white/20 text-2xl ml-3">yrs</span>
-                  </p>
+                <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8">
+                  <div>
+                    <p className="micro-label mb-2">Biological</p>
+                    <div className="flex items-baseline gap-3">
+                      <p className={`metric-display text-7xl md:text-8xl font-light tracking-normal leading-none ${bioAgeColor}`}>
+                        {bioAge}
+                      </p>
+                      <span className="text-2xl font-light leading-none text-white/24">yrs</span>
+                    </div>
+                  </div>
                   {assessmentAge && (
-                    <div className="mb-1">
-                      <p className="micro-label mb-1">Chronological</p>
-                      <p className="text-white/50 text-2xl font-light">{assessmentAge}</p>
+                    <div className="min-w-[8rem] border-l border-white/[0.07] pl-5">
+                      <p className="micro-label mb-2">Chronological</p>
+                      <div className="flex items-baseline gap-2">
+                        <p className="text-3xl font-light leading-none text-white/58">{assessmentAge}</p>
+                        <span className="text-sm leading-none text-white/24">yrs</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -688,59 +696,71 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_1fr_1.2fr]">
+          <div className="mt-6 grid gap-4 lg:grid-cols-3">
             {(["oura", "whoop"] as const).map((provider) => (
-              <button
+              <div
                 key={provider}
-                onClick={() => handleWearableProviderAction(provider)}
-                disabled={Boolean(wearableSyncing)}
-                className="executive-panel-soft quiet-lift rounded-lg p-4 text-left disabled:cursor-not-allowed disabled:opacity-45"
+                className="executive-panel-soft flex min-h-[15.5rem] flex-col rounded-lg p-4"
               >
-                <p className="micro-label">
-                  {provider === "oura" ? "Oura Ring" : "WHOOP"}
-                </p>
-                <p className="mt-2 text-sm text-white/72">
-                  {wearableSyncing === provider
-                    ? "Syncing..."
-                    : connectedProviderSet.has(provider)
-                    ? "Sync latest data"
-                    : "Connect account"}
-                </p>
-                <p className="mt-2 text-xs leading-5 text-white/45">
-                  {connectedProviderSet.has(provider)
-                    ? "Pulls sleep, recovery, strain, and activity metrics into health state."
-                    : "Starts secure OAuth authorization and stores refreshable sync credentials."}
-                </p>
-                {connectedProviderSet.has(provider) && (
-                  <p className="mt-3 text-[9px] uppercase tracking-normal royal-text">
-                    Connected
-                  </p>
-                )}
-              </button>
-            ))}
-
-            <div className="executive-panel-soft rounded-lg p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
+                <div className="flex-1">
                   <p className="micro-label">
-                    Apple Health
+                    {provider === "oura" ? "Oura Ring" : "WHOOP"}
                   </p>
-                  <p className="mt-2 text-sm text-white/72">Import export JSON</p>
+                  <p className="mt-2 text-sm text-white/72">
+                    {wearableSyncing === provider
+                      ? "Syncing..."
+                      : connectedProviderSet.has(provider)
+                      ? "Ready to sync"
+                      : "Not connected"}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-white/45">
+                    {connectedProviderSet.has(provider)
+                      ? "Pulls sleep, recovery, strain, and activity metrics into health state."
+                      : "Starts secure OAuth authorization and stores refreshable sync credentials."}
+                  </p>
+                  {connectedProviderSet.has(provider) && (
+                    <p className="mt-3 text-[9px] uppercase tracking-normal text-white/38">
+                      Connected
+                    </p>
+                  )}
                 </div>
                 <button
-                  onClick={() => handleWearableSync("apple")}
+                  onClick={() => handleWearableProviderAction(provider)}
                   disabled={Boolean(wearableSyncing)}
-                  className="premium-action rounded-md px-4 py-2 text-[10px] uppercase tracking-normal disabled:cursor-not-allowed disabled:opacity-45"
+                  className="premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-normal disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  {wearableSyncing === "apple" ? "Importing" : "Import"}
+                  {wearableSyncing === provider
+                    ? "Syncing"
+                    : connectedProviderSet.has(provider)
+                    ? "Sync Data"
+                    : "Connect"}
                 </button>
               </div>
-              <textarea
-                value={applePayload}
-                onChange={(event) => setApplePayload(event.target.value)}
-                placeholder='{"records":[{"type":"HKQuantityTypeIdentifierStepCount","value":8400,"endDate":"2026-06-09T08:00:00Z"}]}'
-                className="executive-input mt-3 h-24 w-full resize-none rounded-md p-3 text-xs leading-5 placeholder:text-white/16"
-              />
+            ))}
+
+            <div className="executive-panel-soft flex min-h-[15.5rem] flex-col rounded-lg p-4">
+              <div className="flex-1">
+                <p className="micro-label">
+                  Apple Health
+                </p>
+                <p className="mt-2 text-sm text-white/72">Ready to import</p>
+                <p className="mt-2 text-xs leading-5 text-white/45">
+                  Paste a HealthKit export payload to add steps, sleep, and activity records.
+                </p>
+                <textarea
+                  value={applePayload}
+                  onChange={(event) => setApplePayload(event.target.value)}
+                  placeholder='{"records":[{"type":"HKQuantityTypeIdentifierStepCount","value":8400}]}'
+                  className="executive-input mt-4 h-16 w-full resize-none rounded-md p-3 text-xs leading-5 placeholder:text-white/16"
+                />
+              </div>
+              <button
+                onClick={() => handleWearableSync("apple")}
+                disabled={Boolean(wearableSyncing)}
+                className="premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-normal disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {wearableSyncing === "apple" ? "Importing" : "Import Data"}
+              </button>
             </div>
           </div>
 
