@@ -9,15 +9,12 @@ import {
 
 async function getSupabaseUser() {
   const cookieStore = await cookies();
-
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
+        getAll() { return cookieStore.getAll(); },
         setAll(cookiesToSet: any) {
           cookiesToSet.forEach(({ name, value, options }: any) => {
             cookieStore.set(name, value, options);
@@ -30,15 +27,8 @@ async function getSupabaseUser() {
 
 export async function POST() {
   try {
-    /**
-     * STEP 1 — AUTH
-     */
     const supabaseUser = await getSupabaseUser();
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabaseUser.auth.getUser();
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
 
     if (userError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -47,9 +37,6 @@ export async function POST() {
     const userId = user.id;
     const supabase = getSupabaseAdmin();
 
-    /**
-     * STEP 2 — FETCH LATEST ASSESSMENT
-     */
     const { data: assessment, error: assessmentError } = await supabase
       .from("longevity_assessments")
       .select("*")
@@ -60,55 +47,84 @@ export async function POST() {
 
     if (assessmentError || !assessment) {
       return NextResponse.json(
-        { error: "No assessment found. Complete your assessment first." },
+        { error: "No assessment found." },
         { status: 404 }
       );
     }
 
-    /**
-     * STEP 3 — PARSE + VALIDATE INPUT
-     */
-    const age = Number(assessment.age);
-    const height_cm = Number(assessment.height_cm);
-    const weight_kg = Number(assessment.weight_kg);
-    const sleep_hours = Number(assessment.sleep_hours);
-    const sleep_quality = Number(assessment.sleep_quality);
-    const exercise_days = Number(assessment.exercise_days);
-    const stress_level = Number(assessment.stress_level);
-
-    if (!age || !height_cm || !weight_kg) {
-      return NextResponse.json(
-        { error: "Assessment is missing required fields." },
-        { status: 400 }
-      );
-    }
+    const safeNum = (v: any): number | undefined => {
+      const n = Number(v);
+      return !isNaN(n) && v !== "" && v != null ? n : undefined;
+    };
 
     const input: AssessmentInput = {
-      age,
+      // Required
+      age: Number(assessment.age) || 30,
       sex: assessment.sex || "unknown",
-      height_cm,
-      weight_kg,
-      sleep_hours: sleep_hours || 7,
-      sleep_quality: sleep_quality || 5,
-      exercise_days: exercise_days || 0,
-      strength_training:
-        assessment.strength_training?.toLowerCase() === "yes",
+      height_cm: Number(assessment.height_cm) || 170,
+      weight_kg: Number(assessment.weight_kg) || 70,
+      sleep_hours: Number(assessment.sleep_hours) || 7,
+      sleep_quality: Number(assessment.sleep_quality) || 5,
+      exercise_days: Number(assessment.exercise_days) || 0,
+      strength_training: assessment.strength_training?.toLowerCase() === "yes",
       diet_type: assessment.diet_type || "standard",
       alcohol_use: assessment.alcohol_use || "none",
       smoking: assessment.smoking || "never",
-      stress_level: stress_level || 5,
+      stress_level: Number(assessment.stress_level) || 5,
       primary_goal: assessment.primary_goal || "",
+
+      // Cardiovascular
+      resting_hr: safeNum(assessment.resting_hr),
+      blood_pressure_systolic: safeNum(assessment.blood_pressure_systolic),
+      blood_pressure_diastolic: safeNum(assessment.blood_pressure_diastolic),
+      vo2_max: safeNum(assessment.vo2_max),
+      hrv: safeNum(assessment.hrv),
+
+      // Metabolic
+      fasting_glucose: safeNum(assessment.fasting_glucose),
+      hba1c: safeNum(assessment.hba1c),
+      total_cholesterol: safeNum(assessment.total_cholesterol),
+      ldl: safeNum(assessment.ldl),
+      hdl: safeNum(assessment.hdl),
+      triglycerides: safeNum(assessment.triglycerides),
+      fasting_insulin: safeNum(assessment.fasting_insulin),
+      hscrp: safeNum(assessment.hscrp),
+
+      // Body
+      body_fat_pct: safeNum(assessment.body_fat_pct),
+      waist_cm: safeNum(assessment.waist_cm),
+
+      // Sleep extras
+      recovery_quality: safeNum(assessment.recovery_quality),
+      screen_time_before_bed: assessment.screen_time_before_bed || undefined,
+
+      // Lifestyle
+      water_intake: assessment.water_intake || undefined,
+      fasting_type: assessment.fasting_type || undefined,
+      supplements: assessment.supplements || undefined,
+      sunlight_hours: assessment.sunlight_hours || undefined,
+      cold_exposure: assessment.cold_exposure || undefined,
+
+      // Mental
+      anxiety_level: safeNum(assessment.anxiety_level),
+      cognitive_score: safeNum(assessment.cognitive_score),
+      social_connection: safeNum(assessment.social_connection),
+      purpose_score: safeNum(assessment.purpose_score),
+
+      // Hormones
+      testosterone: safeNum(assessment.testosterone),
+      cortisol: safeNum(assessment.cortisol),
+
+      // Family
+      family_heart_disease: assessment.family_heart_disease || undefined,
+      family_cancer: assessment.family_cancer || undefined,
+      family_diabetes: assessment.family_diabetes || undefined,
+      family_longevity: assessment.family_longevity || undefined,
     };
 
-    /**
-     * STEP 4 — COMPUTE BIOLOGICAL AGE
-     */
     const result = computeBiologicalAge(input);
 
-    /**
-     * STEP 5 — SAVE TO PROFILES
-     */
-    const { error: updateError } = await supabase
+    await supabase
       .from("profiles")
       .update({
         biological_age: result.biologicalAge,
@@ -116,17 +132,7 @@ export async function POST() {
       })
       .eq("user_id", userId);
 
-    if (updateError) {
-      console.error("Failed to save biological age:", updateError.message);
-    }
-
-    /**
-     * STEP 6 — RETURN RESULT
-     */
-    return NextResponse.json({
-      success: true,
-      result,
-    });
+    return NextResponse.json({ success: true, result });
   } catch (err: any) {
     console.error("Biological age error:", err);
     return NextResponse.json(
