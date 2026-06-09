@@ -82,6 +82,19 @@ type Field = {
   optional?: boolean;
 };
 
+type SavedAssessment = Answers & {
+  created_at?: string;
+};
+
+type ProfileResult = {
+  biological_age: number | null;
+};
+
+type LatestReport = {
+  risk_score: number | null;
+  created_at: string | null;
+};
+
 const STEPS: Step[] = [
   {
     id: "basics",
@@ -565,6 +578,59 @@ const REQUIRED_FIELDS: (keyof Answers)[] = [
   "stress_level", "primary_goal",
 ];
 
+const OPTIONAL_KEYS = STEPS.flatMap((s) => s.fields.filter((f) => f.optional).map((f) => f.key));
+
+const SUMMARY_FIELDS: Array<{
+  label: string;
+  fields: Array<keyof Answers>;
+}> = [
+  { label: "Physical", fields: ["age", "sex", "height_cm", "weight_kg", "body_fat_pct", "waist_cm"] },
+  { label: "Sleep", fields: ["sleep_hours", "sleep_quality", "recovery_quality", "screen_time_before_bed"] },
+  { label: "Cardio", fields: ["resting_hr", "blood_pressure_systolic", "blood_pressure_diastolic", "vo2_max", "hrv"] },
+  { label: "Metabolic", fields: ["fasting_glucose", "hba1c", "ldl", "hdl", "triglycerides", "hscrp"] },
+  { label: "Lifestyle", fields: ["exercise_days", "strength_training", "diet_type", "smoking", "alcohol_use", "primary_goal"] },
+];
+
+function isAssessmentComplete(values: Answers) {
+  return REQUIRED_FIELDS.every((key) => values[key]?.trim());
+}
+
+function assessmentAccuracy(values: Answers) {
+  const filledOptional = OPTIONAL_KEYS.filter((key) => values[key]?.trim()).length;
+  return Math.min(100, 40 + Math.round((filledOptional / OPTIONAL_KEYS.length) * 60));
+}
+
+function firstIncompleteStep(values: Answers) {
+  const missingKey = REQUIRED_FIELDS.find((key) => !values[key]?.trim());
+  if (!missingKey) return 0;
+  const index = STEPS.findIndex((stepItem) =>
+    stepItem.fields.some((field) => field.key === missingKey)
+  );
+  return Math.max(0, index);
+}
+
+function fieldLabel(key: keyof Answers) {
+  return STEPS.flatMap((stepItem) => stepItem.fields).find((field) => field.key === key)?.label || key;
+}
+
+function displayValue(key: keyof Answers, value?: string) {
+  if (!value) return null;
+  const field = STEPS.flatMap((stepItem) => stepItem.fields).find((item) => item.key === key);
+  const optionLabel = field?.options?.find((option) => option.value === value)?.label;
+  return `${optionLabel || value}${field?.unit ? ` ${field.unit}` : ""}`;
+}
+
+function sanitizeAnswers(values: Answers) {
+  const payload: Answers = {};
+  for (const field of STEPS.flatMap((stepItem) => stepItem.fields)) {
+    const value = values[field.key];
+    if (value != null && value.trim() !== "") {
+      payload[field.key] = value;
+    }
+  }
+  return payload;
+}
+
 export default function AssessmentPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -572,16 +638,59 @@ export default function AssessmentPage() {
   const [processing, setProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState("");
   const [answers, setAnswers] = useState<Answers>({});
+  const [savedAssessment, setSavedAssessment] = useState<SavedAssessment | null>(null);
+  const [showForm, setShowForm] = useState(true);
+  const [profileResult, setProfileResult] = useState<ProfileResult | null>(null);
+  const [latestReport, setLatestReport] = useState<LatestReport | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) {
         router.replace("/login");
         return;
       }
       setUserId(user.id);
+
+      const [assessmentRes, profileRes, reportRes] = await Promise.all([
+        supabase
+          .from("longevity_assessments")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("biological_age")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("longevity_reports")
+          .select("risk_score, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+
+      if (profileRes.data) setProfileResult(profileRes.data);
+      if (reportRes.data) setLatestReport(reportRes.data);
+
+      if (assessmentRes.data) {
+        const loaded = assessmentRes.data as SavedAssessment;
+        setSavedAssessment(loaded);
+        setAnswers(loaded);
+
+        if (isAssessmentComplete(loaded)) {
+          setShowForm(false);
+        } else {
+          setStep(firstIncompleteStep(loaded));
+          setShowForm(true);
+        }
+      }
+
       setLoading(false);
     });
   }, [router]);
@@ -646,7 +755,7 @@ export default function AssessmentPage() {
 
       const { error: insertError } = await supabase
         .from("longevity_assessments")
-        .insert([{ user_id: userId, ...answers }]);
+        .insert([{ user_id: userId, ...sanitizeAnswers(answers) }]);
 
       if (insertError) {
         setValidationError("Failed to save. Please try again.");
@@ -688,7 +797,7 @@ export default function AssessmentPage() {
                 style={{ animationDuration: "1.5s" }}
               />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full royal-gradient" />
+                <div className="w-2 h-2 rounded-full bg-[rgb(var(--gold))]" />
               </div>
             </div>
           </div>
@@ -727,18 +836,101 @@ export default function AssessmentPage() {
   const progress = ((step + 1) / STEPS.length) * 100;
 
   // Compute live completion percentage
-  const filledOptional = Object.keys(answers).filter(
-    (k) => !REQUIRED_FIELDS.includes(k as keyof Answers) &&
-    answers[k as keyof Answers] &&
-    answers[k as keyof Answers]!.trim() !== ""
-  ).length;
-  const totalOptional = STEPS.flatMap((s) =>
-    s.fields.filter((f) => f.optional)
-  ).length;
-  const completionPct = Math.min(
-    100,
-    40 + Math.round((filledOptional / totalOptional) * 60)
-  );
+  const completionPct = assessmentAccuracy(answers);
+  const requiredComplete = isAssessmentComplete(answers);
+
+  if (!showForm && requiredComplete) {
+    return (
+      <div className="min-h-screen py-20">
+        <PageContainer className="max-w-6xl">
+          <div className="space-y-6">
+            <div className="executive-panel rounded-lg p-6 md:p-8">
+              <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p className="micro-label mb-4">Longevity Assessment</p>
+                  <h1 className="text-4xl md:text-5xl font-light tracking-normal text-white/90">
+                    Your assessment is complete.
+                  </h1>
+                  <p className="mt-4 max-w-2xl text-sm leading-7 text-white/45">
+                    Your saved profile is active. Review your inputs, update anything that changed,
+                    or return to the dashboard to generate fresh intelligence.
+                  </p>
+                  {savedAssessment?.created_at && (
+                    <p className="mt-4 text-[10px] uppercase tracking-normal text-white/30">
+                      Last updated {new Date(savedAssessment.created_at).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 text-right">
+                  <div className="executive-panel-soft rounded-lg p-4">
+                    <p className="micro-label mb-2">Bio Age</p>
+                    <p className="text-3xl font-light text-white/86">
+                      {profileResult?.biological_age ?? "—"}
+                    </p>
+                  </div>
+                  <div className="executive-panel-soft rounded-lg p-4">
+                    <p className="micro-label mb-2">Accuracy</p>
+                    <p className="text-3xl font-light text-white/86">{completionPct}%</p>
+                  </div>
+                  <div className="executive-panel-soft rounded-lg p-4">
+                    <p className="micro-label mb-2">Risk</p>
+                    <p className="text-3xl font-light text-white/86">
+                      {latestReport?.risk_score ?? "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-col gap-3 border-t border-white/[0.06] pt-6 sm:flex-row">
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="premium-action inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium"
+                >
+                  Open Dashboard
+                </button>
+                <button
+                  onClick={() => {
+                    setStep(0);
+                    setShowForm(true);
+                  }}
+                  className="premium-action-secondary inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium"
+                >
+                  Review or Update
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-5">
+              {SUMMARY_FIELDS.map((group) => (
+                <div key={group.label} className="executive-panel-soft rounded-lg p-5">
+                  <p className="micro-label mb-4">{group.label}</p>
+                  <div className="space-y-3">
+                    {group.fields.map((key) => {
+                      const value = displayValue(key, answers[key]);
+                      if (!value) return null;
+                      return (
+                        <div key={key}>
+                          <p className="text-[9px] uppercase tracking-normal text-white/25">
+                            {fieldLabel(key)}
+                          </p>
+                          <p className="mt-1 text-sm leading-5 text-white/70">{value}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </PageContainer>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen py-20">
@@ -793,9 +985,9 @@ export default function AssessmentPage() {
 
         {/* OPTIONAL BADGE */}
         {!currentStep.required && (
-          <div className="executive-panel-soft mb-6 inline-flex items-center gap-2 rounded-md px-4 py-2">
-            <div className="w-1.5 h-1.5 rounded-full royal-gradient" />
-            <span className="text-[10px] uppercase tracking-normal royal-text">
+          <div className="premium-status mb-6 inline-flex items-center gap-2 rounded-md px-4 py-2">
+            <div className="h-1.5 w-1.5 rounded-full bg-white/35" />
+            <span className="text-[10px] uppercase tracking-normal text-white/55">
               Optional — improves accuracy
             </span>
           </div>
@@ -837,7 +1029,7 @@ export default function AssessmentPage() {
           <button
             onClick={handleBack}
             disabled={step === 0}
-            className="px-6 py-3 rounded-md border border-white/[0.08] text-white/35 hover:text-white/65 hover:border-white/20 transition-all duration-300 text-[11px] uppercase tracking-normal disabled:opacity-0"
+            className="premium-action-secondary px-6 py-3 rounded-md transition-all duration-300 text-[11px] uppercase tracking-normal disabled:opacity-0"
           >
             Back
           </button>
@@ -846,7 +1038,7 @@ export default function AssessmentPage() {
             {!currentStep.required && step < STEPS.length - 1 && (
               <button
                 onClick={handleNext}
-                className="text-[10px] uppercase tracking-normal text-white/35 hover:text-white/60 transition-colors duration-300"
+                className="premium-action-ghost text-[10px] uppercase tracking-normal transition-colors duration-300"
               >
                 Skip →
               </button>
@@ -855,14 +1047,14 @@ export default function AssessmentPage() {
             {step < STEPS.length - 1 ? (
               <button
                 onClick={handleNext}
-                className="px-7 py-3 rounded-md border royal-border royal-text hover:border-white/25 hover:text-white/80 transition-all duration-300 text-[11px] uppercase tracking-normal"
+                className="premium-action px-7 py-3 rounded-md transition-all duration-300 text-[11px] uppercase tracking-normal"
               >
                 Continue
               </button>
             ) : (
               <button
                 onClick={submit}
-                className="px-8 py-3 rounded-md royal-gradient transition-all duration-300 text-[11px] uppercase tracking-normal"
+                className="premium-action px-8 py-3 rounded-md transition-all duration-300 text-[11px] uppercase tracking-normal"
               >
                 Analyze My Biology
               </button>

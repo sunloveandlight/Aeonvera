@@ -10,15 +10,15 @@ export default function DesignOverlayToggle() {
       onClick={toggle}
       className={`
         fixed bottom-5 left-5 z-[99999]
-        px-4 py-2 rounded-full
+        px-4 py-2 rounded-md
         text-[10px] uppercase tracking-normal
         border border-white/10
         backdrop-blur-xl
         transition-all duration-300
         ${
           enabled
-            ? "bg-white text-black"
-            : "bg-black/60 text-white/60 hover:text-white"
+            ? "premium-action"
+            : "premium-action-secondary"
         }
       `}
     >

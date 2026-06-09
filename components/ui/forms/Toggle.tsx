@@ -19,7 +19,7 @@ export default function Toggle({ enabled, onChange, label }: ToggleProps) {
         className={`
           w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300
           ${enabled
-            ? "royal-gradient border royal-border"
+            ? "border border-white/20 bg-white/[0.13]"
             : "bg-white/[0.06] border border-white/[0.08]"
           }
         `}
@@ -27,7 +27,7 @@ export default function Toggle({ enabled, onChange, label }: ToggleProps) {
         <div
           className={`
             w-4 h-4 rounded-full transition-all duration-300
-            ${enabled ? "translate-x-4 bg-white" : "translate-x-0 bg-white/40"}
+            ${enabled ? "translate-x-4 bg-white/90 shadow-[0_0_18px_rgba(255,255,255,0.18)]" : "translate-x-0 bg-white/40"}
           `}
         />
       </button>

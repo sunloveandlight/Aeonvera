@@ -418,12 +418,7 @@ export default function DashboardPage() {
       .map((connection) => connection.provider)
   );
 
-  const bioAgeColor =
-    ageDelta === null ? "text-white/70"
-    : ageDelta <= -3 ? "text-green-400"
-    : ageDelta <= 0 ? "text-emerald-400"
-    : ageDelta <= 4 ? "text-yellow-400"
-    : "text-red-400";
+  const bioAgeColor = "text-white/86";
 
   const hour = currentTime.getHours();
   const greeting =
@@ -432,15 +427,9 @@ export default function DashboardPage() {
   const systemStatus =
     !hasAssessment ? "UNINITIALIZED"
     : !bioAge ? "COMPUTING"
-    : ageDelta !== null && ageDelta <= 0 ? "OPTIMAL"
-    : ageDelta !== null && ageDelta <= 4 ? "ATTENTION REQUIRED"
-    : "INTERVENTION ADVISED";
-
-  const statusColor =
-    systemStatus === "OPTIMAL" ? "text-green-400"
-    : systemStatus === "ATTENTION REQUIRED" ? "text-yellow-400"
-    : systemStatus === "INTERVENTION ADVISED" ? "text-red-400"
-    : "text-white/30";
+    : ageDelta !== null && ageDelta <= 0 ? "STABLE"
+    : ageDelta !== null && ageDelta <= 4 ? "NEEDS REVIEW"
+    : "PRIORITY REVIEW";
 
   return (
     <PageContainer>
@@ -470,14 +459,9 @@ export default function DashboardPage() {
 
             {/* SYSTEM STATUS INDICATOR */}
             <div className="flex flex-col items-end gap-2">
-              <div className="executive-panel-soft flex items-center gap-2 rounded-full px-4 py-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${
-                  systemStatus === "OPTIMAL" ? "bg-green-400"
-                  : systemStatus === "ATTENTION REQUIRED" ? "bg-yellow-400"
-                  : systemStatus === "INTERVENTION ADVISED" ? "bg-red-400 animate-pulse"
-                  : "bg-white/20"
-                }`} />
-                <span className={`text-[9px] uppercase tracking-normal ${statusColor}`}>
+              <div className="premium-status-neutral flex items-center gap-2 rounded-md px-4 py-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-white/55 shadow-[0_0_16px_rgba(255,255,255,0.18)]" />
+                <span className="text-[9px] uppercase tracking-normal text-white/68">
                   {systemStatus}
                 </span>
               </div>
@@ -538,7 +522,7 @@ export default function DashboardPage() {
                   {accuracyScore < 70 && (
                     <button
                       onClick={() => router.push("/assessment")}
-                      className="mt-3 text-[9px] uppercase tracking-normal royal-text transition-colors duration-300 hover:text-white/80"
+                      className="premium-action-ghost mt-3 text-[9px] uppercase tracking-normal transition-colors duration-300"
                     >
                       Add lab data to improve →
                     </button>
@@ -566,11 +550,7 @@ export default function DashboardPage() {
               <div className="flex h-full flex-col justify-between">
                 <div>
                 <div className="flex items-end gap-3 mb-3">
-                  <p className={`metric-display text-6xl font-light tracking-normal leading-none ${
-                    report.risk_score <= 35 ? "text-green-400"
-                    : report.risk_score <= 65 ? "text-yellow-400"
-                    : "text-red-400"
-                  }`}>
+                  <p className="metric-display text-6xl font-light tracking-normal leading-none text-white/86">
                     {report.risk_score}
                     <span className="text-white/15 text-2xl ml-2">/ 100</span>
                   </p>
@@ -592,14 +572,14 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3 border-t border-white/[0.06] pt-5">
                   <button
                     onClick={() => router.push("/report")}
-                    className="px-4 py-2 rounded-md border royal-border royal-text transition-all duration-300 text-[10px] uppercase tracking-normal hover:border-white/25 hover:text-white/80"
+                    className="premium-action-secondary px-4 py-2 rounded-md transition-all duration-300 text-[10px] uppercase tracking-normal"
                   >
                     Open Report
                   </button>
                   <button
                     onClick={handleGenerateReport}
                     disabled={generatingReport}
-                    className="text-[10px] uppercase tracking-normal text-white/15 hover:text-white/40 transition-colors duration-300 disabled:opacity-30"
+                    className="premium-action-ghost text-[10px] uppercase tracking-normal transition-colors duration-300 disabled:opacity-30"
                   >
                     {generatingReport ? "Generating..." : "Regenerate"}
                   </button>
@@ -616,7 +596,7 @@ export default function DashboardPage() {
                   <button
                     onClick={handleGenerateReport}
                     disabled={generatingReport}
-                    className="px-6 py-2.5 rounded-md border royal-border royal-text hover:royal-border hover:royal-text transition-all duration-300 text-[10px] uppercase tracking-normal disabled:opacity-30"
+                    className="premium-action px-6 py-2.5 rounded-md transition-all duration-300 text-[10px] uppercase tracking-normal disabled:opacity-30"
                   >
                     {generatingReport ? "Generating..." : "Generate Intelligence Report"}
                   </button>
@@ -632,7 +612,7 @@ export default function DashboardPage() {
         {(generationMessage || hasAssessment) && (
           <div className={`rounded-lg border p-5 ${
             firstReportPrompt && !report
-              ? "royal-border royal-gradient-soft"
+              ? "border-white/20 royal-gradient-soft"
               : "executive-panel-soft"
           }`}>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -652,7 +632,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleGenerateReport}
                 disabled={!hasAssessment || generatingReport}
-                className="inline-flex h-11 items-center justify-center rounded-md royal-gradient px-5 text-sm font-medium transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="premium-action inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {generatingReport ? "Generating..." : report ? "Refresh intelligence" : "Generate report"}
               </button>
@@ -750,7 +730,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => handleWearableSync("apple")}
                   disabled={Boolean(wearableSyncing)}
-                  className="rounded-md royal-gradient px-4 py-2 text-[10px] uppercase tracking-normal disabled:cursor-not-allowed disabled:opacity-45"
+                  className="premium-action rounded-md px-4 py-2 text-[10px] uppercase tracking-normal disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   {wearableSyncing === "apple" ? "Importing" : "Import"}
                 </button>
@@ -813,28 +793,14 @@ export default function DashboardPage() {
               {alerts.map((alert) => (
                 <div
                   key={alert.id}
-                  className={`flex items-start gap-4 p-4 rounded-xl border ${
-                    alert.severity === "high"
-                      ? "border-red-500/15 bg-red-500/[0.04]"
-                      : alert.severity === "medium"
-                      ? "border-yellow-500/15 bg-yellow-500/[0.04]"
-                      : "border-white/[0.06] bg-white/[0.025]"
-                  }`}
+                  className="flex items-start gap-4 rounded-lg border border-white/[0.08] bg-white/[0.025] p-4"
                 >
-                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
-                    alert.severity === "high" ? "bg-red-400"
-                    : alert.severity === "medium" ? "bg-yellow-400"
-                    : "bg-white/30"
-                  }`} />
+                  <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white/35" />
                   <div className="flex-1">
                     <p className="text-white/70 text-sm font-light mb-1">{alert.title}</p>
                     <p className="text-white/40 text-xs leading-relaxed">{alert.recommendation}</p>
                   </div>
-                  <span className={`text-[9px] uppercase tracking-normal shrink-0 ${
-                    alert.severity === "high" ? "text-red-400/60"
-                    : alert.severity === "medium" ? "text-yellow-400/60"
-                    : "text-white/20"
-                  }`}>
+                  <span className="shrink-0 text-[9px] uppercase tracking-normal text-white/28">
                     {alert.severity}
                   </span>
                 </div>
@@ -866,7 +832,7 @@ export default function DashboardPage() {
             <p className="text-white/60 text-sm font-light">
               {hasAssessment ? "Update your assessment data" : "Start your assessment"}
             </p>
-            <p className="royal-text text-[10px] uppercase tracking-normal mt-3">
+            <p className="text-[10px] uppercase tracking-normal mt-3 text-white/42 group-hover:text-white/72 transition-colors">
               {hasAssessment ? "Retake →" : "Start →"}
             </p>
           </button>
@@ -881,7 +847,7 @@ export default function DashboardPage() {
             <p className="text-white/60 text-sm font-light">
               View your full biological profile and 90-day protocol
             </p>
-            <p className="royal-text text-[10px] uppercase tracking-normal mt-3">
+            <p className="text-[10px] uppercase tracking-normal mt-3 text-white/42 group-hover:text-white/72 transition-colors">
               Open report →
             </p>
           </button>
@@ -896,7 +862,7 @@ export default function DashboardPage() {
             <p className="text-white/60 text-sm font-light">
               {profile?.plan ? `${profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)} plan · ${profile.subscription_status}` : "Manage subscription"}
             </p>
-            <p className="royal-text text-[10px] uppercase tracking-normal mt-3">
+            <p className="text-[10px] uppercase tracking-normal mt-3 text-white/42 group-hover:text-white/72 transition-colors">
               Manage →
             </p>
           </button>

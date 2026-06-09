@@ -109,9 +109,24 @@ export default function PricingPage() {
             {PLANS.map((plan) => (
               <div
                 key={plan.id}
-                className={`rounded-lg border p-7 ${
+                role="button"
+                tabIndex={loadingPlan === null ? 0 : -1}
+                aria-disabled={loadingPlan !== null}
+                onClick={() => {
+                  if (loadingPlan === null) handleCheckout(plan.id);
+                }}
+                onKeyDown={(event) => {
+                  if (loadingPlan !== null) return;
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    handleCheckout(plan.id);
+                  }
+                }}
+                className={`pricing-plan-card cursor-pointer rounded-lg border p-7 ${
+                  loadingPlan !== null ? "pointer-events-none opacity-60" : ""
+                } ${
                   plan.recommended
-                    ? "royal-border royal-gradient-soft"
+                    ? "border-white/20 royal-gradient-soft"
                     : "border-white/10 bg-[#151517]"
                 }`}
               >
@@ -119,7 +134,7 @@ export default function PricingPage() {
                   <div className="flex items-start justify-between gap-4">
                     <h2 className="text-2xl font-semibold">{plan.name}</h2>
                     {plan.recommended && (
-                      <span className="shrink-0 rounded-md royal-gradient px-3 py-1 text-xs font-medium text-white">
+                      <span className="premium-status shrink-0 rounded-md px-3 py-1 text-xs font-medium">
                         Recommended
                       </span>
                     )}
@@ -143,18 +158,12 @@ export default function PricingPage() {
                   ))}
                 </div>
 
-                <button
-                  onClick={() => handleCheckout(plan.id)}
-                  disabled={loadingPlan !== null}
-                  className={`mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                    plan.recommended
-                      ? "royal-gradient text-white hover:opacity-95"
-                      : "border border-white/15 text-white/80 hover:border-white/30 hover:text-white"
-                  }`}
+                <div
+                  className="premium-action mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loadingPlan === plan.id ? "Processing..." : `Get ${plan.name}`}
                   {loadingPlan !== plan.id && <ArrowRight size={16} />}
-                </button>
+                </div>
               </div>
             ))}
           </div>

@@ -157,7 +157,7 @@ export default function OnboardingPage() {
                 <button
                   onClick={handleCompleteOnboarding}
                   disabled={saving}
-                  className="premium-button-primary h-14 w-full rounded-md font-medium transition hover:opacity-90 disabled:opacity-50"
+                  className="premium-action h-14 w-full rounded-md font-medium transition hover:opacity-90 disabled:opacity-50"
                 >
                   {saving ? "Initializing..." : "Complete Setup"}
                 </button>

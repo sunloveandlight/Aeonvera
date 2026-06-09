@@ -139,7 +139,7 @@ export default function HomePage() {
       <section className="px-6 pb-24 pt-24 lg:px-8 lg:pb-32 lg:pt-28">
         <div className="mx-auto grid max-w-7xl gap-14 lg:grid-cols-2 lg:items-center">
           <div>
-            <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-white/60">
+            <div className="premium-status mb-8 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm">
               <ShieldCheck size={16} className="royal-text" />
               Private longevity intelligence
             </div>
@@ -156,14 +156,14 @@ export default function HomePage() {
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <Link
                 href={authenticated ? "/dashboard" : "/login?mode=signup"}
-                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md royal-gradient px-6 text-sm font-medium text-white transition hover:opacity-95 sm:w-auto"
+                className="premium-action inline-flex h-12 w-full items-center justify-center gap-2 rounded-md px-6 text-sm font-medium transition hover:opacity-95 sm:w-auto"
               >
                 {authenticated ? "Open dashboard" : "Start assessment"}
                 <ArrowRight size={16} />
               </Link>
               <Link
                 href="/pricing"
-                className="inline-flex h-12 w-full items-center justify-center rounded-md border border-white/15 px-6 text-sm font-medium text-white/75 transition hover:border-white/25 hover:text-white sm:w-auto"
+                className="premium-action-secondary inline-flex h-12 w-full items-center justify-center rounded-md px-6 text-sm font-medium transition sm:w-auto"
               >
                 View plans
               </Link>
@@ -307,7 +307,7 @@ export default function HomePage() {
           </p>
           <Link
             href={authenticated ? "/assessment" : "/login?mode=signup"}
-            className="mt-9 inline-flex h-12 items-center justify-center gap-2 rounded-md royal-gradient px-6 text-sm font-medium text-white transition hover:opacity-95"
+            className="premium-action mt-9 inline-flex h-12 items-center justify-center gap-2 rounded-md px-6 text-sm font-medium transition hover:opacity-95"
           >
             {authenticated ? "Update assessment" : "Get started"}
             <ArrowRight size={16} />

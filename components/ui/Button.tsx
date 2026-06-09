@@ -34,7 +34,6 @@ export default function Button({
     `,
     secondary: `
       premium-button-secondary
-      hover:border-[rgba(55,38,103,0.22)]
       active:scale-[0.985]
     `,
   };

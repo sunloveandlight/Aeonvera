@@ -120,7 +120,7 @@ function LoginInner() {
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md royal-gradient text-sm font-medium text-white transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+            className="premium-action inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Processing..." : isSignUpMode ? "Create account" : "Sign in"}
             {!loading && <ArrowRight size={16} />}

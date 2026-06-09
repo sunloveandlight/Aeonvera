@@ -217,22 +217,9 @@ export default function ReportPage() {
   const chronologicalAge = assessment?.age ? Number(assessment.age) : null;
   const ageDelta = bioAge && chronologicalAge ? bioAge - chronologicalAge : null;
 
-  const bioAgeColor =
-    ageDelta === null ? "text-white/80"
-    : ageDelta <= -3 ? "text-green-400"
-    : ageDelta <= 0 ? "text-emerald-400"
-    : ageDelta <= 4 ? "text-yellow-400"
-    : "text-red-400";
-
-  const riskColor =
-    report.risk_score <= 35 ? "text-green-400"
-    : report.risk_score <= 65 ? "text-yellow-400"
-    : "text-red-400";
-
-  const riskBarColor =
-    report.risk_score <= 35 ? "bg-green-400"
-    : report.risk_score <= 65 ? "bg-yellow-400"
-    : "bg-red-400";
+  const bioAgeColor = "text-white/86";
+  const riskColor = "text-white/86";
+  const riskBarColor = "living-bar";
 
   const categoryLabel =
     ageDelta === null ? null
@@ -241,10 +228,7 @@ export default function ReportPage() {
     : ageDelta <= 4 ? "AVERAGE"
     : "NEEDS ATTENTION";
 
-  const accuracyColor =
-    accuracyScore >= 80 ? "text-green-400"
-    : accuracyScore >= 60 ? "text-yellow-400"
-    : "text-orange-400";
+  const accuracyColor = "text-white/78";
 
   return (
     <PageContainer>
@@ -272,7 +256,7 @@ export default function ReportPage() {
 
             <div className="flex flex-col items-end gap-3">
               {/* ACCURACY BADGE */}
-              <div className="flex items-center gap-3 px-4 py-2 rounded-full border border-white/[0.06] bg-white/[0.02]">
+              <div className="premium-status flex items-center gap-3 rounded-md px-4 py-2">
                 <div className="relative w-8 h-8">
                   <svg className="w-8 h-8 -rotate-90" viewBox="0 0 32 32">
                     <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
@@ -297,7 +281,7 @@ export default function ReportPage() {
               <button
                 onClick={handleRegenerate}
                 disabled={regenerating}
-                className="px-5 py-2 rounded-full border border-white/[0.08] text-white/20 hover:text-white/50 hover:border-white/20 transition-all duration-300 text-[10px] uppercase tracking-normal disabled:opacity-20"
+                className="premium-action-secondary px-5 py-2 rounded-md transition-all duration-300 text-[10px] uppercase tracking-normal disabled:opacity-20"
               >
                 {regenerating ? "Regenerating..." : "Regenerate Report"}
               </button>
@@ -329,13 +313,7 @@ export default function ReportPage() {
                   </div>
 
                   {ageDelta !== null && (
-                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${
-                      ageDelta < 0
-                        ? "border-green-500/20 bg-green-500/5"
-                        : ageDelta === 0
-                        ? "border-white/10 bg-white/[0.02]"
-                        : "border-orange-500/20 bg-orange-500/5"
-                    } mb-4`}>
+                    <div className="premium-status-neutral mb-4 inline-flex items-center gap-2 rounded-md px-3 py-1.5">
                       <span className={`text-xs ${bioAgeColor}`}>
                         {ageDelta < 0
                           ? `${Math.abs(ageDelta)} years younger than chronological age`
@@ -393,11 +371,7 @@ export default function ReportPage() {
                     <span className="text-[9px] uppercase tracking-normal text-white/20">
                       {key.replace(/_risk/g, "").replace(/_/g, " ")}
                     </span>
-                    <span className={`text-[10px] uppercase tracking-normal ${
-                      value === "low" ? "text-green-400"
-                      : value === "medium" ? "text-yellow-400"
-                      : "text-red-400"
-                    }`}>
+                    <span className="text-[10px] uppercase tracking-normal text-white/55">
                       {value}
                     </span>
                   </div>
@@ -424,8 +398,8 @@ export default function ReportPage() {
           <Card title="BIOLOGICAL STRENGTHS">
             <div className="space-y-3">
               {report.strengths.map((item, i) => (
-                <div key={i} className="flex items-start gap-3 p-4 rounded-xl bg-green-500/[0.05] border border-green-500/[0.08]">
-                  <span className="text-green-400 shrink-0 mt-0.5 text-sm">↑</span>
+                <div key={i} className="flex items-start gap-3 rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                  <span className="mt-0.5 shrink-0 text-sm text-white/45">↑</span>
                   <p className="text-white/60 text-sm leading-relaxed">{item}</p>
                 </div>
               ))}
@@ -435,8 +409,8 @@ export default function ReportPage() {
           <Card title="OPTIMIZATION TARGETS">
             <div className="space-y-3">
               {report.weaknesses.map((item, i) => (
-                <div key={i} className="flex items-start gap-3 p-4 rounded-xl bg-orange-500/[0.05] border border-orange-500/[0.08]">
-                  <span className="text-orange-400 shrink-0 mt-0.5 text-sm">↓</span>
+                <div key={i} className="flex items-start gap-3 rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                  <span className="mt-0.5 shrink-0 text-sm text-white/45">↓</span>
                   <p className="text-white/60 text-sm leading-relaxed">{item}</p>
                 </div>
               ))}
@@ -473,13 +447,7 @@ export default function ReportPage() {
                   </p>
                   <p className="text-white/60 text-sm leading-relaxed">{item.action}</p>
                 </div>
-                <span className={`shrink-0 text-[9px] px-3 py-1.5 rounded-full border uppercase tracking-normal ${
-                  item.impact === "high"
-                    ? "border-green-500/20 text-green-400 bg-green-500/[0.06]"
-                    : item.impact === "medium"
-                    ? "border-yellow-500/20 text-yellow-400 bg-yellow-500/[0.06]"
-                    : "border-white/[0.08] text-white/25 bg-white/[0.02]"
-                }`}>
+                <span className="premium-status shrink-0 rounded-md px-3 py-1.5 text-[9px] uppercase tracking-normal">
                   {item.impact}
                 </span>
               </div>
@@ -513,7 +481,7 @@ export default function ReportPage() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {missingFields.map((field, i) => (
-                    <span key={i} className="px-3 py-1 rounded-full border border-white/[0.06] text-white/30 text-[10px] uppercase tracking-normal">
+                    <span key={i} className="premium-status rounded-md px-3 py-1 text-[10px] uppercase tracking-normal">
                       {field}
                     </span>
                   ))}
