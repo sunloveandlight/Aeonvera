@@ -148,7 +148,7 @@ export default function HomePage() {
               Know your biological age. Improve it with precision.
             </h1>
 
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-[rgba(38,51,73,0.68)] md:text-xl">
+            <p className="mt-7 max-w-2xl text-lg leading-8 text-[rgba(28,39,51,0.68)] md:text-xl">
               Aeonvera gives you a decision-ready view of your healthspan:
               biological age, domain signals, risk context, and a practical plan.
             </p>

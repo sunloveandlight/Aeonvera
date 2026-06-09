@@ -11,27 +11,27 @@
   /* =========================
      CORE BACKGROUND SYSTEM
   ========================= */
-  --background: #070b14;
-  --ink: #07111f;
-  --ink-soft: #172238;
-  --slate: #24324a;
-  --slate-soft: #dce3ec;
-  --navy: #0d1b2f;
+  --background: #f4f2ec;
+  --ink: #0b0f14;
+  --ink-soft: #1c2733;
+  --slate: #334150;
+  --slate-soft: #e3e0d8;
+  --navy: #111827;
   --cream: #fbfaf7;
-  --pearl: #f6f3ec;
-  --line: #d9d4ca;
+  --pearl: #ffffff;
+  --line: #d7d2c8;
 
   /* =========================
      ACCENT SYSTEM
   ========================= */
   --surface: 255, 255, 255;
-  --surface-soft: 248, 246, 240;
-  --muted: 92, 102, 120;
-  --royal: 55, 38, 103;
-  --gold: 177, 142, 78;
-  --silver: 213, 220, 229;
+  --surface-soft: 250, 249, 245;
+  --muted: 88, 96, 105;
+  --royal: 20, 83, 68;
+  --gold: 172, 139, 82;
+  --silver: 219, 222, 224;
   --accent: var(--royal);
-  --success: 47, 125, 104;
+  --success: 20, 120, 92;
 
   /* =========================
      TYPOGRAPHY SCALE
@@ -72,7 +72,6 @@ h3,
 h4 {
   letter-spacing: 0;
   font-weight: 300;
-  color: rgba(255, 255, 255, 0.92);
   color: var(--ink);
 }
 
@@ -94,7 +93,33 @@ h3 {
 p {
   font-size: var(--text-md);
   line-height: 1.75;
-  color: rgba(7, 17, 31, 0.68);
+  color: rgba(28, 39, 51, 0.68);
+}
+
+.premium-surface h1,
+.premium-surface h2,
+.premium-surface h3,
+.premium-surface h4,
+[data-surface] h1,
+[data-surface] h2,
+[data-surface] h3,
+[data-surface] h4,
+[class*="bg-[#151517]"] h1,
+[class*="bg-[#151517]"] h2,
+[class*="bg-[#151517]"] h3,
+[class*="bg-[#151517]"] h4,
+.bg-white h1,
+.bg-white h2,
+.bg-white h3,
+.bg-white h4 {
+  color: var(--ink);
+}
+
+.premium-surface p,
+[data-surface] p,
+[class*="bg-[#151517]"] p,
+.bg-white p {
+  color: rgba(23, 34, 56, 0.68);
 }
 
 /* Subtle text helpers */
@@ -121,10 +146,10 @@ body::before {
   pointer-events: none;
 
   background:
-    radial-gradient(circle at 10% 0%, rgba(var(--royal), 0.22), transparent 30%),
-    radial-gradient(circle at 86% 4%, rgba(var(--gold), 0.13), transparent 26%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 24%),
-    linear-gradient(135deg, rgba(24, 34, 58, 0.72), transparent 46%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), transparent 22%),
+    radial-gradient(circle at 12% 0%, rgba(var(--royal), 0.075), transparent 28%),
+    radial-gradient(circle at 88% 10%, rgba(var(--gold), 0.08), transparent 30%),
+    linear-gradient(135deg, rgba(17, 24, 39, 0.045), transparent 45%),
     var(--background);
 }
 
@@ -134,10 +159,9 @@ body::after {
 
 .hero-stage {
   background:
-    linear-gradient(145deg, rgba(13, 27, 47, 0.97), rgba(36, 50, 74, 0.94)),
-    radial-gradient(circle at 18% 18%, rgba(var(--royal), 0.28), transparent 32%),
-    linear-gradient(135deg, rgba(var(--gold), 0.2), transparent 36%);
-  box-shadow: 0 24px 80px rgba(13, 27, 47, 0.18);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(250, 249, 245, 0.92)),
+    linear-gradient(135deg, rgba(var(--royal), 0.075), transparent 40%);
+  box-shadow: 0 24px 70px rgba(11, 15, 20, 0.1);
 }
 
 .hero-stage::before {
@@ -146,15 +170,15 @@ body::after {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, transparent, rgba(var(--gold), 0.16), transparent),
+    linear-gradient(90deg, transparent, rgba(var(--gold), 0.12), transparent),
     repeating-linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.05) 0,
-      rgba(255, 255, 255, 0.05) 1px,
+      rgba(17, 24, 39, 0.045) 0,
+      rgba(17, 24, 39, 0.045) 1px,
       transparent 1px,
       transparent 96px
     );
-  opacity: 0.32;
+  opacity: 0.24;
 }
 
 .hero-pulse {
@@ -225,10 +249,10 @@ body::after {
 .premium-surface {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(36, 50, 74, 0.11);
-  background: rgba(var(--surface), 0.9);
-  box-shadow: 0 26px 90px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(18px);
+  border: 1px solid rgba(17, 24, 39, 0.1);
+  background: rgba(var(--surface), 0.92);
+  box-shadow: 0 18px 54px rgba(11, 15, 20, 0.08);
+  backdrop-filter: blur(14px);
 }
 
 .premium-surface::before {
@@ -251,9 +275,9 @@ body::after {
 }
 
 .premium-button-primary {
-  background: linear-gradient(135deg, #07111f, rgb(var(--royal)) 66%, rgb(var(--gold)));
+  background: #0b0f14;
   color: #ffffff;
-  box-shadow: 0 14px 36px rgba(55, 38, 103, 0.18);
+  box-shadow: 0 14px 34px rgba(11, 15, 20, 0.18);
 }
 
 .premium-button-secondary {
@@ -264,14 +288,14 @@ body::after {
 }
 
 .royal-gradient {
-  background: linear-gradient(135deg, #07111f, rgb(var(--royal)) 68%, rgb(var(--gold)));
+  background: #0b0f14;
   color: #ffffff;
 }
 
 .royal-gradient-soft {
   background:
-    linear-gradient(135deg, rgba(var(--royal), 0.08), rgba(var(--gold), 0.11)),
-    rgba(255, 255, 255, 0.72);
+    linear-gradient(135deg, rgba(var(--royal), 0.07), rgba(var(--gold), 0.055)),
+    rgba(255, 255, 255, 0.84);
 }
 
 .royal-text {
@@ -326,14 +350,14 @@ body.aeonvera-overlay [data-aeonvera-input] {
 .text-white\/80,
 .text-white\/75,
 .text-white\/70 {
-  color: rgba(7, 17, 31, 0.92) !important;
+  color: rgba(11, 15, 20, 0.9) !important;
 }
 
 .text-white\/65,
 .text-white\/60,
 .text-white\/55,
 .text-white\/50 {
-  color: rgba(23, 34, 56, 0.74) !important;
+  color: rgba(28, 39, 51, 0.68) !important;
 }
 
 .text-white\/45,
@@ -342,18 +366,18 @@ body.aeonvera-overlay [data-aeonvera-input] {
 .text-white\/34,
 .text-white\/32,
 .text-white\/30 {
-  color: rgba(23, 34, 56, 0.58) !important;
+  color: rgba(28, 39, 51, 0.5) !important;
 }
 
 .text-white\/25,
 .text-white\/20,
 .text-white\/18,
 .text-white\/15 {
-  color: rgba(23, 34, 56, 0.44) !important;
+  color: rgba(28, 39, 51, 0.38) !important;
 }
 
 .text-white\/10 {
-  color: rgba(23, 34, 56, 0.3) !important;
+  color: rgba(28, 39, 51, 0.28) !important;
 }
 
 .text-black {
@@ -388,6 +412,78 @@ body.aeonvera-overlay [data-aeonvera-input] {
 .bg-white\/\[0\.02\],
 .bg-white\/\[0\.018\] {
   background-color: rgba(255, 255, 255, 0.84) !important;
+}
+
+.premium-surface .text-white,
+.premium-surface .text-white\/90,
+.premium-surface .text-white\/80,
+.premium-surface .text-white\/75,
+.premium-surface .text-white\/70,
+[data-surface] .text-white,
+[data-surface] .text-white\/90,
+[data-surface] .text-white\/80,
+[data-surface] .text-white\/75,
+[data-surface] .text-white\/70,
+[class*="bg-[#151517]"] .text-white,
+[class*="bg-[#151517]"] .text-white\/90,
+[class*="bg-[#151517]"] .text-white\/80,
+[class*="bg-[#151517]"] .text-white\/75,
+[class*="bg-[#151517]"] .text-white\/70,
+.bg-white .text-white,
+.bg-white\/90 .text-white,
+.bg-white\/10 .text-white {
+  color: rgba(7, 17, 31, 0.92) !important;
+}
+
+.premium-surface .text-white\/65,
+.premium-surface .text-white\/60,
+.premium-surface .text-white\/55,
+.premium-surface .text-white\/50,
+[data-surface] .text-white\/65,
+[data-surface] .text-white\/60,
+[data-surface] .text-white\/55,
+[data-surface] .text-white\/50,
+[class*="bg-[#151517]"] .text-white\/65,
+[class*="bg-[#151517]"] .text-white\/60,
+[class*="bg-[#151517]"] .text-white\/55,
+[class*="bg-[#151517]"] .text-white\/50 {
+  color: rgba(23, 34, 56, 0.74) !important;
+}
+
+.premium-surface .text-white\/45,
+.premium-surface .text-white\/40,
+.premium-surface .text-white\/35,
+.premium-surface .text-white\/34,
+.premium-surface .text-white\/32,
+.premium-surface .text-white\/30,
+[data-surface] .text-white\/45,
+[data-surface] .text-white\/40,
+[data-surface] .text-white\/35,
+[data-surface] .text-white\/34,
+[data-surface] .text-white\/32,
+[data-surface] .text-white\/30,
+[class*="bg-[#151517]"] .text-white\/45,
+[class*="bg-[#151517]"] .text-white\/40,
+[class*="bg-[#151517]"] .text-white\/35,
+[class*="bg-[#151517]"] .text-white\/34,
+[class*="bg-[#151517]"] .text-white\/32,
+[class*="bg-[#151517]"] .text-white\/30 {
+  color: rgba(23, 34, 56, 0.58) !important;
+}
+
+.premium-surface .text-white\/25,
+.premium-surface .text-white\/20,
+.premium-surface .text-white\/18,
+.premium-surface .text-white\/15,
+[data-surface] .text-white\/25,
+[data-surface] .text-white\/20,
+[data-surface] .text-white\/18,
+[data-surface] .text-white\/15,
+[class*="bg-[#151517]"] .text-white\/25,
+[class*="bg-[#151517]"] .text-white\/20,
+[class*="bg-[#151517]"] .text-white\/18,
+[class*="bg-[#151517]"] .text-white\/15 {
+  color: rgba(23, 34, 56, 0.44) !important;
 }
 
 [class*="bg-[#151517]"],

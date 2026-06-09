@@ -95,7 +95,7 @@ export default function PricingPage() {
             <h1 className="mt-5 text-5xl font-semibold leading-[1.05] md:text-6xl">
               Choose the right level of longevity intelligence.
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[rgba(38,51,73,0.64)]">
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[rgba(28,39,51,0.68)]">
               Start with a reliable baseline. Move into deeper support as your
               data, goals, and decision-making needs grow.
             </p>
