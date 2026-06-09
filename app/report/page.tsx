@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabase/client";
 import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import type { BiologicalAgeResult } from "@/lib/longevity/biologicalAgeEngine";
 
 type ReportData = {
   risk_score: number;
@@ -31,8 +30,67 @@ type ReportData = {
 type ProfileData = {
   display_name: string | null;
   biological_age: number | null;
-  date_of_birth: string | null;
 };
+
+type AssessmentData = {
+  age: string;
+  // cardiovascular
+  resting_hr?: string;
+  blood_pressure_systolic?: string;
+  blood_pressure_diastolic?: string;
+  vo2_max?: string;
+  hrv?: string;
+  // metabolic
+  fasting_glucose?: string;
+  hba1c?: string;
+  ldl?: string;
+  hdl?: string;
+  triglycerides?: string;
+  fasting_insulin?: string;
+  hscrp?: string;
+  // body
+  body_fat_pct?: string;
+  waist_cm?: string;
+  // lifestyle
+  sleep_hours?: string;
+  sleep_quality?: string;
+  exercise_days?: string;
+  strength_training?: string;
+  diet_type?: string;
+  smoking?: string;
+  alcohol_use?: string;
+  stress_level?: string;
+  // mental
+  anxiety_level?: string;
+  social_connection?: string;
+  purpose_score?: string;
+  // family
+  family_longevity?: string;
+  family_heart_disease?: string;
+  family_diabetes?: string;
+};
+
+const OPTIONAL_FIELDS: { key: keyof AssessmentData; label: string }[] = [
+  { key: "resting_hr", label: "Resting Heart Rate" },
+  { key: "blood_pressure_systolic", label: "Blood Pressure" },
+  { key: "vo2_max", label: "VO2 Max" },
+  { key: "hrv", label: "HRV" },
+  { key: "fasting_glucose", label: "Fasting Glucose" },
+  { key: "hba1c", label: "HbA1c" },
+  { key: "ldl", label: "LDL Cholesterol" },
+  { key: "hdl", label: "HDL Cholesterol" },
+  { key: "triglycerides", label: "Triglycerides" },
+  { key: "fasting_insulin", label: "Fasting Insulin" },
+  { key: "hscrp", label: "hsCRP Inflammation" },
+  { key: "body_fat_pct", label: "Body Fat %" },
+  { key: "waist_cm", label: "Waist Circumference" },
+  { key: "anxiety_level", label: "Anxiety Level" },
+  { key: "social_connection", label: "Social Connection" },
+  { key: "purpose_score", label: "Purpose Score" },
+  { key: "family_longevity", label: "Family Longevity" },
+  { key: "family_heart_disease", label: "Family Heart Disease" },
+  { key: "family_diabetes", label: "Family Diabetes" },
+];
 
 export default function ReportPage() {
   const router = useRouter();
@@ -40,26 +98,19 @@ export default function ReportPage() {
   const [report, setReport] = useState<ReportData | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [bioAge, setBioAge] = useState<number | null>(null);
-  const [assessment, setAssessment] = useState<any | null>(null);
+  const [assessment, setAssessment] = useState<AssessmentData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
+  const [accuracyScore, setAccuracyScore] = useState(40);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { router.replace("/login"); return; }
 
-        if (!user) {
-          router.replace("/login");
-          return;
-        }
-
-        /**
-         * FETCH ALL DATA IN PARALLEL
-         */
         const [reportRes, profileRes, assessmentRes] = await Promise.all([
           supabase
             .from("longevity_reports")
@@ -68,13 +119,11 @@ export default function ReportPage() {
             .order("created_at", { ascending: false })
             .limit(1)
             .single(),
-
           supabase
             .from("profiles")
-            .select("display_name, biological_age, date_of_birth")
+            .select("display_name, biological_age")
             .eq("user_id", user.id)
             .single(),
-
           supabase
             .from("longevity_assessments")
             .select("*")
@@ -84,22 +133,32 @@ export default function ReportPage() {
             .single(),
         ]);
 
-        if (reportRes.data) {
-          setReport(reportRes.data.report as ReportData);
-        }
-
+        if (reportRes.data) setReport(reportRes.data.report as ReportData);
         if (profileRes.data) {
           setProfile(profileRes.data);
           setBioAge(profileRes.data.biological_age);
         }
-
         if (assessmentRes.data) {
-          setAssessment(assessmentRes.data);
+          setAssessment(assessmentRes.data as AssessmentData);
+
+          // Compute accuracy score from filled optional fields
+          const filled = OPTIONAL_FIELDS.filter((f) => {
+            const val = assessmentRes.data[f.key];
+            return val != null && val !== "" && val !== undefined;
+          });
+          const missing = OPTIONAL_FIELDS.filter((f) => {
+            const val = assessmentRes.data[f.key];
+            return !val || val === "";
+          });
+          const score = Math.min(
+            100,
+            40 + Math.round((filled.length / OPTIONAL_FIELDS.length) * 60)
+          );
+          setAccuracyScore(score);
+          setMissingFields(missing.slice(0, 6).map((f) => f.label));
         }
 
-        if (!reportRes.data) {
-          setError("No report found. Complete your assessment first.");
-        }
+        if (!reportRes.data) setError("No report found. Complete your assessment first.");
       } catch {
         setError("Failed to load intelligence report.");
       } finally {
@@ -113,23 +172,12 @@ export default function ReportPage() {
   async function handleRegenerate() {
     try {
       setRegenerating(true);
-
-      await fetch("/api/longevity/biological-age", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      const res = await fetch("/api/longevity/report", {
-        method: "POST",
-        credentials: "include",
-      });
-
+      await fetch("/api/longevity/biological-age", { method: "POST", credentials: "include" });
+      const res = await fetch("/api/longevity/report", { method: "POST", credentials: "include" });
       const data = await res.json();
-
       if (res.ok && data.report?.report) {
         setReport(data.report.report as ReportData);
       }
-
       window.location.reload();
     } catch (err) {
       console.error(err);
@@ -140,12 +188,12 @@ export default function ReportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <div className="relative mb-8">
-          <div className="w-16 h-16 rounded-full border border-white/10" />
-          <div className="absolute inset-0 w-16 h-16 rounded-full border-t border-[rgba(212,175,55,0.6)] animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6">
+        <div className="relative w-16 h-16">
+          <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
+          <div className="absolute inset-0 rounded-full border-t border-[rgba(212,175,55,0.6)] animate-spin" />
         </div>
-        <p className="text-white/30 text-xs tracking-[0.4em] uppercase">
+        <p className="text-white/20 text-[10px] tracking-[0.5em] uppercase">
           Loading Intelligence Report
         </p>
       </div>
@@ -156,11 +204,9 @@ export default function ReportPage() {
     return (
       <PageContainer>
         <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="text-center max-w-md">
-            <p className="text-white/20 text-xs uppercase tracking-[0.4em] mb-6">
-              No Report Found
-            </p>
-            <p className="text-white/50 mb-8">{error}</p>
+          <div className="text-center max-w-md space-y-6">
+            <p className="text-white/20 text-xs uppercase tracking-[0.4em]">No Report Found</p>
+            <p className="text-white/40 text-sm">{error}</p>
             <Button href="/assessment">Start Assessment</Button>
           </div>
         </div>
@@ -169,68 +215,99 @@ export default function ReportPage() {
   }
 
   const chronologicalAge = assessment?.age ? Number(assessment.age) : null;
-  const ageDelta =
-    bioAge && chronologicalAge ? bioAge - chronologicalAge : null;
+  const ageDelta = bioAge && chronologicalAge ? bioAge - chronologicalAge : null;
 
   const bioAgeColor =
-    ageDelta === null
-      ? "text-white/80"
-      : ageDelta <= -3
-      ? "text-green-400"
-      : ageDelta <= 0
-      ? "text-emerald-400"
-      : ageDelta <= 4
-      ? "text-yellow-400"
-      : "text-red-400";
+    ageDelta === null ? "text-white/80"
+    : ageDelta <= -3 ? "text-green-400"
+    : ageDelta <= 0 ? "text-emerald-400"
+    : ageDelta <= 4 ? "text-yellow-400"
+    : "text-red-400";
 
   const riskColor =
-    report.risk_score <= 35
-      ? "text-green-400"
-      : report.risk_score <= 65
-      ? "text-yellow-400"
-      : "text-red-400";
+    report.risk_score <= 35 ? "text-green-400"
+    : report.risk_score <= 65 ? "text-yellow-400"
+    : "text-red-400";
 
   const riskBarColor =
-    report.risk_score <= 35
-      ? "bg-green-400"
-      : report.risk_score <= 65
-      ? "bg-yellow-400"
-      : "bg-red-400";
+    report.risk_score <= 35 ? "bg-green-400"
+    : report.risk_score <= 65 ? "bg-yellow-400"
+    : "bg-red-400";
+
+  const categoryLabel =
+    ageDelta === null ? null
+    : ageDelta <= -5 ? "EXCELLENT"
+    : ageDelta <= -1 ? "GOOD"
+    : ageDelta <= 4 ? "AVERAGE"
+    : "NEEDS ATTENTION";
+
+  const accuracyColor =
+    accuracyScore >= 80 ? "text-green-400"
+    : accuracyScore >= 60 ? "text-yellow-400"
+    : "text-orange-400";
 
   return (
     <PageContainer>
-      <div className="py-16 space-y-6">
+      <div className="py-16 space-y-8">
 
-        {/* ================= HEADER ================= */}
-        <div className="pb-10 border-b border-white/5">
-          <p className="text-[10px] tracking-[0.6em] text-white/20 uppercase mb-4">
-            Aeonvera Intelligence Report
+        {/* ═══════════════════════════════════════
+            HEADER
+        ═══════════════════════════════════════ */}
+        <div className="pb-10 border-b border-white/[0.04]">
+          <p className="text-[10px] tracking-[0.6em] text-white/15 uppercase mb-6">
+            Aeonvera — Biological Intelligence Report
           </p>
 
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-5xl md:text-6xl font-light tracking-[-0.05em] text-white/90">
-                {profile?.display_name
-                  ? `${profile.display_name}'s`
-                  : "Your"}{" "}
-                <span className="text-white/40">Biological Profile</span>
+              <h1 className="text-5xl md:text-6xl font-light tracking-[-0.05em] text-white/90 leading-tight">
+                {profile?.display_name ? `${profile.display_name}'s` : "Your"}
+                <br />
+                <span className="text-white/30">Biological Profile</span>
               </h1>
-              <p className="mt-4 text-white/30 text-sm">
-                Personalized longevity intelligence based on your biological data.
+              <p className="mt-4 text-white/25 text-sm">
+                Personalized longevity intelligence · {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </p>
             </div>
 
-            <button
-              onClick={handleRegenerate}
-              disabled={regenerating}
-              className="shrink-0 mt-2 px-5 py-2 rounded-full border border-white/10 text-white/25 hover:text-white/50 hover:border-white/20 transition-all duration-300 text-[10px] uppercase tracking-[0.3em] disabled:opacity-20"
-            >
-              {regenerating ? "Regenerating..." : "Regenerate"}
-            </button>
+            <div className="flex flex-col items-end gap-3">
+              {/* ACCURACY BADGE */}
+              <div className="flex items-center gap-3 px-4 py-2 rounded-full border border-white/[0.06] bg-white/[0.02]">
+                <div className="relative w-8 h-8">
+                  <svg className="w-8 h-8 -rotate-90" viewBox="0 0 32 32">
+                    <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
+                    <circle
+                      cx="16" cy="16" r="13" fill="none"
+                      stroke={accuracyScore >= 80 ? "rgba(74,222,128,0.7)" : accuracyScore >= 60 ? "rgba(250,204,21,0.7)" : "rgba(251,146,60,0.7)"}
+                      strokeWidth="3"
+                      strokeDasharray={`${(accuracyScore / 100) * 81.7} 81.7`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-medium text-white/60">
+                    {accuracyScore}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-[9px] uppercase tracking-[0.3em] text-white/20">Accuracy</p>
+                  <p className={`text-xs font-light ${accuracyColor}`}>{accuracyScore}% complete</p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleRegenerate}
+                disabled={regenerating}
+                className="px-5 py-2 rounded-full border border-white/[0.08] text-white/20 hover:text-white/50 hover:border-white/20 transition-all duration-300 text-[10px] uppercase tracking-[0.3em] disabled:opacity-20"
+              >
+                {regenerating ? "Regenerating..." : "Regenerate Report"}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* ================= HERO METRICS ================= */}
+        {/* ═══════════════════════════════════════
+            HERO METRICS
+        ═══════════════════════════════════════ */}
         <div className="grid md:grid-cols-2 gap-6">
 
           {/* BIOLOGICAL AGE */}
@@ -238,28 +315,50 @@ export default function ReportPage() {
             <div className="pt-2">
               {bioAge ? (
                 <>
-                  <p className={`text-7xl font-light tracking-[-0.05em] ${bioAgeColor}`}>
-                    {bioAge}
-                    <span className="text-white/20 text-3xl ml-2">yrs</span>
-                  </p>
+                  <div className="flex items-end gap-6 mb-4">
+                    <p className={`text-8xl font-light tracking-[-0.06em] leading-none ${bioAgeColor}`}>
+                      {bioAge}
+                      <span className="text-white/20 text-3xl ml-2">yrs</span>
+                    </p>
+                    {chronologicalAge && (
+                      <div className="mb-1">
+                        <p className="text-[9px] uppercase tracking-[0.3em] text-white/20 mb-1">Chronological</p>
+                        <p className="text-white/40 text-2xl font-light">{chronologicalAge}<span className="text-white/20 text-sm ml-1">yrs</span></p>
+                      </div>
+                    )}
+                  </div>
 
-                  {chronologicalAge && (
-                    <p className={`mt-3 text-sm ${bioAgeColor}`}>
-                      {ageDelta !== null && ageDelta < 0
-                        ? `${Math.abs(ageDelta)} years younger than your chronological age of ${chronologicalAge}`
-                        : ageDelta !== null && ageDelta > 0
-                        ? `${ageDelta} years older than your chronological age of ${chronologicalAge}`
-                        : `Biological age matches chronological age of ${chronologicalAge}`}
+                  {ageDelta !== null && (
+                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+                      ageDelta < 0
+                        ? "border-green-500/20 bg-green-500/5"
+                        : ageDelta === 0
+                        ? "border-white/10 bg-white/[0.02]"
+                        : "border-orange-500/20 bg-orange-500/5"
+                    } mb-4`}>
+                      <span className={`text-xs ${bioAgeColor}`}>
+                        {ageDelta < 0
+                          ? `${Math.abs(ageDelta)} years younger than chronological age`
+                          : ageDelta > 0
+                          ? `${ageDelta} years older than chronological age`
+                          : "Matches chronological age"}
+                      </span>
+                    </div>
+                  )}
+
+                  {categoryLabel && (
+                    <p className={`text-[10px] uppercase tracking-[0.5em] mb-4 ${bioAgeColor}`}>
+                      {categoryLabel}
                     </p>
                   )}
 
-                  <p className="mt-4 text-white/20 text-xs leading-relaxed">
-                    Estimated from lifestyle biomarkers. Updates as your
-                    habits improve.
+                  <p className="text-white/20 text-xs leading-relaxed border-t border-white/[0.04] pt-4">
+                    Estimated from {accuracyScore >= 70 ? "comprehensive" : "lifestyle"} biomarkers.
+                    {accuracyScore < 70 && " Add lab values to improve accuracy."}
                   </p>
                 </>
               ) : (
-                <p className="text-white/30">Not yet computed.</p>
+                <p className="text-white/25 text-sm">Not yet computed.</p>
               )}
             </div>
           </Card>
@@ -267,77 +366,67 @@ export default function ReportPage() {
           {/* RISK SCORE */}
           <Card title="SYSTEM RISK INDEX">
             <div className="pt-2">
-              <p className={`text-7xl font-light tracking-[-0.05em] ${riskColor}`}>
+              <p className={`text-8xl font-light tracking-[-0.06em] leading-none mb-4 ${riskColor}`}>
                 {report.risk_score}
                 <span className="text-white/20 text-3xl ml-2">/ 100</span>
               </p>
 
-              <div className="mt-4 h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+              <div className="mb-4 h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-1000 ${riskBarColor}`}
                   style={{ width: `${report.risk_score}%` }}
                 />
               </div>
 
-              <p className="mt-3 text-white/30 text-xs leading-relaxed">
+              <p className="text-white/30 text-sm mb-6">
                 {report.risk_score <= 35
-                  ? "Low biological risk. Your system is performing well."
+                  ? "Low biological risk. Your system is performing exceptionally."
                   : report.risk_score <= 65
-                  ? "Moderate biological risk. Targeted improvements recommended."
-                  : "Elevated biological risk. Immediate intervention advised."}
+                  ? "Moderate biological risk. Targeted improvements will move the needle."
+                  : "Elevated biological risk. Immediate lifestyle intervention is advised."}
               </p>
+
+              {/* RISK PROFILE MINI */}
+              <div className="grid grid-cols-2 gap-2 border-t border-white/[0.04] pt-4">
+                {Object.entries(report.risk_profile).map(([key, value]) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <span className="text-[9px] uppercase tracking-[0.2em] text-white/20">
+                      {key.replace(/_risk/g, "").replace(/_/g, " ")}
+                    </span>
+                    <span className={`text-[10px] uppercase tracking-[0.2em] ${
+                      value === "low" ? "text-green-400"
+                      : value === "medium" ? "text-yellow-400"
+                      : "text-red-400"
+                    }`}>
+                      {value}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </Card>
 
         </div>
 
-        {/* ================= PRIMARY GOAL ================= */}
+        {/* ═══════════════════════════════════════
+            PRIMARY OBJECTIVE
+        ═══════════════════════════════════════ */}
         <Card title="PRIMARY OBJECTIVE">
           <p className="text-2xl md:text-3xl font-light text-white/80 leading-relaxed">
             {report.primary_goal}
           </p>
         </Card>
 
-        {/* ================= RISK PROFILE ================= */}
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.5em] text-white/20 mb-4">
-            Risk Profile
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(report.risk_profile).map(([key, value]) => (
-              <Card key={key}>
-                <p className="text-[9px] uppercase tracking-[0.4em] text-white/25 mb-3">
-                  {key.replace(/_/g, " ")}
-                </p>
-                <p
-                  className={`text-lg font-light capitalize ${
-                    value === "low"
-                      ? "text-green-400"
-                      : value === "medium"
-                      ? "text-yellow-400"
-                      : "text-red-400"
-                  }`}
-                >
-                  {value}
-                </p>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* ================= STRENGTHS + WEAKNESSES ================= */}
+        {/* ═══════════════════════════════════════
+            STRENGTHS + WEAKNESSES
+        ═══════════════════════════════════════ */}
         <div className="grid md:grid-cols-2 gap-6">
           <Card title="BIOLOGICAL STRENGTHS">
             <div className="space-y-3">
               {report.strengths.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 p-3 rounded-xl bg-green-500/[0.07] border border-green-500/10"
-                >
-                  <span className="text-green-400 mt-0.5 shrink-0">↑</span>
-                  <p className="text-white/60 text-sm leading-relaxed">
-                    {item}
-                  </p>
+                <div key={i} className="flex items-start gap-3 p-4 rounded-xl bg-green-500/[0.05] border border-green-500/[0.08]">
+                  <span className="text-green-400 shrink-0 mt-0.5 text-sm">↑</span>
+                  <p className="text-white/60 text-sm leading-relaxed">{item}</p>
                 </div>
               ))}
             </div>
@@ -346,63 +435,51 @@ export default function ReportPage() {
           <Card title="OPTIMIZATION TARGETS">
             <div className="space-y-3">
               {report.weaknesses.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-3 p-3 rounded-xl bg-orange-500/[0.07] border border-orange-500/10"
-                >
-                  <span className="text-orange-400 mt-0.5 shrink-0">↓</span>
-                  <p className="text-white/60 text-sm leading-relaxed">
-                    {item}
-                  </p>
+                <div key={i} className="flex items-start gap-3 p-4 rounded-xl bg-orange-500/[0.05] border border-orange-500/[0.08]">
+                  <span className="text-orange-400 shrink-0 mt-0.5 text-sm">↓</span>
+                  <p className="text-white/60 text-sm leading-relaxed">{item}</p>
                 </div>
               ))}
             </div>
           </Card>
         </div>
 
-        {/* ================= TOP PRIORITIES ================= */}
+        {/* ═══════════════════════════════════════
+            TOP PRIORITIES
+        ═══════════════════════════════════════ */}
         <Card title="TOP INTERVENTION PRIORITIES">
           <div className="space-y-3">
             {report.top_priorities.map((p, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/[0.05]"
-              >
-                <span className="text-[rgba(212,175,55,0.5)] text-sm font-light shrink-0 mt-0.5">
+              <div key={i} className="flex items-start gap-5 p-4 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition-colors duration-300">
+                <span className="text-[rgba(212,175,55,0.4)] text-sm font-light shrink-0 mt-0.5 tabular-nums">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <p className="text-white/65 text-sm leading-relaxed">{p}</p>
+                <p className="text-white/60 text-sm leading-relaxed">{p}</p>
               </div>
             ))}
           </div>
         </Card>
 
-        {/* ================= 90 DAY PLAN ================= */}
+        {/* ═══════════════════════════════════════
+            90-DAY PLAN
+        ═══════════════════════════════════════ */}
         <Card title="90-DAY OPTIMIZATION PROTOCOL">
           <div className="space-y-3">
             {report["90_day_plan"].map((item, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.05] gap-4"
-              >
+              <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.07] transition-colors duration-300 gap-4">
                 <div className="flex-1">
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-[rgba(212,175,55,0.5)] mb-1">
+                  <p className="text-[9px] uppercase tracking-[0.4em] text-[rgba(212,175,55,0.5)] mb-1.5">
                     {item.category}
                   </p>
-                  <p className="text-white/65 text-sm leading-relaxed">
-                    {item.action}
-                  </p>
+                  <p className="text-white/60 text-sm leading-relaxed">{item.action}</p>
                 </div>
-
-                <span
-                  className={`shrink-0 text-[10px] px-3 py-1 rounded-full border uppercase tracking-[0.2em] ${
-                    item.impact === "high"
-                      ? "border-green-500/20 text-green-400 bg-green-500/5"
-                      : item.impact === "medium"
-                      ? "border-yellow-500/20 text-yellow-400 bg-yellow-500/5"
-                      : "border-white/10 text-white/30 bg-white/[0.02]"
-                  }`}
-                >
+                <span className={`shrink-0 text-[9px] px-3 py-1.5 rounded-full border uppercase tracking-[0.2em] ${
+                  item.impact === "high"
+                    ? "border-green-500/20 text-green-400 bg-green-500/[0.06]"
+                    : item.impact === "medium"
+                    ? "border-yellow-500/20 text-yellow-400 bg-yellow-500/[0.06]"
+                    : "border-white/[0.08] text-white/25 bg-white/[0.02]"
+                }`}>
                   {item.impact}
                 </span>
               </div>
@@ -410,33 +487,58 @@ export default function ReportPage() {
           </div>
         </Card>
 
-        {/* ================= BEHAVIORAL INSIGHTS ================= */}
+        {/* ═══════════════════════════════════════
+            BEHAVIORAL INTELLIGENCE
+        ═══════════════════════════════════════ */}
         <Card title="BEHAVIORAL INTELLIGENCE">
           <div className="space-y-4">
             {report.behavioral_insights.map((insight, i) => (
-              <div
-                key={i}
-                className="flex items-start gap-4 border-l-2 border-[rgba(212,175,55,0.2)] pl-5 py-1"
-              >
-                <p className="text-white/55 text-sm leading-relaxed">
-                  {insight}
-                </p>
+              <div key={i} className="flex items-start gap-4 border-l-2 border-[rgba(212,175,55,0.15)] pl-5 py-1">
+                <p className="text-white/50 text-sm leading-relaxed">{insight}</p>
               </div>
             ))}
           </div>
         </Card>
 
-        {/* ================= FOOTER ACTIONS ================= */}
-        <div className="flex items-center justify-between pt-6 border-t border-white/5">
-          <p className="text-white/20 text-xs">
-            Intelligence report generated by Aeonvera AI
+        {/* ═══════════════════════════════════════
+            ACCURACY UPGRADE PROMPT
+        ═══════════════════════════════════════ */}
+        {accuracyScore < 80 && missingFields.length > 0 && (
+          <Card title="IMPROVE ACCURACY" glow>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="flex-1">
+                <p className="text-white/50 text-sm mb-4 leading-relaxed">
+                  Your biological age estimate is currently <span className={accuracyColor}>{accuracyScore}% accurate</span>.
+                  Adding the following data points will significantly improve precision:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {missingFields.map((field, i) => (
+                    <span key={i} className="px-3 py-1 rounded-full border border-white/[0.06] text-white/30 text-[10px] uppercase tracking-[0.2em]">
+                      {field}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <Button href="/assessment">
+                Add Data
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {/* ═══════════════════════════════════════
+            FOOTER
+        ═══════════════════════════════════════ */}
+        <div className="flex items-center justify-between pt-8 border-t border-white/[0.04]">
+          <p className="text-white/15 text-xs">
+            Generated by Aeonvera AI · For informational purposes only
           </p>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <Button variant="secondary" href="/dashboard">
               Dashboard
             </Button>
             <Button href="/assessment">
-              Retake Assessment
+              Update Assessment
             </Button>
           </div>
         </div>
