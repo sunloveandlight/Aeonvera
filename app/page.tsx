@@ -69,20 +69,21 @@ const PLANS = [
 
 function HeroVisual() {
   return (
-    <div className="hero-stage relative overflow-hidden rounded-lg border border-white/10 p-6 md:p-8">
+    <div className="hero-stage relative overflow-hidden rounded-xl border border-white/10 p-6 md:p-8">
       <div className="relative z-10">
         <div className="mb-10 flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-white">Healthspan overview</p>
             <p className="mt-1 text-sm text-white/50">Updated from your latest assessment</p>
           </div>
-          <div className="rounded-md bg-white/10 px-3 py-1 text-sm font-medium text-white/70">
+          <div className="premium-status rounded-md px-3 py-1 text-sm font-medium text-white/70">
             Optimal
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-2 lg:items-end">
-          <div>
+        <div className="grid gap-8 lg:grid-cols-[0.86fr_1.14fr] lg:items-end">
+          <div className="relative">
+            <div className="hero-age-ring absolute -left-5 -top-5 hidden size-36 md:block" />
             <p className="text-sm text-white/50">Biological age</p>
             <div className="mt-3 flex items-baseline gap-3">
               <p className="hero-metric-glow text-6xl font-light leading-none md:text-7xl">38.4</p>
@@ -93,7 +94,7 @@ function HeroVisual() {
             </p>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-5 rounded-lg border border-white/[0.07] bg-black/20 p-5">
             {[
               ["Cardiovascular", "86%"],
               ["Metabolic", "78%"],
@@ -122,7 +123,7 @@ function HeroVisual() {
             ["Accuracy", "84%", "high"],
             ["Priority", "Sleep", "next"],
           ].map(([label, value, note]) => (
-            <div key={label} className="rounded-lg bg-black/25 p-4">
+            <div key={label} className="rounded-lg border border-white/[0.06] bg-white/[0.035] p-4">
               <p className="text-sm text-white/40">{label}</p>
               <p className="mt-2 text-2xl font-light text-white">{value}</p>
               <p className="mt-1 text-sm text-white/40">{note}</p>

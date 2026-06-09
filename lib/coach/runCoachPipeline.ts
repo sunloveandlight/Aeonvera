@@ -1,5 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { runLongevityCoach } from "./longevityCoach";
+import { deliverCoachNotifications } from "@/lib/notifications/coachDelivery";
+import { generateJarvisMessage } from "@/lib/voice/jarvisResponseEngine";
 
 /**
  * FULL COACH PIPELINE (V2 UPGRADE)
@@ -52,8 +54,10 @@ export async function runCoachPipeline(userId: string) {
   /**
    * 4. STORE ALERTS
    */
+  let storedAlerts = [];
+
   if (alerts.length > 0) {
-    const { error: insertError } = await supabase
+    const { data, error: insertError } = await supabase
       .from("health_alerts")
       .insert(
         alerts.map((a) => ({
@@ -65,15 +69,54 @@ export async function runCoachPipeline(userId: string) {
           recommendation: a.recommendation,
           confidence: a.confidence,
         }))
-      );
+      )
+      .select("id, type, severity, title, message, recommendation, confidence");
 
     if (insertError) {
       throw new Error(insertError.message);
     }
+
+    storedAlerts = data || [];
+
+    const interventions = alerts.map((alert) => ({
+      domain: alert.type,
+      action: alert.recommendation,
+      reason: alert.message,
+      priority: alert.severity === "high" ? 10 : alert.severity === "medium" ? 7 : 4,
+    }));
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    const jarvis = generateJarvisMessage({
+      userName: profile?.display_name || undefined,
+      interventions,
+      trigger: {
+        shouldTrigger: true,
+        intensity: alerts.some((alert) => alert.severity === "high")
+          ? "high"
+          : "medium",
+        mode: alerts.some((alert) => alert.severity === "high")
+          ? "notification"
+          : "dashboard",
+        selectedInterventions: interventions,
+      },
+    });
+
+    await deliverCoachNotifications({
+      supabase,
+      userId,
+      alerts: storedAlerts,
+      jarvis,
+    });
   }
 
   return {
     success: true,
     alerts,
+    delivered: storedAlerts.length,
   };
 }

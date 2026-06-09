@@ -8,6 +8,7 @@ import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import WearablesPanel from "@/components/dashboard/WearablesPanel";
+import NotificationPreferencesPanel from "@/components/dashboard/NotificationPreferencesPanel";
 
 type Profile = {
   display_name: string | null;
@@ -695,6 +696,8 @@ export default function DashboardPage() {
           onProviderAction={handleWearableProviderAction}
           onWearableSync={handleWearableSync}
         />
+
+        <NotificationPreferencesPanel />
 
         {/* ═══════════════════════════════════════
             COACH ALERTS
