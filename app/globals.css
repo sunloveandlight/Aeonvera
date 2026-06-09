@@ -308,6 +308,16 @@ body::after {
   background: rgba(218, 220, 224, 0.36);
 }
 
+.apple-health-input {
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.apple-health-input::-webkit-scrollbar {
+  display: none;
+}
+
 /* =====================================================
    UI SURFACE SYSTEM (IMPORTANT FOR CONSISTENCY)
 ===================================================== */

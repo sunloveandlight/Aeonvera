@@ -757,7 +757,7 @@ export default function DashboardPage() {
                   value={applePayload}
                   onChange={(event) => setApplePayload(event.target.value)}
                   placeholder='{"records":[{"type":"HKQuantityTypeIdentifierStepCount","value":8400}]}'
-                  className="executive-input mt-4 h-16 w-full resize-none rounded-lg p-3 text-xs leading-5 placeholder:text-white/16"
+                  className="apple-health-input executive-input mt-4 h-16 w-full resize-none rounded-lg p-3 text-xs leading-5 placeholder:text-white/16"
                 />
               </div>
               <button
