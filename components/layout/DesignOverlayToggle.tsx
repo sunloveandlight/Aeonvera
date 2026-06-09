@@ -11,7 +11,7 @@ export default function DesignOverlayToggle() {
       className={`
         fixed bottom-5 left-5 z-[99999]
         px-4 py-2 rounded-full
-        text-[10px] uppercase tracking-[0.3em]
+        text-[10px] uppercase tracking-normal
         border border-white/10
         backdrop-blur-xl
         transition-all duration-300

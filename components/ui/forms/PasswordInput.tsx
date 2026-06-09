@@ -39,7 +39,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
         <button
           type="button"
           onClick={() => setShow(!show)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white/60 transition"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-normal text-white/30 hover:text-white/60 transition"
         >
           {show ? "Hide" : "Show"}
         </button>

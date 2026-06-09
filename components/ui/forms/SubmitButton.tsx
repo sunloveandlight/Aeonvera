@@ -17,7 +17,7 @@ export default function SubmitButton({ children, loading }: SubmitButtonProps) {
         rounded-lg
         text-sm
         font-light
-        tracking-[0.15em]
+        tracking-normal
         uppercase
         transition-all
         duration-300

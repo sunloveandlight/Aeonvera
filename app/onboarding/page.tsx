@@ -111,16 +111,16 @@ export default function OnboardingPage() {
     <div>
       <section className="pt-32 pb-24">
         <PageContainer>
-          <div className="max-w-4xl mx-auto text-center">
-            <p className="text-xs uppercase tracking-[0.5em] text-white/40 mb-8">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="mb-8 text-xs uppercase tracking-normal text-[#d4af37]/75">
               Initialization
             </p>
-            <h1 className="text-5xl md:text-7xl font-semibold tracking-tight leading-[0.95]">
+            <h1 className="text-5xl font-semibold leading-[1.04] tracking-normal md:text-7xl">
               Create Your
               <br />
               Longevity Identity
             </h1>
-            <p className="mt-8 text-xl text-white/60 max-w-2xl mx-auto">
+            <p className="mx-auto mt-8 max-w-2xl text-xl text-white/60">
               Configure the foundation of your biological intelligence system.
             </p>
           </div>
@@ -130,7 +130,7 @@ export default function OnboardingPage() {
       <section className="pb-32">
         <PageContainer>
           <div className="max-w-2xl mx-auto">
-            <Card className="p-10">
+            <Card className="p-10" hover={false} glow>
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm text-white/50 mb-3">
@@ -140,7 +140,7 @@ export default function OnboardingPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="John Smith"
-                    className="w-full h-14 rounded-xl bg-black/50 border border-white/10 px-4 text-white outline-none focus:border-white/30"
+                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] outline-none focus:border-[#d4af37]/45"
                   />
                 </div>
                 <div>
@@ -151,13 +151,13 @@ export default function OnboardingPage() {
                     value={entityName}
                     onChange={(e) => setEntityName(e.target.value)}
                     placeholder="Aeon Entity Alpha"
-                    className="w-full h-14 rounded-xl bg-black/50 border border-white/10 px-4 text-white outline-none focus:border-white/30"
+                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] outline-none focus:border-[#d4af37]/45"
                   />
                 </div>
                 <button
                   onClick={handleCompleteOnboarding}
                   disabled={saving}
-                  className="w-full h-14 rounded-xl bg-white text-black font-medium transition hover:bg-zinc-200 disabled:opacity-50"
+                  className="premium-button-primary h-14 w-full rounded-md font-medium transition hover:brightness-95 disabled:opacity-50"
                 >
                   {saving ? "Initializing..." : "Complete Setup"}
                 </button>

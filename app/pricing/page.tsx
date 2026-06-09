@@ -92,11 +92,11 @@ export default function PricingPage() {
         <PageContainer>
           <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
             <div>
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-white/55">
+              <div className="premium-chip mb-5 rounded-full px-3 py-1.5 text-xs">
                 <ShieldCheck size={14} className="text-[#d4af37]" />
                 Membership
               </div>
-              <h1 className="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-tight text-white md:text-7xl">
+              <h1 className="max-w-3xl text-5xl font-semibold leading-[1.04] tracking-normal text-white md:text-7xl">
                 Choose the depth of your longevity system.
               </h1>
             </div>
@@ -114,15 +114,15 @@ export default function PricingPage() {
             {PLANS.map((plan) => (
               <div
                 key={plan.id}
-                className={`flex min-h-[560px] flex-col rounded-lg border p-6 ${
+                className={`premium-surface flex min-h-[560px] flex-col rounded-lg p-6 ${
                   plan.featured
-                    ? "border-[#d4af37]/35 bg-[#d4af37]/8"
-                    : "border-white/8 bg-white/[0.025]"
+                    ? "border-[#d4af37]/40"
+                    : ""
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-2xl font-semibold tracking-tight text-white">
+                    <h2 className="text-2xl font-semibold tracking-normal text-white">
                       {plan.name}
                     </h2>
                     <p className="mt-3 text-sm leading-7 text-white/48">
@@ -131,13 +131,13 @@ export default function PricingPage() {
                   </div>
                   {plan.featured && (
                     <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-black">
-                      Popular
+                      Flagship
                     </span>
                   )}
                 </div>
 
                 <div className="mt-9">
-                  <p className="text-5xl font-semibold tracking-tight text-white">
+                  <p className="text-5xl font-semibold tracking-normal text-white">
                     {plan.price}
                     <span className="text-sm font-normal text-white/35"> / month</span>
                   </p>
@@ -157,8 +157,8 @@ export default function PricingPage() {
                   disabled={loadingPlan !== null}
                   className={`mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-45 ${
                     plan.featured
-                      ? "bg-white text-black hover:bg-white/90"
-                      : "border border-white/12 text-white/75 hover:border-white/25 hover:text-white"
+                      ? "premium-button-primary hover:brightness-95"
+                      : "premium-button-secondary hover:border-white/25 hover:text-white"
                   }`}
                 >
                   {loadingPlan === plan.id ? "Processing..." : `Get ${plan.name}`}

@@ -85,19 +85,19 @@ export default function SuccessPage() {
   }, [router]);
 
   return (
-    <main className="min-h-screen bg-black text-white flex items-center justify-center">
-      <div className="text-center max-w-xl px-6">
-        <p className="text-zinc-500 uppercase tracking-[0.3em] mb-6">
+    <main className="flex min-h-screen items-center justify-center px-6 text-white">
+      <div className="premium-surface max-w-xl rounded-lg p-8 text-center">
+        <p className="mb-6 text-xs uppercase tracking-normal text-[#d4af37]/75">
           AEONVERA
         </p>
 
-        <h1 className="text-5xl font-light mb-6">Subscription Activated</h1>
+        <h1 className="mb-6 text-5xl font-semibold tracking-normal">Subscription Activated</h1>
 
-        <div className="flex justify-center mb-8">
-          <div className="animate-spin w-8 h-8 border-2 border-white/20 border-t-white rounded-full" />
+        <div className="mb-8 flex justify-center">
+          <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-[#d4af37]" />
         </div>
 
-        <p className="text-zinc-400">{status}</p>
+        <p className="text-white/55">{status}</p>
       </div>
     </main>
   );

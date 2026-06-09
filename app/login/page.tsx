@@ -90,18 +90,18 @@ function LoginInner() {
 
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-16 text-white">
-      <div className="grid w-full max-w-5xl overflow-hidden rounded-lg border border-white/10 bg-white/[0.025] md:grid-cols-[0.9fr_1.1fr]">
-        <div className="hidden border-r border-white/8 bg-[#0d1117] p-8 md:block">
-          <div className="flex size-11 items-center justify-center rounded-md bg-white text-black">
+      <div className="premium-surface grid w-full max-w-5xl rounded-lg md:grid-cols-[0.9fr_1.1fr]">
+        <div className="hidden border-r border-white/10 bg-black/20 p-8 md:block">
+          <div className="flex size-11 items-center justify-center rounded-md bg-white text-black shadow-[0_0_30px_rgba(255,255,255,0.14)]">
             <LockKeyhole size={20} />
           </div>
-          <h1 className="mt-10 text-4xl font-semibold tracking-tight text-white">
+          <h1 className="mt-10 text-4xl font-semibold tracking-normal text-white">
             {isSignUpMode ? "Create your private health workspace." : "Welcome back to Aeonvera."}
           </h1>
           <p className="mt-5 text-sm leading-7 text-white/52">
             Access your biological age model, assessment history, and generated longevity reports.
           </p>
-          <div className="mt-10 rounded-md border border-emerald-400/15 bg-emerald-400/[0.06] p-4">
+          <div className="mt-10 rounded-md border border-emerald-400/18 bg-emerald-400/[0.065] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
             <p className="text-sm font-medium text-emerald-200">Protected workspace</p>
             <p className="mt-1 text-sm text-white/50">
               Authentication is handled through Supabase with account-specific profile routing.
@@ -111,11 +111,11 @@ function LoginInner() {
 
         <div className="p-6 sm:p-10">
 
-        <p className="mb-4 text-xs uppercase tracking-[0.28em] text-[#d4af37]/75">
+        <p className="mb-4 text-xs uppercase tracking-normal text-[#d4af37]/75">
           Aeonvera
         </p>
 
-        <h2 className="mb-8 text-3xl font-semibold tracking-tight text-white">
+        <h2 className="mb-8 text-3xl font-semibold tracking-normal text-white">
           {isSignUpMode ? "Create Account" : "Welcome Back"}
         </h2>
 
@@ -125,7 +125,7 @@ function LoginInner() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="h-12 w-full rounded-md border border-white/10 bg-black/25 px-4 text-sm text-white/85 placeholder-white/25 transition focus:border-[#d4af37]/45 focus:outline-none"
+            className="h-12 w-full rounded-md border border-white/10 bg-black/30 px-4 text-sm text-white/85 placeholder-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition focus:border-[#d4af37]/45 focus:outline-none"
             required
           />
 
@@ -134,14 +134,14 @@ function LoginInner() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="h-12 w-full rounded-md border border-white/10 bg-black/25 px-4 text-sm text-white/85 placeholder-white/25 transition focus:border-[#d4af37]/45 focus:outline-none"
+            className="h-12 w-full rounded-md border border-white/10 bg-black/30 px-4 text-sm text-white/85 placeholder-white/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition focus:border-[#d4af37]/45 focus:outline-none"
             required
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md bg-white text-sm font-medium text-black transition hover:bg-white/90 disabled:opacity-45"
+            className="premium-button-primary inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition hover:brightness-95 disabled:opacity-45"
           >
             {loading ? "Processing..." : isSignUpMode ? "Create Account" : "Sign In"}
             {!loading && <ArrowRight size={16} />}

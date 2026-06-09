@@ -688,7 +688,7 @@ export default function AssessmentPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6">
         <div className="text-center max-w-lg">
-          <p className="text-[10px] uppercase tracking-[0.6em] text-white/20 mb-10">
+          <p className="text-[10px] uppercase tracking-normal text-white/20 mb-10">
             AEONVERA INTELLIGENCE ENGINE
           </p>
 
@@ -707,7 +707,7 @@ export default function AssessmentPage() {
             </div>
           </div>
 
-          <h2 className="text-3xl font-light tracking-[-0.03em] text-white/80 mb-4">
+          <h2 className="text-3xl font-light tracking-normal text-white/80 mb-4">
             Building Your Biological Profile
           </h2>
 
@@ -760,11 +760,11 @@ export default function AssessmentPage() {
 
         {/* HEADER */}
         <div className="mb-12">
-          <p className="text-[10px] uppercase tracking-[0.6em] text-white/20 mb-4">
+          <p className="text-[10px] uppercase tracking-normal text-white/20 mb-4">
             Longevity Assessment — Step {step + 1} of {STEPS.length}
           </p>
 
-          <h1 className="text-4xl md:text-5xl font-light tracking-[-0.04em] text-white/90">
+          <h1 className="text-4xl md:text-5xl font-light tracking-normal text-white/90">
             {currentStep.title}
           </h1>
 
@@ -774,7 +774,7 @@ export default function AssessmentPage() {
 
           {/* PROGRESS BAR */}
           <div className="mt-8 space-y-2">
-            <div className="flex justify-between text-[10px] uppercase tracking-[0.3em] text-white/20">
+            <div className="flex justify-between text-[10px] uppercase tracking-normal text-white/20">
               <span>Progress</span>
               <span>Accuracy {completionPct}%</span>
             </div>
@@ -812,7 +812,7 @@ export default function AssessmentPage() {
         {!currentStep.required && (
           <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-[rgba(212,175,55,0.2)] bg-[rgba(212,175,55,0.05)]">
             <div className="w-1.5 h-1.5 rounded-full bg-[rgba(212,175,55,0.6)]" />
-            <span className="text-[10px] uppercase tracking-[0.4em] text-[rgba(212,175,55,0.7)]">
+            <span className="text-[10px] uppercase tracking-normal text-[rgba(212,175,55,0.7)]">
               Optional — improves accuracy
             </span>
           </div>
@@ -854,7 +854,7 @@ export default function AssessmentPage() {
           <button
             onClick={handleBack}
             disabled={step === 0}
-            className="px-6 py-3 rounded-full border border-white/[0.06] text-white/25 hover:text-white/50 hover:border-white/15 transition-all duration-300 text-[11px] uppercase tracking-[0.3em] disabled:opacity-0"
+            className="px-6 py-3 rounded-full border border-white/[0.06] text-white/25 hover:text-white/50 hover:border-white/15 transition-all duration-300 text-[11px] uppercase tracking-normal disabled:opacity-0"
           >
             Back
           </button>
@@ -863,7 +863,7 @@ export default function AssessmentPage() {
             {!currentStep.required && step < STEPS.length - 1 && (
               <button
                 onClick={handleNext}
-                className="text-[10px] uppercase tracking-[0.3em] text-white/20 hover:text-white/40 transition-colors duration-300"
+                className="text-[10px] uppercase tracking-normal text-white/20 hover:text-white/40 transition-colors duration-300"
               >
                 Skip →
               </button>
@@ -872,14 +872,14 @@ export default function AssessmentPage() {
             {step < STEPS.length - 1 ? (
               <button
                 onClick={handleNext}
-                className="px-7 py-3 rounded-full border border-[rgba(212,175,55,0.3)] text-[rgba(212,175,55,0.8)] hover:border-[rgba(212,175,55,0.7)] hover:text-[rgba(212,175,55,1)] transition-all duration-300 text-[11px] uppercase tracking-[0.3em]"
+                className="px-7 py-3 rounded-full border border-[rgba(212,175,55,0.3)] text-[rgba(212,175,55,0.8)] hover:border-[rgba(212,175,55,0.7)] hover:text-[rgba(212,175,55,1)] transition-all duration-300 text-[11px] uppercase tracking-normal"
               >
                 Continue
               </button>
             ) : (
               <button
                 onClick={submit}
-                className="px-8 py-3 rounded-full border border-[rgba(212,175,55,0.4)] text-[rgba(212,175,55,0.9)] hover:border-[rgba(212,175,55,0.8)] hover:text-[rgba(212,175,55,1)] bg-[rgba(212,175,55,0.06)] transition-all duration-300 text-[11px] uppercase tracking-[0.3em]"
+                className="px-8 py-3 rounded-full border border-[rgba(212,175,55,0.4)] text-[rgba(212,175,55,0.9)] hover:border-[rgba(212,175,55,0.8)] hover:text-[rgba(212,175,55,1)] bg-[rgba(212,175,55,0.06)] transition-all duration-300 text-[11px] uppercase tracking-normal"
               >
                 Analyze My Biology
               </button>
@@ -904,11 +904,11 @@ function InputField({
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <label className="text-[10px] uppercase tracking-[0.35em] text-white/30">
+        <label className="text-[10px] uppercase tracking-normal text-white/30">
           {field.label}
         </label>
         {field.optional && (
-          <span className="text-[9px] uppercase tracking-[0.3em] text-white/15">
+          <span className="text-[9px] uppercase tracking-normal text-white/15">
             Optional
           </span>
         )}
@@ -943,11 +943,11 @@ function SelectField({
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <label className="text-[10px] uppercase tracking-[0.35em] text-white/30">
+        <label className="text-[10px] uppercase tracking-normal text-white/30">
           {field.label}
         </label>
         {field.optional && (
-          <span className="text-[9px] uppercase tracking-[0.3em] text-white/15">
+          <span className="text-[9px] uppercase tracking-normal text-white/15">
             Optional
           </span>
         )}

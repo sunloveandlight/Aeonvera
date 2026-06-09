@@ -11,7 +11,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
 
           {/* BRAND */}
-          <div className="text-sm font-semibold tracking-[0.32em] text-white/80">
+          <div className="text-sm font-semibold tracking-normal text-white/80">
             AEONVERA
           </div>
 

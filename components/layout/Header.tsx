@@ -30,13 +30,13 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#07070a]/88 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/[0.08] bg-[#050507]/82 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
 
         {/* BRAND */}
         <Link
           href="/"
-          className="text-sm font-semibold tracking-[0.32em] text-white/82 transition-colors duration-300 hover:text-white"
+          className="text-sm font-semibold tracking-normal text-white/82 transition-colors duration-300 hover:text-white"
         >
           AEONVERA
         </Link>
@@ -103,7 +103,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/login?mode=signup"
-                className="flex h-10 items-center rounded-md bg-white px-4 text-xs font-medium text-black transition hover:bg-white/90"
+                className="premium-button-primary flex h-10 items-center rounded-md px-4 text-xs font-medium transition hover:brightness-95"
               >
                 Begin
               </Link>

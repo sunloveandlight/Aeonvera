@@ -31,7 +31,7 @@ export default function AppShell({ children }: AppShellProps) {
 
       {/* DESIGN SYSTEM OVERLAY INDICATOR */}
       {enabled && (
-        <div className="fixed bottom-5 right-5 z-[99999] rounded-full border border-white/15 bg-white/90 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-black shadow-xl">
+        <div className="fixed bottom-5 right-5 z-[99999] rounded-full border border-white/15 bg-white/90 px-4 py-2 text-[10px] font-semibold uppercase tracking-normal text-black shadow-xl">
           DESIGN SYSTEM MODE
         </div>
       )}
