@@ -394,25 +394,25 @@ export default function DashboardPage() {
 
   return (
     <PageContainer>
-      <div className="py-14 space-y-8">
+      <div className="py-16 space-y-10">
 
         {/* ═══════════════════════════════════════
             HEADER
         ═══════════════════════════════════════ */}
-        <div className="border-b border-white/[0.04] pb-10">
-          <div className="flex items-start justify-between flex-wrap gap-4">
+        <div className="pb-10">
+          <div className="flex items-start justify-between flex-wrap gap-6">
             <div>
-              <p className="text-[10px] uppercase tracking-normal text-white/15 mb-4">
+              <p className="micro-label mb-5">
                 {currentTime.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               </p>
               <h1 className="text-5xl md:text-6xl font-light tracking-normal text-white/90 leading-tight">
                 {greeting},
                 <br />
-                <span className="text-white/40">
+                <span className="text-white/50">
                   {profile?.display_name || "User"}
                 </span>
               </h1>
-              <p className="mt-4 text-white/25 text-sm leading-relaxed max-w-lg">
+              <p className="mt-5 max-w-xl text-sm leading-7 text-white/40">
                 Your biological operating system is{" "}
                 {hasAssessment ? "active and monitoring." : "waiting for initialization."}
               </p>
@@ -420,7 +420,7 @@ export default function DashboardPage() {
 
             {/* SYSTEM STATUS INDICATOR */}
             <div className="flex flex-col items-end gap-2">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/[0.06] bg-white/[0.02]">
+              <div className="executive-panel-soft flex items-center gap-2 rounded-full px-4 py-2">
                 <div className={`w-1.5 h-1.5 rounded-full ${
                   systemStatus === "OPTIMAL" ? "bg-green-400"
                   : systemStatus === "ATTENTION REQUIRED" ? "bg-yellow-400"
@@ -431,37 +431,39 @@ export default function DashboardPage() {
                   {systemStatus}
                 </span>
               </div>
-              <p className="text-[9px] uppercase tracking-normal text-white/15">
+              <p className="text-[9px] uppercase tracking-normal text-white/25">
                 {profile?.plan || "core"} · {profile?.subscription_status || "active"}
               </p>
             </div>
           </div>
+          <div className="silver-rule mt-10" />
         </div>
 
         {/* ═══════════════════════════════════════
             HERO ROW — BIO AGE + RISK
         ═══════════════════════════════════════ */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid gap-6 lg:grid-cols-[1.18fr_0.82fr]">
 
           {/* BIOLOGICAL AGE CARD */}
-          <Card title="BIOLOGICAL AGE" glow>
+          <Card title="BIOLOGICAL AGE" glow className="min-h-[340px]">
             {bioAge ? (
-              <div>
-                <div className="flex items-end gap-4 mb-3">
-                  <p className={`text-5xl md:text-6xl font-light tracking-normal leading-none ${bioAgeColor}`}>
+              <div className="flex h-full flex-col justify-between">
+                <div>
+                <div className="flex items-end gap-5 mb-4">
+                  <p className={`metric-display text-7xl md:text-8xl font-light tracking-normal leading-none ${bioAgeColor}`}>
                     {bioAge}
-                    <span className="text-white/15 text-2xl ml-2">yrs</span>
+                    <span className="text-white/20 text-2xl ml-3">yrs</span>
                   </p>
                   {assessmentAge && (
                     <div className="mb-1">
-                      <p className="text-[9px] uppercase tracking-normal text-white/15 mb-0.5">Chrono</p>
-                      <p className="text-white/35 text-xl font-light">{assessmentAge}</p>
+                      <p className="micro-label mb-1">Chronological</p>
+                      <p className="text-white/50 text-2xl font-light">{assessmentAge}</p>
                     </div>
                   )}
                 </div>
 
                 {ageDelta !== null && (
-                  <p className={`text-sm mb-4 ${bioAgeColor}`}>
+                  <p className={`text-sm mb-6 ${bioAgeColor}`}>
                     {ageDelta < 0
                       ? `${Math.abs(ageDelta)} years younger than chronological age`
                       : ageDelta > 0
@@ -470,26 +472,23 @@ export default function DashboardPage() {
                   </p>
                 )}
 
-                {/* ACCURACY BAR */}
-                <div className="border-t border-white/[0.04] pt-4">
-                  <div className="flex justify-between text-[9px] uppercase tracking-normal text-white/20 mb-2">
+                </div>
+
+                <div className="pt-6">
+                  <div className="flex justify-between micro-label mb-3">
                     <span>Estimation Accuracy</span>
                     <span>{accuracyScore}%</span>
                   </div>
-                  <div className="h-px bg-white/[0.06] overflow-hidden">
+                  <div className="h-px overflow-hidden bg-white/[0.08]">
                     <div
-                      className={`h-full transition-all duration-1000 ${
-                        accuracyScore >= 80 ? "bg-green-400/50"
-                        : accuracyScore >= 60 ? "bg-yellow-400/50"
-                        : "bg-orange-400/50"
-                      }`}
+                      className="gold-fill transition-all duration-1000"
                       style={{ width: `${accuracyScore}%` }}
                     />
                   </div>
                   {accuracyScore < 70 && (
                     <button
                       onClick={() => router.push("/assessment")}
-                      className="mt-2 text-[9px] uppercase tracking-normal royal-text hover:royal-text transition-colors duration-300"
+                      className="mt-3 text-[9px] uppercase tracking-normal royal-text transition-colors duration-300 hover:text-white/80"
                     >
                       Add lab data to improve →
                     </button>
@@ -512,11 +511,12 @@ export default function DashboardPage() {
           </Card>
 
           {/* RISK + INTELLIGENCE CARD */}
-          <Card title="INTELLIGENCE REPORT">
+          <Card title="INTELLIGENCE REPORT" className="min-h-[340px]">
             {report ? (
-              <div>
+              <div className="flex h-full flex-col justify-between">
+                <div>
                 <div className="flex items-end gap-3 mb-3">
-                  <p className={`text-5xl md:text-6xl font-light tracking-normal leading-none ${
+                  <p className={`metric-display text-6xl font-light tracking-normal leading-none ${
                     report.risk_score <= 35 ? "text-green-400"
                     : report.risk_score <= 65 ? "text-yellow-400"
                     : "text-red-400"
@@ -524,28 +524,25 @@ export default function DashboardPage() {
                     {report.risk_score}
                     <span className="text-white/15 text-2xl ml-2">/ 100</span>
                   </p>
-                  <p className="text-white/25 text-sm mb-1">risk score</p>
+                  <p className="text-white/35 text-sm mb-1">risk score</p>
                 </div>
 
-                <div className="h-px bg-white/[0.04] overflow-hidden mb-4">
+                <div className="h-px bg-white/[0.08] overflow-hidden mb-5">
                   <div
-                    className={`h-full ${
-                      report.risk_score <= 35 ? "bg-green-400/40"
-                      : report.risk_score <= 65 ? "bg-yellow-400/40"
-                      : "bg-red-400/40"
-                    }`}
+                    className="gold-fill"
                     style={{ width: `${report.risk_score}%` }}
                   />
                 </div>
 
-                <p className="text-white/30 text-sm leading-relaxed mb-6 line-clamp-2">
+                <p className="text-white/45 text-sm leading-7 mb-6 line-clamp-3">
                   {latestPriority}
                 </p>
+                </div>
 
-                <div className="flex items-center gap-3 border-t border-white/[0.04] pt-4">
+                <div className="flex items-center gap-3 border-t border-white/[0.06] pt-5">
                   <button
                     onClick={() => router.push("/report")}
-                    className="px-4 py-2 rounded-full border royal-border royal-text hover:royal-border hover:royal-text transition-all duration-300 text-[10px] uppercase tracking-normal"
+                    className="px-4 py-2 rounded-full border royal-border royal-text transition-all duration-300 text-[10px] uppercase tracking-normal hover:border-white/25 hover:text-white/80"
                   >
                     Open Report
                   </button>
@@ -586,7 +583,7 @@ export default function DashboardPage() {
           <div className={`rounded-lg border p-5 ${
             firstReportPrompt && !report
               ? "royal-border royal-gradient-soft"
-              : "border-white/10 bg-[#151517]"
+              : "executive-panel-soft"
           }`}>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
@@ -595,7 +592,7 @@ export default function DashboardPage() {
                     ? "Your assessment is complete"
                     : "Phase 1 intelligence loop"}
                 </p>
-                <p className="mt-1 text-sm text-white/45">
+                <p className="mt-1 text-sm leading-6 text-white/50">
                   {generationMessage ||
                     (firstReportPrompt && !report
                       ? "Generate your first AI longevity report to activate the dashboard."
@@ -605,7 +602,7 @@ export default function DashboardPage() {
               <button
                 onClick={handleGenerateReport}
                 disabled={!hasAssessment || generatingReport}
-                className="inline-flex h-11 items-center justify-center rounded-full royal-gradient px-5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex h-11 items-center justify-center rounded-full royal-gradient px-5 text-sm font-medium transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {generatingReport ? "Generating..." : report ? "Refresh intelligence" : "Generate report"}
               </button>
@@ -616,16 +613,16 @@ export default function DashboardPage() {
         {/* ═══════════════════════════════════════
             PHASE 2 — WEARABLE DATA
         ═══════════════════════════════════════ */}
-        <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+        <div className="executive-panel rounded-lg p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-xl">
-              <p className="text-[10px] uppercase tracking-normal text-white/20">
+              <p className="micro-label">
                 Phase 2 · Wearable Intelligence
               </p>
-              <h2 className="mt-2 text-2xl font-light tracking-normal text-white/80">
+              <h2 className="mt-3 text-2xl font-light tracking-normal text-white/80">
                 Continuous health state
               </h2>
-              <p className="mt-2 text-sm leading-6 text-white/35">
+              <p className="mt-2 text-sm leading-7 text-white/45">
                 Connect a device once, then let Aeonvera rebuild sleep, recovery,
                 activity, and cardiovascular state as new data arrives.
               </p>
@@ -636,20 +633,20 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-3 gap-3 text-right">
               <div>
-                <p className="text-[9px] uppercase tracking-normal text-white/18">Sources</p>
-                <p className="mt-1 text-xl font-light text-white/70">
+                <p className="micro-label">Sources</p>
+                <p className="mt-2 text-xl font-light text-white/78">
                   {connectedProviders.length || 0}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-normal text-white/18">Metrics</p>
-                <p className="mt-1 text-xl font-light text-white/70">
+                <p className="micro-label">Metrics</p>
+                <p className="mt-2 text-xl font-light text-white/78">
                   {wearableRows.length}
                 </p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-normal text-white/18">Updated</p>
-                <p className="mt-1 text-sm font-light text-white/55">
+                <p className="micro-label">Updated</p>
+                <p className="mt-2 text-sm font-light text-white/60">
                   {latestWearableAt
                     ? new Date(latestWearableAt).toLocaleDateString("en-US", {
                         month: "short",
@@ -667,32 +664,32 @@ export default function DashboardPage() {
                 key={provider}
                 onClick={() => handleWearableSync(provider)}
                 disabled={Boolean(wearableSyncing)}
-                className="rounded-lg border border-white/[0.06] bg-[#151517] p-4 text-left transition hover:border-white/14 disabled:cursor-not-allowed disabled:opacity-45"
+                className="executive-panel-soft quiet-lift rounded-lg p-4 text-left disabled:cursor-not-allowed disabled:opacity-45"
               >
-                <p className="text-[10px] uppercase tracking-normal text-white/20">
+                <p className="micro-label">
                   {provider === "oura" ? "Oura Ring" : "WHOOP"}
                 </p>
-                <p className="mt-2 text-sm text-white/65">
+                <p className="mt-2 text-sm text-white/72">
                   {wearableSyncing === provider ? "Syncing..." : "Sync latest data"}
                 </p>
-                <p className="mt-2 text-xs leading-5 text-white/30">
+                <p className="mt-2 text-xs leading-5 text-white/45">
                   Pulls sleep, recovery, strain, and activity metrics into health state.
                 </p>
               </button>
             ))}
 
-            <div className="rounded-lg border border-white/[0.06] bg-[#151517] p-4">
+            <div className="executive-panel-soft rounded-lg p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] uppercase tracking-normal text-white/20">
+                  <p className="micro-label">
                     Apple Health
                   </p>
-                  <p className="mt-2 text-sm text-white/65">Import export JSON</p>
+                  <p className="mt-2 text-sm text-white/72">Import export JSON</p>
                 </div>
                 <button
                   onClick={() => handleWearableSync("apple")}
                   disabled={Boolean(wearableSyncing)}
-                  className="rounded-full royal-gradient px-4 py-2 text-[10px] uppercase tracking-normal text-white disabled:cursor-not-allowed disabled:opacity-45"
+                  className="rounded-full royal-gradient px-4 py-2 text-[10px] uppercase tracking-normal disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   {wearableSyncing === "apple" ? "Importing" : "Import"}
                 </button>
@@ -701,7 +698,7 @@ export default function DashboardPage() {
                 value={applePayload}
                 onChange={(event) => setApplePayload(event.target.value)}
                 placeholder='{"records":[{"type":"HKQuantityTypeIdentifierStepCount","value":8400,"endDate":"2026-06-09T08:00:00Z"}]}'
-                className="mt-3 h-24 w-full resize-none rounded-md border border-white/[0.06] bg-black/20 p-3 text-xs leading-5 text-white/55 outline-none transition placeholder:text-white/16 focus:border-white/16"
+                className="executive-input mt-3 h-24 w-full resize-none rounded-md p-3 text-xs leading-5 placeholder:text-white/16"
               />
             </div>
           </div>
@@ -715,20 +712,20 @@ export default function DashboardPage() {
             ].map(([label, risk, baseline]) => (
               <div
                 key={label}
-                className="rounded-lg border border-white/[0.05] bg-white/[0.018] p-4"
+                className="executive-panel-soft rounded-lg p-4"
               >
-                <p className="text-[9px] uppercase tracking-normal text-white/18">
+                <p className="micro-label">
                   {label}
                 </p>
                 <div className="mt-2 flex items-end justify-between gap-3">
-                  <p className="text-xl font-light text-white/70">
+                  <p className="text-xl font-light text-white/78">
                     {typeof risk === "number" ? risk : "—"}
                   </p>
-                  <p className="text-xs text-white/25">{baseline}</p>
+                  <p className="text-xs text-white/40">{baseline}</p>
                 </div>
-                <div className="mt-3 h-px bg-white/[0.06]">
+                <div className="mt-3 h-px bg-white/[0.08]">
                   <div
-                    className="h-full royal-gradient"
+                    className="gold-fill"
                     style={{ width: `${typeof risk === "number" ? risk : 0}%` }}
                   />
                 </div>
@@ -737,7 +734,7 @@ export default function DashboardPage() {
           </div>
 
           {healthState?.insights?.[0] && (
-            <p className="mt-4 text-xs leading-6 text-white/34">
+            <p className="mt-4 text-xs leading-6 text-white/45">
               {healthState.insights[0]}
             </p>
           )}
@@ -747,7 +744,7 @@ export default function DashboardPage() {
             COACH ALERTS
         ═══════════════════════════════════════ */}
         <div>
-          <p className="text-[10px] uppercase tracking-normal text-white/15 mb-4">
+          <p className="micro-label mb-4">
             Active Intelligence Alerts
           </p>
           {alerts.length > 0 ? (
@@ -760,7 +757,7 @@ export default function DashboardPage() {
                       ? "border-red-500/15 bg-red-500/[0.04]"
                       : alert.severity === "medium"
                       ? "border-yellow-500/15 bg-yellow-500/[0.04]"
-                      : "border-white/[0.05] bg-white/[0.02]"
+                      : "border-white/[0.06] bg-white/[0.025]"
                   }`}
                 >
                   <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
@@ -769,8 +766,8 @@ export default function DashboardPage() {
                     : "bg-white/30"
                   }`} />
                   <div className="flex-1">
-                    <p className="text-white/60 text-sm font-light mb-1">{alert.title}</p>
-                    <p className="text-white/30 text-xs leading-relaxed">{alert.recommendation}</p>
+                    <p className="text-white/70 text-sm font-light mb-1">{alert.title}</p>
+                    <p className="text-white/40 text-xs leading-relaxed">{alert.recommendation}</p>
                   </div>
                   <span className={`text-[9px] uppercase tracking-normal shrink-0 ${
                     alert.severity === "high" ? "text-red-400/60"
@@ -783,11 +780,11 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-5">
-              <p className="text-sm text-white/55">
+            <div className="executive-panel-soft rounded-lg p-5">
+              <p className="text-sm text-white/60">
                 No active alerts yet.
               </p>
-              <p className="mt-1 text-xs leading-6 text-white/32">
+              <p className="mt-1 text-xs leading-6 text-white/40">
                 Generate your first report to create an in-app coach notification.
               </p>
             </div>
@@ -800,7 +797,7 @@ export default function DashboardPage() {
         <div className="grid md:grid-cols-3 gap-4">
           <button
             onClick={() => router.push("/assessment")}
-            className="premium-surface rounded-lg p-5 text-left transition-all duration-300 hover:border-white/15 group"
+            className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
           >
             <p className="text-[10px] uppercase tracking-normal text-white/20 mb-3 group-hover:text-white/30 transition-colors">
               {hasAssessment ? "Update" : "Initialize"}
@@ -815,7 +812,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => router.push("/report")}
-            className="premium-surface rounded-lg p-5 text-left transition-all duration-300 hover:border-white/15 group"
+            className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
           >
             <p className="text-[10px] uppercase tracking-normal text-white/20 mb-3 group-hover:text-white/30 transition-colors">
               Intelligence
@@ -830,7 +827,7 @@ export default function DashboardPage() {
 
           <button
             onClick={() => router.push("/pricing")}
-            className="premium-surface rounded-lg p-5 text-left transition-all duration-300 hover:border-white/15 group"
+            className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
           >
             <p className="text-[10px] uppercase tracking-normal text-white/20 mb-3 group-hover:text-white/30 transition-colors">
               Account

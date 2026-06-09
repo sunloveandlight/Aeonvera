@@ -742,11 +742,12 @@ export default function AssessmentPage() {
 
   return (
     <div className="min-h-screen py-20">
-      <PageContainer className="max-w-3xl">
+      <PageContainer className="max-w-4xl">
+        <div className="executive-panel rounded-lg p-6 md:p-8">
 
         {/* HEADER */}
         <div className="mb-12">
-          <p className="text-[10px] uppercase tracking-normal text-white/20 mb-4">
+          <p className="micro-label mb-4">
             Longevity Assessment — Step {step + 1} of {STEPS.length}
           </p>
 
@@ -754,24 +755,20 @@ export default function AssessmentPage() {
             {currentStep.title}
           </h1>
 
-          <p className="mt-3 text-white/35 text-sm leading-relaxed">
+          <p className="mt-4 max-w-2xl text-white/45 text-sm leading-7">
             {currentStep.subtitle}
           </p>
 
           {/* PROGRESS BAR */}
-          <div className="mt-8 space-y-2">
-            <div className="flex justify-between text-[10px] uppercase tracking-normal text-white/20">
+          <div className="mt-9 space-y-3">
+            <div className="flex justify-between micro-label">
               <span>Progress</span>
               <span>Accuracy {completionPct}%</span>
             </div>
-            <div className="w-full h-px bg-white/[0.06] overflow-hidden">
+            <div className="w-full h-px bg-white/[0.08] overflow-hidden">
               <div
-                className="h-full transition-all duration-700"
-                style={{
-                  width: `${progress}%`,
-                  background:
-                    "linear-gradient(to right, rgba(126,87,194,0.45), rgba(214,183,101,0.9))",
-                }}
+                className="gold-fill transition-all duration-700"
+                style={{ width: `${progress}%` }}
               />
             </div>
           </div>
@@ -783,10 +780,10 @@ export default function AssessmentPage() {
                 key={s.id}
                 className={`h-1 rounded-full transition-all duration-500 ${
                   i < step
-                    ? "royal-gradient"
+                    ? "bg-[rgb(var(--gold))]"
                     : i === step
-                    ? "royal-gradient"
-                    : "bg-white/[0.06]"
+                    ? "bg-[rgb(var(--gold))]"
+                    : "bg-white/[0.08]"
                 }`}
                 style={{ width: `${100 / STEPS.length - 1}%` }}
               />
@@ -796,7 +793,7 @@ export default function AssessmentPage() {
 
         {/* OPTIONAL BADGE */}
         {!currentStep.required && (
-          <div className="mb-6 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/12 bg-white/[0.04]">
+          <div className="executive-panel-soft mb-6 inline-flex items-center gap-2 rounded-full px-4 py-2">
             <div className="w-1.5 h-1.5 rounded-full royal-gradient" />
             <span className="text-[10px] uppercase tracking-normal royal-text">
               Optional — improves accuracy
@@ -836,11 +833,11 @@ export default function AssessmentPage() {
         )}
 
         {/* NAVIGATION */}
-        <div className="flex justify-between items-center pt-6 border-t border-white/[0.04]">
+        <div className="flex justify-between items-center pt-6 border-t border-white/[0.06]">
           <button
             onClick={handleBack}
             disabled={step === 0}
-            className="px-6 py-3 rounded-full border border-white/[0.06] text-white/25 hover:text-white/50 hover:border-white/15 transition-all duration-300 text-[11px] uppercase tracking-normal disabled:opacity-0"
+            className="px-6 py-3 rounded-full border border-white/[0.08] text-white/35 hover:text-white/65 hover:border-white/20 transition-all duration-300 text-[11px] uppercase tracking-normal disabled:opacity-0"
           >
             Back
           </button>
@@ -849,7 +846,7 @@ export default function AssessmentPage() {
             {!currentStep.required && step < STEPS.length - 1 && (
               <button
                 onClick={handleNext}
-                className="text-[10px] uppercase tracking-normal text-white/20 hover:text-white/40 transition-colors duration-300"
+                className="text-[10px] uppercase tracking-normal text-white/35 hover:text-white/60 transition-colors duration-300"
               >
                 Skip →
               </button>
@@ -858,21 +855,21 @@ export default function AssessmentPage() {
             {step < STEPS.length - 1 ? (
               <button
                 onClick={handleNext}
-                className="px-7 py-3 rounded-full border royal-border royal-text hover:royal-border hover:royal-text transition-all duration-300 text-[11px] uppercase tracking-normal"
+                className="px-7 py-3 rounded-full border royal-border royal-text hover:border-white/25 hover:text-white/80 transition-all duration-300 text-[11px] uppercase tracking-normal"
               >
                 Continue
               </button>
             ) : (
               <button
                 onClick={submit}
-                className="px-8 py-3 rounded-full border royal-border royal-text hover:royal-border hover:royal-text royal-gradient-soft transition-all duration-300 text-[11px] uppercase tracking-normal"
+                className="px-8 py-3 rounded-full royal-gradient transition-all duration-300 text-[11px] uppercase tracking-normal"
               >
                 Analyze My Biology
               </button>
             )}
           </div>
         </div>
-
+        </div>
       </PageContainer>
     </div>
   );
@@ -905,10 +902,10 @@ function InputField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl text-white/80 placeholder-white/10 focus:outline-none focus:border-[#d6b765] focus:bg-white/[0.03] transition-all duration-300 text-sm"
+          className="executive-input w-full rounded-xl px-4 py-3 text-sm"
         />
         {field.unit && (
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 text-xs">
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 text-xs">
             {field.unit}
           </span>
         )}
@@ -941,7 +938,7 @@ function SelectField({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl text-white/80 focus:outline-none focus:border-[#d6b765] focus:bg-white/[0.03] transition-all duration-300 text-sm appearance-none cursor-pointer"
+        className="executive-input w-full rounded-xl px-4 py-3 text-sm appearance-none cursor-pointer"
         style={{ backgroundColor: "rgba(7,7,10,0.95)" }}
       >
         <option value="" className="bg-[#07070a] text-white/30">

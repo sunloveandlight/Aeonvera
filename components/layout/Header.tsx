@@ -45,7 +45,7 @@ export default function Header() {
         <nav className="hidden items-center gap-7 md:flex">
           <Link
             href="/pricing"
-            className="text-xs font-medium text-white/48 transition-colors duration-300 hover:text-white/80"
+            className="text-xs font-medium text-white/50 transition-colors duration-300 hover:text-white/80"
           >
             Pricing
           </Link>
@@ -53,19 +53,19 @@ export default function Header() {
             <>
               <Link
                 href="/dashboard"
-                className="text-xs font-medium text-white/48 transition-colors duration-300 hover:text-white/80"
+                className="text-xs font-medium text-white/50 transition-colors duration-300 hover:text-white/80"
               >
                 Dashboard
               </Link>
               <Link
                 href="/assessment"
-                className="text-xs font-medium text-white/48 transition-colors duration-300 hover:text-white/80"
+                className="text-xs font-medium text-white/50 transition-colors duration-300 hover:text-white/80"
               >
                 Assessment
               </Link>
               <Link
                 href="/report"
-                className="text-xs font-medium text-white/48 transition-colors duration-300 hover:text-white/80"
+                className="text-xs font-medium text-white/50 transition-colors duration-300 hover:text-white/80"
               >
                 Report
               </Link>
@@ -89,7 +89,7 @@ export default function Header() {
           ) : authenticated ? (
             <button
               onClick={handleLogout}
-              className="hidden text-xs font-medium text-white/48 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
+              className="hidden text-xs font-medium text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
             >
               Sign Out
             </button>
@@ -97,7 +97,7 @@ export default function Header() {
             <>
               <Link
                 href="/login?mode=signin"
-                className="hidden text-xs font-medium text-white/48 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
+                className="hidden text-xs font-medium text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
               >
                 Sign In
               </Link>
