@@ -10,10 +10,12 @@ type WearablesPanelProps = {
   wearableSyncing: string | null;
   connectedProviderSet: Set<"oura" | "whoop">;
   applePayload: string;
+  appleImportFileName: string | null;
   wearableRisk: Record<string, number>;
   wearableBaselines: Record<string, number>;
   firstInsight?: string;
   onApplePayloadChange: (value: string) => void;
+  onAppleImportFileChange: (file: File | null) => void;
   onProviderAction: (provider: "oura" | "whoop") => void;
   onWearableSync: (provider: WearableProvider) => void;
 };
@@ -26,10 +28,12 @@ export default function WearablesPanel({
   wearableSyncing,
   connectedProviderSet,
   applePayload,
+  appleImportFileName,
   wearableRisk,
   wearableBaselines,
   firstInsight,
   onApplePayloadChange,
+  onAppleImportFileChange,
   onProviderAction,
   onWearableSync,
 }: WearablesPanelProps) {
@@ -81,7 +85,7 @@ export default function WearablesPanel({
         {(["oura", "whoop"] as const).map((provider) => (
           <div
             key={provider}
-            className="executive-panel-soft flex min-h-[15.5rem] flex-col rounded-lg p-4"
+            className="executive-panel-soft flex min-h-[20rem] flex-col rounded-lg p-5"
           >
             <div className="flex-1">
               <p className="micro-label">
@@ -119,19 +123,44 @@ export default function WearablesPanel({
           </div>
         ))}
 
-        <div className="executive-panel-soft flex min-h-[15.5rem] flex-col rounded-lg p-4">
+        <div className="executive-panel-soft flex min-h-[20rem] flex-col rounded-lg p-5">
           <div className="flex-1">
             <p className="micro-label">Apple Health</p>
             <p className="mt-2 text-sm text-white/72">Ready to import</p>
             <p className="mt-2 text-xs leading-5 text-white/45">
-              Paste a HealthKit export payload to add steps, sleep, and activity records.
+              Paste JSON, upload an export file, or add a readable screenshot.
             </p>
             <textarea
               value={applePayload}
               onChange={(event) => onApplePayloadChange(event.target.value)}
               placeholder='{"records":[{"type":"HKQuantityTypeIdentifierStepCount","value":8400}]}'
-              className="apple-health-input executive-input mt-4 h-16 w-full resize-none rounded-lg p-3 text-xs leading-5 placeholder:text-white/16"
+              className="apple-health-input executive-input mt-4 h-28 w-full resize-none rounded-lg p-3 text-xs leading-5 placeholder:text-white/16"
             />
+            <label className="mt-4 flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.025] px-3 py-3 text-xs text-white/50 transition hover:border-white/[0.16] hover:text-white/70">
+              <span className="min-w-0 truncate">
+                {appleImportFileName || "Upload file or picture"}
+              </span>
+              <span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-white/30">
+                Choose
+              </span>
+              <input
+                type="file"
+                accept="application/json,text/plain,text/csv,.json,.csv,.txt,image/png,image/jpeg,image/webp,image/heic,image/heif"
+                className="sr-only"
+                onChange={(event) =>
+                  onAppleImportFileChange(event.target.files?.[0] || null)
+                }
+              />
+            </label>
+            {appleImportFileName && (
+              <button
+                type="button"
+                onClick={() => onAppleImportFileChange(null)}
+                className="mt-2 text-left text-[9px] uppercase tracking-[0.14em] text-white/28 transition hover:text-white/55"
+              >
+                Remove upload
+              </button>
+            )}
           </div>
           <button
             onClick={() => onWearableSync("apple")}

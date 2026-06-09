@@ -92,6 +92,7 @@ export default function DashboardPage() {
     return null;
   });
   const [applePayload, setApplePayload] = useState("");
+  const [appleImportFile, setAppleImportFile] = useState<File | null>(null);
   const [firstReportPrompt, setFirstReportPrompt] = useState(() => {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("firstReport") === "1";
@@ -293,23 +294,39 @@ export default function DashboardPage() {
           ? "/api/wearables/whoop/sync"
           : "/api/wearables/apple/import";
 
-      const body =
-        provider === "apple"
-          ? applePayload.trim()
-            ? JSON.parse(applePayload)
-            : null
-          : {};
-
-      if (provider === "apple" && !body) {
-        throw new Error("Paste Apple Health JSON before importing.");
-      }
-
-      const response = await fetch(endpoint, {
+      let requestInit: RequestInit = {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      };
+
+      if (provider === "apple") {
+        const payload = applePayload.trim();
+
+        if (!payload && !appleImportFile) {
+          throw new Error("Add Apple Health JSON, a file, or a picture before importing.");
+        }
+
+        if (appleImportFile) {
+          const formData = new FormData();
+          formData.append("file", appleImportFile);
+          if (payload) formData.append("payload", payload);
+          requestInit = { ...requestInit, body: formData };
+        } else {
+          requestInit = {
+            ...requestInit,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(JSON.parse(payload)),
+          };
+        }
+      } else {
+        requestInit = {
+          ...requestInit,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        };
+      }
+
+      const response = await fetch(endpoint, requestInit);
       const data = await response.json();
 
       if (!response.ok) {
@@ -349,7 +366,10 @@ export default function DashboardPage() {
       setWearableMessage(
         `${provider.toUpperCase()} synced ${data.inserted} metrics and updated health state.`
       );
-      if (provider === "apple") setApplePayload("");
+      if (provider === "apple") {
+        setApplePayload("");
+        setAppleImportFile(null);
+      }
     } catch (err) {
       console.error(err);
       setWearableMessage(
@@ -666,10 +686,12 @@ export default function DashboardPage() {
           wearableSyncing={wearableSyncing}
           connectedProviderSet={connectedProviderSet}
           applePayload={applePayload}
+          appleImportFileName={appleImportFile?.name || null}
           wearableRisk={wearableRisk}
           wearableBaselines={wearableBaselines}
           firstInsight={healthState?.insights?.[0]}
           onApplePayloadChange={setApplePayload}
+          onAppleImportFileChange={setAppleImportFile}
           onProviderAction={handleWearableProviderAction}
           onWearableSync={handleWearableSync}
         />
