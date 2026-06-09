@@ -1,39 +1,83 @@
 "use client";
 
 import { useState } from "react";
+import { ArrowRight, Check, ShieldCheck } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 
 type Plan = "core" | "elite" | "sovereign";
 
+const PLANS: Array<{
+  id: Plan;
+  name: string;
+  price: string;
+  summary: string;
+  features: string[];
+  featured?: boolean;
+}> = [
+  {
+    id: "core",
+    name: "Core",
+    price: "$49",
+    summary: "A precise baseline for people starting their longevity work.",
+    features: [
+      "Biological age computation",
+      "Full assessment",
+      "AI longevity report",
+      "Risk profile analysis",
+      "Dashboard access",
+    ],
+  },
+  {
+    id: "elite",
+    name: "Elite",
+    price: "$199",
+    summary: "Deeper biomarker intelligence and ongoing optimization.",
+    features: [
+      "Everything in Core",
+      "Advanced biomarker analysis",
+      "Proactive AI coaching",
+      "Daily intelligence alerts",
+      "Priority feature access",
+    ],
+    featured: true,
+  },
+  {
+    id: "sovereign",
+    name: "Sovereign",
+    price: "$999",
+    summary: "Private health intelligence for executive-level oversight.",
+    features: [
+      "Everything in Elite",
+      "Unlimited AI analysis",
+      "Digital twin modeling",
+      "Physician-ready exports",
+      "Concierge data integration",
+      "Priority support",
+    ],
+  },
+];
+
 export default function PricingPage() {
-  const [loadingPlan, setLoadingPlan] =
-    useState<Plan | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
 
   async function handleCheckout(plan: Plan) {
     try {
       setLoadingPlan(plan);
 
-      const res = await fetch(
-        "/api/stripe/checkout",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ plan }),
-        }
-      );
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ plan }),
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(
-          data.error || "Checkout failed"
-        );
+        throw new Error(data.error || "Checkout failed");
       }
 
-      window.location.href = data.url;
+      window.location.assign(data.url);
     } catch (err) {
       console.error(err);
       alert("Failed to start checkout.");
@@ -44,164 +88,85 @@ export default function PricingPage() {
 
   return (
     <div>
-      <section className="pt-32 pb-24">
+      <section className="px-6 py-20 lg:px-8">
         <PageContainer>
-
-          <div className="max-w-4xl mx-auto text-center">
-
-            <p className="text-xs uppercase tracking-[0.5em] text-white/40 mb-8">
-              Membership
+          <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
+            <div>
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-white/55">
+                <ShieldCheck size={14} className="text-[#d4af37]" />
+                Membership
+              </div>
+              <h1 className="max-w-3xl text-5xl font-semibold leading-[1.02] tracking-tight text-white md:text-7xl">
+                Choose the depth of your longevity system.
+              </h1>
+            </div>
+            <p className="max-w-2xl text-lg leading-8 text-white/55">
+              Start with a reliable biological age baseline, then move into
+              deeper intelligence as your data and goals become more specific.
             </p>
-
-            <h1 className="text-5xl md:text-7xl font-semibold tracking-tight leading-[0.95]">
-              Choose Your
-              <br />
-              Longevity Layer
-            </h1>
-
-            <p className="mt-8 text-xl text-white/60 max-w-3xl mx-auto">
-              From foundational tracking to a fully
-              personalized longevity intelligence
-              system.
-            </p>
-
           </div>
-
         </PageContainer>
       </section>
 
-      <section className="pb-32">
+      <section className="px-6 pb-20 lg:px-8">
         <PageContainer>
-
-          <div className="grid lg:grid-cols-3 gap-8">
-
-            {/* CORE */}
-            <div className="rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl p-8">
-
-              <div className="mb-8">
-                <h2 className="text-2xl font-semibold">
-                  Core
-                </h2>
-                <p className="mt-3 text-white/50">
-                  Foundational longevity tracking.
-                </p>
-              </div>
-
-              <div className="mb-8">
-                <div className="text-5xl font-semibold">
-                  $49
-                </div>
-                <div className="text-white/40 mt-2">
-                  per month
-                </div>
-              </div>
-
-              <ul className="space-y-4 text-white/70 mb-10">
-                <li>✓ Dashboard Access</li>
-                <li>✓ Health Profile</li>
-                <li>✓ Basic Assessments</li>
-                <li>✓ Longevity Tracking</li>
-                <li>✓ AI Report Generation</li>
-              </ul>
-
-              <button
-                onClick={() => handleCheckout("core")}
-                disabled={loadingPlan !== null}
-                className="w-full h-12 rounded-xl bg-white text-black font-medium transition hover:bg-zinc-200"
+          <div className="grid gap-4 lg:grid-cols-3">
+            {PLANS.map((plan) => (
+              <div
+                key={plan.id}
+                className={`flex min-h-[560px] flex-col rounded-lg border p-6 ${
+                  plan.featured
+                    ? "border-[#d4af37]/35 bg-[#d4af37]/8"
+                    : "border-white/8 bg-white/[0.025]"
+                }`}
               >
-                {loadingPlan === "core" ? "Processing..." : "Get Core"}
-              </button>
-
-            </div>
-
-            {/* ELITE */}
-            <div className="rounded-[32px] border border-white/20 bg-white/[0.05] backdrop-blur-xl p-8 relative">
-
-              <div className="absolute top-6 right-6 text-xs px-3 py-1 rounded-full bg-white text-black font-medium">
-                Recommended
-              </div>
-
-              <div className="mb-8">
-                <h2 className="text-2xl font-semibold">
-                  Elite
-                </h2>
-                <p className="mt-3 text-white/50">
-                  Full AI-powered optimization.
-                </p>
-              </div>
-
-              <div className="mb-8">
-                <div className="text-5xl font-semibold">
-                  $199
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-semibold tracking-tight text-white">
+                      {plan.name}
+                    </h2>
+                    <p className="mt-3 text-sm leading-7 text-white/48">
+                      {plan.summary}
+                    </p>
+                  </div>
+                  {plan.featured && (
+                    <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-black">
+                      Popular
+                    </span>
+                  )}
                 </div>
-                <div className="text-white/40 mt-2">
-                  per month
+
+                <div className="mt-9">
+                  <p className="text-5xl font-semibold tracking-tight text-white">
+                    {plan.price}
+                    <span className="text-sm font-normal text-white/35"> / month</span>
+                  </p>
                 </div>
-              </div>
 
-              <ul className="space-y-4 text-white/70 mb-10">
-                <li>✓ Everything in Core</li>
-                <li>✓ Advanced AI Reports</li>
-                <li>✓ Biological Age Tracking</li>
-                <li>✓ Risk Intelligence Engine</li>
-                <li>✓ Optimization Protocols</li>
-                <li>✓ Priority Feature Access</li>
-              </ul>
-
-              <button
-                onClick={() => handleCheckout("elite")}
-                disabled={loadingPlan !== null}
-                className="w-full h-12 rounded-xl bg-white text-black font-medium transition hover:bg-zinc-200"
-              >
-                {loadingPlan === "elite" ? "Processing..." : "Get Elite"}
-              </button>
-
-            </div>
-
-            {/* SOVEREIGN */}
-            <div className="rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl p-8">
-
-              <div className="mb-8">
-                <h2 className="text-2xl font-semibold">
-                  Sovereign
-                </h2>
-                <p className="mt-3 text-white/50">
-                  Private longevity intelligence.
-                </p>
-              </div>
-
-              <div className="mb-8">
-                <div className="text-5xl font-semibold">
-                  $999
+                <div className="mt-8 flex-1 space-y-3">
+                  {plan.features.map((feature) => (
+                    <div key={feature} className="flex items-start gap-3 text-sm leading-6 text-white/58">
+                      <Check size={16} className="mt-1 shrink-0 text-emerald-300/80" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="text-white/40 mt-2">
-                  per month
-                </div>
+
+                <button
+                  onClick={() => handleCheckout(plan.id)}
+                  disabled={loadingPlan !== null}
+                  className={`mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-45 ${
+                    plan.featured
+                      ? "bg-white text-black hover:bg-white/90"
+                      : "border border-white/12 text-white/75 hover:border-white/25 hover:text-white"
+                  }`}
+                >
+                  {loadingPlan === plan.id ? "Processing..." : `Get ${plan.name}`}
+                  {loadingPlan !== plan.id && <ArrowRight size={16} />}
+                </button>
               </div>
-
-              <ul className="space-y-4 text-white/70 mb-10">
-                <li>✓ Everything in Elite</li>
-                <li>✓ Unlimited AI Analysis</li>
-                <li>✓ Digital Twin Modeling</li>
-                <li>✓ Executive Health Dashboard</li>
-                <li>✓ Concierge Data Integration</li>
-                <li>✓ Priority Support</li>
-                <li>✓ Future Genomics Layer</li>
-                <li>✓ Future Family Accounts</li>
-              </ul>
-
-              <button
-                onClick={() => handleCheckout("sovereign")}
-                disabled={loadingPlan !== null}
-                className="w-full h-12 rounded-xl bg-white text-black font-medium transition hover:bg-zinc-200"
-              >
-                {loadingPlan === "sovereign" ? "Processing..." : "Get Sovereign"}
-              </button>
-
-            </div>
-
+            ))}
           </div>
-
         </PageContainer>
       </section>
     </div>

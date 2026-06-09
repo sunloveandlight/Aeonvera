@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /* =====================================================
-   AEONVERA DESIGN SYSTEM — REFINED REGAL CORE
-   Clean, minimal, intentional, production-grade
+   AEONVERA DESIGN SYSTEM
+   Quiet clinical interface with restrained contrast.
 ===================================================== */
 
 :root {
@@ -18,7 +18,8 @@
   ========================= */
   --gold: 212, 175, 55;
   --platinum: 229, 228, 226;
-  --warm: 180, 140, 60;
+  --blue: 61, 110, 255;
+  --green: 52, 211, 153;
 
   /* =========================
      TYPOGRAPHY SCALE
@@ -111,21 +112,9 @@ body::before {
   pointer-events: none;
 
   background:
-    radial-gradient(
-      900px circle at 20% 10%,
-      rgba(var(--gold), 0.06),
-      transparent 60%
-    ),
-    radial-gradient(
-      700px circle at 80% 0%,
-      rgba(var(--platinum), 0.03),
-      transparent 55%
-    ),
-    radial-gradient(
-      800px circle at 50% 100%,
-      rgba(var(--warm), 0.04),
-      transparent 60%
-    );
+    linear-gradient(135deg, rgba(var(--blue), 0.08), transparent 28%),
+    linear-gradient(315deg, rgba(var(--gold), 0.07), transparent 32%),
+    var(--background);
 }
 
 /* =====================================================
@@ -140,13 +129,13 @@ body::after {
   pointer-events: none;
 
   background-image:
-    linear-gradient(rgba(var(--gold), 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(var(--gold), 0.015) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
 
   background-size: 100px 100px;
-  opacity: 0.25;
+  opacity: 0.16;
 
-  mask-image: radial-gradient(circle at center, black 30%, transparent 75%);
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
 }
 
 /* =====================================================
@@ -219,7 +208,7 @@ body.aeonvera-overlay [data-aeonvera-button] {
 }
 
 body.aeonvera-overlay [data-aeonvera-input] {
-  outline: 1px solid rgba(var(--warm), 0.25);
+  outline: 1px solid rgba(var(--green), 0.25);
 }
 
 /* =====================================================

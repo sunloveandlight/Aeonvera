@@ -3,9 +3,9 @@
 import React, { createContext, useContext, useState } from "react";
 
 type FormContextType = {
-  values: Record<string, any>;
+  values: Record<string, unknown>;
   errors: Record<string, string>;
-  setValue: (name: string, value: any) => void;
+  setValue: (name: string, value: unknown) => void;
   setError: (name: string, error: string) => void;
   clearError: (name: string) => void;
 };
@@ -19,8 +19,8 @@ export function useFormContext() {
 }
 
 type FormProps = {
-  defaultValues?: Record<string, any>;
-  onSubmit: (values: Record<string, any>) => void | Promise<void>;
+  defaultValues?: Record<string, unknown>;
+  onSubmit: (values: Record<string, unknown>) => void | Promise<void>;
   children: React.ReactNode;
   className?: string;
 };
@@ -31,10 +31,10 @@ export default function Form({
   children,
   className = "",
 }: FormProps) {
-  const [values, setValues] = useState<Record<string, any>>(defaultValues);
+  const [values, setValues] = useState<Record<string, unknown>>(defaultValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const setValue = (name: string, value: any) => {
+  const setValue = (name: string, value: unknown) => {
     setValues((prev) => ({
       ...prev,
       [name]: value,

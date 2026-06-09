@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Menu, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 export default function Header() {
   const [authenticated, setAuthenticated] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -25,22 +27,22 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/[0.05] backdrop-blur-xl bg-[#08070a]/85">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
+    <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#07070a]/88 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
 
         {/* BRAND */}
         <Link
           href="/"
-          className="text-sm font-light tracking-[0.5em] text-white/70 hover:text-white transition-colors duration-500"
+          className="text-sm font-semibold tracking-[0.32em] text-white/82 transition-colors duration-300 hover:text-white"
         >
           AEONVERA
         </Link>
 
         {/* NAV */}
-        <nav className="hidden md:flex items-center gap-10">
+        <nav className="hidden items-center gap-7 md:flex">
           <Link
             href="/pricing"
-            className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
+            className="text-xs font-medium text-white/45 transition-colors duration-300 hover:text-white/75"
           >
             Pricing
           </Link>
@@ -48,19 +50,19 @@ export default function Header() {
             <>
               <Link
                 href="/dashboard"
-                className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
+                className="text-xs font-medium text-white/45 transition-colors duration-300 hover:text-white/75"
               >
                 Dashboard
               </Link>
               <Link
                 href="/assessment"
-                className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
+                className="text-xs font-medium text-white/45 transition-colors duration-300 hover:text-white/75"
               >
                 Assessment
               </Link>
               <Link
                 href="/report"
-                className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
+                className="text-xs font-medium text-white/45 transition-colors duration-300 hover:text-white/75"
               >
                 Report
               </Link>
@@ -69,11 +71,20 @@ export default function Header() {
         </nav>
 
         {/* AUTH */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setMobileOpen((open) => !open)}
+            className="inline-flex size-10 items-center justify-center rounded-md border border-white/10 text-white/55 md:hidden"
+            aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={mobileOpen}
+            type="button"
+          >
+            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
           {authenticated ? (
             <button
               onClick={handleLogout}
-              className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
+              className="hidden text-xs font-medium text-white/45 transition-colors duration-300 hover:text-white/75 sm:inline-flex"
             >
               Sign Out
             </button>
@@ -81,13 +92,13 @@ export default function Header() {
             <>
               <Link
                 href="/login?mode=signin"
-                className="text-[10px] uppercase tracking-[0.35em] text-white/30 hover:text-white/60 transition-colors duration-300"
+                className="hidden text-xs font-medium text-white/45 transition-colors duration-300 hover:text-white/75 sm:inline-flex"
               >
                 Sign In
               </Link>
               <Link
                 href="/login?mode=signup"
-                className="h-10 px-6 rounded-full border border-[rgba(212,175,55,0.25)] text-[10px] uppercase tracking-[0.35em] text-[rgba(212,175,55,0.7)] hover:border-[rgba(212,175,55,0.5)] hover:text-[rgba(212,175,55,1)] flex items-center transition-all duration-300"
+                className="flex h-10 items-center rounded-md bg-white px-4 text-xs font-medium text-black transition hover:bg-white/90"
               >
                 Begin
               </Link>
@@ -96,6 +107,60 @@ export default function Header() {
         </div>
 
       </div>
+
+      {mobileOpen && (
+        <div className="border-t border-white/[0.07] px-6 py-4 md:hidden">
+          <nav className="mx-auto flex max-w-7xl flex-col gap-2">
+            <Link
+              href="/pricing"
+              onClick={() => setMobileOpen(false)}
+              className="rounded-md border border-white/8 bg-white/[0.025] px-3 py-2 text-sm text-white/70"
+            >
+              Pricing
+            </Link>
+            {authenticated ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md border border-white/8 bg-white/[0.025] px-3 py-2 text-sm text-white/70"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/assessment"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md border border-white/8 bg-white/[0.025] px-3 py-2 text-sm text-white/70"
+                >
+                  Assessment
+                </Link>
+                <Link
+                  href="/report"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md border border-white/8 bg-white/[0.025] px-3 py-2 text-sm text-white/70"
+                >
+                  Report
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="rounded-md border border-white/8 bg-white/[0.025] px-3 py-2 text-left text-sm text-white/70"
+                  type="button"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/login?mode=signin"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-md border border-white/8 bg-white/[0.025] px-3 py-2 text-sm text-white/70"
+              >
+                Sign In
+              </Link>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

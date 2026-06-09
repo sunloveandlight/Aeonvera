@@ -1,7 +1,9 @@
 "use client";
 
 import { FormEvent, useState, Suspense } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight, LockKeyhole } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { ensureProfile } from "@/lib/auth/ensureProfile";
 import { isUserAllowed } from "@/lib/auth/permissions";
@@ -87,16 +89,35 @@ function LoginInner() {
   }
 
   return (
-    <main className="min-h-screen text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-md border border-white/[0.07] bg-white/[0.02] backdrop-blur-xl rounded-3xl p-10">
+    <main className="flex min-h-screen items-center justify-center px-6 py-16 text-white">
+      <div className="grid w-full max-w-5xl overflow-hidden rounded-lg border border-white/10 bg-white/[0.025] md:grid-cols-[0.9fr_1.1fr]">
+        <div className="hidden border-r border-white/8 bg-[#0d1117] p-8 md:block">
+          <div className="flex size-11 items-center justify-center rounded-md bg-white text-black">
+            <LockKeyhole size={20} />
+          </div>
+          <h1 className="mt-10 text-4xl font-semibold tracking-tight text-white">
+            {isSignUpMode ? "Create your private health workspace." : "Welcome back to Aeonvera."}
+          </h1>
+          <p className="mt-5 text-sm leading-7 text-white/52">
+            Access your biological age model, assessment history, and generated longevity reports.
+          </p>
+          <div className="mt-10 rounded-md border border-emerald-400/15 bg-emerald-400/[0.06] p-4">
+            <p className="text-sm font-medium text-emerald-200">Protected workspace</p>
+            <p className="mt-1 text-sm text-white/50">
+              Authentication is handled through Supabase with account-specific profile routing.
+            </p>
+          </div>
+        </div>
 
-        <p className="text-[10px] uppercase tracking-[0.5em] text-white/25 mb-4">
+        <div className="p-6 sm:p-10">
+
+        <p className="mb-4 text-xs uppercase tracking-[0.28em] text-[#d4af37]/75">
           Aeonvera
         </p>
 
-        <h1 className="text-3xl font-light tracking-tight text-white/90 mb-8">
+        <h2 className="mb-8 text-3xl font-semibold tracking-tight text-white">
           {isSignUpMode ? "Create Account" : "Welcome Back"}
-        </h1>
+        </h2>
 
         <form onSubmit={handleAuth} className="space-y-4">
           <input
@@ -104,7 +125,7 @@ function LoginInner() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-white/80 placeholder-white/20 focus:outline-none focus:border-[rgba(212,175,55,0.3)] transition-all duration-300 text-sm"
+            className="h-12 w-full rounded-md border border-white/10 bg-black/25 px-4 text-sm text-white/85 placeholder-white/25 transition focus:border-[#d4af37]/45 focus:outline-none"
             required
           />
 
@@ -113,43 +134,45 @@ function LoginInner() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-white/80 placeholder-white/20 focus:outline-none focus:border-[rgba(212,175,55,0.3)] transition-all duration-300 text-sm"
+            className="h-12 w-full rounded-md border border-white/10 bg-black/25 px-4 text-sm text-white/85 placeholder-white/25 transition focus:border-[#d4af37]/45 focus:outline-none"
             required
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl border border-[rgba(212,175,55,0.3)] text-[rgba(212,175,55,0.8)] hover:border-[rgba(212,175,55,0.6)] hover:text-[rgba(212,175,55,1)] transition-all duration-300 text-[11px] uppercase tracking-[0.3em] disabled:opacity-30"
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md bg-white text-sm font-medium text-black transition hover:bg-white/90 disabled:opacity-45"
           >
             {loading ? "Processing..." : isSignUpMode ? "Create Account" : "Sign In"}
+            {!loading && <ArrowRight size={16} />}
           </button>
         </form>
 
         {message && (
-          <div className="mt-4 text-xs border border-white/[0.06] p-3 rounded-xl text-white/40 tracking-wide">
+          <div className="mt-4 rounded-md border border-white/10 bg-black/20 p-3 text-sm text-white/55">
             {message}
           </div>
         )}
 
-        <div className="mt-8 text-center text-xs text-white/25 tracking-wide">
+        <div className="mt-8 text-center text-sm text-white/45">
           {isSignUpMode ? (
             <p>
               Already have an account?{" "}
-              <a href="/login" className="text-white/50 hover:text-white/80 transition-colors duration-300">
+              <Link href="/login" className="text-white/75 transition-colors duration-300 hover:text-white">
                 Sign in
-              </a>
+              </Link>
             </p>
           ) : (
             <p>
-              Don't have an account?{" "}
-              <a href="/login?mode=signup" className="text-white/50 hover:text-white/80 transition-colors duration-300">
+              Don&apos;t have an account?{" "}
+              <Link href="/login?mode=signup" className="text-white/75 transition-colors duration-300 hover:text-white">
                 Create one
-              </a>
+              </Link>
             </p>
           )}
         </div>
 
+        </div>
       </div>
     </main>
   );

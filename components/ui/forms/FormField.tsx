@@ -10,10 +10,10 @@ type FormFieldProps = {
   hint?: string;
   required?: boolean;
   children: (props: {
-    value: any;
-    onChange: (value: any) => void;
+    value: unknown;
+    onChange: (value: unknown) => void;
   }) => React.ReactNode;
-  validate?: (value: any) => string | null;
+  validate?: (value: unknown) => string | null;
 };
 
 export default function FormField({
@@ -30,7 +30,7 @@ export default function FormField({
   const value = values[name];
   const error = errors[name];
 
-  const handleChange = (val: any) => {
+  const handleChange = (val: unknown) => {
     setValue(name, val);
 
     if (validate) {
@@ -46,7 +46,7 @@ export default function FormField({
       if (result) setError(name, result);
       else clearError(name);
     }
-  }, []);
+  }, [clearError, name, setError, validate, value]);
 
   return (
     <Field label={label} hint={hint} error={error} required={required}>
