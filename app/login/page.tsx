@@ -87,8 +87,8 @@ function LoginInner() {
     <main className="flex min-h-screen items-center justify-center px-6 py-16 text-white">
       <div className="premium-surface w-full max-w-md rounded-lg p-8">
         <div className="mb-10 text-center">
-          <p className="text-sm font-medium royal-text">Aeonvera</p>
-          <h1 className="mt-4 text-4xl font-semibold leading-tight">
+          <p className="text-eyebrow">Aeonvera</p>
+          <h1 className="mt-4 text-4xl font-light leading-tight">
             {isSignUpMode ? "Create your account." : "Welcome back."}
           </h1>
           <p className="mt-4 text-sm leading-6 text-white/55">

@@ -380,7 +380,7 @@ export default function DashboardPage() {
           <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
           <div className="absolute inset-0 rounded-full border-t royal-border animate-spin" />
         </div>
-        <p className="text-white/20 text-[10px] tracking-normal uppercase">Initializing</p>
+        <p className="text-white/20 text-[10px] tracking-[0.14em] uppercase">Initializing</p>
       </div>
     );
   }
@@ -444,7 +444,7 @@ export default function DashboardPage() {
               <p className="micro-label mb-5">
                 {currentTime.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               </p>
-              <h1 className="text-5xl md:text-6xl font-light tracking-normal text-white/90 leading-tight">
+              <h1 className="text-5xl md:text-6xl font-light tracking-tight text-white/90 leading-tight">
                 {greeting},
                 <br />
                 <span className="text-white/50">
@@ -467,11 +467,11 @@ export default function DashboardPage() {
                     ? "system-status-stable-dot"
                     : "bg-white/55 shadow-[0_0_16px_rgba(255,255,255,0.18)]"
                 }`} />
-                <span className="text-[9px] uppercase tracking-normal text-white/78">
+                <span className="text-[9px] uppercase tracking-[0.14em] text-white/78">
                   {systemStatus}
                 </span>
               </div>
-              <p className="text-[9px] uppercase tracking-normal text-white/25">
+              <p className="text-[9px] uppercase tracking-[0.14em] text-white/25">
                 {profile?.plan || "core"} · {profile?.subscription_status || "active"}
               </p>
             </div>
@@ -493,7 +493,7 @@ export default function DashboardPage() {
                   <div>
                     <p className="micro-label mb-2">Biological</p>
                     <div className="flex items-baseline gap-3">
-                      <p className={`metric-display text-7xl md:text-8xl font-light tracking-normal leading-none ${bioAgeColor}`}>
+                      <p className={`metric-display text-7xl md:text-8xl font-light tracking-tight leading-none ${bioAgeColor}`}>
                         {bioAge}
                       </p>
                       <span className="text-2xl font-light leading-none text-white/24">yrs</span>
@@ -536,7 +536,7 @@ export default function DashboardPage() {
                   {accuracyScore < 70 && (
                     <button
                       onClick={() => router.push("/assessment")}
-                      className="premium-action-ghost mt-3 text-[9px] uppercase tracking-normal transition-colors duration-300"
+                      className="premium-action-ghost mt-3 text-[9px] uppercase tracking-[0.14em] transition-colors duration-300"
                     >
                       Add lab data to improve →
                     </button>
@@ -564,7 +564,7 @@ export default function DashboardPage() {
               <div className="flex h-full flex-col justify-between">
                 <div>
                 <div className="flex items-end gap-3 mb-3">
-                  <p className="metric-display text-6xl font-light tracking-normal leading-none text-white/86">
+                  <p className="metric-display text-6xl font-light tracking-tight leading-none text-white/86">
                     {report.risk_score}
                     <span className="text-white/15 text-2xl ml-2">/ 100</span>
                   </p>
@@ -586,14 +586,14 @@ export default function DashboardPage() {
                 <div className="flex items-center gap-3 border-t border-white/[0.06] pt-5">
                   <button
                     onClick={() => router.push("/report")}
-                    className="premium-action-secondary px-4 py-2 rounded-md transition-all duration-300 text-[10px] uppercase tracking-normal"
+                    className="premium-action-secondary px-4 py-2 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em]"
                   >
                     Open Report
                   </button>
                   <button
                     onClick={handleGenerateReport}
                     disabled={generatingReport}
-                    className="premium-action-ghost text-[10px] uppercase tracking-normal transition-colors duration-300 disabled:opacity-30"
+                    className="premium-action-ghost text-[10px] uppercase tracking-[0.14em] transition-colors duration-300 disabled:opacity-30"
                   >
                     {generatingReport ? "Generating..." : "Regenerate"}
                   </button>
@@ -610,7 +610,7 @@ export default function DashboardPage() {
                   <button
                     onClick={handleGenerateReport}
                     disabled={generatingReport}
-                    className="premium-action px-6 py-2.5 rounded-md transition-all duration-300 text-[10px] uppercase tracking-normal disabled:opacity-30"
+                    className="premium-action px-6 py-2.5 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em] disabled:opacity-30"
                   >
                     {generatingReport ? "Generating..." : "Generate Intelligence Report"}
                   </button>
@@ -663,7 +663,7 @@ export default function DashboardPage() {
               <p className="micro-label">
                 Phase 2 · Wearable Intelligence
               </p>
-              <h2 className="mt-3 text-2xl font-light tracking-normal text-white/80">
+              <h2 className="mt-3 text-2xl font-light tracking-tight text-white/80">
                 Continuous health state
               </h2>
               <p className="mt-2 text-sm leading-7 text-white/45">
@@ -725,7 +725,7 @@ export default function DashboardPage() {
                       : "Starts secure OAuth authorization and stores refreshable sync credentials."}
                   </p>
                   {connectedProviderSet.has(provider) && (
-                    <p className="mt-3 text-[9px] uppercase tracking-normal text-white/38">
+                    <p className="mt-3 text-[9px] uppercase tracking-[0.14em] text-white/38">
                       Connected
                     </p>
                   )}
@@ -733,7 +733,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => handleWearableProviderAction(provider)}
                   disabled={Boolean(wearableSyncing)}
-                  className="premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-normal disabled:cursor-not-allowed disabled:opacity-45"
+                  className="premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   {wearableSyncing === provider
                     ? "Syncing"
@@ -763,7 +763,7 @@ export default function DashboardPage() {
               <button
                 onClick={() => handleWearableSync("apple")}
                 disabled={Boolean(wearableSyncing)}
-                className="premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-normal disabled:cursor-not-allowed disabled:opacity-45"
+                className="premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {wearableSyncing === "apple" ? "Importing" : "Import Data"}
               </button>
@@ -826,7 +826,7 @@ export default function DashboardPage() {
                     <p className="text-white/70 text-sm font-light mb-1">{alert.title}</p>
                     <p className="text-white/40 text-xs leading-relaxed">{alert.recommendation}</p>
                   </div>
-                  <span className="shrink-0 text-[9px] uppercase tracking-normal text-white/28">
+                  <span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-white/28">
                     {alert.severity}
                   </span>
                 </div>
@@ -852,13 +852,13 @@ export default function DashboardPage() {
             onClick={() => router.push("/assessment")}
             className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
           >
-            <p className="text-[10px] uppercase tracking-normal text-white/20 mb-3 group-hover:text-white/30 transition-colors">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-white/20 mb-3 group-hover:text-white/30 transition-colors">
               {hasAssessment ? "Update" : "Initialize"}
             </p>
             <p className="text-white/60 text-sm font-light">
               {hasAssessment ? "Update your assessment data" : "Start your assessment"}
             </p>
-            <p className="text-[10px] uppercase tracking-normal mt-3 text-white/42 group-hover:text-white/72 transition-colors">
+            <p className="text-[10px] uppercase tracking-[0.14em] mt-3 text-white/42 group-hover:text-white/72 transition-colors">
               {hasAssessment ? "Retake →" : "Start →"}
             </p>
           </button>
@@ -867,13 +867,13 @@ export default function DashboardPage() {
             onClick={() => router.push("/report")}
             className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
           >
-            <p className="text-[10px] uppercase tracking-normal text-white/20 mb-3 group-hover:text-white/30 transition-colors">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-white/20 mb-3 group-hover:text-white/30 transition-colors">
               Intelligence
             </p>
             <p className="text-white/60 text-sm font-light">
               View your full biological profile and 90-day protocol
             </p>
-            <p className="text-[10px] uppercase tracking-normal mt-3 text-white/42 group-hover:text-white/72 transition-colors">
+            <p className="text-[10px] uppercase tracking-[0.14em] mt-3 text-white/42 group-hover:text-white/72 transition-colors">
               Open report →
             </p>
           </button>
@@ -882,13 +882,13 @@ export default function DashboardPage() {
             onClick={() => router.push("/pricing")}
             className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
           >
-            <p className="text-[10px] uppercase tracking-normal text-white/20 mb-3 group-hover:text-white/30 transition-colors">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-white/20 mb-3 group-hover:text-white/30 transition-colors">
               Account
             </p>
             <p className="text-white/60 text-sm font-light">
               {profile?.plan ? `${profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)} plan · ${profile.subscription_status}` : "Manage subscription"}
             </p>
-            <p className="text-[10px] uppercase tracking-normal mt-3 text-white/42 group-hover:text-white/72 transition-colors">
+            <p className="text-[10px] uppercase tracking-[0.14em] mt-3 text-white/42 group-hover:text-white/72 transition-colors">
               Manage →
             </p>
           </button>

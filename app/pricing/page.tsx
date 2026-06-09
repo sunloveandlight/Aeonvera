@@ -91,8 +91,8 @@ export default function PricingPage() {
       <section className="px-6 py-24 lg:px-8">
         <PageContainer>
           <div className="mx-auto max-w-4xl text-center">
-            <p className="text-sm font-medium royal-text">Pricing</p>
-            <h1 className="mt-5 text-5xl font-semibold leading-[1.05] md:text-6xl">
+            <p className="text-eyebrow">Pricing</p>
+            <h1 className="mt-5 text-5xl font-light leading-[1.05] md:text-6xl">
               Choose the right level of longevity intelligence.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/55">
@@ -132,7 +132,7 @@ export default function PricingPage() {
               >
                 <div className="min-h-[112px]">
                   <div className="flex items-start justify-between gap-4">
-                    <h2 className="text-2xl font-semibold">{plan.name}</h2>
+                    <h2 className="text-2xl font-light">{plan.name}</h2>
                     {plan.recommended && (
                       <span className="premium-status shrink-0 rounded-md px-3 py-1 text-xs font-medium">
                         Recommended
@@ -144,7 +144,7 @@ export default function PricingPage() {
                   </p>
                 </div>
 
-                <p className="mt-8 text-5xl font-semibold">
+                <p className="mt-8 text-5xl font-light">
                   {plan.price}
                   <span className="text-base font-normal text-white/40"> / month</span>
                 </p>

@@ -21,7 +21,7 @@ export default function Field({
   return (
     <div className={`w-full flex flex-col gap-1 ${className}`}>
       {label && (
-        <label className="text-[10px] uppercase tracking-normal text-white/30 mb-2 flex items-center gap-1">
+        <label className="text-[10px] uppercase tracking-[0.14em] text-white/30 mb-2 flex items-center gap-1">
           {label}
           {required && <span className="text-red-400">*</span>}
         </label>

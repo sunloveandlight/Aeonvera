@@ -29,13 +29,13 @@ export default function SectionTitle({
     >
       {/* EYEBROW */}
       {eyebrow && (
-        <p className="text-[10px] uppercase tracking-normal text-white/25 mb-6">
+        <p className="text-[10px] uppercase tracking-[0.14em] text-white/25 mb-6">
           {eyebrow}
         </p>
       )}
 
       {/* TITLE */}
-      <h2 className="text-4xl md:text-5xl font-light tracking-normal text-white/90 leading-[1.1]">
+      <h2 className="text-4xl md:text-5xl font-light tracking-tight text-white/90 leading-[1.1]">
         {title}
       </h2>
 

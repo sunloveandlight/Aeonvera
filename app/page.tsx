@@ -85,7 +85,7 @@ function HeroVisual() {
           <div>
             <p className="text-sm text-white/50">Biological age</p>
             <div className="mt-3 flex items-baseline gap-3">
-              <p className="hero-metric-glow text-6xl font-semibold leading-none md:text-7xl">38.4</p>
+              <p className="hero-metric-glow text-6xl font-light leading-none md:text-7xl">38.4</p>
               <p className="text-lg leading-none text-white/45">years</p>
             </div>
             <p className="mt-4 text-base text-white/60">
@@ -124,7 +124,7 @@ function HeroVisual() {
           ].map(([label, value, note]) => (
             <div key={label} className="rounded-lg bg-black/25 p-4">
               <p className="text-sm text-white/40">{label}</p>
-              <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
+              <p className="mt-2 text-2xl font-light text-white">{value}</p>
               <p className="mt-1 text-sm text-white/40">{note}</p>
             </div>
           ))}
@@ -188,7 +188,7 @@ export default function HomePage() {
               Private longevity intelligence
             </div>
 
-            <h1 className="max-w-4xl text-5xl font-semibold leading-[1.04] text-white md:text-6xl xl:text-7xl">
+            <h1 className="max-w-4xl text-5xl font-light leading-[1.04] text-white md:text-6xl xl:text-7xl">
               Know your biological age. Improve it with precision.
             </h1>
 
@@ -225,7 +225,7 @@ export default function HomePage() {
               <div className="mb-6 flex size-12 items-center justify-center rounded-lg bg-white text-black">
                 <Activity size={22} />
               </div>
-              <h2 className="max-w-xl text-3xl font-semibold leading-tight md:text-5xl">
+              <h2 className="max-w-xl text-3xl font-light leading-tight md:text-5xl">
                 A healthspan dashboard that stays out of your way.
               </h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-white/55">
@@ -237,7 +237,7 @@ export default function HomePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               {METRICS.map(([value, label]) => (
                 <div key={label} className="rounded-lg bg-white/[0.055] p-5 transition duration-300 hover:bg-white/[0.08]">
-                  <p className="text-4xl font-semibold leading-none text-white">{value}</p>
+                  <p className="text-4xl font-light leading-none text-white">{value}</p>
                   <p className="mt-3 text-sm text-white/50">{label}</p>
                 </div>
               ))}
@@ -250,8 +250,8 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
-              <p className="text-sm font-medium royal-text">Coverage</p>
-              <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
+              <p className="text-eyebrow">Coverage</p>
+              <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
                 One model across eight clinical domains.
               </h2>
             </div>
@@ -269,8 +269,8 @@ export default function HomePage() {
       <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-3xl">
-            <p className="text-sm font-medium royal-text">Platform</p>
-            <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
+            <p className="text-eyebrow">Platform</p>
+            <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
               Professional health intelligence, reduced to essentials.
             </h2>
           </div>
@@ -279,7 +279,7 @@ export default function HomePage() {
             {CAPABILITIES.map((item) => (
               <div key={item.title} className="premium-surface rounded-lg p-7">
                 <Dna size={24} className="mb-8 text-[rgb(var(--royal))]" />
-                <h3 className="text-xl font-semibold text-white">{item.title}</h3>
+                <h3 className="text-xl font-light text-white">{item.title}</h3>
                 <p className="mt-4 text-sm leading-7 text-white/55">{item.body}</p>
               </div>
             ))}
@@ -291,8 +291,8 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
-              <p className="text-sm font-medium royal-text">Workflow</p>
-              <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
+              <p className="text-eyebrow">Workflow</p>
+              <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
                 Built for repeatable progress.
               </h2>
             </div>
@@ -301,7 +301,7 @@ export default function HomePage() {
                 <div key={title} className="grid gap-4 border-b border-white/[0.08] pb-6 sm:grid-cols-[72px_1fr]">
                   <p className="text-sm text-white/35">{String(index + 1).padStart(2, "0")}</p>
                   <div>
-                    <h3 className="text-xl font-semibold text-white">{title}</h3>
+                    <h3 className="text-xl font-light text-white">{title}</h3>
                     <p className="mt-2 text-sm leading-7 text-white/55">{body}</p>
                   </div>
                 </div>
@@ -315,8 +315,8 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
-              <p className="text-sm font-medium royal-text">Membership</p>
-              <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
+              <p className="text-eyebrow">Membership</p>
+              <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
                 Choose your level of support.
               </h2>
             </div>
@@ -334,8 +334,8 @@ export default function HomePage() {
                 disabled={loadingPlan !== null}
                 className="pricing-plan-card premium-surface cursor-pointer rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <h3 className="text-xl font-semibold">{plan.name}</h3>
-                <p className="mt-6 text-4xl font-semibold">{plan.price}</p>
+                <h3 className="text-xl font-light">{plan.name}</h3>
+                <p className="mt-6 text-4xl font-light">{plan.price}</p>
                 <p className="mt-4 text-sm leading-7 text-white/55">{plan.body}</p>
                 <div className="mt-8 flex items-center gap-2 text-sm text-white/60">
                   <Check size={16} />
@@ -353,7 +353,7 @@ export default function HomePage() {
 
       <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl font-semibold leading-tight md:text-6xl">
+          <h2 className="text-4xl font-light leading-tight md:text-6xl">
             Start with the number that changes the conversation.
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/55">

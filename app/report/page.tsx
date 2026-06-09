@@ -193,7 +193,7 @@ export default function ReportPage() {
           <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
           <div className="absolute inset-0 rounded-full border-t royal-border animate-spin" />
         </div>
-        <p className="text-white/20 text-[10px] tracking-normal uppercase">
+        <p className="text-white/20 text-[10px] tracking-[0.14em] uppercase">
           Loading Intelligence Report
         </p>
       </div>
@@ -205,7 +205,7 @@ export default function ReportPage() {
       <PageContainer>
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="text-center max-w-md space-y-6">
-            <p className="text-white/20 text-xs uppercase tracking-normal">No Report Found</p>
+            <p className="text-white/20 text-xs uppercase tracking-[0.14em]">No Report Found</p>
             <p className="text-white/40 text-sm">{error}</p>
             <Button href="/assessment">Start Assessment</Button>
           </div>
@@ -238,13 +238,13 @@ export default function ReportPage() {
             HEADER
         ═══════════════════════════════════════ */}
         <div className="pb-10 border-b border-white/[0.04]">
-          <p className="text-[10px] tracking-normal text-white/15 uppercase mb-6">
+          <p className="text-[10px] tracking-[0.14em] text-white/15 uppercase mb-6">
             Aeonvera — Biological Intelligence Report
           </p>
 
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-5xl md:text-6xl font-light tracking-normal text-white/90 leading-tight">
+              <h1 className="text-5xl md:text-6xl font-light tracking-tight text-white/90 leading-tight">
                 {profile?.display_name ? `${profile.display_name}'s` : "Your"}
                 <br />
                 <span className="text-white/30">Biological Profile</span>
@@ -273,7 +273,7 @@ export default function ReportPage() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-[9px] uppercase tracking-normal text-white/20">Accuracy</p>
+                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/20">Accuracy</p>
                   <p className={`text-xs font-light ${accuracyColor}`}>{accuracyScore}% complete</p>
                 </div>
               </div>
@@ -281,7 +281,7 @@ export default function ReportPage() {
               <button
                 onClick={handleRegenerate}
                 disabled={regenerating}
-                className="premium-action-secondary px-5 py-2 rounded-md transition-all duration-300 text-[10px] uppercase tracking-normal disabled:opacity-20"
+                className="premium-action-secondary px-5 py-2 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em] disabled:opacity-20"
               >
                 {regenerating ? "Regenerating..." : "Regenerate Report"}
               </button>
@@ -303,7 +303,7 @@ export default function ReportPage() {
                     <div>
                       <p className="micro-label mb-2">Biological</p>
                       <div className="flex items-baseline gap-3">
-                        <p className={`text-6xl font-light tracking-normal leading-none ${bioAgeColor}`}>
+                        <p className={`text-6xl font-light tracking-tight leading-none ${bioAgeColor}`}>
                           {bioAge}
                         </p>
                         <span className="text-2xl font-light leading-none text-white/24">yrs</span>
@@ -333,7 +333,7 @@ export default function ReportPage() {
                   )}
 
                   {categoryLabel && (
-                    <p className={`text-[10px] uppercase tracking-normal mb-4 ${bioAgeColor}`}>
+                    <p className={`text-[10px] uppercase tracking-[0.14em] mb-4 ${bioAgeColor}`}>
                       {categoryLabel}
                     </p>
                   )}
@@ -352,7 +352,7 @@ export default function ReportPage() {
           {/* RISK SCORE */}
           <Card title="SYSTEM RISK INDEX">
             <div className="pt-2">
-              <p className={`text-6xl md:text-6xl font-light tracking-normal leading-none mb-4 ${riskColor}`}>
+              <p className={`text-6xl md:text-6xl font-light tracking-tight leading-none mb-4 ${riskColor}`}>
                 {report.risk_score}
                 <span className="text-white/20 text-3xl ml-2">/ 100</span>
               </p>
@@ -376,10 +376,10 @@ export default function ReportPage() {
               <div className="grid grid-cols-2 gap-2 border-t border-white/[0.04] pt-4">
                 {Object.entries(report.risk_profile).map(([key, value]) => (
                   <div key={key} className="flex items-center justify-between">
-                    <span className="text-[9px] uppercase tracking-normal text-white/20">
+                    <span className="text-[9px] uppercase tracking-[0.14em] text-white/20">
                       {key.replace(/_risk/g, "").replace(/_/g, " ")}
                     </span>
-                    <span className="text-[10px] uppercase tracking-normal text-white/55">
+                    <span className="text-[10px] uppercase tracking-[0.14em] text-white/55">
                       {value}
                     </span>
                   </div>
@@ -450,12 +450,12 @@ export default function ReportPage() {
             {report["90_day_plan"].map((item, i) => (
               <div key={i} className="flex items-center justify-between gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] p-4 transition-colors duration-300 hover:border-white/[0.07]">
                 <div className="flex-1">
-                  <p className="text-[9px] uppercase tracking-normal royal-text mb-1.5">
+                  <p className="text-[9px] uppercase tracking-[0.14em] royal-text mb-1.5">
                     {item.category}
                   </p>
                   <p className="text-white/60 text-sm leading-relaxed">{item.action}</p>
                 </div>
-                <span className="premium-status shrink-0 rounded-md px-3 py-1.5 text-[9px] uppercase tracking-normal">
+                <span className="premium-status shrink-0 rounded-md px-3 py-1.5 text-[9px] uppercase tracking-[0.14em]">
                   {item.impact}
                 </span>
               </div>
@@ -489,7 +489,7 @@ export default function ReportPage() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {missingFields.map((field, i) => (
-                    <span key={i} className="premium-status rounded-md px-3 py-1 text-[10px] uppercase tracking-normal">
+                    <span key={i} className="premium-status rounded-md px-3 py-1 text-[10px] uppercase tracking-[0.14em]">
                       {field}
                     </span>
                   ))}

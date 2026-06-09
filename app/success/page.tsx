@@ -87,14 +87,14 @@ export default function SuccessPage() {
   return (
     <main className="flex min-h-screen items-center justify-center px-6 text-white">
       <div className="premium-surface max-w-xl rounded-lg p-8 text-center">
-        <p className="mb-6 text-xs uppercase tracking-normal text-white/50">
+        <p className="mb-6 text-eyebrow">
           AEONVERA
         </p>
 
-        <h1 className="mb-6 text-5xl font-semibold tracking-normal">Subscription Activated</h1>
+        <h1 className="mb-6 text-5xl font-light tracking-tight">Subscription Activated</h1>
 
         <div className="mb-8 flex justify-center">
-          <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-[#d6b765]" />
+          <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-[#c4a969]" />
         </div>
 
         <p className="text-white/55">{status}</p>

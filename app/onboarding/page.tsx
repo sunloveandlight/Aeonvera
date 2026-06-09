@@ -112,10 +112,10 @@ export default function OnboardingPage() {
       <section className="pt-32 pb-24">
         <PageContainer>
           <div className="mx-auto max-w-4xl text-center">
-            <p className="mb-8 text-xs uppercase tracking-normal text-white/50">
+            <p className="mb-8 text-eyebrow">
               Initialization
             </p>
-            <h1 className="text-5xl font-semibold leading-[1.04] tracking-normal md:text-6xl">
+            <h1 className="text-5xl font-light leading-[1.04] tracking-tight md:text-6xl">
               Create Your
               <br />
               Longevity Identity
@@ -140,7 +140,7 @@ export default function OnboardingPage() {
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="John Smith"
-                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#d6b765]"
+                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#c4a969]"
                   />
                 </div>
                 <div>
@@ -151,7 +151,7 @@ export default function OnboardingPage() {
                     value={entityName}
                     onChange={(e) => setEntityName(e.target.value)}
                     placeholder="Aeon Entity Alpha"
-                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#d6b765]"
+                    className="h-14 w-full rounded-md border border-white/10 bg-black/30 px-4 text-white outline-none focus:border-[#c4a969]"
                   />
                 </div>
                 <button

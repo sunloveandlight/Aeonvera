@@ -36,7 +36,7 @@ export default function Header() {
         {/* BRAND */}
         <Link
           href="/"
-          className="text-sm font-semibold tracking-normal text-white/85 transition-colors duration-300 hover:text-white"
+          className="text-sm font-medium tracking-[0.2em] text-white/85 transition-colors duration-300 hover:text-white"
         >
           AEONVERA
         </Link>

@@ -1,5 +1,7 @@
+// Single source of truth for the champagne accent: rgb(196, 169, 105) === #c4a969.
+// Must stay in sync with `--gold` / `--royal` in app/globals.css.
 export const colors = {
-  bg: "#07070a",
+  bg: "#000000",
 
   white: {
     100: "rgba(255,255,255,0.95)",
@@ -13,12 +15,12 @@ export const colors = {
   },
 
   gold: {
-    100: "rgba(212,175,55,1)",
-    70: "rgba(212,175,55,0.7)",
-    40: "rgba(212,175,55,0.4)",
-    20: "rgba(212,175,55,0.2)",
-    10: "rgba(212,175,55,0.1)",
-    5: "rgba(212,175,55,0.05)",
+    100: "rgba(196,169,105,1)",
+    70: "rgba(196,169,105,0.7)",
+    40: "rgba(196,169,105,0.4)",
+    20: "rgba(196,169,105,0.2)",
+    10: "rgba(196,169,105,0.1)",
+    5: "rgba(196,169,105,0.05)",
   },
 };
 
@@ -54,8 +56,8 @@ export const space = {
 ================================ */
 
 export const type = {
-  hero: "text-5xl md:text-7xl font-light tracking-[-0.06em] leading-[1.05]",
-  title: "text-3xl md:text-5xl font-light tracking-[-0.04em] leading-[1.1]",
+  hero: "text-5xl md:text-7xl font-light tracking-[-0.022em] leading-[1.05]",
+  title: "text-3xl md:text-5xl font-light tracking-[-0.018em] leading-[1.1]",
   subtitle: "text-lg md:text-xl text-white/40 leading-relaxed",
   body: "text-base text-white/45 leading-relaxed",
   small: "text-sm text-white/35",
@@ -89,5 +91,5 @@ export const radius = {
 export const shadow = {
   soft: "shadow-[0_10px_40px_rgba(0,0,0,0.35)]",
   medium: "shadow-[0_20px_60px_rgba(0,0,0,0.5)]",
-  glow: "shadow-[0_0_30px_rgba(212,175,55,0.12)]",
+  glow: "shadow-[0_0_30px_rgba(196,169,105,0.12)]",
 };
