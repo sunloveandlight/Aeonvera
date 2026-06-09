@@ -20,6 +20,16 @@ type Report = {
   risk_score: number;
   primary_goal: string;
   created_at: string;
+  report?: {
+    top_priorities?: string[];
+    strengths?: string[];
+    weaknesses?: string[];
+    "90_day_plan"?: Array<{
+      category: string;
+      action: string;
+      impact: string;
+    }>;
+  } | null;
 };
 
 type Alert = {
@@ -44,6 +54,7 @@ export default function DashboardPage() {
   const [assessmentAge, setAssessmentAge] = useState<number | null>(null);
   const [accuracyScore, setAccuracyScore] = useState<number>(40);
   const [generatingReport, setGeneratingReport] = useState(false);
+  const [generationMessage, setGenerationMessage] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -73,7 +84,7 @@ export default function DashboardPage() {
         const [reportRes, assessmentRes, alertsRes] = await Promise.all([
           supabase
             .from("longevity_reports")
-            .select("id, risk_score, primary_goal, created_at")
+            .select("id, risk_score, primary_goal, created_at, report")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false })
             .limit(1)
@@ -150,11 +161,52 @@ export default function DashboardPage() {
   async function handleGenerateReport() {
     try {
       setGeneratingReport(true);
-      await fetch("/api/longevity/biological-age", { method: "POST", credentials: "include" });
-      const res = await fetch("/api/longevity/report", { method: "POST", credentials: "include" });
-      if (res.ok) router.push("/report");
+      setGenerationMessage("Computing biological age...");
+
+      const bioAgeRes = await fetch("/api/longevity/biological-age", {
+        method: "POST",
+        credentials: "include",
+      });
+      const bioAgeData = await bioAgeRes.json();
+
+      if (!bioAgeRes.ok) {
+        throw new Error(bioAgeData.error || "Failed to compute biological age.");
+      }
+
+      if (bioAgeData.result?.biologicalAge) {
+        setProfile((prev) =>
+          prev
+            ? { ...prev, biological_age: bioAgeData.result.biologicalAge }
+            : prev
+        );
+      }
+
+      setGenerationMessage("Generating longevity report...");
+
+      const reportRes = await fetch("/api/longevity/report", {
+        method: "POST",
+        credentials: "include",
+      });
+      const reportData = await reportRes.json();
+
+      if (!reportRes.ok) {
+        throw new Error(reportData.error || "Failed to generate report.");
+      }
+
+      if (reportData.report) {
+        setReport(reportData.report);
+      }
+
+      if (reportData.alert) {
+        setAlerts((prev) => [reportData.alert, ...prev].slice(0, 3));
+      }
+
+      setGenerationMessage("Report ready. Dashboard updated.");
     } catch (err) {
       console.error(err);
+      setGenerationMessage(
+        err instanceof Error ? err.message : "Report generation failed."
+      );
     } finally {
       setGeneratingReport(false);
     }
@@ -182,6 +234,8 @@ export default function DashboardPage() {
 
   const bioAge = profile?.biological_age ?? null;
   const ageDelta = bioAge && assessmentAge ? bioAge - assessmentAge : null;
+  const latestPriority =
+    report?.report?.top_priorities?.[0] || report?.primary_goal || null;
 
   const bioAgeColor =
     ageDelta === null ? "text-white/70"
@@ -354,7 +408,7 @@ export default function DashboardPage() {
                 </div>
 
                 <p className="text-white/30 text-sm leading-relaxed mb-6 line-clamp-2">
-                  {report.primary_goal}
+                  {latestPriority}
                 </p>
 
                 <div className="flex items-center gap-3 border-t border-white/[0.04] pt-4">
@@ -397,14 +451,37 @@ export default function DashboardPage() {
 
         </div>
 
+        {(generationMessage || hasAssessment) && (
+          <div className="rounded-lg border border-white/10 bg-[#151517] p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-medium text-white/80">
+                  Phase 1 intelligence loop
+                </p>
+                <p className="mt-1 text-sm text-white/45">
+                  {generationMessage ||
+                    "Generate a fresh biological age score, AI report, and dashboard alert from your latest assessment."}
+                </p>
+              </div>
+              <button
+                onClick={handleGenerateReport}
+                disabled={!hasAssessment || generatingReport}
+                className="inline-flex h-11 items-center justify-center rounded-full royal-gradient px-5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {generatingReport ? "Generating..." : report ? "Refresh intelligence" : "Generate report"}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ═══════════════════════════════════════
             COACH ALERTS
         ═══════════════════════════════════════ */}
-        {alerts.length > 0 && (
-          <div>
-            <p className="text-[10px] uppercase tracking-normal text-white/15 mb-4">
-              Active Intelligence Alerts
-            </p>
+        <div>
+          <p className="text-[10px] uppercase tracking-normal text-white/15 mb-4">
+            Active Intelligence Alerts
+          </p>
+          {alerts.length > 0 ? (
             <div className="space-y-3">
               {alerts.map((alert) => (
                 <div
@@ -436,8 +513,17 @@ export default function DashboardPage() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-5">
+              <p className="text-sm text-white/55">
+                No active alerts yet.
+              </p>
+              <p className="mt-1 text-xs leading-6 text-white/32">
+                Generate your first report to create an in-app coach notification.
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* ═══════════════════════════════════════
             QUICK ACTIONS

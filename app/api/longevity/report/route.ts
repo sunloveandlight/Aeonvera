@@ -31,7 +31,7 @@ async function getSupabase() {
   );
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const supabase = await getSupabase();
 
@@ -223,7 +223,7 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
     let report;
     try {
       report = JSON.parse(cleaned);
-    } catch (e) {
+    } catch {
       return NextResponse.json(
         { error: "Invalid AI JSON output", raw: cleaned },
         { status: 500 }
@@ -249,12 +249,38 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    const alertSeverity =
+      Number(report.risk_score) >= 70
+        ? "high"
+        : Number(report.risk_score) >= 45
+        ? "medium"
+        : "low";
+
+    const { data: alert } = await supabase
+      .from("health_alerts")
+      .insert({
+        user_id: userId,
+        type: "longevity_report",
+        severity: alertSeverity,
+        title: "New longevity report is ready",
+        message:
+          "Aeonvera generated a new biological intelligence report from your latest assessment.",
+        recommendation:
+          report.top_priorities?.[0] ||
+          report.primary_goal ||
+          "Review your updated 90-day longevity protocol.",
+        confidence: 0.82,
+      })
+      .select()
+      .single();
+
     /**
      * STEP 9 — RESPONSE
      */
     return NextResponse.json({
       success: true,
       report: data,
+      alert,
       memory: conversationMemory,
       adaptive_weights: adaptiveWeights,
     });
