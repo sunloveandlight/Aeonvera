@@ -90,7 +90,7 @@ export default function OnboardingPage() {
         return;
       }
 
-      router.replace("/dashboard");
+      router.replace("/assessment");
     } catch (err) {
       console.error(err);
       alert("Onboarding failed.");

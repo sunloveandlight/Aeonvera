@@ -55,6 +55,10 @@ export default function DashboardPage() {
   const [accuracyScore, setAccuracyScore] = useState<number>(40);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [generationMessage, setGenerationMessage] = useState<string | null>(null);
+  const [firstReportPrompt, setFirstReportPrompt] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("firstReport") === "1";
+  });
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -202,6 +206,8 @@ export default function DashboardPage() {
       }
 
       setGenerationMessage("Report ready. Dashboard updated.");
+      setFirstReportPrompt(false);
+      router.replace("/dashboard");
     } catch (err) {
       console.error(err);
       setGenerationMessage(
@@ -452,15 +458,23 @@ export default function DashboardPage() {
         </div>
 
         {(generationMessage || hasAssessment) && (
-          <div className="rounded-lg border border-white/10 bg-[#151517] p-5">
+          <div className={`rounded-lg border p-5 ${
+            firstReportPrompt && !report
+              ? "royal-border royal-gradient-soft"
+              : "border-white/10 bg-[#151517]"
+          }`}>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-sm font-medium text-white/80">
-                  Phase 1 intelligence loop
+                  {firstReportPrompt && !report
+                    ? "Your assessment is complete"
+                    : "Phase 1 intelligence loop"}
                 </p>
                 <p className="mt-1 text-sm text-white/45">
                   {generationMessage ||
-                    "Generate a fresh biological age score, AI report, and dashboard alert from your latest assessment."}
+                    (firstReportPrompt && !report
+                      ? "Generate your first AI longevity report to activate the dashboard."
+                      : "Generate a fresh biological age score, AI report, and dashboard alert from your latest assessment.")}
                 </p>
               </div>
               <button

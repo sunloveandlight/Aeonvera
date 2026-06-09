@@ -661,22 +661,8 @@ export default function AssessmentPage() {
         credentials: "include",
       });
 
-      setProcessingStatus(
-        "Aeonvera AI is analyzing your complete biological profile..."
-      );
-
-      const reportRes = await fetch("/api/longevity/report", {
-        method: "POST",
-        credentials: "include",
-      });
-
-      if (!reportRes.ok) {
-        router.replace("/dashboard");
-        return;
-      }
-
-      setProcessingStatus("Intelligence report ready.");
-      router.replace("/report");
+      setProcessingStatus("Biological age ready. Opening your dashboard...");
+      router.replace("/dashboard?firstReport=1");
     } catch (err) {
       console.error(err);
       setValidationError("Something went wrong. Please try again.");
