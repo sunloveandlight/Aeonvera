@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { ingestWearableMetrics } from "@/lib/wearables/ingestWearableMetrics";
 import { fetchWhoopMetrics } from "@/lib/wearables/whoop";
+import { getValidWearableAccessToken } from "@/lib/wearables/oauth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const accessToken = body.accessToken || process.env.WHOOP_ACCESS_TOKEN;
+    const admin = getSupabaseAdmin();
+    const accessToken =
+      body.accessToken ||
+      (await getValidWearableAccessToken({
+        supabase: admin,
+        userId: user.id,
+        provider: "whoop",
+      })) ||
+      process.env.WHOOP_ACCESS_TOKEN;
 
     if (!accessToken) {
       return NextResponse.json(
@@ -28,11 +37,17 @@ export async function POST(request: NextRequest) {
     const { startDate, endDate } = getSyncWindow(body.startDate, body.endDate);
     const metrics = await fetchWhoopMetrics({ accessToken, startDate, endDate });
     const result = await ingestWearableMetrics({
-      supabase: getSupabaseAdmin(),
+      supabase: admin,
       userId: user.id,
       provider: "whoop",
       metrics,
     });
+
+    await admin
+      .from("wearable_connections")
+      .update({ last_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("user_id", user.id)
+      .eq("provider", "whoop");
 
     return NextResponse.json({
       success: true,

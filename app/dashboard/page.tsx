@@ -54,6 +54,15 @@ type WearableMetricRow = {
   recorded_at?: string | null;
 };
 
+type WearableConnection = {
+  provider: "oura" | "whoop";
+  status: string;
+  scope: string | null;
+  expires_at: string | null;
+  last_synced_at: string | null;
+  connected_at: string | null;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
 
@@ -69,8 +78,18 @@ export default function DashboardPage() {
   const [generationMessage, setGenerationMessage] = useState<string | null>(null);
   const [healthState, setHealthState] = useState<HealthState | null>(null);
   const [wearableRows, setWearableRows] = useState<WearableMetricRow[]>([]);
+  const [wearableConnections, setWearableConnections] = useState<WearableConnection[]>([]);
   const [wearableSyncing, setWearableSyncing] = useState<string | null>(null);
-  const [wearableMessage, setWearableMessage] = useState<string | null>(null);
+  const [wearableMessage, setWearableMessage] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    const connected = params.get("wearableConnected");
+    const error = params.get("wearableError");
+
+    if (connected) return `${connected.toUpperCase()} connected. Sync latest data when ready.`;
+    if (error) return error;
+    return null;
+  });
   const [applePayload, setApplePayload] = useState("");
   const [firstReportPrompt, setFirstReportPrompt] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -102,7 +121,7 @@ export default function DashboardPage() {
 
         setProfile(profileData);
 
-        const [reportRes, assessmentRes, alertsRes, stateRes, wearableRes] = await Promise.all([
+        const [reportRes, assessmentRes, alertsRes, stateRes, wearableRes, connectionRes] = await Promise.all([
           supabase
             .from("longevity_reports")
             .select("id, risk_score, primary_goal, created_at, report")
@@ -140,6 +159,10 @@ export default function DashboardPage() {
             .eq("user_id", user.id)
             .order("recorded_at", { ascending: false })
             .limit(50),
+
+          fetch("/api/wearables/connections", {
+            credentials: "include",
+          }).then((response) => response.json()).catch(() => null),
         ]);
 
         if (reportRes.data) setReport(reportRes.data);
@@ -184,6 +207,9 @@ export default function DashboardPage() {
         if (alertsRes.data) setAlerts(alertsRes.data);
         if (stateRes.data) setHealthState(stateRes.data);
         if (wearableRes.data) setWearableRows(wearableRes.data);
+        if (connectionRes?.connections) {
+          setWearableConnections(connectionRes.connections);
+        }
 
         setLoading(false);
       } catch (err) {
@@ -333,6 +359,20 @@ export default function DashboardPage() {
     }
   }
 
+  function handleWearableProviderAction(provider: "oura" | "whoop") {
+    const connected = wearableConnections.some(
+      (connection) =>
+        connection.provider === provider && connection.status === "connected"
+    );
+
+    if (!connected) {
+      window.location.assign(`/api/wearables/${provider}/connect`);
+      return;
+    }
+
+    handleWearableSync(provider);
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6">
@@ -358,7 +398,12 @@ export default function DashboardPage() {
   const latestPriority =
     report?.report?.top_priorities?.[0] || report?.primary_goal || null;
   const connectedProviders = Array.from(
-    new Set(wearableRows.map((row) => row.provider).filter(Boolean))
+    new Set([
+      ...wearableConnections
+        .filter((connection) => connection.status === "connected")
+        .map((connection) => connection.provider),
+      ...wearableRows.map((row) => row.provider).filter(Boolean),
+    ])
   );
   const latestWearableAt = wearableRows
     .map((row) => row.recorded_at)
@@ -367,6 +412,11 @@ export default function DashboardPage() {
     .at(-1);
   const wearableRisk = healthState?.risk_scores || {};
   const wearableBaselines = healthState?.baseline || {};
+  const connectedProviderSet = new Set(
+    wearableConnections
+      .filter((connection) => connection.status === "connected")
+      .map((connection) => connection.provider)
+  );
 
   const bioAgeColor =
     ageDelta === null ? "text-white/70"
@@ -481,7 +531,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="h-px overflow-hidden bg-white/[0.08]">
                     <div
-                      className="gold-fill transition-all duration-1000"
+                      className="living-bar transition-all duration-1000"
                       style={{ width: `${accuracyScore}%` }}
                     />
                   </div>
@@ -529,7 +579,7 @@ export default function DashboardPage() {
 
                 <div className="h-px bg-white/[0.08] overflow-hidden mb-5">
                   <div
-                    className="gold-fill"
+                    className="living-bar"
                     style={{ width: `${report.risk_score}%` }}
                   />
                 </div>
@@ -662,7 +712,7 @@ export default function DashboardPage() {
             {(["oura", "whoop"] as const).map((provider) => (
               <button
                 key={provider}
-                onClick={() => handleWearableSync(provider)}
+                onClick={() => handleWearableProviderAction(provider)}
                 disabled={Boolean(wearableSyncing)}
                 className="executive-panel-soft quiet-lift rounded-lg p-4 text-left disabled:cursor-not-allowed disabled:opacity-45"
               >
@@ -670,11 +720,22 @@ export default function DashboardPage() {
                   {provider === "oura" ? "Oura Ring" : "WHOOP"}
                 </p>
                 <p className="mt-2 text-sm text-white/72">
-                  {wearableSyncing === provider ? "Syncing..." : "Sync latest data"}
+                  {wearableSyncing === provider
+                    ? "Syncing..."
+                    : connectedProviderSet.has(provider)
+                    ? "Sync latest data"
+                    : "Connect account"}
                 </p>
                 <p className="mt-2 text-xs leading-5 text-white/45">
-                  Pulls sleep, recovery, strain, and activity metrics into health state.
+                  {connectedProviderSet.has(provider)
+                    ? "Pulls sleep, recovery, strain, and activity metrics into health state."
+                    : "Starts secure OAuth authorization and stores refreshable sync credentials."}
                 </p>
+                {connectedProviderSet.has(provider) && (
+                  <p className="mt-3 text-[9px] uppercase tracking-normal royal-text">
+                    Connected
+                  </p>
+                )}
               </button>
             ))}
 
@@ -725,7 +786,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="mt-3 h-px bg-white/[0.08]">
                   <div
-                    className="gold-fill"
+                    className="living-bar"
                     style={{ width: `${typeof risk === "number" ? risk : 0}%` }}
                   />
                 </div>
