@@ -159,9 +159,13 @@ body::after {
 
 .hero-stage {
   background:
-    linear-gradient(145deg, rgba(20, 21, 24, 0.96), rgba(6, 7, 9, 0.98)),
-    linear-gradient(135deg, rgba(var(--gold), 0.12), transparent 42%);
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.55);
+    radial-gradient(circle at 22% 18%, rgba(125, 180, 255, 0.04), transparent 28%),
+    radial-gradient(circle at 88% 18%, rgba(var(--gold), 0.06), transparent 26%),
+    linear-gradient(145deg, rgba(22, 23, 27, 0.98), rgba(6, 7, 9, 0.99)),
+    linear-gradient(135deg, rgba(var(--gold), 0.09), transparent 42%);
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.042);
 }
 
 .hero-stage::before {
@@ -170,7 +174,7 @@ body::after {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, transparent, rgba(var(--gold), 0.12), transparent),
+    linear-gradient(90deg, transparent, rgba(var(--gold), 0.09), transparent),
     repeating-linear-gradient(
       90deg,
       rgba(255, 255, 255, 0.035) 0,
@@ -178,11 +182,83 @@ body::after {
       transparent 1px,
       transparent 96px
     );
-  opacity: 0.3;
+  opacity: 0.24;
 }
 
 .hero-pulse {
   animation: hero-pulse 5s ease-in-out infinite;
+}
+
+.hero-metric-glow {
+  text-shadow:
+    0 0 20px rgba(255, 255, 255, 0.052),
+    0 0 34px rgba(var(--gold), 0.034);
+}
+
+.living-bar {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(226, 229, 235, 0.94) 0%,
+      rgba(116, 156, 255, 0.82) 24%,
+      rgba(162, 110, 255, 0.78) 46%,
+      rgba(255, 124, 199, 0.72) 64%,
+      rgba(var(--gold), 0.9) 84%,
+      rgba(241, 243, 247, 0.94) 100%
+    );
+  background-size: 180% 100%;
+  box-shadow:
+    0 0 18px rgba(255, 255, 255, 0.1),
+    0 0 26px rgba(116, 156, 255, 0.09),
+    0 0 30px rgba(var(--gold), 0.1);
+  animation:
+    hero-pulse 5s ease-in-out infinite,
+    living-bar-color 8s ease-in-out infinite;
+}
+
+.living-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 42%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.42),
+    transparent
+  );
+  animation: living-bar-sweep 3.2s ease-in-out infinite;
+}
+
+@keyframes living-bar-color {
+  0%,
+  100% {
+    background-position: 0% 50%;
+    filter: saturate(0.92) brightness(0.96);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: saturate(1.08) brightness(1.06);
+  }
+}
+
+@keyframes living-bar-sweep {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  28% {
+    opacity: 0.66;
+  }
+  62% {
+    opacity: 0.34;
+  }
+  100% {
+    transform: translateX(260%);
+    opacity: 0;
+  }
 }
 
 @keyframes hero-pulse {

@@ -67,9 +67,9 @@ function HeroVisual() {
         <div className="grid gap-8 lg:grid-cols-2 lg:items-end">
           <div>
             <p className="text-sm text-white/50">Biological age</p>
-            <div className="mt-3 flex items-end gap-3">
-              <p className="text-6xl font-semibold leading-none md:text-7xl">38.4</p>
-              <p className="pb-3 text-lg text-white/45">years</p>
+            <div className="mt-3 flex items-baseline gap-3">
+              <p className="hero-metric-glow text-6xl font-semibold leading-none md:text-7xl">38.4</p>
+              <p className="text-lg leading-none text-white/45">years</p>
             </div>
             <p className="mt-4 text-base text-white/60">
               2.6 years below chronological baseline.
@@ -90,7 +90,7 @@ function HeroVisual() {
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="hero-pulse h-full origin-left rounded-full royal-gradient"
+                    className="hero-pulse living-bar h-full origin-left rounded-full"
                     style={{ width }}
                   />
                 </div>
