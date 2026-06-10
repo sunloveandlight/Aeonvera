@@ -262,18 +262,33 @@ body::after {
 
 .hero-age-copy {
   margin-top: 1.04rem;
+  transform: scale(0.68);
+  transform-origin: top left;
+  width: 145%;
 }
 
 .hero-age-label {
   margin-bottom: 0.28rem;
+  font-size: 0.32rem !important;
+  line-height: 1 !important;
 }
 
 .hero-age-value {
   margin-top: 0;
 }
 
+.hero-age-number {
+  font-size: 0.62rem !important;
+}
+
+.hero-age-unit {
+  font-size: 0.32rem !important;
+}
+
 .hero-age-note {
   margin-top: 0.36rem;
+  max-width: 7rem;
+  font-size: 0.38rem !important;
   line-height: 1.35;
 }
 

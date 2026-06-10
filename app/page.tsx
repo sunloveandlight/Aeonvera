@@ -142,12 +142,12 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
             </div>
 
             <div className="hero-age-copy">
-              <p className="hero-age-label text-[4.5px] font-medium uppercase tracking-[0.14em] text-white/42">Biological age</p>
+              <p className="hero-age-label font-medium uppercase tracking-[0.14em] text-white/42">Biological age</p>
               <div className="hero-age-value flex items-baseline gap-2">
-                <p className="hero-metric-glow text-[0.56rem] font-light leading-none">38.4</p>
-                <p className="text-[4.5px] leading-none text-white/42">years</p>
+                <p className="hero-age-number hero-metric-glow font-light leading-none">38.4</p>
+                <p className="hero-age-unit leading-none text-white/42">years</p>
               </div>
-              <p className="hero-age-note text-[5.25px] font-medium text-white/50">
+              <p className="hero-age-note font-medium text-white/50">
                 2.6 years below chronological baseline.
               </p>
             </div>
