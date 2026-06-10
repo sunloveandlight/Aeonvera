@@ -487,6 +487,19 @@ export default function DashboardPage() {
           updated_at: data.state.updatedAt,
         });
       }
+      if (data.biologicalAge?.result?.biologicalAge) {
+        setProfile((prev) =>
+          prev
+            ? { ...prev, biological_age: data.biologicalAge.result.biologicalAge }
+            : prev
+        );
+      }
+      if (data.biologicalAge?.history) {
+        setBioAgeHistory((prev) => [
+          data.biologicalAge.history,
+          ...prev,
+        ].slice(0, 24));
+      }
 
       setWearableRows((prev) => [
         ...Array.from({ length: data.inserted || 0 }, () => ({

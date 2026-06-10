@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { buildHealthState } from "@/lib/state/healthStateEngine";
 import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
+import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAge";
 
 export async function POST(req: NextRequest) {
   try {
@@ -147,11 +148,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const biologicalAge = await refreshBiologicalAgeForUser({
+      supabase,
+      userId,
+      source: "wearable",
+    });
+
     return NextResponse.json({
       success: true,
       processed: rawMetrics.length,
       normalized: normalized.length,
       state,
+      biologicalAge,
     });
   } catch (err) {
     const message =

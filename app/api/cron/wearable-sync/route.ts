@@ -83,6 +83,7 @@ async function syncWearables(request: NextRequest) {
         userId: connection.user_id,
         inserted: result.inserted,
         normalized: result.normalized,
+        biologicalAge: result.biologicalAge?.result?.biologicalAge ?? null,
       });
     }
 

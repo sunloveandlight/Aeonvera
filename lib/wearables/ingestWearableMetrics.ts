@@ -1,5 +1,6 @@
 import { buildHealthState } from "@/lib/state/healthStateEngine";
 import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
+import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAge";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { WearableProvider, WearableRawMetric, WearableIngestionResult } from "./types";
 
@@ -125,10 +126,17 @@ export async function ingestWearableMetrics({
     confidence: 0.78,
   });
 
+  const biologicalAge = await refreshBiologicalAgeForUser({
+    supabase,
+    userId,
+    source: "wearable",
+  });
+
   return {
     inserted: validMetrics.length,
     normalized: normalized.length,
     stateUpdated: true,
     state,
+    biologicalAge,
   };
 }
