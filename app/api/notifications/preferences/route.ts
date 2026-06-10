@@ -42,15 +42,17 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      preferences: data || {
-        user_id: user.id,
-        email_enabled: true,
-        push_enabled: false,
-        quiet_hours_start: sleepSchedule.start,
-        quiet_hours_end: sleepSchedule.end,
-        timezone: "UTC",
-        source: "sleep_schedule",
-      },
+      preferences: data
+        ? { ...data, source: "table" }
+        : {
+            user_id: user.id,
+            email_enabled: true,
+            push_enabled: false,
+            quiet_hours_start: sleepSchedule.start,
+            quiet_hours_end: sleepSchedule.end,
+            timezone: "UTC",
+            source: "sleep_schedule",
+          },
     });
   } catch (error) {
     const message =
@@ -111,7 +113,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ preferences: data });
+    return NextResponse.json({ preferences: { ...data, source: "table" } });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to save preferences.";
