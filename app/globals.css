@@ -453,8 +453,8 @@ body::after {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 46 154;
-  stroke-dashoffset: 146;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
   animation: dashboard-heartbeat-trace var(--heartbeat-duration, 2.2s) linear infinite;
 }
 
@@ -471,18 +471,23 @@ body::after {
 
 @keyframes dashboard-heartbeat-trace {
   0% {
-    stroke-dashoffset: 146;
-    opacity: 0.18;
+    stroke-dashoffset: 100;
+    opacity: 0;
   }
   8% {
     opacity: 0.92;
   }
+  78% {
+    stroke-dashoffset: 0;
+    opacity: 0.92;
+  }
   88% {
+    stroke-dashoffset: 0;
     opacity: 0.92;
   }
   100% {
-    stroke-dashoffset: -100;
-    opacity: 0.18;
+    stroke-dashoffset: 0;
+    opacity: 0;
   }
 }
 
