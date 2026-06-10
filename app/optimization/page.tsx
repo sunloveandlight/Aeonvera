@@ -1,9 +1,11 @@
 "use client";
 
-import { type CSSProperties, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
+import { supabase } from "@/lib/supabase/client";
 
 type Question = {
   id: string;
@@ -79,15 +81,42 @@ const DOMAINS = [
 ];
 
 export default function OptimizationPage() {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [context, setContext] = useState("");
   const [showMap, setShowMap] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   const question = QUESTIONS[step];
   const answeredCount = Object.keys(answers).length;
   const progress = Math.round((answeredCount / QUESTIONS.length) * 100);
   const complete = showMap && answeredCount === QUESTIONS.length;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function verifyUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (cancelled) return;
+
+      if (!user) {
+        router.replace("/login?mode=signin");
+        return;
+      }
+
+      setAuthChecked(true);
+    }
+
+    verifyUser();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   const focusStack = useMemo(() => {
     const selected = Object.values(answers);
@@ -119,10 +148,24 @@ export default function OptimizationPage() {
     }
   }
 
+  if (!authChecked) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6">
+        <div className="relative size-12">
+          <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
+          <div className="absolute inset-0 animate-spin rounded-full border-t royal-border" />
+        </div>
+        <p className="text-[10px] uppercase tracking-[0.14em] text-white/25">
+          Loading optimization
+        </p>
+      </div>
+    );
+  }
+
   return (
     <PageContainer>
       <div className="py-16">
-        <div className="mb-10 flex flex-col gap-5 border-b border-white/[0.06] pb-8 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="micro-label mb-5">Optimization</p>
             <h1 className="max-w-4xl text-5xl font-light leading-[1.04] text-white md:text-6xl">
