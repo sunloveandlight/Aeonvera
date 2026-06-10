@@ -115,7 +115,7 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
           </div>
         </div>
 
-        <div className="grid gap-7 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
+        <div className="grid gap-5 lg:grid-cols-[0.88fr_1.12fr] lg:items-stretch">
           <div
             className="hero-age-block"
             style={{ "--biometric-duration": biometricDuration } as CSSProperties}
@@ -143,7 +143,7 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
 
             <div className="hero-age-copy">
               <p className="hero-age-label font-medium uppercase tracking-[0.14em] text-white/42">Biological age</p>
-              <div className="hero-age-value flex items-baseline gap-2">
+              <div className="hero-age-value flex items-end gap-2">
                 <p className="hero-age-number hero-metric-glow font-light leading-none">38.4</p>
                 <p className="hero-age-unit leading-none text-white/42">years</p>
               </div>

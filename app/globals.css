@@ -249,26 +249,27 @@ body::after {
   display: flex;
   height: 14.15rem;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 0.05rem 0 0.05rem 0.15rem;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0.1rem 0 0.1rem 0.15rem;
 }
 
 .age-signal {
   position: relative;
-  width: 6.75rem;
-  height: 6.75rem;
+  width: 6.15rem;
+  height: 6.15rem;
   margin-left: -0.15rem;
 }
 
 .hero-age-copy {
-  margin-top: 0.78rem;
+  margin-top: 0.9rem;
   transform-origin: top left;
   width: 100%;
 }
 
 .hero-age-label {
-  margin-bottom: 0.38rem;
-  font-size: 0.66rem !important;
+  margin-bottom: 0.34rem;
+  font-size: 0.58rem !important;
   line-height: 1 !important;
 }
 
@@ -277,17 +278,18 @@ body::after {
 }
 
 .hero-age-number {
-  font-size: 2.18rem !important;
+  font-size: 1.86rem !important;
 }
 
 .hero-age-unit {
-  font-size: 0.72rem !important;
+  padding-bottom: 0.14rem;
+  font-size: 0.62rem !important;
 }
 
 .hero-age-note {
-  margin-top: 0.5rem;
-  max-width: 12rem;
-  font-size: 0.72rem !important;
+  margin-top: 0.44rem;
+  max-width: 10.5rem;
+  font-size: 0.62rem !important;
   line-height: 1.35;
 }
 
