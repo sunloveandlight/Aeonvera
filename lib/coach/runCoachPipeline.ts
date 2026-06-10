@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { runLongevityCoach } from "./longevityCoach";
 import { deliverCoachNotifications } from "@/lib/notifications/coachDelivery";
+import { executeAeonveraActions } from "@/lib/execution/aeonveraExecutionEngine";
 import { generateJarvisMessage } from "@/lib/voice/jarvisResponseEngine";
 
 /**
@@ -111,6 +112,17 @@ export async function runCoachPipeline(userId: string) {
       userId,
       alerts: storedAlerts,
       jarvis,
+    });
+
+    await executeAeonveraActions({
+      userId,
+      priorityQueue: interventions.map((intervention) => ({
+        type: "proactive",
+        domain: intervention.domain,
+        action: intervention.action,
+        reason: intervention.reason,
+        priority: intervention.priority * 10,
+      })),
     });
   }
 

@@ -261,15 +261,14 @@ body::after {
 }
 
 .hero-age-copy {
-  margin-top: 1.04rem;
-  transform: scale(0.68);
+  margin-top: 0.78rem;
   transform-origin: top left;
-  width: 145%;
+  width: 100%;
 }
 
 .hero-age-label {
-  margin-bottom: 0.28rem;
-  font-size: 0.32rem !important;
+  margin-bottom: 0.38rem;
+  font-size: 0.66rem !important;
   line-height: 1 !important;
 }
 
@@ -278,17 +277,17 @@ body::after {
 }
 
 .hero-age-number {
-  font-size: 0.62rem !important;
+  font-size: 2.18rem !important;
 }
 
 .hero-age-unit {
-  font-size: 0.32rem !important;
+  font-size: 0.72rem !important;
 }
 
 .hero-age-note {
-  margin-top: 0.36rem;
-  max-width: 7rem;
-  font-size: 0.38rem !important;
+  margin-top: 0.5rem;
+  max-width: 12rem;
+  font-size: 0.72rem !important;
   line-height: 1.35;
 }
 

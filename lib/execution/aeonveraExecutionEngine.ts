@@ -1,10 +1,4 @@
-/**
- * Aeonvera — Execution Layer Engine (STEP 33)
- * ------------------------------------------
- * Turns decisions into real system actions
- */
-
-import { supabase } from "@/lib/supabase/client";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 export type ExecutionItem = {
   type: "immediate" | "proactive";
@@ -30,6 +24,7 @@ export async function executeAeonveraActions(params: {
   priorityQueue: ExecutionItem[];
 }) {
   const { userId, priorityQueue } = params;
+  const supabase = getSupabaseAdmin();
 
   let notificationsTriggered = 0;
 
@@ -44,10 +39,10 @@ export async function executeAeonveraActions(params: {
    * STEP 2 — EXECUTE EACH ITEM
    */
   for (const item of sorted) {
-    await storeEvent(userId, item);
+    await storeEvent(supabase, userId, item);
 
     if (shouldNotify(item)) {
-      await triggerNotification(userId, item);
+      await triggerNotification(supabase, userId, item);
       notificationsTriggered++;
     }
   }
@@ -64,10 +59,15 @@ export async function executeAeonveraActions(params: {
  * STORE INTO SUPABASE EVENTS
  * =========================
  */
-async function storeEvent(userId: string, item: ExecutionItem) {
+async function storeEvent(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  item: ExecutionItem
+) {
   const { error } = await supabase.from("behavior_events").insert({
     user_id: userId,
     type: item.type,
+    event_type: item.type,
     domain: item.domain,
     action: item.action,
     reason: item.reason,
@@ -97,21 +97,32 @@ function shouldNotify(item: ExecutionItem): boolean {
 
 /**
  * =========================
- * NOTIFICATION SIMULATION LAYER
- * (Replace later with real push/email/SMS system)
+ * IN-APP EXECUTION NOTIFICATION
  * =========================
  */
-async function triggerNotification(userId: string, item: ExecutionItem) {
-  console.log("[NOTIFY]", {
-    userId,
-    title: `${item.domain.toUpperCase()} ALERT`,
-    message: item.reason,
-    action: item.action,
+async function triggerNotification(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  item: ExecutionItem
+) {
+  const title = `${item.domain.toUpperCase()} ALERT`;
+  const message = item.reason || item.action;
+
+  const { error } = await supabase.from("notification_deliveries").insert({
+    user_id: userId,
+    channel: "in_app",
+    status: "pending",
+    title,
+    message,
+    payload: {
+      domain: item.domain,
+      action: item.action,
+      priority: item.priority,
+      type: item.type,
+    },
   });
 
-  // placeholder for:
-  // - push notifications
-  // - email system
-  // - SMS
-  // - in-app feed
+  if (error) {
+    console.error("[Execution Notification Error]", error.message);
+  }
 }
