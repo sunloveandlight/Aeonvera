@@ -109,6 +109,20 @@ type BioAgeSimulation = {
   keyDrivers: string[];
 };
 
+type LabTrend = {
+  canonicalKey: string;
+  label: string;
+  latestValue: number;
+  previousValue: number | null;
+  unit: string | null;
+  measuredAt: string;
+  delta: number | null;
+  percentChange: number | null;
+  status: "improving" | "worsening" | "stable" | "baseline";
+  interpretation: string;
+  target: string;
+};
+
 const OPTIONAL_FIELDS: { key: keyof AssessmentData; label: string }[] = [
   { key: "resting_hr", label: "Resting Heart Rate" },
   { key: "blood_pressure_systolic", label: "Blood Pressure" },
@@ -152,6 +166,7 @@ export default function ReportPage() {
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [bioAgeHistory, setBioAgeHistory] = useState<BioAgeHistoryPoint[]>([]);
   const [bioAgeSimulations, setBioAgeSimulations] = useState<BioAgeSimulation[]>([]);
+  const [labTrends, setLabTrends] = useState<LabTrend[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -159,7 +174,7 @@ export default function ReportPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { router.replace("/login"); return; }
 
-        const [reportRes, profileRes, assessmentRes, historyRes, simulatorRes] = await Promise.all([
+        const [reportRes, profileRes, assessmentRes, historyRes, simulatorRes, labTrendsRes] = await Promise.all([
           supabase
             .from("longevity_reports")
             .select("report, created_at, risk_score, primary_goal")
@@ -183,6 +198,9 @@ export default function ReportPage() {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
           fetch("/api/longevity/simulator", {
+            credentials: "include",
+          }).then((response) => response.json()).catch(() => null),
+          fetch("/api/labs/trends", {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
         ]);
@@ -213,6 +231,7 @@ export default function ReportPage() {
         }
         if (historyRes?.history) setBioAgeHistory(historyRes.history);
         if (simulatorRes?.simulations) setBioAgeSimulations(simulatorRes.simulations);
+        if (labTrendsRes?.trends) setLabTrends(labTrendsRes.trends);
 
         if (!reportRes.data) setError("No report found. Complete your assessment first.");
       } catch {
@@ -466,6 +485,8 @@ export default function ReportPage() {
             onOpenOptimization={() => router.push("/optimization")}
           />
         </div>
+
+        <LabTrendsCard trends={labTrends} />
 
         {/* ═══════════════════════════════════════
             STRENGTHS + WEAKNESSES
@@ -806,4 +827,53 @@ function BioAgeSimulationCard({
       )}
     </Card>
   );
+}
+
+function LabTrendsCard({ trends }: { trends: LabTrend[] }) {
+  return (
+    <Card title="CLINICAL LAB TRENDS">
+      {trends.length ? (
+        <div className="grid gap-3 md:grid-cols-3">
+          {trends.slice(0, 9).map((trend) => (
+            <div
+              key={trend.canonicalKey}
+              className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4"
+            >
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+                  {trend.label}
+                </p>
+                <span className={labTrendClassName(trend.status)}>
+                  {trend.status}
+                </span>
+              </div>
+              <p className="text-2xl font-light text-white/78">
+                {trend.latestValue}
+                <span className="ml-1 text-xs text-white/28">{trend.unit || ""}</span>
+              </p>
+              <p className="mt-3 text-xs leading-5 text-white/38">
+                {trend.interpretation}
+              </p>
+              <p className="mt-3 border-t border-white/[0.05] pt-3 text-[9px] uppercase tracking-[0.14em] text-white/22">
+                Target: {trend.target}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm leading-7 text-white/38">
+          Import labs twice over time to unlock biomarker trend intelligence.
+        </p>
+      )}
+    </Card>
+  );
+}
+
+function labTrendClassName(status: LabTrend["status"]) {
+  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+
+  if (status === "improving") return `${base} royal-text bg-white/[0.035]`;
+  if (status === "worsening") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
+  if (status === "stable") return `${base} text-white/34 bg-white/[0.025]`;
+  return `${base} text-white/28 bg-white/[0.02]`;
 }

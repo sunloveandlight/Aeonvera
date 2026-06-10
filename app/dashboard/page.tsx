@@ -131,6 +131,20 @@ type LabBiomarkerRow = {
   measured_at: string;
 };
 
+type LabTrend = {
+  canonicalKey: string;
+  label: string;
+  latestValue: number;
+  previousValue: number | null;
+  unit: string | null;
+  measuredAt: string;
+  delta: number | null;
+  percentChange: number | null;
+  status: "improving" | "worsening" | "stable" | "baseline";
+  interpretation: string;
+  target: string;
+};
+
 type WearableMetricRow = {
   provider?: string | null;
   recorded_at?: string | null;
@@ -171,6 +185,7 @@ export default function DashboardPage() {
   const [bioAgeHistory, setBioAgeHistory] = useState<BioAgeHistoryPoint[]>([]);
   const [bioAgeSimulations, setBioAgeSimulations] = useState<BioAgeSimulation[]>([]);
   const [labRows, setLabRows] = useState<LabBiomarkerRow[]>([]);
+  const [labTrends, setLabTrends] = useState<LabTrend[]>([]);
   const [labPayload, setLabPayload] = useState("");
   const [labImportFile, setLabImportFile] = useState<File | null>(null);
   const [labImporting, setLabImporting] = useState(false);
@@ -239,6 +254,7 @@ export default function DashboardPage() {
           bioAgeHistoryRes,
           bioAgeSimulatorRes,
           labsRes,
+          labTrendsRes,
         ] = await Promise.all([
           supabase
             .from("longevity_reports")
@@ -308,6 +324,10 @@ export default function DashboardPage() {
             .eq("user_id", user.id)
             .order("measured_at", { ascending: false })
             .limit(18),
+
+          fetch("/api/labs/trends", {
+            credentials: "include",
+          }).then((response) => response.json()).catch(() => null),
         ]);
 
         if (reportRes.data) setReport(reportRes.data);
@@ -369,6 +389,9 @@ export default function DashboardPage() {
         }
         if (labsRes.data) {
           setLabRows(labsRes.data as LabBiomarkerRow[]);
+        }
+        if (labTrendsRes?.trends) {
+          setLabTrends(labTrendsRes.trends);
         }
 
         setLoading(false);
@@ -591,6 +614,12 @@ export default function DashboardPage() {
 
       if (data.inserted) {
         setLabRows((prev) => [...data.inserted, ...prev].slice(0, 18));
+      }
+      const trendsResponse = await fetch("/api/labs/trends", {
+        credentials: "include",
+      }).then((response) => response.json()).catch(() => null);
+      if (trendsResponse?.trends) {
+        setLabTrends(trendsResponse.trends);
       }
       if (data.biologicalAge?.result?.biologicalAge) {
         setProfile((prev) =>
@@ -1022,6 +1051,7 @@ export default function DashboardPage() {
 
         <LabImportPanel
           labRows={labRows}
+          labTrends={labTrends}
           labPayload={labPayload}
           labImportFileName={labImportFile?.name || null}
           labImporting={labImporting}
@@ -1324,6 +1354,7 @@ function BioAgeSimulationPanel({
 
 function LabImportPanel({
   labRows,
+  labTrends,
   labPayload,
   labImportFileName,
   labImporting,
@@ -1333,6 +1364,7 @@ function LabImportPanel({
   onLabImport,
 }: {
   labRows: LabBiomarkerRow[];
+  labTrends: LabTrend[];
   labPayload: string;
   labImportFileName: string | null;
   labImporting: boolean;
@@ -1413,13 +1445,34 @@ function LabImportPanel({
               {labRows.length} values
             </span>
           </div>
-          {labRows.length ? (
+          {labTrends.length ? (
             <div className="grid gap-2 sm:grid-cols-2">
-              {labRows.slice(0, 8).map((row) => (
+              {labTrends.slice(0, 8).map((trend) => (
                 <div
-                  key={`${row.id}-${row.canonical_key}`}
+                  key={trend.canonicalKey}
                   className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3"
                 >
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+                      {trend.label}
+                    </p>
+                    <span className={labTrendClassName(trend.status)}>
+                      {trend.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-white/70">
+                    {trend.latestValue} {trend.unit || ""}
+                  </p>
+                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-white/34">
+                    {trend.interpretation}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : labRows.length ? (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {labRows.slice(0, 8).map((row) => (
+                <div key={`${row.id}-${row.canonical_key}`} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
                   <p className="text-[9px] uppercase tracking-[0.14em] text-white/25">
                     {formatLabKey(row.canonical_key)}
                   </p>
@@ -1565,4 +1618,13 @@ function formatLabKey(value: string) {
     .replace("Hscrp", "hsCRP")
     .replace("Mcv", "MCV")
     .replace("Wbc", "WBC");
+}
+
+function labTrendClassName(status: LabTrend["status"]) {
+  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+
+  if (status === "improving") return `${base} royal-text bg-white/[0.035]`;
+  if (status === "worsening") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
+  if (status === "stable") return `${base} text-white/34 bg-white/[0.025]`;
+  return `${base} text-white/28 bg-white/[0.02]`;
 }
