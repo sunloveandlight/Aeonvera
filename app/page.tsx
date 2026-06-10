@@ -2,7 +2,7 @@
 
 import { type CSSProperties, useEffect, useState } from "react";
 import Link from "next/link";
-import { Activity, ArrowRight, Check, Dna, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, Dna, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { isSubscriptionValid, type SubscriptionStatus } from "@/lib/auth/permissions";
 
@@ -396,9 +396,37 @@ export default function HomePage() {
             <div>
               <div
                 className="living-dashboard-pulse mb-6 flex size-12 items-center justify-center rounded-lg"
-                style={{ "--heartbeat-duration": `${Math.max(1.8, Math.min(3.2, 120 / restingHeartRate.bpm))}s` } as CSSProperties}
               >
-                <Activity size={22} />
+                <svg className="dashboard-heartbeat-monitor" viewBox="0 0 64 40" aria-hidden="true">
+                  <defs>
+                    <filter id="dashboard-heartbeat-light-glow" x="-80%" y="-80%" width="260%" height="260%">
+                      <feGaussianBlur stdDeviation="2.6" result="blur" />
+                      <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </defs>
+                  <path
+                    id="dashboard-heartbeat-path"
+                    className="dashboard-heartbeat-monitor__line"
+                    pathLength={100}
+                    d="M4 22 H20 L25 13 L32 30 L39 9 L45 22 H60"
+                  />
+                  <circle
+                    className="dashboard-heartbeat-monitor__light"
+                    r="2.7"
+                    filter="url(#dashboard-heartbeat-light-glow)"
+                  >
+                    <animateMotion
+                      dur={`${Math.max(1.8, Math.min(3.2, 120 / restingHeartRate.bpm))}s`}
+                      repeatCount="indefinite"
+                      rotate="auto"
+                    >
+                      <mpath href="#dashboard-heartbeat-path" />
+                    </animateMotion>
+                  </circle>
+                </svg>
               </div>
               <h2 className="max-w-xl text-3xl font-light leading-tight md:text-5xl">
                 A healthspan dashboard that stays out of your way.

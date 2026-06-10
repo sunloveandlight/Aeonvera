@@ -269,7 +269,7 @@ body::after {
 
 .hero-age-label {
   margin-bottom: 0.34rem;
-  font-size: 0.58rem !important;
+  font-size: 0.68rem !important;
   line-height: 1 !important;
 }
 
@@ -278,18 +278,18 @@ body::after {
 }
 
 .hero-age-number {
-  font-size: 1.86rem !important;
+  font-size: 1.38rem !important;
 }
 
 .hero-age-unit {
-  padding-bottom: 0.14rem;
-  font-size: 0.62rem !important;
+  padding-bottom: 0.08rem;
+  font-size: 0.72rem !important;
 }
 
 .hero-age-note {
   margin-top: 0.44rem;
   max-width: 10.5rem;
-  font-size: 0.62rem !important;
+  font-size: 0.72rem !important;
   line-height: 1.35;
 }
 
@@ -417,7 +417,6 @@ body::after {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  color: rgba(255, 255, 255, 0.38);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045)),
     rgba(255, 255, 255, 0.035) !important;
@@ -426,35 +425,28 @@ body::after {
     0 14px 32px rgba(0, 0, 0, 0.32);
 }
 
-.living-dashboard-pulse::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -70%;
-  width: 64%;
-  background:
-    linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.18) 34%,
-      rgba(255, 255, 255, 0.92) 52%,
-      rgba(255, 255, 255, 0.18) 68%,
-      transparent 100%
-    );
-  filter: blur(2px);
-  opacity: 0.9;
-  mix-blend-mode: screen;
-  animation: dashboard-heartbeat-light var(--heartbeat-duration, 2.2s) linear infinite;
-}
-
 .living-dashboard-pulse svg {
   position: relative;
   z-index: 1;
-  color: rgba(255, 255, 255, 0.5);
-  filter:
-    drop-shadow(0 0 6px rgba(255, 255, 255, 0.22))
-    drop-shadow(0 0 16px rgba(255, 255, 255, 0.08));
+}
+
+.dashboard-heartbeat-monitor {
+  width: 1.8rem;
+  height: 1.2rem;
+  overflow: visible;
+}
+
+.dashboard-heartbeat-monitor__line {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.42);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dashboard-heartbeat-monitor__light {
+  fill: rgba(255, 255, 255, 0.98);
+  opacity: 0.96;
 }
 
 .living-bar {
@@ -603,15 +595,6 @@ body::after {
   50% {
     transform: scale(1.12);
     opacity: 0.92;
-  }
-}
-
-@keyframes dashboard-heartbeat-light {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(270%);
   }
 }
 
