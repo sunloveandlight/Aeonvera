@@ -65,17 +65,24 @@ export default function PricingPlanCard({
       } ${
         isCurrent
           ? "pricing-plan-card-current"
+          : plan.id === "sovereign"
+          ? "pricing-plan-card-sovereign"
           : plan.recommended
           ? "pricing-plan-card-featured"
           : "border-white/10 bg-[#151517]"
       }`}
     >
-      <div className="min-h-[112px]">
-        <div className="flex items-start justify-between gap-4">
+      <div className="pricing-card-intro">
+        <div className="flex min-h-8 items-start justify-between gap-4">
           <h2 className="text-2xl font-light">{plan.name}</h2>
           {plan.recommended && (
             <span className="premium-status shrink-0 rounded-md px-3 py-1 text-xs font-medium">
               Recommended
+            </span>
+          )}
+          {plan.id === "sovereign" && !isCurrent && (
+            <span className="premium-status premium-status-sovereign shrink-0 rounded-md px-3 py-1 text-xs font-medium">
+              Most advanced
             </span>
           )}
           {isCurrent && (
@@ -100,7 +107,7 @@ export default function PricingPlanCard({
         </button>
       </div>
 
-      <div className="mt-8 min-h-[3.75rem]">
+      <div className="pricing-card-price">
         {showPrice ? (
           <p className="text-5xl font-light">
             {plan.price}
@@ -118,7 +125,7 @@ export default function PricingPlanCard({
         )}
       </div>
 
-      <div className="mt-8 flex-1 space-y-4">
+      <div className="pricing-card-features">
         {plan.features.map((feature) => (
           <div key={feature} className="flex gap-3 text-sm leading-6 text-white/70">
             <Check size={17} className="mt-1 shrink-0 royal-text" />

@@ -694,6 +694,49 @@ body::after {
     inset 0 1px 0 rgba(255, 255, 255, 0.095);
 }
 
+.pricing-plan-card-sovereign {
+  border-color: rgba(232, 234, 238, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.105), rgba(232, 234, 238, 0.024)),
+    linear-gradient(135deg, rgba(232, 234, 238, 0.075), transparent 44%),
+    linear-gradient(315deg, rgba(var(--gold), 0.06), transparent 50%),
+    rgba(17, 18, 20, 0.98);
+  box-shadow:
+    0 26px 76px rgba(0, 0, 0, 0.44),
+    0 0 0 1px rgba(232, 234, 238, 0.055),
+    0 0 32px rgba(232, 234, 238, 0.075),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.premium-status-sovereign {
+  border-color: rgba(232, 234, 238, 0.18);
+  color: rgba(247, 247, 244, 0.72);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(var(--gold), 0.035)),
+    rgba(255, 255, 255, 0.035);
+}
+
+.pricing-card-intro {
+  min-height: 10rem;
+}
+
+.pricing-card-price {
+  display: flex;
+  min-height: 5.15rem;
+  align-items: flex-end;
+  margin-top: 2rem;
+}
+
+.pricing-card-features {
+  flex: 1;
+  min-height: 12.5rem;
+  margin-top: 2rem;
+}
+
+.pricing-card-features > * + * {
+  margin-top: 1rem;
+}
+
 .pricing-plan-card-current {
   border-color: rgba(70, 184, 137, 0.34);
   background:
@@ -805,6 +848,22 @@ body::after {
     0 0 42px rgba(var(--gold), 0.22),
     0 0 24px rgba(255, 255, 255, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.pricing-plan-card-sovereign:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 255, 255, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(232, 234, 238, 0.038)),
+    linear-gradient(135deg, rgba(232, 234, 238, 0.12), transparent 44%),
+    linear-gradient(315deg, rgba(var(--gold), 0.095), transparent 50%),
+    rgba(21, 22, 25, 0.99);
+  box-shadow:
+    0 34px 98px rgba(0, 0, 0, 0.54),
+    0 0 0 1px rgba(232, 234, 238, 0.08),
+    0 0 42px rgba(232, 234, 238, 0.13),
+    0 0 24px rgba(var(--gold), 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
 .pricing-plan-card:hover::before {
