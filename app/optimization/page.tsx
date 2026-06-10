@@ -39,6 +39,40 @@ type OptimizationProtocol = {
   coach_message: string;
 };
 
+type BioAgeSimulation = {
+  id: string;
+  title: string;
+  domain: string;
+  action: string;
+  horizon: string;
+  projectedAgeDeltaImprovement: number;
+  projectedBiologicalAgeImprovement: number;
+  projectedBiologicalAge: number;
+  projectedScore: number;
+  confidence: number;
+  keyDrivers: string[];
+};
+
+type SimulatorControls = {
+  sleep_hours: number;
+  vo2_max: number;
+  weight_kg: number;
+  stress_level: number;
+  exercise_days: number;
+  resting_hr: number;
+};
+
+type SimulatorProjection = {
+  chronologicalAge: number;
+  biologicalAge: number;
+  ageDelta: number;
+  score: number;
+  accuracyScore: number;
+  category: string;
+  projectedAgeDeltaImprovement: number;
+  projectedBiologicalAgeImprovement: number;
+};
+
 const QUESTIONS: Question[] = [
   {
     id: "priority",
@@ -96,6 +130,22 @@ const IMPACT_WIDTH = {
   low: 54,
 };
 
+const SIMULATOR_FIELDS: Array<{
+  key: keyof SimulatorControls;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  suffix: string;
+}> = [
+  { key: "sleep_hours", label: "Sleep", min: 4, max: 10, step: 0.1, suffix: "hrs" },
+  { key: "vo2_max", label: "VO2 Max", min: 20, max: 70, step: 1, suffix: "" },
+  { key: "weight_kg", label: "Weight", min: 45, max: 180, step: 0.5, suffix: "kg" },
+  { key: "stress_level", label: "Stress", min: 1, max: 10, step: 1, suffix: "/10" },
+  { key: "exercise_days", label: "Exercise", min: 0, max: 7, step: 1, suffix: "days" },
+  { key: "resting_hr", label: "Resting HR", min: 40, max: 100, step: 1, suffix: "bpm" },
+];
+
 export default function OptimizationPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -106,6 +156,11 @@ export default function OptimizationPage() {
   const [generatingProtocol, setGeneratingProtocol] = useState(false);
   const [protocol, setProtocol] = useState<OptimizationProtocol | null>(null);
   const [protocolMessage, setProtocolMessage] = useState<string | null>(null);
+  const [bioAgeSimulations, setBioAgeSimulations] = useState<BioAgeSimulation[]>([]);
+  const [simulatorControls, setSimulatorControls] = useState<SimulatorControls | null>(null);
+  const [simulatorProjection, setSimulatorProjection] = useState<SimulatorProjection | null>(null);
+  const [runningProjection, setRunningProjection] = useState(false);
+  const [projectionMessage, setProjectionMessage] = useState<string | null>(null);
 
   const question = QUESTIONS[step];
   const answeredCount = Object.keys(answers).length;
@@ -126,6 +181,16 @@ export default function OptimizationPage() {
         router.replace("/login?mode=signin");
         return;
       }
+
+      fetch("/api/longevity/simulator", { credentials: "include" })
+        .then((response) => response.json())
+        .then((data) => {
+          if (!cancelled && data?.simulations) {
+            setBioAgeSimulations(data.simulations);
+            setSimulatorControls(data.controls || null);
+          }
+        })
+        .catch(() => null);
 
       setAuthChecked(true);
     }
@@ -200,6 +265,40 @@ export default function OptimizationPage() {
     if (step > 0) {
       setStep((current) => current - 1);
     }
+  }
+
+  async function runProjection(nextControls = simulatorControls) {
+    if (!nextControls) return;
+
+    setRunningProjection(true);
+    setProjectionMessage(null);
+
+    try {
+      const response = await fetch("/api/longevity/simulator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ controls: nextControls }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not run projection.");
+      }
+
+      setSimulatorControls(data.controls);
+      setSimulatorProjection(data.projection);
+    } catch (error) {
+      setProjectionMessage(
+        error instanceof Error ? error.message : "Could not run projection."
+      );
+    } finally {
+      setRunningProjection(false);
+    }
+  }
+
+  function updateSimulatorControl(key: keyof SimulatorControls, value: number) {
+    setSimulatorControls((current) => current ? { ...current, [key]: value } : current);
   }
 
   if (!authChecked) {
@@ -455,6 +554,151 @@ export default function OptimizationPage() {
             )}
           </div>
         </div>
+
+        {bioAgeSimulations.length > 0 && (
+          <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
+            <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="micro-label">Biological age levers</p>
+                <h2 className="mt-3 text-3xl font-light text-white">
+                  Highest-impact changes from your current baseline.
+                </h2>
+              </div>
+              <p className="max-w-sm text-sm leading-6 text-white/38">
+                These projections use the same engine as your biological age score.
+              </p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              {bioAgeSimulations.slice(0, 3).map((simulation, index) => (
+                <div
+                  key={simulation.id}
+                  className="quiet-lift rounded-lg border border-white/[0.07] bg-white/[0.025] p-5"
+                >
+                  <div className="mb-5 flex items-center justify-between gap-3">
+                    <span className="royal-text text-sm tabular-nums">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+                      {simulation.domain}
+                    </span>
+                  </div>
+                  <p className="text-lg font-light leading-7 text-white/80">
+                    {simulation.title}
+                  </p>
+                  <p className="mt-3 min-h-20 text-sm leading-7 text-white/42">
+                    {simulation.action}
+                  </p>
+                  <div className="mt-5 flex items-end justify-between border-t border-white/[0.06] pt-4">
+                    <div>
+                      <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">
+                        Potential
+                      </p>
+                      <p className="mt-1 text-2xl font-light royal-text">
+                        {simulation.projectedAgeDeltaImprovement.toFixed(1)}
+                      </p>
+                    </div>
+                    <p className="text-xs text-white/34">{simulation.horizon}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {simulatorControls && (
+          <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
+            <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="micro-label">Future self simulator</p>
+                <h2 className="mt-3 text-3xl font-light text-white">
+                  Adjust the levers and project the biological-age shift.
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => void runProjection()}
+                disabled={runningProjection}
+                className="premium-action inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {runningProjection ? "Projecting" : "Run projection"}
+              </button>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {SIMULATOR_FIELDS.map((field) => (
+                  <div key={field.key} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-sm text-white/64">{field.label}</p>
+                      <span className="text-sm royal-text">
+                        {simulatorControls[field.key]}
+                        {field.suffix ? ` ${field.suffix}` : ""}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={field.min}
+                      max={field.max}
+                      step={field.step}
+                      value={simulatorControls[field.key]}
+                      onChange={(event) =>
+                        updateSimulatorControl(field.key, Number(event.target.value))
+                      }
+                      className="w-full accent-[#dabc73]"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
+                <p className="micro-label mb-5">Projection result</p>
+                {simulatorProjection ? (
+                  <>
+                    <div className="flex items-end gap-3">
+                      <p className="text-6xl font-light leading-none text-white/88">
+                        {simulatorProjection.biologicalAge}
+                      </p>
+                      <p className="mb-1 text-sm uppercase tracking-[0.14em] text-white/24">
+                        yrs projected
+                      </p>
+                    </div>
+                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                        <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                          Improvement
+                        </p>
+                        <p className="mt-2 text-2xl font-light royal-text">
+                          {simulatorProjection.projectedAgeDeltaImprovement.toFixed(1)} yrs
+                        </p>
+                      </div>
+                      <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                        <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                          Score
+                        </p>
+                        <p className="mt-2 text-2xl font-light text-white/72">
+                          {simulatorProjection.score}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-5 text-sm leading-7 text-white/42">
+                      This is a deterministic projection from your current assessment, not a medical diagnosis.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm leading-7 text-white/42">
+                    Move the controls, then run a projection to see the estimated biological-age trajectory.
+                  </p>
+                )}
+                {projectionMessage && (
+                  <p className="mt-4 rounded-lg border border-white/[0.08] bg-white/[0.025] p-4 text-sm leading-6 text-white/55">
+                    {projectionMessage}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </PageContainer>
   );

@@ -70,6 +70,32 @@ type AssessmentData = {
   family_diabetes?: string;
 };
 
+type BioAgeHistoryPoint = {
+  id: string;
+  chronological_age: number | string;
+  biological_age: number | string;
+  age_delta: number | string;
+  score?: number | string | null;
+  accuracy_score?: number | string | null;
+  category?: string | null;
+  source?: string | null;
+  created_at: string;
+};
+
+type BioAgeSimulation = {
+  id: string;
+  title: string;
+  domain: string;
+  action: string;
+  horizon: string;
+  projectedAgeDeltaImprovement: number;
+  projectedBiologicalAgeImprovement: number;
+  projectedBiologicalAge: number;
+  projectedScore: number;
+  confidence: number;
+  keyDrivers: string[];
+};
+
 const OPTIONAL_FIELDS: { key: keyof AssessmentData; label: string }[] = [
   { key: "resting_hr", label: "Resting Heart Rate" },
   { key: "blood_pressure_systolic", label: "Blood Pressure" },
@@ -104,6 +130,8 @@ export default function ReportPage() {
   const [regenerating, setRegenerating] = useState(false);
   const [accuracyScore, setAccuracyScore] = useState(40);
   const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [bioAgeHistory, setBioAgeHistory] = useState<BioAgeHistoryPoint[]>([]);
+  const [bioAgeSimulations, setBioAgeSimulations] = useState<BioAgeSimulation[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -111,7 +139,7 @@ export default function ReportPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { router.replace("/login"); return; }
 
-        const [reportRes, profileRes, assessmentRes] = await Promise.all([
+        const [reportRes, profileRes, assessmentRes, historyRes, simulatorRes] = await Promise.all([
           supabase
             .from("longevity_reports")
             .select("report, created_at, risk_score, primary_goal")
@@ -131,6 +159,12 @@ export default function ReportPage() {
             .order("created_at", { ascending: false })
             .limit(1)
             .single(),
+          fetch("/api/longevity/biological-age", {
+            credentials: "include",
+          }).then((response) => response.json()).catch(() => null),
+          fetch("/api/longevity/simulator", {
+            credentials: "include",
+          }).then((response) => response.json()).catch(() => null),
         ]);
 
         if (reportRes.data) setReport(reportRes.data.report as ReportData);
@@ -157,6 +191,8 @@ export default function ReportPage() {
           setAccuracyScore(score);
           setMissingFields(missing.slice(0, 6).map((f) => f.label));
         }
+        if (historyRes?.history) setBioAgeHistory(historyRes.history);
+        if (simulatorRes?.simulations) setBioAgeSimulations(simulatorRes.simulations);
 
         if (!reportRes.data) setError("No report found. Complete your assessment first.");
       } catch {
@@ -399,6 +435,18 @@ export default function ReportPage() {
           </p>
         </Card>
 
+        <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <BioAgeHistoryCard
+            history={bioAgeHistory}
+            currentBioAge={bioAge}
+            chronologicalAge={chronologicalAge}
+          />
+          <BioAgeSimulationCard
+            simulations={bioAgeSimulations}
+            onOpenOptimization={() => router.push("/optimization")}
+          />
+        </div>
+
         {/* ═══════════════════════════════════════
             STRENGTHS + WEAKNESSES
         ═══════════════════════════════════════ */}
@@ -521,5 +569,199 @@ export default function ReportPage() {
 
       </div>
     </PageContainer>
+  );
+}
+
+function BioAgeHistoryCard({
+  history,
+  currentBioAge,
+  chronologicalAge,
+}: {
+  history: BioAgeHistoryPoint[];
+  currentBioAge: number | null;
+  chronologicalAge: number | null;
+}) {
+  const points = history
+    .slice()
+    .reverse()
+    .map((point) => ({
+      biological: Number(point.biological_age),
+      chronological: Number(point.chronological_age),
+      createdAt: point.created_at,
+    }))
+    .filter(
+      (point) =>
+        Number.isFinite(point.biological) && Number.isFinite(point.chronological)
+    );
+  const displayPoints =
+    points.length > 0
+      ? points
+      : currentBioAge && chronologicalAge
+      ? [
+          {
+            biological: currentBioAge,
+            chronological: chronologicalAge,
+            createdAt: new Date().toISOString(),
+          },
+        ]
+      : [];
+
+  const values = displayPoints.flatMap((point) => [
+    point.biological,
+    point.chronological,
+  ]);
+  const min = values.length ? Math.min(...values) - 1 : 0;
+  const max = values.length ? Math.max(...values) + 1 : 1;
+  const span = Math.max(1, max - min);
+  const biologicalLine = displayPoints.map((point, index) => {
+    const x =
+      displayPoints.length === 1
+        ? 50
+        : (index / (displayPoints.length - 1)) * 100;
+    const y = 88 - ((point.biological - min) / span) * 76;
+    return `${x},${y}`;
+  });
+  const chronologicalLine = displayPoints.map((point, index) => {
+    const x =
+      displayPoints.length === 1
+        ? 50
+        : (index / (displayPoints.length - 1)) * 100;
+    const y = 88 - ((point.chronological - min) / span) * 76;
+    return `${x},${y}`;
+  });
+  const first = displayPoints[0];
+  const latest = displayPoints[displayPoints.length - 1];
+  const change = first && latest
+    ? Number((latest.biological - first.biological).toFixed(1))
+    : 0;
+
+  return (
+    <Card title="BIOLOGICAL AGE TRAJECTORY" glow>
+      {displayPoints.length ? (
+        <div>
+          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-4xl font-light leading-none text-white/86">
+                {latest.biological}
+                <span className="ml-2 text-xl text-white/22">yrs</span>
+              </p>
+              <p className="mt-3 text-sm leading-6 text-white/38">
+                Current biological age against chronological baseline.
+              </p>
+            </div>
+            <div className="premium-status-neutral rounded-md px-3 py-2 text-[10px] uppercase tracking-[0.14em]">
+              {change === 0
+                ? "Baseline active"
+                : change < 0
+                ? `${Math.abs(change)} yrs improved`
+                : `${change} yrs higher`}
+            </div>
+          </div>
+
+          <svg viewBox="0 0 100 100" className="h-44 w-full overflow-visible" aria-hidden="true">
+            <polyline
+              points={chronologicalLine.join(" ")}
+              fill="none"
+              stroke="rgba(255,255,255,0.16)"
+              strokeDasharray="3 4"
+              strokeWidth="1.5"
+            />
+            <polyline
+              points={biologicalLine.join(" ")}
+              fill="none"
+              stroke="rgba(218,188,115,0.9)"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.8"
+            />
+            {biologicalLine.map((point, index) => {
+              const [cx, cy] = point.split(",");
+              return (
+                <circle
+                  key={`${point}-${index}`}
+                  cx={cx}
+                  cy={cy}
+                  r={index === biologicalLine.length - 1 ? "3.2" : "2.2"}
+                  fill="rgba(248,250,252,0.92)"
+                />
+              );
+            })}
+          </svg>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {[
+              ["History", `${displayPoints.length} point${displayPoints.length === 1 ? "" : "s"}`],
+              ["Signal", "Biological"],
+              ["Baseline", "Chronological"],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-3">
+                <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">{label}</p>
+                <p className="mt-2 text-sm text-white/62">{value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm leading-7 text-white/38">
+          Generate a biological age score to activate your historical trajectory.
+        </p>
+      )}
+    </Card>
+  );
+}
+
+function BioAgeSimulationCard({
+  simulations,
+  onOpenOptimization,
+}: {
+  simulations: BioAgeSimulation[];
+  onOpenOptimization: () => void;
+}) {
+  const topSimulation = simulations[0];
+
+  return (
+    <Card title="WHAT WOULD CHANGE YOUR AGE" onClick={onOpenOptimization} actionLabel="Open optimization">
+      {topSimulation ? (
+        <div className="flex h-full flex-col">
+          <div className="mb-5 rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+            <p className="micro-label mb-4">{topSimulation.domain}</p>
+            <div className="flex items-end gap-3">
+              <p className="text-5xl font-light leading-none royal-text">
+                {topSimulation.projectedAgeDeltaImprovement.toFixed(1)}
+              </p>
+              <p className="mb-1 text-xs uppercase tracking-[0.14em] text-white/24">
+                yrs potential
+              </p>
+            </div>
+            <p className="mt-5 text-lg font-light leading-7 text-white/78">
+              {topSimulation.title}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-white/42">
+              {topSimulation.action}
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {simulations.slice(1, 4).map((simulation) => (
+              <div key={simulation.id} className="flex items-center justify-between gap-4 rounded-lg border border-white/[0.05] bg-white/[0.02] p-4">
+                <div>
+                  <p className="text-sm text-white/68">{simulation.title}</p>
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/24">
+                    {simulation.horizon}
+                  </p>
+                </div>
+                <span className="royal-text text-sm">
+                  {simulation.projectedAgeDeltaImprovement.toFixed(1)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm leading-7 text-white/38">
+          Once your biological age is generated, Aeonvera will show the highest-impact intervention levers here.
+        </p>
+      )}
+    </Card>
   );
 }

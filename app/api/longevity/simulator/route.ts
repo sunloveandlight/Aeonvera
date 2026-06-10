@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import {
@@ -24,6 +24,15 @@ type SimulationScenario = {
   apply: (input: AssessmentInput) => AssessmentInput;
 };
 
+type SimulatorControls = {
+  sleep_hours: number;
+  vo2_max: number;
+  weight_kg: number;
+  stress_level: number;
+  exercise_days: number;
+  resting_hr: number;
+};
+
 async function getSupabaseUser() {
   const cookieStore = await cookies();
   return createServerClient(
@@ -44,30 +53,7 @@ async function getSupabaseUser() {
 
 export async function GET() {
   try {
-    const supabaseUser = await getSupabaseUser();
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const supabase = getSupabaseAdmin();
-    const { data: assessment, error: assessmentError } = await supabase
-      .from("longevity_assessments")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (assessmentError || !assessment) {
-      return NextResponse.json(
-        { error: "No assessment found." },
-        { status: 404 }
-      );
-    }
-
-    const input = buildAssessmentInput(assessment);
+    const input = await getLatestAssessmentInput();
     const baseline = computeBiologicalAge(input);
     const simulations = SCENARIOS.map((scenario) =>
       buildSimulation(scenario, baseline, input)
@@ -77,13 +63,82 @@ export async function GET() {
 
     return NextResponse.json({
       baseline: summarizeResult(baseline),
+      controls: buildControls(input),
       simulations,
     });
   } catch (error) {
+    if (error instanceof SimulatorError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
     const message =
       error instanceof Error ? error.message : "Failed to run biological age simulator.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const input = await getLatestAssessmentInput();
+    const baseline = computeBiologicalAge(input);
+    const body = await readJsonBody(request);
+    const controls = normalizeControls(body?.controls, buildControls(input));
+    const projected = computeBiologicalAge({
+      ...input,
+      sleep_hours: controls.sleep_hours,
+      vo2_max: controls.vo2_max,
+      weight_kg: controls.weight_kg,
+      stress_level: controls.stress_level,
+      exercise_days: controls.exercise_days,
+      resting_hr: controls.resting_hr,
+    });
+
+    return NextResponse.json({
+      baseline: summarizeResult(baseline),
+      controls,
+      projection: {
+        ...summarizeResult(projected),
+        projectedAgeDeltaImprovement: Number(
+          (baseline.ageDelta - projected.ageDelta).toFixed(1)
+        ),
+        projectedBiologicalAgeImprovement: Number(
+          (baseline.biologicalAge - projected.biologicalAge).toFixed(1)
+        ),
+      },
+    });
+  } catch (error) {
+    if (error instanceof SimulatorError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
+    const message =
+      error instanceof Error ? error.message : "Failed to run custom simulator.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+async function getLatestAssessmentInput() {
+  const supabaseUser = await getSupabaseUser();
+  const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+
+  if (userError || !user) {
+    throw new SimulatorError("Unauthorized", 401);
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data: assessment, error: assessmentError } = await supabase
+    .from("longevity_assessments")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (assessmentError || !assessment) {
+    throw new SimulatorError("No assessment found.", 404);
+  }
+
+  return buildAssessmentInput(assessment);
 }
 
 function buildSimulation(
@@ -117,6 +172,57 @@ function buildSimulation(
   };
 }
 
+function buildControls(input: AssessmentInput): SimulatorControls {
+  return {
+    sleep_hours: clamp(round(input.sleep_hours, 1), 4, 10),
+    vo2_max: clamp(round(input.vo2_max ?? 40, 1), 20, 70),
+    weight_kg: clamp(round(input.weight_kg, 1), 45, 180),
+    stress_level: clamp(round(input.stress_level, 0), 1, 10),
+    exercise_days: clamp(round(input.exercise_days, 0), 0, 7),
+    resting_hr: clamp(round(input.resting_hr ?? 65, 0), 40, 100),
+  };
+}
+
+function normalizeControls(
+  value: unknown,
+  fallback: SimulatorControls
+): SimulatorControls {
+  const controls = typeof value === "object" && value !== null
+    ? (value as Partial<Record<keyof SimulatorControls, unknown>>)
+    : {};
+
+  return {
+    sleep_hours: clamp(numberOr(controls.sleep_hours, fallback.sleep_hours), 4, 10),
+    vo2_max: clamp(numberOr(controls.vo2_max, fallback.vo2_max), 20, 70),
+    weight_kg: clamp(numberOr(controls.weight_kg, fallback.weight_kg), 45, 180),
+    stress_level: clamp(numberOr(controls.stress_level, fallback.stress_level), 1, 10),
+    exercise_days: clamp(numberOr(controls.exercise_days, fallback.exercise_days), 0, 7),
+    resting_hr: clamp(numberOr(controls.resting_hr, fallback.resting_hr), 40, 100),
+  };
+}
+
+async function readJsonBody(request: NextRequest) {
+  try {
+    return await request.json();
+  } catch {
+    return null;
+  }
+}
+
+function numberOr(value: unknown, fallback: number) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function round(value: number, decimals: number) {
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+}
+
 function summarizeResult(result: BiologicalAgeResult) {
   return {
     chronologicalAge: result.chronologicalAge,
@@ -126,6 +232,12 @@ function summarizeResult(result: BiologicalAgeResult) {
     accuracyScore: result.accuracyScore,
     category: result.category,
   };
+}
+
+class SimulatorError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
 }
 
 const SCENARIOS: SimulationScenario[] = [
