@@ -1,5 +1,7 @@
 "use client";
 
+import { KeyboardEvent, MouseEvent } from "react";
+
 type WearableProvider = "oura" | "whoop" | "apple";
 
 type WearablesPanelProps = {
@@ -20,6 +22,12 @@ type WearablesPanelProps = {
   onWearableSync: (provider: WearableProvider) => void;
 };
 
+function isInteractiveTarget(target: EventTarget | null) {
+  return target instanceof HTMLElement
+    ? Boolean(target.closest("button, input, label, select, textarea, a"))
+    : false;
+}
+
 export default function WearablesPanel({
   wearableMessage,
   connectedProvidersCount,
@@ -37,6 +45,28 @@ export default function WearablesPanel({
   onProviderAction,
   onWearableSync,
 }: WearablesPanelProps) {
+  function handleKeyboardAction(
+    event: KeyboardEvent<HTMLElement>,
+    action: () => void,
+    disabled = false
+  ) {
+    if (
+      disabled ||
+      isInteractiveTarget(event.target) ||
+      (event.key !== "Enter" && event.key !== " ")
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    action();
+  }
+
+  function handleAppleCardClick(event: MouseEvent<HTMLDivElement>) {
+    if (Boolean(wearableSyncing) || isInteractiveTarget(event.target)) return;
+    onWearableSync("apple");
+  }
+
   return (
     <div className="executive-panel rounded-lg p-6">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -83,9 +113,12 @@ export default function WearablesPanel({
 
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         {(["oura", "whoop"] as const).map((provider) => (
-          <div
+          <button
             key={provider}
-            className="executive-panel-soft flex min-h-[20rem] flex-col rounded-lg p-5"
+            type="button"
+            onClick={() => onProviderAction(provider)}
+            disabled={Boolean(wearableSyncing)}
+            className="executive-panel-soft quiet-lift flex min-h-[20rem] cursor-pointer flex-col rounded-lg p-5 text-left disabled:cursor-not-allowed disabled:opacity-55"
           >
             <div className="flex-1">
               <p className="micro-label">
@@ -109,21 +142,34 @@ export default function WearablesPanel({
                 </p>
               )}
             </div>
-            <button
-              onClick={() => onProviderAction(provider)}
-              disabled={Boolean(wearableSyncing)}
-              className="premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+            <span
+              className="premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
             >
               {wearableSyncing === provider
                 ? "Syncing"
                 : connectedProviderSet.has(provider)
                 ? "Sync Data"
                 : "Connect"}
-            </button>
-          </div>
+            </span>
+          </button>
         ))}
 
-        <div className="executive-panel-soft flex min-h-[20rem] flex-col rounded-lg p-5">
+        <div
+          role="button"
+          tabIndex={wearableSyncing ? -1 : 0}
+          aria-label="Import Apple Health data"
+          onClick={handleAppleCardClick}
+          onKeyDown={(event) =>
+            handleKeyboardAction(
+              event,
+              () => onWearableSync("apple"),
+              Boolean(wearableSyncing)
+            )
+          }
+          className={`executive-panel-soft quiet-lift flex min-h-[20rem] flex-col rounded-lg p-5 ${
+            wearableSyncing ? "cursor-not-allowed opacity-55" : "cursor-pointer"
+          }`}
+        >
           <div className="flex-1">
             <p className="micro-label">Apple Health</p>
             <p className="mt-2 text-sm text-white/72">Ready to import</p>
@@ -155,7 +201,10 @@ export default function WearablesPanel({
             {appleImportFileName && (
               <button
                 type="button"
-                onClick={() => onAppleImportFileChange(null)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onAppleImportFileChange(null);
+                }}
                 className="mt-2 text-left text-[9px] uppercase tracking-[0.14em] text-white/28 transition hover:text-white/55"
               >
                 Remove upload
@@ -163,7 +212,10 @@ export default function WearablesPanel({
             )}
           </div>
           <button
-            onClick={() => onWearableSync("apple")}
+            onClick={(event) => {
+              event.stopPropagation();
+              onWearableSync("apple");
+            }}
             disabled={Boolean(wearableSyncing)}
             className="premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
           >

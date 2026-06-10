@@ -33,7 +33,20 @@ export default function PricingPlanCard({
 
   return (
     <div
-      className={`pricing-plan-card flex h-full min-h-[34rem] flex-col rounded-lg border p-7 ${
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled}
+      onClick={() => {
+        if (!disabled) onCheckout(plan.id);
+      }}
+      onKeyDown={(event) => {
+        if (disabled) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onCheckout(plan.id);
+        }
+      }}
+      className={`pricing-plan-card flex h-full min-h-[34rem] cursor-pointer flex-col rounded-lg border p-7 ${
         disabled ? "pointer-events-none opacity-60" : ""
       } ${
         plan.recommended
@@ -54,6 +67,16 @@ export default function PricingPlanCard({
         <p className="mt-4 text-[10px] uppercase tracking-[0.14em] royal-text">
           {plan.depth}
         </p>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setExpanded((open) => !open);
+          }}
+          className="mt-4 text-left text-[10px] uppercase tracking-[0.14em] text-white/30 transition hover:text-white/62"
+        >
+          {expanded ? "Hide details" : "View details"}
+        </button>
       </div>
 
       <p className="mt-8 text-5xl font-light">
@@ -89,17 +112,12 @@ export default function PricingPlanCard({
 
       <button
         type="button"
-        onClick={() => setExpanded((open) => !open)}
-        className="premium-action-secondary mt-7 inline-flex h-10 w-full items-center justify-center rounded-md text-[10px] uppercase tracking-[0.14em]"
-      >
-        {expanded ? "Close Tier" : "Open Tier"}
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onCheckout(plan.id)}
+        onClick={(event) => {
+          event.stopPropagation();
+          onCheckout(plan.id);
+        }}
         disabled={disabled}
-        className="premium-action mt-3 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
+        className="premium-action mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loadingPlan === plan.id ? "Processing..." : `Get ${plan.name}`}
         {loadingPlan !== plan.id && <ArrowRight size={16} />}

@@ -82,8 +82,7 @@ function HeroVisual() {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[0.86fr_1.14fr] lg:items-end">
-          <div className="relative">
-            <div className="hero-age-ring absolute -left-5 -top-5 hidden size-36 md:block" />
+          <div className="hero-age-panel">
             <p className="text-sm text-white/50">Biological age</p>
             <div className="mt-3 flex items-baseline gap-3">
               <p className="hero-metric-glow text-6xl font-light leading-none md:text-7xl">38.4</p>

@@ -65,6 +65,12 @@ type WearableConnection = {
   connected_at: string | null;
 };
 
+function isInteractiveTarget(target: EventTarget | null) {
+  return target instanceof HTMLElement
+    ? Boolean(target.closest("button, input, label, select, textarea, a"))
+    : false;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
 
@@ -226,6 +232,8 @@ export default function DashboardPage() {
   }, [router]);
 
   async function handleGenerateReport() {
+    if (!hasAssessment || generatingReport) return;
+
     try {
       setGeneratingReport(true);
       setGenerationMessage("Computing biological age...");
@@ -509,38 +517,27 @@ export default function DashboardPage() {
           {/* BIOLOGICAL AGE CARD */}
           <Card title="BIOLOGICAL AGE" glow className="min-h-[340px]">
             {bioAge ? (
-              <div className="flex h-full flex-col justify-between">
-                <div className="min-h-[190px]">
-                <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8">
-                  <div>
-                    <p className="micro-label mb-2">Biological</p>
-                    <div className="flex items-baseline gap-3">
-                      <p className={`metric-display text-7xl md:text-8xl font-light tracking-tight leading-none ${bioAgeColor}`}>
-                        {bioAge}
-                      </p>
-                      <span className="text-2xl font-light leading-none text-white/24">yrs</span>
-                    </div>
-                  </div>
-                  {assessmentAge && (
-                    <div className="min-w-[8rem] border-l border-white/[0.07] pl-5">
-                      <p className="micro-label mb-2">Chronological</p>
-                      <div className="flex items-baseline gap-2">
-                        <p className="text-3xl font-light leading-none text-white/58">{assessmentAge}</p>
-                        <span className="text-sm leading-none text-white/24">yrs</span>
+              <div className="flex h-full flex-col">
+                <div className="dashboard-hero-metric-block grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8">
+                    <div>
+                      <p className="micro-label mb-2">Biological</p>
+                      <div className="flex items-baseline gap-3">
+                        <p className={`metric-display text-7xl md:text-8xl font-light tracking-tight leading-none ${bioAgeColor}`}>
+                          {bioAge}
+                        </p>
+                        <span className="text-2xl font-light leading-none text-white/24">yrs</span>
                       </div>
                     </div>
-                  )}
+                    {assessmentAge && (
+                      <div className="min-w-[8rem] border-l border-white/[0.07] pl-5">
+                        <p className="micro-label mb-2">Chronological</p>
+                        <div className="flex items-baseline gap-2">
+                          <p className="text-3xl font-light leading-none text-white/58">{assessmentAge}</p>
+                          <span className="text-sm leading-none text-white/24">yrs</span>
+                        </div>
+                      </div>
+                    )}
                 </div>
-
-                {ageDelta !== null && (
-                  <p className={`text-sm mb-5 leading-7 ${bioAgeColor}`}>
-                    {ageDelta < 0
-                      ? `${Math.abs(ageDelta)} years younger than chronological age`
-                      : ageDelta > 0
-                      ? `${ageDelta} years older than chronological age`
-                      : "Biological age matches chronological age"}
-                  </p>
-                )}
 
                 <div className="h-px overflow-hidden bg-white/[0.08]">
                   <div
@@ -549,16 +546,27 @@ export default function DashboardPage() {
                   />
                 </div>
 
-                </div>
+                {ageDelta !== null && (
+                  <p className={`mt-5 min-h-14 text-sm leading-7 ${bioAgeColor}`}>
+                    {ageDelta < 0
+                      ? `${Math.abs(ageDelta)} years younger than chronological age`
+                      : ageDelta > 0
+                      ? `${ageDelta} years older than chronological age`
+                      : "Biological age matches chronological age"}
+                  </p>
+                )}
 
-                <div className="border-t border-white/[0.06] pt-5">
+                <div className="mt-auto border-t border-white/[0.06] pt-5">
                   <div className="flex justify-between micro-label mb-3">
                     <span>Estimation Accuracy</span>
                     <span>{accuracyScore}%</span>
                   </div>
                   {accuracyScore < 70 && (
                     <button
-                      onClick={() => router.push("/assessment")}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        router.push("/assessment");
+                      }}
                       className="premium-action-ghost mt-3 text-[9px] uppercase tracking-[0.14em] transition-colors duration-300"
                     >
                       Add lab data to improve →
@@ -582,11 +590,33 @@ export default function DashboardPage() {
           </Card>
 
           {/* RISK + INTELLIGENCE CARD */}
-          <Card title="INTELLIGENCE REPORT" className="min-h-[340px]">
+          <Card
+            title="INTELLIGENCE REPORT"
+            className="min-h-[340px]"
+            actionLabel={
+              report
+                ? "Open intelligence report"
+                : hasAssessment
+                ? "Generate intelligence report"
+                : "Start assessment"
+            }
+            onClick={() => {
+              if (report) {
+                router.push("/report");
+                return;
+              }
+
+              if (hasAssessment) {
+                void handleGenerateReport();
+                return;
+              }
+
+              router.push("/assessment");
+            }}
+          >
             {report ? (
-              <div className="flex h-full flex-col justify-between">
-                <div className="min-h-[190px]">
-                <div className="flex items-end gap-3 mb-3">
+              <div className="flex h-full flex-col">
+                <div className="dashboard-hero-metric-block flex items-end gap-3">
                   <p className="metric-display text-6xl font-light tracking-tight leading-none text-white/86">
                     {report.risk_score}
                     <span className="text-white/15 text-2xl ml-2">/ 100</span>
@@ -601,20 +631,25 @@ export default function DashboardPage() {
                   />
                 </div>
 
-                <p className="text-white/45 text-sm leading-7 mb-6 line-clamp-3">
+                <p className="min-h-14 text-white/45 text-sm leading-7 line-clamp-2">
                   {latestPriority}
                 </p>
-                </div>
 
-                <div className="flex items-center gap-3 border-t border-white/[0.06] pt-5">
+                <div className="mt-auto flex items-center gap-3 border-t border-white/[0.06] pt-5">
                   <button
-                    onClick={() => router.push("/report")}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      router.push("/report");
+                    }}
                     className="premium-action-secondary inline-flex h-9 items-center justify-center px-4 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em]"
                   >
                     Open Report
                   </button>
                   <button
-                    onClick={handleGenerateReport}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void handleGenerateReport();
+                    }}
                     disabled={generatingReport}
                     className="premium-action-ghost text-[10px] uppercase tracking-[0.14em] transition-colors duration-300 disabled:opacity-30"
                   >
@@ -631,7 +666,10 @@ export default function DashboardPage() {
                 </p>
                 {hasAssessment ? (
                   <button
-                    onClick={handleGenerateReport}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      void handleGenerateReport();
+                    }}
                     disabled={generatingReport}
                     className="premium-action inline-flex h-9 items-center justify-center px-6 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em] disabled:opacity-30"
                   >
@@ -647,11 +685,27 @@ export default function DashboardPage() {
         </div>
 
         {(generationMessage || hasAssessment) && (
-          <div className={`rounded-lg border p-5 ${
+          <div
+            role="button"
+            tabIndex={hasAssessment && !generatingReport ? 0 : -1}
+            aria-label={report ? "Refresh intelligence" : "Generate report"}
+            onClick={() => {
+              if (!hasAssessment || generatingReport) return;
+              void handleGenerateReport();
+            }}
+            onKeyDown={(event) => {
+              if (!hasAssessment || generatingReport || isInteractiveTarget(event.target)) return;
+              if (event.key !== "Enter" && event.key !== " ") return;
+
+              event.preventDefault();
+              void handleGenerateReport();
+            }}
+            className={`cursor-pointer rounded-lg border p-5 transition hover:border-white/[0.16] ${
             firstReportPrompt && !report
               ? "border-white/20 royal-gradient-soft"
               : "executive-panel-soft"
-          }`}>
+          } ${!hasAssessment || generatingReport ? "cursor-not-allowed opacity-75" : ""}`}
+          >
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-sm font-medium text-white/80">
@@ -667,7 +721,10 @@ export default function DashboardPage() {
                 </p>
               </div>
               <button
-                onClick={handleGenerateReport}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void handleGenerateReport();
+                }}
                 disabled={!hasAssessment || generatingReport}
                 className="premium-action inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
