@@ -20,16 +20,30 @@ export type PricingPlan = {
 type PricingPlanCardProps = {
   plan: PricingPlan;
   loadingPlan: PricingPlan["id"] | null;
-  onCheckout: (plan: PricingPlan["id"]) => void;
+  mode: "purchase" | "current" | "included" | "upgrade" | "manage";
+  onSelect: (plan: PricingPlan["id"]) => void;
 };
 
 export default function PricingPlanCard({
   plan,
   loadingPlan,
-  onCheckout,
+  mode,
+  onSelect,
 }: PricingPlanCardProps) {
   const disabled = loadingPlan !== null;
   const [expanded, setExpanded] = useState(false);
+  const showPrice = mode === "purchase" || mode === "upgrade";
+  const isCurrent = mode === "current";
+  const ctaLabel =
+    loadingPlan === plan.id
+      ? "Opening..."
+      : mode === "current"
+      ? "Manage current plan"
+      : mode === "included"
+      ? "Included in your plan"
+      : mode === "upgrade"
+      ? `Upgrade to ${plan.name}`
+      : `Get ${plan.name}`;
 
   return (
     <div
@@ -37,19 +51,21 @@ export default function PricingPlanCard({
       tabIndex={disabled ? -1 : 0}
       aria-disabled={disabled}
       onClick={() => {
-        if (!disabled) onCheckout(plan.id);
+        if (!disabled) onSelect(plan.id);
       }}
       onKeyDown={(event) => {
         if (disabled) return;
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          onCheckout(plan.id);
+          onSelect(plan.id);
         }
       }}
       className={`pricing-plan-card flex h-full min-h-[34rem] cursor-pointer flex-col rounded-lg border p-7 ${
         disabled ? "pointer-events-none opacity-60" : ""
       } ${
-        plan.recommended
+        isCurrent
+          ? "pricing-plan-card-current"
+          : plan.recommended
           ? "pricing-plan-card-featured"
           : "border-white/10 bg-[#151517]"
       }`}
@@ -60,6 +76,11 @@ export default function PricingPlanCard({
           {plan.recommended && (
             <span className="premium-status shrink-0 rounded-md px-3 py-1 text-xs font-medium">
               Recommended
+            </span>
+          )}
+          {isCurrent && (
+            <span className="premium-status shrink-0 rounded-md px-3 py-1 text-xs font-medium">
+              Current
             </span>
           )}
         </div>
@@ -79,10 +100,23 @@ export default function PricingPlanCard({
         </button>
       </div>
 
-      <p className="mt-8 text-5xl font-light">
-        {plan.price}
-        <span className="text-base font-normal text-white/40"> / month</span>
-      </p>
+      <div className="mt-8 min-h-[3.75rem]">
+        {showPrice ? (
+          <p className="text-5xl font-light">
+            {plan.price}
+            <span className="text-base font-normal text-white/40"> / month</span>
+          </p>
+        ) : (
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.14em] royal-text">
+              {isCurrent ? "Active membership" : "Already unlocked"}
+            </p>
+            <p className="mt-3 text-2xl font-light text-white/80">
+              {isCurrent ? "Your current tier" : "Included with your tier"}
+            </p>
+          </div>
+        )}
+      </div>
 
       <div className="mt-8 flex-1 space-y-4">
         {plan.features.map((feature) => (
@@ -114,12 +148,12 @@ export default function PricingPlanCard({
         type="button"
         onClick={(event) => {
           event.stopPropagation();
-          onCheckout(plan.id);
+          onSelect(plan.id);
         }}
         disabled={disabled}
         className="premium-action mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loadingPlan === plan.id ? "Processing..." : `Get ${plan.name}`}
+        {ctaLabel}
         {loadingPlan !== plan.id && <ArrowRight size={16} />}
       </button>
     </div>

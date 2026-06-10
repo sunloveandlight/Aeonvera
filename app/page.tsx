@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Activity, ArrowRight, Check, Dna, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { isSubscriptionValid, type SubscriptionStatus } from "@/lib/auth/permissions";
 
 const METRICS = [
   ["47+", "inputs"],
@@ -45,6 +46,17 @@ const STEPS = [
 ];
 
 type Plan = "core" | "elite" | "sovereign";
+
+type Profile = {
+  plan: Plan | null;
+  subscription_status: SubscriptionStatus | null;
+};
+
+const PLAN_RANK: Record<Plan, number> = {
+  core: 1,
+  elite: 2,
+  sovereign: 3,
+};
 
 const PLANS = [
   {
@@ -137,22 +149,87 @@ function HeroVisual() {
 export default function HomePage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const activePlan =
+    profile?.plan && isSubscriptionValid(profile.subscription_status)
+      ? profile.plan
+      : null;
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    let cancelled = false;
+
+    async function loadUser() {
+      const { data } = await supabase.auth.getUser();
+      if (cancelled) return;
+
       setAuthenticated(!!data.user);
-    });
+
+      if (!data.user) {
+        setProfile(null);
+        return;
+      }
+
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("plan, subscription_status")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+
+      if (!cancelled && profileData) {
+        setProfile({
+          plan: profileData.plan as Plan | null,
+          subscription_status: profileData.subscription_status as SubscriptionStatus | null,
+        });
+      }
+    }
+
+    loadUser();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_, session) => {
       setAuthenticated(!!session?.user);
+      loadUser();
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
+  function getPlanActionLabel(plan: Plan) {
+    if (!activePlan) return `Choose ${PLANS.find((item) => item.id === plan)?.name || plan}`;
+    if (plan === activePlan) return "Manage current plan";
+    if (PLAN_RANK[plan] < PLAN_RANK[activePlan]) return "Included";
+    return `Upgrade to ${PLANS.find((item) => item.id === plan)?.name || plan}`;
+  }
+
+  async function handleBillingPortal(plan: Plan) {
+    try {
+      setLoadingPlan(plan);
+      const res = await fetch("/api/stripe/customer-portal", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Could not open billing management.");
+      window.location.assign(data.url);
+    } catch (err) {
+      console.error(err);
+      window.location.assign("/pricing");
+    } finally {
+      setLoadingPlan(null);
+    }
+  }
+
   async function handleCheckout(plan: Plan) {
+    if (activePlan) {
+      await handleBillingPortal(plan);
+      return;
+    }
+
     if (!authenticated) {
       window.location.assign("/login?mode=signup");
       return;
@@ -335,14 +412,25 @@ export default function HomePage() {
                 className="pricing-plan-card premium-surface cursor-pointer rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <h3 className="text-xl font-light">{plan.name}</h3>
-                <p className="mt-6 text-4xl font-light">{plan.price}</p>
+                {activePlan && PLAN_RANK[plan.id] <= PLAN_RANK[activePlan] ? (
+                  <div className="mt-6">
+                    <p className="text-[10px] uppercase tracking-[0.14em] royal-text">
+                      {plan.id === activePlan ? "Current membership" : "Already unlocked"}
+                    </p>
+                    <p className="mt-2 text-2xl font-light text-white/82">
+                      {plan.id === activePlan ? "Active tier" : "Included"}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-6 text-4xl font-light">{plan.price}</p>
+                )}
                 <p className="mt-4 text-sm leading-7 text-white/55">{plan.body}</p>
                 <div className="mt-8 flex items-center gap-2 text-sm text-white/60">
                   <Check size={16} />
                   Monthly membership
                 </div>
                 <div className="premium-action mt-7 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md px-5 text-sm font-medium">
-                  {loadingPlan === plan.id ? "Opening checkout" : `Choose ${plan.name}`}
+                  {loadingPlan === plan.id ? "Opening" : getPlanActionLabel(plan.id)}
                   {loadingPlan !== plan.id && <ArrowRight size={16} />}
                 </div>
               </button>

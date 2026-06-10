@@ -17,6 +17,8 @@ type Profile = {
   biological_age: number | null;
 };
 
+type MembershipPlan = "core" | "elite" | "sovereign";
+
 type Report = {
   id: string;
   risk_score: number;
@@ -88,6 +90,13 @@ export default function DashboardPage() {
   const [wearableRows, setWearableRows] = useState<WearableMetricRow[]>([]);
   const [wearableConnections, setWearableConnections] = useState<WearableConnection[]>([]);
   const [wearableSyncing, setWearableSyncing] = useState<string | null>(null);
+  const [activatedPlan] = useState<MembershipPlan | null>(() => {
+    if (typeof window === "undefined") return null;
+    const plan = new URLSearchParams(window.location.search).get("activated");
+    return plan === "core" || plan === "elite" || plan === "sovereign"
+      ? plan
+      : null;
+  });
   const [wearableMessage, setWearableMessage] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     const params = new URLSearchParams(window.location.search);
@@ -460,6 +469,22 @@ export default function DashboardPage() {
     : ageDelta !== null && ageDelta <= 0 ? "STABLE"
     : ageDelta !== null && ageDelta <= 4 ? "NEEDS REVIEW"
     : "PRIORITY REVIEW";
+  const activationMessage = activatedPlan
+    ? {
+        core: {
+          title: "Core is active",
+          body: "Your baseline, assessment, biological age, and first longevity report are ready to build from.",
+        },
+        elite: {
+          title: "Elite is active",
+          body: "Your optimization tier is live with proactive coach delivery, wearable-state updates, and deeper regeneration paths.",
+        },
+        sovereign: {
+          title: "Sovereign is active",
+          body: "Your executive tier is live with the complete digital-twin path, exports, and concierge-grade intelligence layer.",
+        },
+      }[activatedPlan]
+    : null;
 
   return (
     <PageContainer>
@@ -508,6 +533,15 @@ export default function DashboardPage() {
           </div>
           <div className="silver-rule mt-10" />
         </div>
+
+        {activationMessage && (
+          <div className="executive-panel-soft rounded-lg border border-white/[0.12] p-5">
+            <p className="micro-label">{activationMessage.title}</p>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-white/58">
+              {activationMessage.body}
+            </p>
+          </div>
+        )}
 
         {/* ═══════════════════════════════════════
             HERO ROW — BIO AGE + RISK

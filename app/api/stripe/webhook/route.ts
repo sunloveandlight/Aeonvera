@@ -16,6 +16,29 @@ function getStripe() {
 
 type AllowedPlan = "core" | "elite" | "sovereign";
 
+function getPlanFromPriceId(priceId?: string | null): AllowedPlan | null {
+  const priceToPlan: Record<string, AllowedPlan> = {};
+
+  if (process.env.STRIPE_CORE_PRICE_ID) {
+    priceToPlan[process.env.STRIPE_CORE_PRICE_ID] = "core";
+  }
+
+  if (process.env.STRIPE_ELITE_PRICE_ID) {
+    priceToPlan[process.env.STRIPE_ELITE_PRICE_ID] = "elite";
+  }
+
+  if (process.env.STRIPE_SOVEREIGN_PRICE_ID) {
+    priceToPlan[process.env.STRIPE_SOVEREIGN_PRICE_ID] = "sovereign";
+  }
+
+  return priceId ? priceToPlan[priceId] ?? null : null;
+}
+
+function getPlanFromSubscription(sub: Stripe.Subscription): AllowedPlan | null {
+  const priceId = sub.items.data[0]?.price.id;
+  return getPlanFromPriceId(priceId) ?? (sub.metadata?.plan as AllowedPlan | undefined) ?? null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const stripe = getStripe();
@@ -96,10 +119,12 @@ export async function POST(req: NextRequest) {
 
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
+        const plan = getPlanFromSubscription(sub);
 
         await supabase
           .from("profiles")
           .update({
+            ...(plan ? { plan } : {}),
             subscription_status: sub.status,
             stripe_subscription_id: sub.id,
           })

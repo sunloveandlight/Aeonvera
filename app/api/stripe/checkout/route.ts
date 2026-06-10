@@ -91,11 +91,17 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success`,
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?plan=${plan}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing`,
       metadata: {
         user_id: user.id,
         plan,
+      },
+      subscription_data: {
+        metadata: {
+          user_id: user.id,
+          plan,
+        },
       },
     });
 

@@ -623,6 +623,19 @@ body::after {
     inset 0 1px 0 rgba(255, 255, 255, 0.095);
 }
 
+.pricing-plan-card-current {
+  border-color: rgba(70, 184, 137, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(70, 184, 137, 0.035)),
+    linear-gradient(135deg, rgba(70, 184, 137, 0.08), transparent 46%),
+    rgba(17, 18, 20, 0.96);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(70, 184, 137, 0.08),
+    0 0 32px rgba(70, 184, 137, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}
+
 .pricing-plan-card::before {
   content: none;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PageContainer from "@/components/ui/PageContainer";
 import Page from "@/components/ui/Page";
 import Section from "@/components/ui/Section";
@@ -8,8 +8,21 @@ import SectionTitle from "@/components/ui/SectionTitle";
 import Text from "@/components/ui/Text";
 import Motion from "@/components/motion/Motion";
 import PricingPlanCard, { type PricingPlan } from "@/components/pricing/PricingPlanCard";
+import { supabase } from "@/lib/supabase/client";
+import { isSubscriptionValid, type SubscriptionStatus } from "@/lib/auth/permissions";
 
 type Plan = "core" | "elite" | "sovereign";
+
+type Profile = {
+  plan: Plan | null;
+  subscription_status: SubscriptionStatus | null;
+};
+
+const PLAN_RANK: Record<Plan, number> = {
+  core: 1,
+  elite: 2,
+  sovereign: 3,
+};
 
 const PLANS: PricingPlan[] = [
   {
@@ -116,8 +129,103 @@ const PLANS: PricingPlan[] = [
 export default function PricingPage() {
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
   const [checkoutMessage, setCheckoutMessage] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [authenticated, setAuthenticated] = useState(false);
+
+  const activePlan =
+    profile?.plan && isSubscriptionValid(profile.subscription_status)
+      ? profile.plan
+      : null;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProfile() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (cancelled) return;
+      setAuthenticated(Boolean(user));
+
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("plan, subscription_status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!cancelled && data) {
+        setProfile({
+          plan: data.plan as Plan | null,
+          subscription_status: data.subscription_status as SubscriptionStatus | null,
+        });
+      }
+    }
+
+    loadProfile();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      loadProfile();
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  function getCardMode(plan: Plan) {
+    if (!activePlan) return "purchase" as const;
+    if (plan === activePlan) return "current" as const;
+    if (PLAN_RANK[plan] < PLAN_RANK[activePlan]) return "included" as const;
+    if (PLAN_RANK[plan] > PLAN_RANK[activePlan]) return "upgrade" as const;
+    return "manage" as const;
+  }
+
+  async function handleBillingPortal(plan: Plan) {
+    try {
+      setLoadingPlan(plan);
+      setCheckoutMessage(null);
+
+      const res = await fetch("/api/stripe/customer-portal", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Could not open billing management.");
+      }
+
+      window.location.assign(data.url);
+    } catch (err) {
+      console.error(err);
+      setCheckoutMessage(
+        err instanceof Error
+          ? err.message
+          : "Failed to open billing management."
+      );
+    } finally {
+      setLoadingPlan(null);
+    }
+  }
 
   async function handleCheckout(plan: Plan) {
+    if (activePlan) {
+      await handleBillingPortal(plan);
+      return;
+    }
+
+    if (!authenticated) {
+      window.location.assign("/login?mode=signup");
+      return;
+    }
+
     try {
       setLoadingPlan(plan);
       setCheckoutMessage(null);
@@ -154,15 +262,29 @@ export default function PricingPage() {
         <PageContainer>
           <SectionTitle
             eyebrow="Pricing"
-            title="Choose the right level of longevity intelligence."
+            title={
+              activePlan
+                ? `Your ${activePlan} membership is active.`
+                : "Choose the right level of longevity intelligence."
+            }
             align="center"
           />
           <Text
             variant="secondary"
             className="mx-auto mt-6 block max-w-2xl text-center text-lg leading-8"
           >
+            {activePlan ? (
+              <>
+                Aeonvera now treats this page as account management: your
+                current tier is marked, lower tiers are included, and higher
+                tiers route through billing management.
+              </>
+            ) : (
+              <>
               Start with a reliable baseline. Move into deeper support as your
               data, goals, and decision-making needs grow.
+              </>
+            )}
           </Text>
             {checkoutMessage && (
               <div className="mx-auto mt-6 max-w-xl rounded-lg border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-sm leading-6 text-red-200/80">
@@ -180,7 +302,8 @@ export default function PricingPage() {
                 <PricingPlanCard
                   plan={plan}
                   loadingPlan={loadingPlan}
-                  onCheckout={handleCheckout}
+                  mode={getCardMode(plan.id)}
+                  onSelect={handleCheckout}
                 />
               </Motion>
             ))}
