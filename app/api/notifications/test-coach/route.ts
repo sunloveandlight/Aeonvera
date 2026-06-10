@@ -4,6 +4,8 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { deliverCoachNotifications } from "@/lib/notifications/coachDelivery";
 import type { JarvisMessage } from "@/lib/voice/jarvisResponseEngine";
 import type { LongevityAlert } from "@/lib/coach/longevityCoach";
+import type { LabTrend } from "@/lib/labs/labTrends";
+import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
 
 type OptimizationProtocol = {
   summary?: string;
@@ -29,7 +31,7 @@ export async function POST() {
     }
 
     const admin = getSupabaseAdmin();
-    const [{ data: profile }, { data: latestProtocol }] = await Promise.all([
+    const [{ data: profile }, { data: latestProtocol }, labTrends] = await Promise.all([
       admin
         .from("profiles")
         .select("display_name")
@@ -42,16 +44,24 @@ export async function POST() {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      loadLabTrendsForUser(admin, user.id),
     ]);
 
     const protocol = latestProtocol?.protocol as OptimizationProtocol | undefined;
+    const clinicalSignal = pickClinicalSignal(labTrends);
     const topAction = protocol?.primary_protocol?.[0];
-    const title = protocol ? "Optimization protocol focus" : "Coach delivery test";
+    const title = clinicalSignal
+      ? clinicalSignal.title
+      : protocol
+      ? "Optimization protocol focus"
+      : "Coach delivery test";
     const message =
+      clinicalSignal?.message ||
       protocol?.coach_message ||
       protocol?.summary ||
       "This is a test proactive coach message from Aeonvera.";
     const recommendation =
+      clinicalSignal?.recommendation ||
       topAction?.action ||
       protocol?.focus_domains?.[0] ||
       "Your delivery settings are connected.";
@@ -64,8 +74,8 @@ export async function POST() {
     ];
 
     const alert: LongevityAlert = {
-      type: normalizeAlertType(topAction?.domain),
-      severity: topAction?.impact === "high" ? "medium" : "low",
+      type: clinicalSignal?.type || normalizeAlertType(topAction?.domain),
+      severity: clinicalSignal?.severity || (topAction?.impact === "high" ? "medium" : "low"),
       title,
       message,
       recommendation,
@@ -104,12 +114,14 @@ export async function POST() {
       userId: user.id,
       alerts: [storedAlert],
       jarvis,
+      memoryTags: clinicalSignal ? [`lab:${clinicalSignal.canonicalKey}:${clinicalSignal.status}`] : [],
     });
 
     return NextResponse.json({
       success: true,
       delivery,
       protocol_context: Boolean(protocol),
+      clinical_context: Boolean(clinicalSignal),
     });
   } catch (error) {
     const message =
@@ -118,9 +130,36 @@ export async function POST() {
   }
 }
 
+function pickClinicalSignal(trends: LabTrend[]) {
+  const trend =
+    trends.find((item) => item.status === "worsening") ||
+    trends.find((item) => item.status === "improving");
+
+  if (!trend) return null;
+
+  const unit = trend.unit ? ` ${trend.unit}` : "";
+  const worsening = trend.status === "worsening";
+
+  return {
+    canonicalKey: trend.canonicalKey,
+    status: trend.status,
+    type: normalizeAlertType(trend.canonicalKey),
+    severity: (worsening ? clinicalSeverity(trend) : "low") as LongevityAlert["severity"],
+    title: worsening ? `${trend.label} needs attention` : `${trend.label} is improving`,
+    message: worsening
+      ? `${trend.label} moved away from target. Latest value: ${trend.latestValue}${unit}.`
+      : `${trend.label} is moving in a favorable direction. Latest value: ${trend.latestValue}${unit}.`,
+    recommendation: worsening
+      ? `Make ${trend.label} the focus of your next protocol review. Target: ${trend.target}.`
+      : `Keep the current rhythm steady and retest ${trend.label} on the next lab cycle.`,
+  };
+}
+
 function normalizeAlertType(domain?: string): LongevityAlert["type"] {
   const value = domain?.toLowerCase() || "";
 
+  if (value.includes("glucose") || value.includes("albumin")) return "nutrition";
+  if (value.includes("hscrp") || value.includes("crp")) return "recovery";
   if (value.includes("sleep")) return "sleep";
   if (value.includes("recover") || value.includes("stress")) return "recovery";
   if (value.includes("nutrition") || value.includes("metabolic")) return "nutrition";
@@ -129,4 +168,10 @@ function normalizeAlertType(domain?: string): LongevityAlert["type"] {
   }
 
   return "risk";
+}
+
+function clinicalSeverity(trend: LabTrend): LongevityAlert["severity"] {
+  return trend.canonicalKey === "hscrp" || trend.canonicalKey === "fasting_glucose"
+    ? "high"
+    : "medium";
 }

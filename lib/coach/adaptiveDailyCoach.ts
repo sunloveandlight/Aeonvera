@@ -1,4 +1,5 @@
 import type { LongevityAlert } from "./longevityCoach";
+import type { LabTrend } from "@/lib/labs/labTrends";
 
 type OptimizationAction = {
   domain?: string;
@@ -50,6 +51,7 @@ export type AdaptiveCoachContext = {
   recentNotifications: NotificationRow[];
   latestReport?: ReportRow | null;
   recentBehaviorEvents: BehaviorEventRow[];
+  labTrends?: LabTrend[];
 };
 
 export type AdaptiveCoachDecision = {
@@ -142,6 +144,9 @@ export function buildAdaptiveCoachDecision({
   const trendSignals = buildTrendSignals(context.metrics)
     .filter((signal) => !recentTags.has(signal.tag))
     .sort((a, b) => b.priority - a.priority);
+  const labSignals = buildLabTrendSignals(context.labTrends || [])
+    .filter((signal) => !recentTags.has(signal.tag))
+    .sort((a, b) => b.priority - a.priority);
   const unrepeatedBaseAlerts = baseAlerts.filter(
     (alert) => !recentTags.has(alertTag(alert))
   );
@@ -153,6 +158,12 @@ export function buildAdaptiveCoachDecision({
     const primaryTrend = trendSignals[0];
     alerts.push(signalToAlert(primaryTrend));
     memoryTags.push(primaryTrend.tag);
+  }
+
+  if (labSignals.length > 0) {
+    const primaryLabTrend = labSignals[0];
+    alerts.push(signalToAlert(primaryLabTrend));
+    memoryTags.push(primaryLabTrend.tag);
   }
 
   if (alerts.length === 0 && optimizationProtocol) {
@@ -189,6 +200,8 @@ export function buildAdaptiveCoachDecision({
     shouldSend: true,
     reason: trendSignals.length
       ? "Meaningful health trend detected."
+      : labSignals.length
+      ? "Meaningful clinical biomarker trend detected."
       : optimizationProtocol
       ? "Active optimization protocol nudge due."
       : "Coach alert due.",
@@ -249,6 +262,43 @@ function buildTrendSignals(metrics: HealthMetricRow[]): TrendSignal[] {
   }
 
   return signals;
+}
+
+function buildLabTrendSignals(trends: LabTrend[]): TrendSignal[] {
+  return trends.flatMap((trend) => {
+    if (trend.status !== "worsening" && trend.status !== "improving") {
+      return [];
+    }
+
+    const domain = clinicalDomain(trend);
+    const unit = trend.unit ? ` ${trend.unit}` : "";
+    const delta =
+      trend.delta == null
+        ? ""
+        : ` by ${Math.abs(trend.delta)}${unit}${
+            trend.percentChange == null ? "" : ` (${Math.abs(trend.percentChange)}%)`
+          }`;
+    const worsening = trend.status === "worsening";
+
+    return [
+      {
+        domain,
+        title: worsening
+          ? `${trend.label} needs attention`
+          : `${trend.label} is improving`,
+        message: worsening
+          ? `${trend.label} moved away from target${delta}. Latest value: ${trend.latestValue}${unit}.`
+          : `${trend.label} is moving in a favorable direction${delta}. Latest value: ${trend.latestValue}${unit}.`,
+        recommendation: worsening
+          ? buildLabTrendRecommendation(trend)
+          : `Keep the current protocol steady and retest ${trend.label} on your next lab cycle.`,
+        severity: worsening ? clinicalSeverity(trend) : "low",
+        confidence: worsening ? 0.84 : 0.74,
+        priority: worsening ? clinicalPriority(trend) : 5,
+        tag: `lab:${trend.canonicalKey}:${trend.status}`,
+      },
+    ];
+  });
 }
 
 function groupMetrics(metrics: HealthMetricRow[]) {
@@ -390,6 +440,55 @@ function buildTrendRecommendation(metric: string) {
     default:
       return "Review your protocol and tighten the next small behavior.";
   }
+}
+
+function buildLabTrendRecommendation(trend: LabTrend) {
+  switch (trend.canonicalKey) {
+    case "fasting_glucose":
+      return "Prioritize a 10-minute walk after your two highest-carbohydrate meals and tighten the first meal around protein.";
+    case "hscrp":
+      return "Reduce training intensity for 48 hours, protect sleep, and remove the most obvious inflammatory trigger this week.";
+    case "albumin":
+      return "Increase protein consistency and review hydration before the next lab draw.";
+    case "creatinine":
+      return "Review hydration, training load, and creatine use before interpreting the next result.";
+    case "lymphocyte_pct":
+    case "white_blood_cell_count":
+      return "Treat this as an immune-system trend to watch; prioritize recovery, sleep, and retesting context.";
+    case "mean_cell_volume":
+    case "red_cell_distribution_width":
+      return "Review nutrition consistency and discuss persistent red-cell marker changes with a clinician.";
+    case "alkaline_phosphatase":
+      return "Track this alongside nutrition, training load, and liver/bone context on the next lab cycle.";
+    default:
+      return "Use this clinical trend as the next protocol priority and retest on your next lab cycle.";
+  }
+}
+
+function clinicalDomain(trend: LabTrend): LongevityAlert["type"] {
+  if (trend.canonicalKey === "fasting_glucose" || trend.canonicalKey === "albumin") {
+    return "nutrition";
+  }
+
+  if (trend.canonicalKey === "hscrp") return "recovery";
+
+  return "risk";
+}
+
+function clinicalSeverity(trend: LabTrend): LongevityAlert["severity"] {
+  if (trend.canonicalKey === "hscrp" || trend.canonicalKey === "fasting_glucose") {
+    return "high";
+  }
+
+  return "medium";
+}
+
+function clinicalPriority(trend: LabTrend) {
+  if (trend.canonicalKey === "hscrp" || trend.canonicalKey === "fasting_glucose") {
+    return 11;
+  }
+
+  return 9;
 }
 
 function daysSinceReport(report: ReportRow) {

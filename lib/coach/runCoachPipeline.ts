@@ -3,6 +3,7 @@ import { runLongevityCoach } from "./longevityCoach";
 import { deliverCoachNotifications } from "@/lib/notifications/coachDelivery";
 import { executeAeonveraActions } from "@/lib/execution/aeonveraExecutionEngine";
 import { generateJarvisMessage } from "@/lib/voice/jarvisResponseEngine";
+import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
 import type { LongevityAlert } from "./longevityCoach";
 import {
   buildAdaptiveCoachDecision,
@@ -195,7 +196,7 @@ async function loadAdaptiveCoachContext(
 ): Promise<AdaptiveCoachContext> {
   const since = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [metricsResult, notificationsResult, reportResult, behaviorResult] =
+  const [metricsResult, notificationsResult, reportResult, behaviorResult, labTrends] =
     await Promise.all([
       supabase
         .from("health_metrics")
@@ -224,6 +225,7 @@ async function loadAdaptiveCoachContext(
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(20),
+      loadLabTrendsForUser(supabase, userId),
     ]);
 
   return {
@@ -231,6 +233,7 @@ async function loadAdaptiveCoachContext(
     recentNotifications: notificationsResult.data || [],
     latestReport: reportResult.data || null,
     recentBehaviorEvents: behaviorResult.data || [],
+    labTrends,
   };
 }
 

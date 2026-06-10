@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import type { LabTrend } from "@/lib/labs/labTrends";
+import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
 
 type Question = {
   id: string;
@@ -94,7 +96,13 @@ export async function POST(request: NextRequest) {
 
     const admin = getSupabaseAdmin();
 
-    const [{ data: profile }, { data: assessment }, { data: healthState }, { data: recentReport }] =
+    const [
+      { data: profile },
+      { data: assessment },
+      { data: healthState },
+      { data: recentReport },
+      labTrends,
+    ] =
       await Promise.all([
         admin.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
         admin
@@ -118,6 +126,7 @@ export async function POST(request: NextRequest) {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
+        loadLabTrendsForUser(admin, user.id),
       ]);
 
     const intakeResult = await admin
@@ -150,6 +159,7 @@ export async function POST(request: NextRequest) {
       assessment,
       healthState,
       recentReport,
+      labTrends,
       projectionContext,
     });
 
@@ -200,13 +210,14 @@ async function generateProtocol(params: {
   assessment: unknown;
   healthState: unknown;
   recentReport: unknown;
+  labTrends: LabTrend[];
   projectionContext: ProjectionContext | null;
 }): Promise<{ protocol: OptimizationProtocol; status: "generated" | "fallback" }> {
   const openai = getOpenAI();
 
   if (!openai) {
     return {
-      protocol: buildFallbackProtocol(params.answers, params.context, params.projectionContext),
+      protocol: buildFallbackProtocol(params.answers, params.context, params.projectionContext, params.labTrends),
       status: "fallback",
     };
   }
@@ -239,10 +250,14 @@ ${JSON.stringify(params.healthState, null, 2)}
 LATEST REPORT:
 ${JSON.stringify(params.recentReport, null, 2)}
 
+CLINICAL LAB TRENDS:
+${params.labTrends.length ? JSON.stringify(params.labTrends, null, 2) : "No clinical lab trend history yet."}
+
 SIMULATOR PROJECTION:
 ${params.projectionContext ? JSON.stringify(params.projectionContext, null, 2) : "No simulator projection provided."}
 
 When simulator projection is present, use it as the central protocol target. Tie actions to the adjusted levers, projected biological age, and measurable improvement estimate.
+When clinical lab trends are present, prioritize worsening biomarkers first, reinforce improving biomarkers second, and connect actions to measurable retesting targets without diagnosing disease.
 
 Return raw JSON only. No markdown fences.
 Schema:
@@ -295,7 +310,7 @@ Schema:
 
     if (!raw) {
       return {
-        protocol: buildFallbackProtocol(params.answers, params.context, params.projectionContext),
+        protocol: buildFallbackProtocol(params.answers, params.context, params.projectionContext, params.labTrends),
         status: "fallback",
       };
     }
@@ -303,7 +318,13 @@ Schema:
     const parsed = JSON.parse(stripJsonFences(raw)) as Partial<OptimizationProtocol>;
 
     return {
-      protocol: normalizeProtocol(parsed, params.answers, params.context, params.projectionContext),
+      protocol: normalizeProtocol(
+        parsed,
+        params.answers,
+        params.context,
+        params.projectionContext,
+        params.labTrends
+      ),
       status: "generated",
     };
   } catch (error) {
@@ -313,7 +334,7 @@ Schema:
     );
 
     return {
-      protocol: buildFallbackProtocol(params.answers, params.context, params.projectionContext),
+      protocol: buildFallbackProtocol(params.answers, params.context, params.projectionContext, params.labTrends),
       status: "fallback",
     };
   }
@@ -323,9 +344,10 @@ function normalizeProtocol(
   protocol: Partial<OptimizationProtocol>,
   answers: Record<string, string>,
   context: string,
-  projectionContext: ProjectionContext | null
+  projectionContext: ProjectionContext | null,
+  labTrends: LabTrend[] = []
 ): OptimizationProtocol {
-  const fallback = buildFallbackProtocol(answers, context, projectionContext);
+  const fallback = buildFallbackProtocol(answers, context, projectionContext, labTrends);
 
   return {
     summary: protocol.summary || fallback.summary,
@@ -349,7 +371,8 @@ function normalizeProtocol(
 function buildFallbackProtocol(
   answers: Record<string, string>,
   context: string,
-  projectionContext: ProjectionContext | null = null
+  projectionContext: ProjectionContext | null = null,
+  labTrends: LabTrend[] = []
 ): OptimizationProtocol {
   const priority = answers.priority || "More energy";
   const sleep = answers.sleep || "Inconsistent schedule";
@@ -363,54 +386,76 @@ function buildFallbackProtocol(
   const projectionSummary = projectionImprovement
     ? ` The simulator projects up to ${projectionImprovement.toFixed(1)} years of biological-age improvement from the selected levers.`
     : "";
+  const clinicalPriority = labTrends.find((trend) => trend.status === "worsening");
+  const clinicalWin = labTrends.find((trend) => trend.status === "improving");
+  const clinicalSummary = clinicalPriority
+    ? ` The newest clinical priority is ${clinicalPriority.label}, which moved away from target.`
+    : clinicalWin
+    ? ` The newest clinical reinforcement signal is ${clinicalWin.label}, which is moving favorably.`
+    : "";
+  const clinicalAction = clinicalPriority
+    ? buildClinicalProtocolAction(clinicalPriority)
+    : clinicalWin
+    ? {
+        domain: "Clinical trend",
+        action: `Keep the current rhythm steady and retest ${clinicalWin.label} on the next lab cycle.`,
+        why: `${clinicalWin.label} is moving in a favorable direction, so the protocol should preserve the behaviors that likely supported it.`,
+        cadence: "Review weekly until next lab import",
+        impact: "medium" as const,
+      }
+    : null;
+  const primaryProtocol = [
+    clinicalAction,
+    {
+      domain: "Sleep",
+      action: `Stabilize the factor most limiting recovery: ${sleep.toLowerCase()}.`,
+      why: "Sleep consistency is the highest-leverage signal for recovery, appetite control, glucose stability, and cognitive output.",
+      cadence: "Nightly for 14 days",
+      impact: "high" as const,
+    },
+    {
+      domain: "Nutrition",
+      action: `Build the first meal around ${nutrition.toLowerCase()} and repeat it on workdays.`,
+      why: "A repeatable nutrition anchor reduces decision fatigue and improves metabolic predictability.",
+      cadence: "5 days per week",
+      impact: "medium" as const,
+    },
+    {
+      domain: "Movement",
+      action: `Convert your current pattern (${training.toLowerCase()}) into three planned movement blocks.`,
+      why: "Planned movement improves adherence and gives Aeonvera a cleaner signal to optimize against.",
+      cadence: "3 sessions per week",
+      impact: "high" as const,
+    },
+    {
+      domain: "Metabolic",
+      action: `Track the metabolic signal you chose first: ${metabolic.toLowerCase()}.`,
+      why: "The protocol should improve one measurable metabolic signal before expanding complexity.",
+      cadence: "Weekly review",
+      impact: "medium" as const,
+    },
+    {
+      domain: "Stress",
+      action: `Protect the point where stress most affects you: ${stress.toLowerCase()}.`,
+      why: "Lower friction recovery windows improve sleep onset, training readiness, and dietary consistency.",
+      cadence: "Daily 10-minute reset",
+      impact: "medium" as const,
+    },
+    {
+      domain: "Cognition",
+      action: `Schedule one protected block for ${cognitive.toLowerCase()}.`,
+      why: "Cognitive performance improves when energy, sleep, and stress interventions are tied to a real weekly output.",
+      cadence: "2 blocks per week",
+      impact: "medium" as const,
+    },
+  ].filter((action): action is ProtocolAction => Boolean(action));
 
   return {
-    summary: `Your first protocol prioritizes ${priority.toLowerCase()} by tightening sleep, nutrition, movement, and recovery into one measurable rhythm.${projectionSummary}`,
-    focus_domains: ["Sleep", "Metabolic", "Movement", "Recovery"],
-    primary_protocol: [
-      {
-        domain: "Sleep",
-        action: `Stabilize the factor most limiting recovery: ${sleep.toLowerCase()}.`,
-        why: "Sleep consistency is the highest-leverage signal for recovery, appetite control, glucose stability, and cognitive output.",
-        cadence: "Nightly for 14 days",
-        impact: "high",
-      },
-      {
-        domain: "Nutrition",
-        action: `Build the first meal around ${nutrition.toLowerCase()} and repeat it on workdays.`,
-        why: "A repeatable nutrition anchor reduces decision fatigue and improves metabolic predictability.",
-        cadence: "5 days per week",
-        impact: "medium",
-      },
-      {
-        domain: "Movement",
-        action: `Convert your current pattern (${training.toLowerCase()}) into three planned movement blocks.`,
-        why: "Planned movement improves adherence and gives Aeonvera a cleaner signal to optimize against.",
-        cadence: "3 sessions per week",
-        impact: "high",
-      },
-      {
-        domain: "Metabolic",
-        action: `Track the metabolic signal you chose first: ${metabolic.toLowerCase()}.`,
-        why: "The protocol should improve one measurable metabolic signal before expanding complexity.",
-        cadence: "Weekly review",
-        impact: "medium",
-      },
-      {
-        domain: "Stress",
-        action: `Protect the point where stress most affects you: ${stress.toLowerCase()}.`,
-        why: "Lower friction recovery windows improve sleep onset, training readiness, and dietary consistency.",
-        cadence: "Daily 10-minute reset",
-        impact: "medium",
-      },
-      {
-        domain: "Cognition",
-        action: `Schedule one protected block for ${cognitive.toLowerCase()}.`,
-        why: "Cognitive performance improves when energy, sleep, and stress interventions are tied to a real weekly output.",
-        cadence: "2 blocks per week",
-        impact: "medium",
-      },
-    ],
+    summary: `Your first protocol prioritizes ${priority.toLowerCase()} by tightening sleep, nutrition, movement, and recovery into one measurable rhythm.${projectionSummary}${clinicalSummary}`,
+    focus_domains: clinicalPriority
+      ? ["Clinical trend", clinicalPriority.label, "Sleep", "Metabolic", "Recovery"]
+      : ["Sleep", "Metabolic", "Movement", "Recovery"],
+    primary_protocol: primaryProtocol.slice(0, 6),
     weekly_sequence: [
       {
         week: "1-2",
@@ -429,15 +474,87 @@ function buildFallbackProtocol(
       },
     ],
     tracking_metrics: [
+      ...(clinicalPriority
+        ? [
+            {
+              metric: clinicalPriority.label,
+              target: clinicalPriority.target,
+              source: "Clinical lab import",
+            },
+          ]
+        : []),
       { metric: "Resting heart rate", target: "Stable or down 2-4 bpm", source: "Wearable or manual check-in" },
       { metric: "Sleep duration", target: "7.5+ hours average", source: "Wearable or assessment" },
       { metric: "Training adherence", target: "3 planned sessions weekly", source: "Manual check-in" },
       { metric: "Energy", target: "Higher morning score", source: "Optimization intake" },
-    ],
-    coach_message: context || projectionContext
-      ? "I used your extra context and simulator projection to keep this protocol realistic. Start with the first two weeks, then I will adapt it from your trend data."
-      : "Start with the first two weeks. Once your wearable and check-in signals update, I will adapt the protocol automatically.",
+    ].slice(0, 5),
+    coach_message: buildFallbackCoachMessage({
+      hasContext: Boolean(context),
+      hasProjection: Boolean(projectionContext),
+      hasClinicalTrends: labTrends.length > 0,
+    }),
   };
+}
+
+function buildFallbackCoachMessage({
+  hasContext,
+  hasProjection,
+  hasClinicalTrends,
+}: {
+  hasContext: boolean;
+  hasProjection: boolean;
+  hasClinicalTrends: boolean;
+}) {
+  const sources = [
+    hasContext ? "extra context" : null,
+    hasProjection ? "simulator projection" : null,
+    hasClinicalTrends ? "clinical trends" : null,
+  ].filter(Boolean);
+
+  if (sources.length) {
+    return `I used your ${sources.join(", ")} to keep this protocol realistic. Start with the first two weeks, then I will adapt it from your trend data.`;
+  }
+
+  return "Start with the first two weeks. Once your wearable and check-in signals update, I will adapt the protocol automatically.";
+}
+
+function buildClinicalProtocolAction(trend: LabTrend): ProtocolAction {
+  const unit = trend.unit ? ` ${trend.unit}` : "";
+
+  switch (trend.canonicalKey) {
+    case "fasting_glucose":
+      return {
+        domain: "Clinical trend",
+        action: "Add a 10-minute walk after your two highest-carbohydrate meals and anchor breakfast with protein.",
+        why: `Fasting Glucose moved away from target. Latest value: ${trend.latestValue}${unit}.`,
+        cadence: "Daily for 14 days, then review",
+        impact: "high",
+      };
+    case "hscrp":
+      return {
+        domain: "Clinical trend",
+        action: "Run a 7-day inflammation reset: protect sleep, reduce training intensity, and remove the most obvious inflammatory trigger.",
+        why: `hsCRP moved away from target. Latest value: ${trend.latestValue}${unit}.`,
+        cadence: "Daily for 7 days",
+        impact: "high",
+      };
+    case "albumin":
+      return {
+        domain: "Clinical trend",
+        action: "Increase protein consistency and review hydration before the next lab cycle.",
+        why: `Albumin moved away from target. Latest value: ${trend.latestValue}${unit}.`,
+        cadence: "5 days per week",
+        impact: "medium",
+      };
+    default:
+      return {
+        domain: "Clinical trend",
+        action: `Make ${trend.label} the next tracked clinical marker and retest after the next protocol cycle.`,
+        why: `${trend.label} moved away from target. Latest value: ${trend.latestValue}${unit}.`,
+        cadence: "Weekly review until next lab import",
+        impact: "medium",
+      };
+  }
 }
 
 async function recordOptimizationDelivery({
