@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 
 import { computeAdaptiveWeights } from "@/lib/personalization/adaptiveWeightEngine";
 import { buildConversationMemory } from "@/lib/memory/conversationMemoryEngine";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 let openaiClient: OpenAI | null = null;
 
@@ -286,6 +287,17 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
       .select()
       .single();
 
+    const notification = await recordReportNotification({
+      userId,
+      title: "New longevity report is ready",
+      message:
+        report.top_priorities?.[0] ||
+        report.primary_goal ||
+        "Review your updated 90-day longevity protocol.",
+      riskScore: report.risk_score,
+      alertId: isUuid(alert?.id) ? alert.id : undefined,
+    });
+
     /**
      * STEP 9 — RESPONSE
      */
@@ -293,6 +305,7 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
       success: true,
       report: data,
       alert,
+      notification,
       memory: conversationMemory,
       adaptive_weights: adaptiveWeights,
     });
@@ -302,4 +315,72 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
       { status: 500 }
     );
   }
+}
+
+async function recordReportNotification({
+  userId,
+  title,
+  message,
+  riskScore,
+  alertId,
+}: {
+  userId: string;
+  title: string;
+  message: string;
+  riskScore: number;
+  alertId?: string;
+}) {
+  try {
+    const admin = getSupabaseAdmin();
+    const { data, error } = await admin
+      .from("notification_deliveries")
+      .insert({
+        user_id: userId,
+        alert_id: alertId,
+        channel: "in_app",
+        status: "sent",
+        title,
+        message,
+        payload: {
+          source: "longevity_report",
+          risk_score: riskScore,
+        },
+        sent_at: new Date().toISOString(),
+      })
+      .select("id, channel, status, title, message, payload, error, created_at, sent_at")
+      .single();
+
+    if (error) {
+      if (!isMissingNotificationTable(error)) {
+        console.error("[Report Notification Error]", error.message);
+      }
+
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error(
+      "[Report Notification Error]",
+      error instanceof Error ? error.message : error
+    );
+    return null;
+  }
+}
+
+function isMissingNotificationTable(error: { message?: string; code?: string }) {
+  return (
+    error.code === "PGRST205" ||
+    error.message?.includes("notification_deliveries") ||
+    error.message?.includes("schema cache")
+  );
+}
+
+function isUuid(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value
+    )
+  );
 }

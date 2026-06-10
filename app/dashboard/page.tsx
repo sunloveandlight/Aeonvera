@@ -46,6 +46,18 @@ type Alert = {
   created_at: string;
 };
 
+type CoachNotification = {
+  id: string;
+  channel: "in_app" | "email" | "push";
+  status: "pending" | "sent" | "skipped" | "failed";
+  title: string;
+  message: string;
+  payload?: Record<string, unknown> | null;
+  error?: string | null;
+  created_at: string;
+  sent_at?: string | null;
+};
+
 type HealthState = {
   baseline?: Record<string, number>;
   risk_scores?: Record<string, number>;
@@ -81,6 +93,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [coachNotifications, setCoachNotifications] = useState<CoachNotification[]>([]);
   const [hasAssessment, setHasAssessment] = useState(false);
   const [assessmentAge, setAssessmentAge] = useState<number | null>(null);
   const [accuracyScore, setAccuracyScore] = useState<number>(40);
@@ -139,7 +152,15 @@ export default function DashboardPage() {
 
         setProfile(profileData);
 
-        const [reportRes, assessmentRes, alertsRes, stateRes, wearableRes, connectionRes] = await Promise.all([
+        const [
+          reportRes,
+          assessmentRes,
+          alertsRes,
+          stateRes,
+          wearableRes,
+          connectionRes,
+          notificationRes,
+        ] = await Promise.all([
           supabase
             .from("longevity_reports")
             .select("id, risk_score, primary_goal, created_at, report")
@@ -179,6 +200,10 @@ export default function DashboardPage() {
             .limit(50),
 
           fetch("/api/wearables/connections", {
+            credentials: "include",
+          }).then((response) => response.json()).catch(() => null),
+
+          fetch("/api/notifications/deliveries", {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
         ]);
@@ -227,6 +252,9 @@ export default function DashboardPage() {
         if (wearableRes.data) setWearableRows(wearableRes.data);
         if (connectionRes?.connections) {
           setWearableConnections(connectionRes.connections);
+        }
+        if (notificationRes?.notifications) {
+          setCoachNotifications(notificationRes.notifications);
         }
 
         setLoading(false);
@@ -283,6 +311,13 @@ export default function DashboardPage() {
 
       if (reportData.alert) {
         setAlerts((prev) => [reportData.alert, ...prev].slice(0, 3));
+      }
+
+      if (reportData.notification) {
+        setCoachNotifications((prev) => [
+          reportData.notification,
+          ...prev,
+        ].slice(0, 5));
       }
 
       setGenerationMessage("Report ready. Dashboard updated.");
@@ -485,6 +520,20 @@ export default function DashboardPage() {
         },
       }[activatedPlan]
     : null;
+  const intelligenceItems =
+    coachNotifications.length > 0
+      ? coachNotifications.map((notification) => ({
+          id: notification.id,
+          title: notification.title,
+          body: notification.message,
+          status: notification.status,
+        }))
+      : alerts.map((alert) => ({
+          id: alert.id,
+          title: alert.title,
+          body: alert.recommendation,
+          status: alert.severity,
+        }));
 
   return (
     <PageContainer>
@@ -798,20 +847,20 @@ export default function DashboardPage() {
           <p className="micro-label mb-4">
             Active Intelligence Alerts
           </p>
-          {alerts.length > 0 ? (
+          {intelligenceItems.length > 0 ? (
             <div className="space-y-3">
-              {alerts.map((alert) => (
+              {intelligenceItems.map((item) => (
                 <div
-                  key={alert.id}
+                  key={item.id}
                   className="flex items-start gap-4 rounded-lg border border-white/[0.08] bg-white/[0.025] p-4"
                 >
                   <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white/35" />
                   <div className="flex-1">
-                    <p className="text-white/70 text-sm font-light mb-1">{alert.title}</p>
-                    <p className="text-white/40 text-xs leading-relaxed">{alert.recommendation}</p>
+                    <p className="text-white/70 text-sm font-light mb-1">{item.title}</p>
+                    <p className="text-white/40 text-xs leading-relaxed">{item.body}</p>
                   </div>
                   <span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-white/28">
-                    {alert.severity}
+                    {item.status}
                   </span>
                 </div>
               ))}
