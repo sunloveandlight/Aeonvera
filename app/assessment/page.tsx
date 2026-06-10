@@ -11,7 +11,6 @@ import {
   SearchInput,
   Select as FormSelect,
   Textarea,
-  Toggle,
 } from "@/components/ui/forms";
 
 type Answers = {
@@ -1121,7 +1120,7 @@ function InputField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          className={`executive-input w-full rounded-lg py-3 pl-4 text-sm ${
+          className={`assessment-input executive-input w-full rounded-lg pl-4 text-sm ${
             field.unit ? "pr-20" : "pr-4"
           }`}
         />
@@ -1161,22 +1160,6 @@ function SelectField({
     );
   }
 
-  if (field.key === "strength_training") {
-    return (
-      <FormField
-        label={field.label}
-        hint={value === "yes" ? "Resistance training is counted in your exercise profile." : undefined}
-        required
-      >
-        <Toggle
-          enabled={value === "yes"}
-          onChange={(enabled) => onChange(enabled ? "yes" : "no")}
-          label={value === "yes" ? "Regular strength training" : "No regular strength training"}
-        />
-      </FormField>
-    );
-  }
-
   if (field.type === "textarea") {
     return (
       <FormField label={field.label} required={!field.optional}>
@@ -1210,10 +1193,10 @@ function SelectField({
             { label: "Select...", value: "" },
             ...(field.options || []),
           ]}
-          className="executive-input w-full rounded-lg py-3 pl-4 pr-12 text-sm appearance-none cursor-pointer"
+          className="assessment-select executive-input w-full rounded-lg pl-4 pr-12 text-sm appearance-none cursor-pointer"
           style={{ backgroundColor: "rgba(7,7,10,0.95)" }}
         />
-        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-white/35">
+        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs leading-none text-white/35">
           ↓
         </span>
       </div>

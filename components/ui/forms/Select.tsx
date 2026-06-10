@@ -18,11 +18,12 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         ref={ref}
         className={`
           w-full
-          h-10
+          min-h-12
           px-3
           rounded-lg
           border
           text-sm
+          leading-5
           bg-white/[0.03]
           text-white/80
           transition

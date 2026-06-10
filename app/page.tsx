@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import Link from "next/link";
 import { Activity, ArrowRight, Check, Dna, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
@@ -52,11 +52,26 @@ type Profile = {
   subscription_status: SubscriptionStatus | null;
 };
 
+type RestingHeartRate = {
+  bpm: number;
+  personalized: boolean;
+};
+
+type HealthStateRow = {
+  baseline?: Record<string, number> | null;
+};
+
+type HealthMetricRow = {
+  value?: number | string | null;
+};
+
 const PLAN_RANK: Record<Plan, number> = {
   core: 1,
   elite: 2,
   sovereign: 3,
 };
+
+const DEFAULT_MALE_RESTING_HEART_RATE = 72;
 
 const PLANS = [
   {
@@ -79,7 +94,14 @@ const PLANS = [
   },
 ] satisfies Array<{ id: Plan; name: string; price: string; body: string }>;
 
-function HeroVisual() {
+function normalizeHeartRate(value: unknown) {
+  const bpm = Number(value);
+  return Number.isFinite(bpm) && bpm >= 35 && bpm <= 130 ? Math.round(bpm) : null;
+}
+
+function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }) {
+  const heartbeatDuration = `${Math.max(0.58, Math.min(1.3, 60 / restingHeartRate.bpm))}s`;
+
   return (
     <div className="hero-stage relative overflow-hidden rounded-xl border border-white/10 p-6 md:p-8">
       <div className="relative z-10">
@@ -94,7 +116,22 @@ function HeroVisual() {
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[0.86fr_1.14fr] lg:items-end">
-          <div className="hero-age-panel">
+          <div
+            className="hero-age-panel"
+            style={{ "--heartbeat-duration": heartbeatDuration } as CSSProperties}
+          >
+            <div
+              className="heartbeat-field"
+              aria-hidden="true"
+            >
+              <svg viewBox="0 0 240 80" preserveAspectRatio="none">
+                <path
+                  className="heartbeat-trace-line"
+                  d="M0 42 H48 L58 42 L67 21 L78 64 L91 42 H126 L136 42 L146 30 L156 54 L169 42 H240"
+                />
+              </svg>
+            </div>
+
             <p className="text-sm text-white/50">Biological age</p>
             <div className="mt-3 flex items-baseline gap-3">
               <p className="hero-metric-glow text-6xl font-light leading-none md:text-7xl">38.4</p>
@@ -150,6 +187,10 @@ export default function HomePage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [restingHeartRate, setRestingHeartRate] = useState<RestingHeartRate>({
+    bpm: DEFAULT_MALE_RESTING_HEART_RATE,
+    personalized: false,
+  });
   const activePlan =
     profile?.plan && isSubscriptionValid(profile.subscription_status)
       ? profile.plan
@@ -166,19 +207,61 @@ export default function HomePage() {
 
       if (!data.user) {
         setProfile(null);
+        setRestingHeartRate({
+          bpm: DEFAULT_MALE_RESTING_HEART_RATE,
+          personalized: false,
+        });
         return;
       }
 
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("plan, subscription_status")
-        .eq("user_id", data.user.id)
-        .maybeSingle();
+      const [profileRes, assessmentRes, healthStateRes, heartMetricRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("plan, subscription_status")
+          .eq("user_id", data.user.id)
+          .maybeSingle(),
+        supabase
+          .from("longevity_assessments")
+          .select("resting_hr")
+          .eq("user_id", data.user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("health_states")
+          .select("baseline")
+          .eq("user_id", data.user.id)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("health_metrics")
+          .select("value")
+          .eq("user_id", data.user.id)
+          .eq("metric", "resting_hr")
+          .order("measured_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
-      if (!cancelled && profileData) {
+      if (!cancelled && profileRes.data) {
         setProfile({
-          plan: profileData.plan as Plan | null,
-          subscription_status: profileData.subscription_status as SubscriptionStatus | null,
+          plan: profileRes.data.plan as Plan | null,
+          subscription_status: profileRes.data.subscription_status as SubscriptionStatus | null,
+        });
+      }
+
+      if (!cancelled) {
+        const healthState = healthStateRes.data as HealthStateRow | null;
+        const latestHeartMetric = heartMetricRes.data as HealthMetricRow | null;
+        const latestBpm = normalizeHeartRate(latestHeartMetric?.value);
+        const wearableBpm = normalizeHeartRate(healthState?.baseline?.resting_hr);
+        const assessmentBpm = normalizeHeartRate(assessmentRes.data?.resting_hr);
+        const bpm = latestBpm ?? wearableBpm ?? assessmentBpm;
+
+        setRestingHeartRate({
+          bpm: bpm ?? DEFAULT_MALE_RESTING_HEART_RATE,
+          personalized: bpm !== null,
         });
       }
     }
@@ -291,7 +374,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <HeroVisual />
+          <HeroVisual restingHeartRate={restingHeartRate} />
         </div>
       </section>
 

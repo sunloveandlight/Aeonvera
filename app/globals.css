@@ -253,6 +253,7 @@ body::after {
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.018)),
     rgba(255, 255, 255, 0.028);
   padding: 1.25rem;
+  min-height: 14.75rem;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.055),
     0 18px 42px rgba(0, 0, 0, 0.22);
@@ -275,6 +276,47 @@ body::after {
 .hero-age-panel > * {
   position: relative;
   z-index: 1;
+}
+
+.heartbeat-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.34;
+  background:
+    radial-gradient(circle at 75% 38%, rgba(255, 112, 143, 0.09), transparent 34%),
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.035), transparent);
+}
+
+.heartbeat-field::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 36%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.11), transparent);
+  animation: heartbeat-scan calc(var(--heartbeat-duration, 0.83s) * 2.6) ease-in-out infinite;
+}
+
+.heartbeat-field svg {
+  position: absolute;
+  inset: 2.4rem -0.75rem auto auto;
+  width: 92%;
+  height: 5.6rem;
+}
+
+.heartbeat-trace-line {
+  fill: none;
+  stroke: rgba(255, 226, 231, 0.5);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  filter:
+    drop-shadow(0 0 5px rgba(255, 112, 143, 0.18))
+    drop-shadow(0 0 8px rgba(var(--gold), 0.08));
+  animation: heartbeat-trace calc(var(--heartbeat-duration, 0.83s) * 2.6) linear infinite;
 }
 
 .living-bar {
@@ -336,6 +378,35 @@ body::after {
   }
   62% {
     opacity: 0.34;
+  }
+  100% {
+    transform: translateX(260%);
+    opacity: 0;
+  }
+}
+
+@keyframes heartbeat-trace {
+  0% {
+    stroke-dashoffset: 300;
+    opacity: 0.24;
+  }
+  42% {
+    opacity: 0.62;
+  }
+  64%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.68;
+  }
+}
+
+@keyframes heartbeat-scan {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.42;
   }
   100% {
     transform: translateX(260%);
@@ -636,6 +707,75 @@ body::after {
     inset 0 1px 0 rgba(255, 255, 255, 0.09);
 }
 
+.membership-current-card,
+.membership-upgrade-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(218, 220, 224, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.022)),
+    rgba(15, 16, 18, 0.94);
+  box-shadow:
+    0 28px 88px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transition:
+    transform 320ms ease,
+    border-color 320ms ease,
+    box-shadow 320ms ease,
+    background 320ms ease;
+}
+
+.membership-current-card {
+  min-height: 34rem;
+}
+
+.membership-current-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(135deg, rgba(70, 184, 137, 0.12), transparent 38%),
+    linear-gradient(270deg, rgba(var(--gold), 0.055), transparent 44%);
+  opacity: 0.72;
+}
+
+.membership-upgrade-card {
+  min-height: 34rem;
+  border-color: rgba(var(--gold), 0.24);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.086), rgba(var(--gold), 0.03)),
+    linear-gradient(135deg, rgba(var(--gold), 0.09), transparent 46%),
+    rgba(17, 18, 20, 0.96);
+}
+
+.membership-upgrade-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(var(--gold), 0.16), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 42%);
+  opacity: 0.78;
+}
+
+.membership-current-card > *,
+.membership-upgrade-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.membership-current-card:hover,
+.membership-upgrade-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(232, 234, 238, 0.22);
+  box-shadow:
+    0 34px 100px rgba(0, 0, 0, 0.44),
+    0 0 34px rgba(232, 234, 238, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
 .pricing-plan-card::before {
   content: none;
 }
@@ -796,6 +936,35 @@ body::after {
 
 .executive-input::placeholder {
   color: rgba(218, 220, 224, 0.24);
+}
+
+.assessment-input {
+  height: 3.25rem;
+  min-height: 3.25rem;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1.25rem;
+}
+
+.assessment-select {
+  height: 3.25rem;
+  min-height: 3.25rem;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 3.25rem;
+  color: rgba(247, 247, 244, 0.88);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assessment-select option {
+  background: #07070a;
+  color: rgba(247, 247, 244, 0.9);
+  font-size: 0.875rem;
+}
+
+.assessment-select:invalid {
+  color: rgba(218, 220, 224, 0.36);
 }
 
 .quiet-lift {
