@@ -215,7 +215,10 @@ export default function OptimizationPage() {
     setAnswers((current) => ({ ...current, [question.id]: value }));
   }
 
-  async function buildOptimizationProtocol() {
+  async function buildOptimizationProtocol(projectionContext?: {
+    controls: SimulatorControls;
+    projection: SimulatorProjection;
+  }) {
     setGeneratingProtocol(true);
     setProtocolMessage(null);
 
@@ -228,6 +231,7 @@ export default function OptimizationPage() {
           answers,
           context,
           questions: QUESTIONS,
+          projectionContext,
         }),
       });
 
@@ -295,6 +299,15 @@ export default function OptimizationPage() {
     } finally {
       setRunningProjection(false);
     }
+  }
+
+  async function buildProtocolFromProjection() {
+    if (!simulatorControls || !simulatorProjection) return;
+
+    await buildOptimizationProtocol({
+      controls: simulatorControls,
+      projection: simulatorProjection,
+    });
   }
 
   function updateSimulatorControl(key: keyof SimulatorControls, value: number) {
@@ -684,6 +697,14 @@ export default function OptimizationPage() {
                     <p className="mt-5 text-sm leading-7 text-white/42">
                       This is a deterministic projection from your current assessment, not a medical diagnosis.
                     </p>
+                    <button
+                      type="button"
+                      onClick={() => void buildProtocolFromProjection()}
+                      disabled={generatingProtocol}
+                      className="premium-action mt-5 inline-flex h-11 w-full items-center justify-center rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {generatingProtocol ? "Building protocol" : "Build protocol from projection"}
+                    </button>
                   </>
                 ) : (
                   <p className="text-sm leading-7 text-white/42">

@@ -39,6 +39,17 @@ type OptimizationProtocol = {
   coach_message: string;
 };
 
+type ProjectionContext = {
+  controls?: Record<string, number>;
+  projection?: {
+    biologicalAge?: number;
+    ageDelta?: number;
+    score?: number;
+    projectedAgeDeltaImprovement?: number;
+    projectedBiologicalAgeImprovement?: number;
+  };
+};
+
 let openaiClient: OpenAI | null = null;
 
 function getOpenAI() {
@@ -68,8 +79,13 @@ export async function POST(request: NextRequest) {
     const answers = sanitizeAnswers(body.answers);
     const questions = sanitizeQuestions(body.questions);
     const context = sanitizeContext(body.context);
+    const projectionContext = sanitizeProjectionContext(body.projectionContext);
+    const enrichedContext = appendProjectionContext(context, projectionContext);
 
-    if (!questions.length || Object.keys(answers).length < questions.length) {
+    if (
+      (!questions.length || Object.keys(answers).length < questions.length) &&
+      !projectionContext
+    ) {
       return NextResponse.json(
         { error: "Complete the optimization intake before building a protocol." },
         { status: 400 }
@@ -109,7 +125,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: user.id,
         answers,
-        context,
+        context: enrichedContext,
         questions,
       })
       .select("id, created_at")
@@ -129,11 +145,12 @@ export async function POST(request: NextRequest) {
     const generated = await generateProtocol({
       answers,
       questions,
-      context,
+      context: enrichedContext,
       profile,
       assessment,
       healthState,
       recentReport,
+      projectionContext,
     });
 
     const protocolResult = await admin
@@ -183,12 +200,13 @@ async function generateProtocol(params: {
   assessment: unknown;
   healthState: unknown;
   recentReport: unknown;
+  projectionContext: ProjectionContext | null;
 }): Promise<{ protocol: OptimizationProtocol; status: "generated" | "fallback" }> {
   const openai = getOpenAI();
 
   if (!openai) {
     return {
-      protocol: buildFallbackProtocol(params.answers, params.context),
+      protocol: buildFallbackProtocol(params.answers, params.context, params.projectionContext),
       status: "fallback",
     };
   }
@@ -220,6 +238,11 @@ ${JSON.stringify(params.healthState, null, 2)}
 
 LATEST REPORT:
 ${JSON.stringify(params.recentReport, null, 2)}
+
+SIMULATOR PROJECTION:
+${params.projectionContext ? JSON.stringify(params.projectionContext, null, 2) : "No simulator projection provided."}
+
+When simulator projection is present, use it as the central protocol target. Tie actions to the adjusted levers, projected biological age, and measurable improvement estimate.
 
 Return raw JSON only. No markdown fences.
 Schema:
@@ -272,7 +295,7 @@ Schema:
 
     if (!raw) {
       return {
-        protocol: buildFallbackProtocol(params.answers, params.context),
+        protocol: buildFallbackProtocol(params.answers, params.context, params.projectionContext),
         status: "fallback",
       };
     }
@@ -280,7 +303,7 @@ Schema:
     const parsed = JSON.parse(stripJsonFences(raw)) as Partial<OptimizationProtocol>;
 
     return {
-      protocol: normalizeProtocol(parsed, params.answers, params.context),
+      protocol: normalizeProtocol(parsed, params.answers, params.context, params.projectionContext),
       status: "generated",
     };
   } catch (error) {
@@ -290,7 +313,7 @@ Schema:
     );
 
     return {
-      protocol: buildFallbackProtocol(params.answers, params.context),
+      protocol: buildFallbackProtocol(params.answers, params.context, params.projectionContext),
       status: "fallback",
     };
   }
@@ -299,9 +322,10 @@ Schema:
 function normalizeProtocol(
   protocol: Partial<OptimizationProtocol>,
   answers: Record<string, string>,
-  context: string
+  context: string,
+  projectionContext: ProjectionContext | null
 ): OptimizationProtocol {
-  const fallback = buildFallbackProtocol(answers, context);
+  const fallback = buildFallbackProtocol(answers, context, projectionContext);
 
   return {
     summary: protocol.summary || fallback.summary,
@@ -324,7 +348,8 @@ function normalizeProtocol(
 
 function buildFallbackProtocol(
   answers: Record<string, string>,
-  context: string
+  context: string,
+  projectionContext: ProjectionContext | null = null
 ): OptimizationProtocol {
   const priority = answers.priority || "More energy";
   const sleep = answers.sleep || "Inconsistent schedule";
@@ -333,9 +358,14 @@ function buildFallbackProtocol(
   const metabolic = answers.metabolic || "Glucose stability";
   const stress = answers.stress || "Evening recovery";
   const cognitive = answers.cognitive || "Calm focus";
+  const projectionImprovement =
+    projectionContext?.projection?.projectedAgeDeltaImprovement;
+  const projectionSummary = projectionImprovement
+    ? ` The simulator projects up to ${projectionImprovement.toFixed(1)} years of biological-age improvement from the selected levers.`
+    : "";
 
   return {
-    summary: `Your first protocol prioritizes ${priority.toLowerCase()} by tightening sleep, nutrition, movement, and recovery into one measurable rhythm.`,
+    summary: `Your first protocol prioritizes ${priority.toLowerCase()} by tightening sleep, nutrition, movement, and recovery into one measurable rhythm.${projectionSummary}`,
     focus_domains: ["Sleep", "Metabolic", "Movement", "Recovery"],
     primary_protocol: [
       {
@@ -404,8 +434,8 @@ function buildFallbackProtocol(
       { metric: "Training adherence", target: "3 planned sessions weekly", source: "Manual check-in" },
       { metric: "Energy", target: "Higher morning score", source: "Optimization intake" },
     ],
-    coach_message: context
-      ? "I used your extra context to keep this protocol realistic. Start with the first two weeks, then I will adapt it from your trend data."
+    coach_message: context || projectionContext
+      ? "I used your extra context and simulator projection to keep this protocol realistic. Start with the first two weeks, then I will adapt it from your trend data."
       : "Start with the first two weeks. Once your wearable and check-in signals update, I will adapt the protocol automatically.",
   };
 }
@@ -493,6 +523,62 @@ function sanitizeQuestions(value: unknown): Question[] {
 
 function sanitizeContext(value: unknown) {
   return typeof value === "string" ? value.slice(0, 2400) : "";
+}
+
+function sanitizeProjectionContext(value: unknown): ProjectionContext | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+
+  const candidate = value as Record<string, unknown>;
+  const controls =
+    candidate.controls && typeof candidate.controls === "object" && !Array.isArray(candidate.controls)
+      ? cleanNumericRecord(candidate.controls as Record<string, unknown>)
+      : undefined;
+  const projection =
+    candidate.projection && typeof candidate.projection === "object" && !Array.isArray(candidate.projection)
+      ? cleanProjection(candidate.projection as Record<string, unknown>)
+      : undefined;
+
+  if (!controls && !projection) return null;
+
+  return { controls, projection };
+}
+
+function appendProjectionContext(
+  context: string,
+  projectionContext: ProjectionContext | null
+) {
+  if (!projectionContext) return context;
+
+  const projectionText = `Simulator projection: ${JSON.stringify(projectionContext)}`;
+  return [context, projectionText].filter(Boolean).join("\n\n").slice(0, 2400);
+}
+
+function cleanNumericRecord(value: Record<string, unknown>) {
+  const entries = Object.entries(value).flatMap(([key, candidate]) => {
+    const numberValue = Number(candidate);
+    return Number.isFinite(numberValue)
+      ? [[key.slice(0, 64), numberValue] as const]
+      : [];
+  });
+
+  return entries.length ? Object.fromEntries(entries) : undefined;
+}
+
+function cleanProjection(value: Record<string, unknown>) {
+  const projection: NonNullable<ProjectionContext["projection"]> = {};
+
+  for (const key of [
+    "biologicalAge",
+    "ageDelta",
+    "score",
+    "projectedAgeDeltaImprovement",
+    "projectedBiologicalAgeImprovement",
+  ] as const) {
+    const numberValue = Number(value[key]);
+    if (Number.isFinite(numberValue)) projection[key] = numberValue;
+  }
+
+  return Object.keys(projection).length ? projection : undefined;
 }
 
 function stripJsonFences(value: string) {
