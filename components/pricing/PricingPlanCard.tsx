@@ -76,7 +76,7 @@ export default function PricingPlanCard({
         <div className="flex min-h-8 items-start justify-between gap-4">
           <h2 className="text-2xl font-light">{plan.name}</h2>
           {plan.recommended && (
-            <span className="premium-status shrink-0 rounded-md px-3 py-1 text-xs font-medium">
+            <span className="premium-status pricing-status-featured shrink-0 rounded-md px-3 py-1 text-xs font-medium">
               Recommended
             </span>
           )}
@@ -92,7 +92,7 @@ export default function PricingPlanCard({
           )}
         </div>
         <p className="mt-4 text-sm leading-6 text-white/55">{plan.summary}</p>
-        <p className="mt-4 text-[10px] uppercase tracking-[0.14em] royal-text">
+        <p className="pricing-card-depth mt-4 text-[10px] uppercase tracking-[0.14em] royal-text">
           {plan.depth}
         </p>
         <button

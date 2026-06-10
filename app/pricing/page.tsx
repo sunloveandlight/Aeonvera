@@ -67,6 +67,7 @@ const PLANS: PricingPlan[] = [
       "Advanced biomarker analysis",
       "Proactive AI coaching",
       "Daily intelligence alerts",
+      "Personalized intervention sequencing",
       "Priority feature access",
     ],
     depth: "Continuous optimization",
@@ -103,6 +104,7 @@ const PLANS: PricingPlan[] = [
       "Physician-ready exports",
       "Concierge data integration",
       "Priority support",
+      "Family account readiness",
     ],
     depth: "Executive digital twin",
     details: [

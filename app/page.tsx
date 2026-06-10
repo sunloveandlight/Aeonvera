@@ -100,12 +100,12 @@ function normalizeHeartRate(value: unknown) {
 }
 
 function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }) {
-  const heartbeatDuration = `${Math.max(0.58, Math.min(1.3, 60 / restingHeartRate.bpm))}s`;
+  const biometricDuration = `${Math.max(4.6, Math.min(8.4, (60 / restingHeartRate.bpm) * 6.3))}s`;
 
   return (
-    <div className="hero-stage relative overflow-hidden rounded-xl border border-white/10 p-6 md:p-8">
-      <div className="relative z-10">
-        <div className="mb-10 flex items-center justify-between gap-4">
+    <div className="hero-stage relative flex h-full overflow-hidden rounded-xl border border-white/10 p-6 md:p-7">
+      <div className="relative z-10 flex h-full w-full flex-col">
+        <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-white">Healthspan overview</p>
             <p className="mt-1 text-sm text-white/50">Updated from your latest assessment</p>
@@ -115,46 +115,58 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[0.86fr_1.14fr] lg:items-end">
+        <div className="grid gap-7 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
           <div
-            className="hero-age-panel"
-            style={{ "--heartbeat-duration": heartbeatDuration } as CSSProperties}
+            className="hero-age-block"
+            style={{ "--biometric-duration": biometricDuration } as CSSProperties}
           >
-            <div
-              className="heartbeat-field"
-              aria-hidden="true"
-            >
-              <svg viewBox="0 0 240 80" preserveAspectRatio="none">
-                <path
-                  className="heartbeat-trace-line"
-                  d="M0 42 H48 L58 42 L67 21 L78 64 L91 42 H126 L136 42 L146 30 L156 54 L169 42 H240"
-                />
+            <div className="age-signal" aria-hidden="true">
+              <div className="age-signal__halo" />
+              <svg viewBox="20 20 120 120">
+                <defs>
+                  <linearGradient id="age-signal-gradient" x1="36" y1="28" x2="124" y2="132" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="rgba(248,250,252,0.94)" />
+                    <stop offset="48%" stopColor="rgba(164, 195, 255, 0.82)" />
+                    <stop offset="74%" stopColor="rgba(218, 188, 115, 0.78)" />
+                    <stop offset="100%" stopColor="rgba(248,250,252,0.9)" />
+                  </linearGradient>
+                </defs>
+                <circle className="age-signal__track" cx="80" cy="80" r="58" />
+                <circle className="age-signal__progress" cx="80" cy="80" r="58" />
+                <circle className="age-signal__inner" cx="80" cy="80" r="34" />
+                <path className="age-signal__wave" pathLength={100} d="M34 83 H55 L63 72 L74 94 L86 65 L98 83 H126" />
+                <line className="age-signal__hand" x1="80" y1="80" x2="80" y2="34" />
+                <path className="age-signal__scan" d="M80 28 A52 52 0 0 1 132 80" />
+                <circle className="age-signal__dot" cx="122" cy="48" r="3.2" />
               </svg>
             </div>
 
-            <p className="text-sm text-white/50">Biological age</p>
-            <div className="mt-3 flex items-baseline gap-3">
-              <p className="hero-metric-glow text-6xl font-light leading-none md:text-7xl">38.4</p>
-              <p className="text-lg leading-none text-white/45">years</p>
+            <div className="hero-age-copy">
+              <p className="hero-age-label text-[4.5px] font-medium uppercase tracking-[0.14em] text-white/42">Biological age</p>
+              <div className="hero-age-value flex items-baseline gap-2">
+                <p className="hero-metric-glow text-[0.56rem] font-light leading-none">38.4</p>
+                <p className="text-[4.5px] leading-none text-white/42">years</p>
+              </div>
+              <p className="hero-age-note text-[5.25px] font-medium text-white/50">
+                2.6 years below chronological baseline.
+              </p>
             </div>
-            <p className="mt-4 text-base text-white/60">
-              2.6 years below chronological baseline.
-            </p>
           </div>
 
-          <div className="space-y-5 rounded-lg border border-white/[0.07] bg-black/20 p-5">
+          <div className="hero-domain-panel">
             {[
               ["Cardiovascular", "86%"],
               ["Metabolic", "78%"],
               ["Recovery", "72%"],
               ["Movement", "91%"],
+              ["VO2 Max", "82%"],
             ].map(([label, width]) => (
-              <div key={label}>
-                <div className="mb-2 flex items-center justify-between gap-4 text-sm">
-                  <span className="text-white/70">{label}</span>
-                  <span className="text-white/40">{width}</span>
+              <div key={label} className="hero-domain-row">
+                <div className="hero-domain-labels mb-2 flex items-center justify-between gap-4">
+                  <span>{label}</span>
+                  <span>{width}</span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
                   <div
                     className="hero-pulse living-bar h-full origin-left rounded-full"
                     style={{ width }}
@@ -165,7 +177,7 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
           </div>
         </div>
 
-        <div className="mt-10 grid gap-3 sm:grid-cols-3">
+        <div className="mt-auto grid gap-3 pt-5 sm:grid-cols-3">
           {[
             ["Risk score", "24", "low"],
             ["Accuracy", "84%", "high"],
@@ -341,8 +353,8 @@ export default function HomePage() {
   return (
     <div className="text-white">
       <section className="px-6 pt-24 pb-24 lg:px-8">
-        <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-2 lg:items-center">
-          <div>
+        <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-2 lg:items-stretch">
+          <div className="flex flex-col justify-between">
             <div className="premium-status mb-8 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm">
               <ShieldCheck size={16} className="royal-text" />
               Private longevity intelligence
@@ -382,7 +394,10 @@ export default function HomePage() {
         <div className="premium-surface mx-auto max-w-6xl rounded-lg p-6 md:p-8">
           <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
             <div>
-              <div className="mb-6 flex size-12 items-center justify-center rounded-lg bg-white text-black">
+              <div
+                className="living-dashboard-pulse mb-6 flex size-12 items-center justify-center rounded-lg bg-white text-black"
+                style={{ "--heartbeat-duration": `${Math.max(0.58, Math.min(1.3, 60 / restingHeartRate.bpm))}s` } as CSSProperties}
+              >
                 <Activity size={22} />
               </div>
               <h2 className="max-w-xl text-3xl font-light leading-tight md:text-5xl">
@@ -492,7 +507,13 @@ export default function HomePage() {
                 type="button"
                 onClick={() => handleCheckout(plan.id)}
                 disabled={loadingPlan !== null}
-                className="pricing-plan-card premium-surface cursor-pointer rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
+                className={`pricing-plan-card premium-surface cursor-pointer rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60 ${
+                  plan.id === "elite"
+                    ? "pricing-plan-card-featured"
+                    : plan.id === "sovereign"
+                    ? "pricing-plan-card-sovereign"
+                    : ""
+                }`}
               >
                 <h3 className="text-xl font-light">{plan.name}</h3>
                 {activePlan && PLAN_RANK[plan.id] <= PLAN_RANK[activePlan] ? (
