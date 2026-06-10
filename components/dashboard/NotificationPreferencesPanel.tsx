@@ -9,6 +9,7 @@ type Preferences = {
   quiet_hours_start: string;
   quiet_hours_end: string;
   timezone: string;
+  source?: "table" | "auth_metadata" | "sleep_schedule";
 };
 
 const DEFAULT_PREFS: Preferences = {
@@ -17,6 +18,7 @@ const DEFAULT_PREFS: Preferences = {
   quiet_hours_start: "22:00",
   quiet_hours_end: "07:00",
   timezone: "UTC",
+  source: "sleep_schedule",
 };
 
 export default function NotificationPreferencesPanel() {
@@ -37,6 +39,7 @@ export default function NotificationPreferencesPanel() {
             quiet_hours_end:
               data.preferences.quiet_hours_end || DEFAULT_PREFS.quiet_hours_end,
             timezone: data.preferences.timezone || DEFAULT_PREFS.timezone,
+            source: data.preferences.source || DEFAULT_PREFS.source,
           });
         }
       })
@@ -111,6 +114,10 @@ export default function NotificationPreferencesPanel() {
           <p className="text-[10px] uppercase tracking-[0.14em] text-white/25">
             {saving ? "Saving" : "Quiet hours"} {preferences.quiet_hours_start}-
             {preferences.quiet_hours_end}
+          </p>
+          <p className="text-xs leading-5 text-white/35">
+            Synced from latest sleep duration. Add wearable sleep data for a more
+            accurate quiet window.
           </p>
         </div>
       </div>

@@ -510,7 +510,7 @@ export default function DashboardPage() {
           <Card title="BIOLOGICAL AGE" glow className="min-h-[340px]">
             {bioAge ? (
               <div className="flex h-full flex-col justify-between">
-                <div>
+                <div className="min-h-[190px]">
                 <div className="mb-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8">
                   <div>
                     <p className="micro-label mb-2">Biological</p>
@@ -533,7 +533,7 @@ export default function DashboardPage() {
                 </div>
 
                 {ageDelta !== null && (
-                  <p className={`text-sm mb-6 ${bioAgeColor}`}>
+                  <p className={`text-sm mb-5 leading-7 ${bioAgeColor}`}>
                     {ageDelta < 0
                       ? `${Math.abs(ageDelta)} years younger than chronological age`
                       : ageDelta > 0
@@ -542,18 +542,19 @@ export default function DashboardPage() {
                   </p>
                 )}
 
+                <div className="h-px overflow-hidden bg-white/[0.08]">
+                  <div
+                    className="living-bar"
+                    style={{ width: `${Math.max(8, Math.min(100, accuracyScore))}%` }}
+                  />
                 </div>
 
-                <div className="pt-6">
+                </div>
+
+                <div className="border-t border-white/[0.06] pt-5">
                   <div className="flex justify-between micro-label mb-3">
                     <span>Estimation Accuracy</span>
                     <span>{accuracyScore}%</span>
-                  </div>
-                  <div className="h-px overflow-hidden bg-white/[0.08]">
-                    <div
-                      className="living-bar transition-all duration-1000"
-                      style={{ width: `${accuracyScore}%` }}
-                    />
                   </div>
                   {accuracyScore < 70 && (
                     <button
@@ -584,7 +585,7 @@ export default function DashboardPage() {
           <Card title="INTELLIGENCE REPORT" className="min-h-[340px]">
             {report ? (
               <div className="flex h-full flex-col justify-between">
-                <div>
+                <div className="min-h-[190px]">
                 <div className="flex items-end gap-3 mb-3">
                   <p className="metric-display text-6xl font-light tracking-tight leading-none text-white/86">
                     {report.risk_score}

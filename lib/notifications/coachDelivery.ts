@@ -27,22 +27,16 @@ export async function deliverCoachNotifications({
     return { email: "skipped", push: "skipped" };
   }
 
-  const [{ data: preferences }, { data: profile }, userResult] =
-    await Promise.all([
-      supabase
-        .from("notification_preferences")
-        .select("email_enabled, push_enabled")
-        .eq("user_id", userId)
-        .maybeSingle(),
-      supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("user_id", userId)
-        .maybeSingle(),
-      supabase.auth.admin.getUserById(userId),
-    ]);
+  const [{ data: profile }, userResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("user_id", userId)
+      .maybeSingle(),
+    supabase.auth.admin.getUserById(userId),
+  ]);
 
-  const prefs = (preferences || {}) as NotificationPreferences;
+  const prefs = await loadPreferences(supabase, userId, userResult.data.user);
   const emailEnabled = prefs.email_enabled !== false;
   const pushEnabled = prefs.push_enabled === true;
   const email = userResult.data.user?.email;
@@ -135,7 +129,7 @@ async function recordDelivery({
   payload: Record<string, unknown>;
   error?: string;
 }) {
-  await supabase.from("notification_deliveries").insert({
+  const { error: deliveryError } = await supabase.from("notification_deliveries").insert({
     user_id: userId,
     alert_id: alertId,
     channel,
@@ -148,6 +142,41 @@ async function recordDelivery({
     error,
     sent_at: status === "sent" ? new Date().toISOString() : null,
   });
+
+  if (deliveryError && !isMissingNotificationTable(deliveryError)) {
+    console.error("[Notification Delivery Error]", deliveryError.message);
+  }
+}
+
+async function loadPreferences(
+  supabase: SupabaseClient,
+  userId: string,
+  user?: { user_metadata?: { notification_preferences?: NotificationPreferences } } | null
+) {
+  const { data, error } = await supabase
+    .from("notification_preferences")
+    .select("email_enabled, push_enabled")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error && !isMissingNotificationTable(error)) {
+    console.error("[Notification Preference Error]", error.message);
+  }
+
+  return (
+    (data as NotificationPreferences | null) ||
+    user?.user_metadata?.notification_preferences ||
+    {}
+  );
+}
+
+function isMissingNotificationTable(error: { message?: string; code?: string }) {
+  return (
+    error.code === "PGRST205" ||
+    error.message?.includes("notification_preferences") ||
+    error.message?.includes("notification_deliveries") ||
+    error.message?.includes("schema cache")
+  );
 }
 
 function buildTitle(alert: StoredAlert) {

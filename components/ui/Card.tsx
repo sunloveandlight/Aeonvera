@@ -21,7 +21,7 @@ export default function Card({
       data-aeonvera-card
       className={`
         executive-panel
-        relative rounded-lg
+        relative h-full rounded-lg
 
         transition-all duration-500
 
@@ -31,7 +31,7 @@ export default function Card({
       `}
     >
       {/* CONTENT */}
-      <div className="relative z-10 p-6">
+      <div className="relative z-10 flex h-full flex-col p-6">
 
         {title && (
           <div className="mb-5 pb-3 border-b border-white/[0.06]">

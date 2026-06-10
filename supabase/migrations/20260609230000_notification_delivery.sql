@@ -48,3 +48,5 @@ create index if not exists notification_deliveries_user_created_idx
 
 create index if not exists push_subscriptions_user_enabled_idx
   on public.push_subscriptions (user_id, enabled);
+
+notify pgrst, 'reload schema';

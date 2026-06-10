@@ -24,6 +24,24 @@ const PLANS: PricingPlan[] = [
       "Risk profile analysis",
       "Dashboard access",
     ],
+    depth: "Baseline intelligence",
+    details: [
+      {
+        label: "Function Set",
+        items: [
+          "One active biological age baseline",
+          "Assessment-driven recommendations",
+          "Manual Apple Health import",
+        ],
+      },
+      {
+        label: "Best For",
+        items: [
+          "Users starting their first healthspan baseline",
+          "Monthly check-ins and simple risk context",
+        ],
+      },
+    ],
   },
   {
     id: "elite",
@@ -36,6 +54,26 @@ const PLANS: PricingPlan[] = [
       "Proactive AI coaching",
       "Daily intelligence alerts",
       "Priority feature access",
+    ],
+    depth: "Continuous optimization",
+    details: [
+      {
+        label: "Function Set",
+        items: [
+          "Daily proactive coach contact",
+          "Wearable-sync health state updates",
+          "Trend-aware sleep, recovery, and activity alerts",
+          "Higher-depth report regeneration",
+        ],
+      },
+      {
+        label: "Automation",
+        items: [
+          "Email delivery via coach pipeline",
+          "Push registration ready for mobile devices",
+          "Behavior memory influences recommendations",
+        ],
+      },
     ],
     recommended: true,
   },
@@ -51,6 +89,26 @@ const PLANS: PricingPlan[] = [
       "Physician-ready exports",
       "Concierge data integration",
       "Priority support",
+    ],
+    depth: "Executive digital twin",
+    details: [
+      {
+        label: "Function Set",
+        items: [
+          "Full digital twin timeline",
+          "Physician-ready reporting and exports",
+          "Multi-source data ingestion strategy",
+          "Advanced scenario simulation readiness",
+        ],
+      },
+      {
+        label: "Operating Model",
+        items: [
+          "Concierge-level data integration",
+          "Family/account expansion path",
+          "Most complete intervention and longitudinal tracking tier",
+        ],
+      },
     ],
   },
 ];
