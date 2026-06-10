@@ -250,9 +250,9 @@ body::after {
   height: 14.15rem;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   text-align: center;
-  padding: 0.1rem;
+  padding: 1rem 0.1rem;
 }
 
 .age-signal {
@@ -265,7 +265,7 @@ body::after {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 1.1rem;
+  margin-top: 0;
 }
 
 .hero-age-label {
