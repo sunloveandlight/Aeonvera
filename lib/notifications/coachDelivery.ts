@@ -21,11 +21,13 @@ export async function deliverCoachNotifications({
   userId,
   alerts,
   jarvis,
+  memoryTags = [],
 }: {
   supabase: SupabaseClient;
   userId: string;
   alerts: StoredAlert[];
   jarvis: JarvisMessage;
+  memoryTags?: string[];
 }) {
   if (!alerts.length || !jarvis.message) {
     return { email: "skipped", push: "skipped" };
@@ -57,7 +59,7 @@ export async function deliverCoachNotifications({
     status: "sent",
     title,
     message,
-    payload: { actions: jarvis.actions, tone: jarvis.tone },
+    payload: { actions: jarvis.actions, tone: jarvis.tone, coach_memory_tags: memoryTags },
   });
 
   if (emailEnabled && email && !quietHoursActive) {
@@ -87,7 +89,7 @@ export async function deliverCoachNotifications({
       title,
       message,
       error: "error" in emailResult ? emailResult.error : undefined,
-      payload: { actions: jarvis.actions, tone: jarvis.tone },
+      payload: { actions: jarvis.actions, tone: jarvis.tone, coach_memory_tags: memoryTags },
     });
   } else {
     const skippedReason = !email
@@ -108,6 +110,7 @@ export async function deliverCoachNotifications({
       payload: {
         actions: jarvis.actions,
         tone: jarvis.tone,
+        coach_memory_tags: memoryTags,
         quiet_hours: {
           active: quietHoursActive,
           start: prefs.quiet_hours_start,
@@ -149,6 +152,7 @@ export async function deliverCoachNotifications({
     payload: {
       actions: jarvis.actions,
       tone: jarvis.tone,
+      coach_memory_tags: memoryTags,
       sent: pushResult.sent,
       failed: pushResult.failed,
     },

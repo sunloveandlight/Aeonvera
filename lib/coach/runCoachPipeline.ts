@@ -4,21 +4,12 @@ import { deliverCoachNotifications } from "@/lib/notifications/coachDelivery";
 import { executeAeonveraActions } from "@/lib/execution/aeonveraExecutionEngine";
 import { generateJarvisMessage } from "@/lib/voice/jarvisResponseEngine";
 import type { LongevityAlert } from "./longevityCoach";
-
-type OptimizationAction = {
-  domain?: string;
-  action?: string;
-  why?: string;
-  cadence?: string;
-  impact?: "low" | "medium" | "high";
-};
-
-type OptimizationProtocol = {
-  summary?: string;
-  focus_domains?: string[];
-  primary_protocol?: OptimizationAction[];
-  coach_message?: string;
-};
+import {
+  buildAdaptiveCoachDecision,
+  buildAdaptiveInterventions,
+  type AdaptiveCoachContext,
+  type OptimizationProtocol,
+} from "./adaptiveDailyCoach";
 
 /**
  * FULL COACH PIPELINE (V2 UPGRADE)
@@ -68,19 +59,25 @@ export async function runCoachPipeline(userId: string) {
    */
   const alerts = runLongevityCoach(enrichedMetrics);
   const latestOptimization = await loadLatestOptimizationProtocol(supabase, userId);
+  const adaptiveContext = await loadAdaptiveCoachContext(supabase, userId);
+  const adaptiveDecision = buildAdaptiveCoachDecision({
+    baseAlerts: alerts,
+    optimizationProtocol: latestOptimization?.protocol,
+    context: adaptiveContext,
+  });
   const optimizationInterventions = buildOptimizationInterventions(
     latestOptimization?.protocol
   );
 
-  if (alerts.length === 0 && latestOptimization?.protocol) {
-    const shouldSendOptimizationFocus = await shouldSendProtocolFocus(
-      supabase,
-      userId
-    );
-
-    if (shouldSendOptimizationFocus) {
-      alerts.push(buildOptimizationAlert(latestOptimization.protocol));
-    }
+  if (!adaptiveDecision.shouldSend) {
+    return {
+      success: true,
+      alerts: [],
+      delivered: 0,
+      optimization_context: Boolean(latestOptimization?.protocol),
+      skipped: true,
+      reason: adaptiveDecision.reason,
+    };
   }
 
   /**
@@ -88,11 +85,11 @@ export async function runCoachPipeline(userId: string) {
    */
   let storedAlerts = [];
 
-  if (alerts.length > 0) {
+  if (adaptiveDecision.alerts.length > 0) {
     const { data, error: insertError } = await supabase
       .from("health_alerts")
       .insert(
-        alerts.map((a) => ({
+        adaptiveDecision.alerts.map((a) => ({
           user_id: userId,
           type: a.type,
           severity: a.severity,
@@ -111,12 +108,7 @@ export async function runCoachPipeline(userId: string) {
     storedAlerts = data || [];
 
     const interventions = [
-      ...alerts.map((alert) => ({
-        domain: alert.type,
-        action: alert.recommendation,
-        reason: alert.message,
-        priority: alert.severity === "high" ? 10 : alert.severity === "medium" ? 7 : 4,
-      })),
+      ...buildAdaptiveInterventions(adaptiveDecision.alerts),
       ...optimizationInterventions,
     ].sort((a, b) => b.priority - a.priority);
 
@@ -131,12 +123,8 @@ export async function runCoachPipeline(userId: string) {
       interventions,
       trigger: {
         shouldTrigger: true,
-        intensity: alerts.some((alert) => alert.severity === "high")
-          ? "high"
-          : "medium",
-        mode: alerts.some((alert) => alert.severity === "high")
-          ? "notification"
-          : "dashboard",
+        intensity: adaptiveDecision.intensity,
+        mode: adaptiveDecision.mode,
         selectedInterventions: interventions,
       },
     });
@@ -146,6 +134,7 @@ export async function runCoachPipeline(userId: string) {
       userId,
       alerts: storedAlerts,
       jarvis,
+      memoryTags: adaptiveDecision.memoryTags,
     });
 
     await executeAeonveraActions({
@@ -158,13 +147,22 @@ export async function runCoachPipeline(userId: string) {
         priority: intervention.priority * 10,
       })),
     });
+
+    await recordCoachOutput({
+      userId,
+      mode: adaptiveDecision.mode,
+      tone: jarvis.tone,
+      message: jarvis.message,
+      actions: jarvis.actions,
+    });
   }
 
   return {
     success: true,
-    alerts,
+    alerts: adaptiveDecision.alerts,
     delivered: storedAlerts.length,
     optimization_context: Boolean(latestOptimization?.protocol),
+    reason: adaptiveDecision.reason,
   };
 }
 
@@ -191,6 +189,79 @@ async function loadLatestOptimizationProtocol(
   return data as { id: string; protocol: OptimizationProtocol; created_at: string } | null;
 }
 
+async function loadAdaptiveCoachContext(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string
+): Promise<AdaptiveCoachContext> {
+  const since = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [metricsResult, notificationsResult, reportResult, behaviorResult] =
+    await Promise.all([
+      supabase
+        .from("health_metrics")
+        .select("metric, value, measured_at")
+        .eq("user_id", userId)
+        .gte("measured_at", since)
+        .order("measured_at", { ascending: false })
+        .limit(240),
+      supabase
+        .from("notification_deliveries")
+        .select("title, message, created_at, payload")
+        .eq("user_id", userId)
+        .eq("channel", "in_app")
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("longevity_reports")
+        .select("risk_score, primary_goal, report, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("behavior_events")
+        .select("domain, action, outcome, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(20),
+    ]);
+
+  return {
+    metrics: metricsResult.data || [],
+    recentNotifications: notificationsResult.data || [],
+    latestReport: reportResult.data || null,
+    recentBehaviorEvents: behaviorResult.data || [],
+  };
+}
+
+async function recordCoachOutput({
+  userId,
+  mode,
+  tone,
+  message,
+  actions,
+}: {
+  userId: string;
+  mode: string;
+  tone: string;
+  message: string;
+  actions: string[];
+}) {
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.from("coach_outputs").insert({
+    user_id: userId,
+    mode,
+    tone,
+    message,
+    actions,
+    source: "cron",
+  });
+
+  if (error) {
+    console.error("[Coach Output Store Error]", error.message);
+  }
+}
+
 function buildOptimizationInterventions(protocol?: OptimizationProtocol | null) {
   if (!protocol?.primary_protocol?.length) return [];
 
@@ -200,50 +271,6 @@ function buildOptimizationInterventions(protocol?: OptimizationProtocol | null) 
     reason: item.why || protocol.summary || protocol.coach_message || "Optimization protocol active.",
     priority: item.impact === "high" ? 8 : item.impact === "medium" ? 6 : 4,
   }));
-}
-
-function buildOptimizationAlert(protocol: OptimizationProtocol): LongevityAlert {
-  const topAction = protocol.primary_protocol?.[0];
-
-  return {
-    type: normalizeDomain(topAction?.domain),
-    severity: topAction?.impact === "high" ? "medium" : "low",
-    title: "Optimization protocol focus",
-    message:
-      protocol.coach_message ||
-      protocol.summary ||
-      "Your optimization protocol is active.",
-    recommendation:
-      topAction?.action ||
-      protocol.focus_domains?.[0] ||
-      "Review your active optimization protocol.",
-    confidence: 0.76,
-  };
-}
-
-async function shouldSendProtocolFocus(
-  supabase: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
-) {
-  const since = new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString();
-  const { data, error } = await supabase
-    .from("notification_deliveries")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("channel", "in_app")
-    .eq("title", "Aeonvera coach: Optimization protocol focus")
-    .gte("created_at", since)
-    .limit(1);
-
-  if (error) {
-    if (!isMissingNotificationTable(error)) {
-      console.error("[Coach Notification Check Error]", error.message);
-    }
-
-    return true;
-  }
-
-  return !data?.length;
 }
 
 function normalizeDomain(domain?: string): LongevityAlert["type"] {
@@ -263,14 +290,6 @@ function isMissingOptimizationTable(error: { message?: string; code?: string }) 
   return (
     error.code === "PGRST205" ||
     error.message?.includes("optimization_protocols") ||
-    error.message?.includes("schema cache")
-  );
-}
-
-function isMissingNotificationTable(error: { message?: string; code?: string }) {
-  return (
-    error.code === "PGRST205" ||
-    error.message?.includes("notification_deliveries") ||
     error.message?.includes("schema cache")
   );
 }
