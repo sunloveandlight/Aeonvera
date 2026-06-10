@@ -178,7 +178,7 @@ export default function OptimizationPage() {
           </div>
           <Link
             href="/dashboard"
-            className="premium-action-secondary inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium"
+            className="text-sm font-medium text-white/45 transition hover:text-white/80"
           >
             Dashboard
           </Link>
