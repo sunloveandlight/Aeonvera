@@ -17,6 +17,7 @@ export default function Checkbox({
   return (
     <label className="flex items-center gap-3 text-sm text-white/60 cursor-pointer">
       <input
+        data-aeonvera-input
         type="checkbox"
         checked={checked}
         disabled={disabled}

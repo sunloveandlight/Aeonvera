@@ -11,12 +11,27 @@ type ConnectionRow = {
   provider: WearableOAuthProvider;
 };
 
+export async function GET(request: NextRequest) {
+  return syncWearables(request);
+}
+
 export async function POST(request: NextRequest) {
+  return syncWearables(request);
+}
+
+async function syncWearables(request: NextRequest) {
   try {
     const cronSecret = process.env.CRON_SECRET;
     const auth = request.headers.get("authorization");
 
-    if (cronSecret && auth !== `Bearer ${cronSecret}`) {
+    if (!cronSecret) {
+      return NextResponse.json(
+        { error: "Cron not configured" },
+        { status: 500 }
+      );
+    }
+
+    if (auth !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

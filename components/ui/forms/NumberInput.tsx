@@ -10,6 +10,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     return (
       <input
         ref={ref}
+        data-aeonvera-input
         type="number"
         className={`
           w-full

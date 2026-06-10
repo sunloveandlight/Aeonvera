@@ -7,30 +7,6 @@ import {
 } from "@/lib/auth/permissions";
 
 export async function getUserSubscription() {
-
-  /**
-   * FIRST:
-   * Get active session directly
-   */
-  const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
-
-  if (sessionError || !session) {
-    return {
-      user: null,
-      plan: null,
-      subscriptionStatus: null,
-      allowed: false,
-      isPaidUser: false,
-    };
-  }
-
-  /**
-   * THEN:
-   * Get authenticated user
-   */
   const {
     data: { user },
     error: userError,
@@ -85,7 +61,7 @@ export async function getUserSubscription() {
     subscriptionStatus: status,
 
     onboardingCompleted:
-      data.onboarding_completed,
+    data.onboarding_completed,
 
     entityState:
       data.entity_state,
@@ -99,6 +75,10 @@ export async function getUserSubscription() {
       "dashboard_access"
     ),
 
-    isPaidUser: !!plan,
+    isPaidUser: allowedPlan(plan, status),
   };
+}
+
+function allowedPlan(plan: Plan | null, status: SubscriptionStatus | null) {
+  return canAccess(plan, status, "dashboard_access");
 }

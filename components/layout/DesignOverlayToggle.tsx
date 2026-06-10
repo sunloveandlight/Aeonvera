@@ -1,13 +1,20 @@
 "use client";
 
-import { useDesignOverlay } from "@/lib/design/useDesignOverlay";
+type DesignOverlayToggleProps = {
+  enabled: boolean;
+  onToggle: () => void;
+};
 
-export default function DesignOverlayToggle() {
-  const { enabled, toggle } = useDesignOverlay();
-
+export default function DesignOverlayToggle({
+  enabled,
+  onToggle,
+}: DesignOverlayToggleProps) {
   return (
     <button
-      onClick={toggle}
+      onClick={onToggle}
+      type="button"
+      aria-pressed={enabled}
+      title="Toggle design audit overlay. Shortcut: Command + Shift + A"
       className={`
         fixed bottom-5 left-5 z-[99999]
         px-4 py-2 rounded-md
@@ -22,7 +29,7 @@ export default function DesignOverlayToggle() {
         }
       `}
     >
-      {enabled ? "Overlay ON" : "Overlay OFF"}
+      {enabled ? "Audit ON" : "Audit OFF"}
     </button>
   );
 }

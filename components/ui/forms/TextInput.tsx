@@ -10,6 +10,7 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
     return (
       <input
         ref={ref}
+        data-aeonvera-input
         className={`
           w-full
           h-10

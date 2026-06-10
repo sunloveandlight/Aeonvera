@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useState } from "react";
 
 type FormContextType = {
   values: Record<string, unknown>;
@@ -34,27 +34,27 @@ export default function Form({
   const [values, setValues] = useState<Record<string, unknown>>(defaultValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const setValue = (name: string, value: unknown) => {
+  const setValue = useCallback((name: string, value: unknown) => {
     setValues((prev) => ({
       ...prev,
       [name]: value,
     }));
-  };
+  }, []);
 
-  const setError = (name: string, error: string) => {
+  const setError = useCallback((name: string, error: string) => {
     setErrors((prev) => ({
       ...prev,
       [name]: error,
     }));
-  };
+  }, []);
 
-  const clearError = (name: string) => {
+  const clearError = useCallback((name: string) => {
     setErrors((prev) => {
       const copy = { ...prev };
       delete copy[name];
       return copy;
     });
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

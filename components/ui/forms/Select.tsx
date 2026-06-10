@@ -16,6 +16,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <select
         ref={ref}
+        data-aeonvera-input
         className={`
           w-full
           min-h-12

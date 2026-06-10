@@ -27,6 +27,7 @@ export default function RadioGroup({
           className="flex items-center gap-3 text-sm text-white/60 cursor-pointer"
         >
           <input
+            data-aeonvera-input
             type="radio"
             name={name}
             value={opt.value}

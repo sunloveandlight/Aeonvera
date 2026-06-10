@@ -2,6 +2,7 @@
 
 import Header from "./Header";
 import Footer from "./Footer";
+import { useDesignAudit } from "@/lib/audit/useDesignAudit";
 import { useDesignOverlay } from "@/lib/design/useDesignOverlay";
 import DesignOverlayToggle from "./DesignOverlayToggle";
 
@@ -10,7 +11,8 @@ type AppShellProps = {
 };
 
 export default function AppShell({ children }: AppShellProps) {
-  const { enabled } = useDesignOverlay();
+  const { enabled, toggle } = useDesignOverlay();
+  useDesignAudit(enabled);
 
   return (
     <main
@@ -37,7 +39,7 @@ export default function AppShell({ children }: AppShellProps) {
       )}
 
       {/* TOGGLE */}
-      <DesignOverlayToggle />
+      <DesignOverlayToggle enabled={enabled} onToggle={toggle} />
     </main>
   );
 }

@@ -10,6 +10,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <textarea
         ref={ref}
+        data-aeonvera-input
         className={`
           w-full
           min-h-[100px]

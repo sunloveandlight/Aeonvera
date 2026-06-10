@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { buildHealthState } from "@/lib/state/healthStateEngine";
 import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
@@ -6,12 +7,13 @@ import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId } = body;
+    const requestedUserId = body.userId;
+    const userId = await resolveAuthorizedUserId(req, requestedUserId);
 
     if (!userId) {
       return NextResponse.json(
-        { error: "Missing userId" },
-        { status: 400 }
+        { error: "Unauthorized" },
+        { status: 401 }
       );
     }
 
@@ -160,4 +162,23 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+async function resolveAuthorizedUserId(req: NextRequest, requestedUserId?: string) {
+  const cronSecret = process.env.CRON_SECRET;
+  const auth = req.headers.get("authorization");
+
+  if (cronSecret && auth === `Bearer ${cronSecret}`) {
+    return typeof requestedUserId === "string" ? requestedUserId : null;
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+  if (requestedUserId && requestedUserId !== user.id) return null;
+
+  return user.id;
 }

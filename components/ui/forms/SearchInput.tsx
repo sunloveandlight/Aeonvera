@@ -12,6 +12,7 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
       <div className="relative w-full">
         <input
           ref={ref}
+          data-aeonvera-input
           type="search"
           className={`
             w-full
@@ -41,6 +42,7 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           <button
             type="button"
             onClick={onClear}
+            aria-label="Clear search"
             className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition text-xs"
           >
             ✕

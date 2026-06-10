@@ -11,6 +11,7 @@ import Motion from "@/components/motion/Motion";
 import PricingPlanCard, { type PricingPlan } from "@/components/pricing/PricingPlanCard";
 import { supabase } from "@/lib/supabase/client";
 import { isSubscriptionValid, type SubscriptionStatus } from "@/lib/auth/permissions";
+import { getUserSubscription } from "@/lib/auth/getUserSubscription";
 
 type Plan = "core" | "elite" | "sovereign";
 
@@ -191,25 +192,18 @@ export default function PricingPage() {
     let cancelled = false;
 
     async function loadProfile() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const subscriptionState = await getUserSubscription();
+      const user = subscriptionState.user;
 
       if (cancelled) return;
       setAuthenticated(Boolean(user));
 
       if (!user) return;
 
-      const { data } = await supabase
-        .from("profiles")
-        .select("plan, subscription_status")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!cancelled && data) {
+      if (!cancelled) {
         setProfile({
-          plan: data.plan as Plan | null,
-          subscription_status: data.subscription_status as SubscriptionStatus | null,
+          plan: subscriptionState.plan as Plan | null,
+          subscription_status: subscriptionState.subscriptionStatus,
         });
       }
     }

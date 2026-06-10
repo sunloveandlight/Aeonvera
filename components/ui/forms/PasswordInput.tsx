@@ -13,6 +13,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
       <div className="relative w-full">
         <input
           ref={ref}
+          data-aeonvera-input
           type={show ? "text" : "password"}
           className={`
             w-full
@@ -39,6 +40,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
         <button
           type="button"
           onClick={() => setShow(!show)}
+          aria-label={show ? "Hide password" : "Show password"}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] uppercase tracking-[0.14em] text-white/30 hover:text-white/60 transition"
         >
           {show ? "Hide" : "Show"}

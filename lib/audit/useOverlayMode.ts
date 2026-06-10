@@ -8,7 +8,10 @@ import { useEffect, useState } from "react";
  */
 
 export function useOverlayMode() {
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("aeonvera-overlay") === "true";
+  });
 
   useEffect(() => {
     const toggle = (e: KeyboardEvent) => {
@@ -27,10 +30,15 @@ export function useOverlayMode() {
 
     if (enabled) {
       document.body.classList.add("aeonvera-overlay");
+      window.localStorage.setItem("aeonvera-overlay", "true");
     } else {
       document.body.classList.remove("aeonvera-overlay");
+      window.localStorage.setItem("aeonvera-overlay", "false");
     }
   }, [enabled]);
 
-  return enabled;
+  return {
+    enabled,
+    toggle: () => setEnabled((prev) => !prev),
+  };
 }
