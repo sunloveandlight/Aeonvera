@@ -417,32 +417,44 @@ body::after {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  color: rgba(158, 34, 48, 0.68);
-  background: #ffffff !important;
+  color: rgba(255, 255, 255, 0.38);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045)),
+    rgba(255, 255, 255, 0.035) !important;
   box-shadow:
-    inset 0 0 0 1px rgba(158, 34, 48, 0.035),
-    0 0 0 rgba(158, 34, 48, 0);
-  transform-origin: center;
-  animation: dashboard-heartbeat-box var(--heartbeat-duration, 0.83s) ease-in-out infinite;
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 14px 32px rgba(0, 0, 0, 0.32);
 }
 
 .living-dashboard-pulse::before {
   content: "";
   position: absolute;
-  inset: 0.42rem;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(158, 34, 48, 0.12), transparent 62%);
-  opacity: 0;
-  transform: scale(0.72);
-  animation: dashboard-heartbeat-aura var(--heartbeat-duration, 0.83s) ease-out infinite;
+  top: 0;
+  bottom: 0;
+  left: -70%;
+  width: 64%;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.18) 34%,
+      rgba(255, 255, 255, 0.92) 52%,
+      rgba(255, 255, 255, 0.18) 68%,
+      transparent 100%
+    );
+  filter: blur(2px);
+  opacity: 0.9;
+  mix-blend-mode: screen;
+  animation: dashboard-heartbeat-light var(--heartbeat-duration, 2.2s) linear infinite;
 }
 
 .living-dashboard-pulse svg {
   position: relative;
   z-index: 1;
-  color: rgba(158, 34, 48, 0.68);
-  transform-origin: center;
-  animation: dashboard-heartbeat-line var(--heartbeat-duration, 0.83s) ease-in-out infinite;
+  color: rgba(255, 255, 255, 0.5);
+  filter:
+    drop-shadow(0 0 6px rgba(255, 255, 255, 0.22))
+    drop-shadow(0 0 16px rgba(255, 255, 255, 0.08));
 }
 
 .living-bar {
@@ -594,70 +606,12 @@ body::after {
   }
 }
 
-@keyframes dashboard-heartbeat-box {
+@keyframes dashboard-heartbeat-light {
   0% {
-    transform: scale(1);
-    box-shadow:
-      inset 0 0 0 1px rgba(158, 34, 48, 0.035),
-      0 0 0 rgba(158, 34, 48, 0);
-  }
-  10% {
-    transform: scale(1.034);
-    box-shadow:
-      inset 0 0 0 1px rgba(158, 34, 48, 0.055),
-      0 0 11px rgba(158, 34, 48, 0.08);
-  }
-  20% {
-    transform: scale(0.994);
-  }
-  32% {
-    transform: scale(1.016);
-  }
-  46% {
-    transform: scale(1);
-  }
-  68% {
-    transform: scale(1.006);
+    transform: translateX(0);
   }
   100% {
-    transform: scale(1);
-    box-shadow:
-      inset 0 0 0 1px rgba(158, 34, 48, 0.035),
-      0 0 0 rgba(158, 34, 48, 0);
-  }
-}
-
-@keyframes dashboard-heartbeat-aura {
-  0%,
-  100% {
-    opacity: 0;
-    transform: scale(0.72);
-  }
-  12% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  42% {
-    opacity: 0;
-    transform: scale(1.24);
-  }
-}
-
-@keyframes dashboard-heartbeat-line {
-  0%,
-  100% {
-    color: rgba(158, 34, 48, 0.62);
-    transform: scale(1);
-  }
-  12% {
-    color: rgba(158, 34, 48, 0.86);
-    transform: scale(1.045);
-  }
-  28% {
-    transform: scale(0.99);
-  }
-  42% {
-    transform: scale(1.018);
+    transform: translateX(270%);
   }
 }
 

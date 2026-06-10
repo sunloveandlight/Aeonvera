@@ -395,8 +395,8 @@ export default function HomePage() {
           <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
             <div>
               <div
-                className="living-dashboard-pulse mb-6 flex size-12 items-center justify-center rounded-lg bg-white text-black"
-                style={{ "--heartbeat-duration": `${Math.max(0.58, Math.min(1.3, 60 / restingHeartRate.bpm))}s` } as CSSProperties}
+                className="living-dashboard-pulse mb-6 flex size-12 items-center justify-center rounded-lg"
+                style={{ "--heartbeat-duration": `${Math.max(1.8, Math.min(3.2, 120 / restingHeartRate.bpm))}s` } as CSSProperties}
               >
                 <Activity size={22} />
               </div>
