@@ -97,6 +97,18 @@ type HealthState = {
   updated_at?: string;
 };
 
+type BioAgeHistoryPoint = {
+  id: string;
+  chronological_age: number | string;
+  biological_age: number | string;
+  age_delta: number | string;
+  score?: number | string | null;
+  accuracy_score?: number | string | null;
+  category?: string | null;
+  source?: string | null;
+  created_at: string;
+};
+
 type WearableMetricRow = {
   provider?: string | null;
   recorded_at?: string | null;
@@ -134,6 +146,7 @@ export default function DashboardPage() {
   const [generatingReport, setGeneratingReport] = useState(false);
   const [generationMessage, setGenerationMessage] = useState<string | null>(null);
   const [healthState, setHealthState] = useState<HealthState | null>(null);
+  const [bioAgeHistory, setBioAgeHistory] = useState<BioAgeHistoryPoint[]>([]);
   const [wearableRows, setWearableRows] = useState<WearableMetricRow[]>([]);
   const [wearableConnections, setWearableConnections] = useState<WearableConnection[]>([]);
   const [wearableSyncing, setWearableSyncing] = useState<string | null>(null);
@@ -195,6 +208,7 @@ export default function DashboardPage() {
           connectionRes,
           notificationRes,
           optimizationRes,
+          bioAgeHistoryRes,
         ] = await Promise.all([
           supabase
             .from("longevity_reports")
@@ -249,6 +263,10 @@ export default function DashboardPage() {
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle(),
+
+          fetch("/api/longevity/biological-age", {
+            credentials: "include",
+          }).then((response) => response.json()).catch(() => null),
         ]);
 
         if (reportRes.data) setReport(reportRes.data);
@@ -302,6 +320,9 @@ export default function DashboardPage() {
         if (optimizationRes.data) {
           setOptimizationProtocol(optimizationRes.data as OptimizationProtocolRow);
         }
+        if (bioAgeHistoryRes?.history) {
+          setBioAgeHistory(bioAgeHistoryRes.history);
+        }
 
         setLoading(false);
       } catch (err) {
@@ -337,6 +358,9 @@ export default function DashboardPage() {
             ? { ...prev, biological_age: bioAgeData.result.biologicalAge }
             : prev
         );
+      }
+      if (bioAgeData.history) {
+        setBioAgeHistory((prev) => [bioAgeData.history, ...prev].slice(0, 24));
       }
 
       setGenerationMessage("Generating longevity report...");
@@ -695,6 +719,8 @@ export default function DashboardPage() {
                       : "Biological age matches chronological age"}
                   </p>
                 )}
+
+                <BioAgeTrend history={bioAgeHistory} currentBioAge={bioAge} />
 
                 <div className="mt-auto border-t border-white/[0.06] pt-5">
                   <div className="flex justify-between micro-label mb-3">
@@ -1061,5 +1087,119 @@ export default function DashboardPage() {
 
       </div>
     </PageContainer>
+  );
+}
+
+function BioAgeTrend({
+  history,
+  currentBioAge,
+}: {
+  history: BioAgeHistoryPoint[];
+  currentBioAge: number | null;
+}) {
+  const points = history
+    .slice()
+    .reverse()
+    .map((point) => ({
+      biological: Number(point.biological_age),
+      chronological: Number(point.chronological_age),
+      createdAt: point.created_at,
+    }))
+    .filter(
+      (point) =>
+        Number.isFinite(point.biological) && Number.isFinite(point.chronological)
+    );
+  const displayPoints =
+    points.length > 0
+      ? points
+      : currentBioAge
+      ? [
+          {
+            biological: currentBioAge,
+            chronological: currentBioAge,
+            createdAt: new Date().toISOString(),
+          },
+        ]
+      : [];
+
+  if (!displayPoints.length) return null;
+
+  const values = displayPoints.flatMap((point) => [
+    point.biological,
+    point.chronological,
+  ]);
+  const min = Math.min(...values) - 1;
+  const max = Math.max(...values) + 1;
+  const span = Math.max(1, max - min);
+  const chartPoints = displayPoints.map((point, index) => {
+    const x =
+      displayPoints.length === 1
+        ? 50
+        : (index / (displayPoints.length - 1)) * 100;
+    const y = 88 - ((point.biological - min) / span) * 76;
+    return `${x},${y}`;
+  });
+  const chronoPoints = displayPoints.map((point, index) => {
+    const x =
+      displayPoints.length === 1
+        ? 50
+        : (index / (displayPoints.length - 1)) * 100;
+    const y = 88 - ((point.chronological - min) / span) * 76;
+    return `${x},${y}`;
+  });
+  const first = displayPoints[0];
+  const latest = displayPoints[displayPoints.length - 1];
+  const change = Number((latest.biological - first.biological).toFixed(1));
+
+  return (
+    <div className="mb-5 rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+      <div className="mb-3 flex items-center justify-between gap-4">
+        <p className="micro-label">Age Trajectory</p>
+        <span className="text-[10px] uppercase tracking-[0.14em] text-white/30">
+          {displayPoints.length} point{displayPoints.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      <svg viewBox="0 0 100 100" className="h-24 w-full overflow-visible" aria-hidden="true">
+        <polyline
+          points={chronoPoints.join(" ")}
+          fill="none"
+          stroke="rgba(255,255,255,0.14)"
+          strokeWidth="1.5"
+          strokeDasharray="3 4"
+        />
+        <polyline
+          points={chartPoints.join(" ")}
+          fill="none"
+          stroke="rgba(218,188,115,0.86)"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {chartPoints.map((point, index) => {
+          const [cx, cy] = point.split(",");
+          return (
+            <circle
+              key={`${point}-${index}`}
+              cx={cx}
+              cy={cy}
+              r={index === chartPoints.length - 1 ? "2.8" : "2"}
+              fill="rgba(248,250,252,0.9)"
+            />
+          );
+        })}
+      </svg>
+      <div className="mt-2 flex items-center justify-between gap-4 text-xs leading-5">
+        <span className="text-white/36">
+          Gold: biological · dashed: chronological
+        </span>
+        <span className={change <= 0 ? "royal-text" : "text-white/45"}>
+          {change === 0
+            ? "Stable"
+            : change < 0
+            ? `${Math.abs(change)} yrs improved`
+            : `${change} yrs higher`}
+        </span>
+      </div>
+    </div>
   );
 }

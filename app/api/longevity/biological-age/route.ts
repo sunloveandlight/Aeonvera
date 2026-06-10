@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
@@ -6,6 +7,12 @@ import {
   computeBiologicalAge,
   AssessmentInput,
 } from "@/lib/longevity/biologicalAgeEngine";
+
+type CookieToSet = {
+  name: string;
+  value: string;
+  options?: Parameters<Awaited<ReturnType<typeof cookies>>["set"]>[2];
+};
 
 async function getSupabaseUser() {
   const cookieStore = await cookies();
@@ -15,8 +22,8 @@ async function getSupabaseUser() {
     {
       cookies: {
         getAll() { return cookieStore.getAll(); },
-        setAll(cookiesToSet: any) {
-          cookiesToSet.forEach(({ name, value, options }: any) => {
+        setAll(cookiesToSet: CookieToSet[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
           });
         },
@@ -25,7 +32,40 @@ async function getSupabaseUser() {
   );
 }
 
-export async function POST() {
+export async function GET() {
+  try {
+    const supabaseUser = await getSupabaseUser();
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("biological_age_history")
+      .select("id, chronological_age, biological_age, age_delta, score, accuracy_score, category, source, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(24);
+
+    if (error) {
+      if (isMissingHistoryTable(error)) {
+        return NextResponse.json({ history: [] });
+      }
+
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ history: data || [] });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to load biological age history.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
   try {
     const supabaseUser = await getSupabaseUser();
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
@@ -52,7 +92,7 @@ export async function POST() {
       );
     }
 
-    const safeNum = (v: any): number | undefined => {
+    const safeNum = (v: unknown): number | undefined => {
       const n = Number(v);
       return !isNaN(n) && v !== "" && v != null ? n : undefined;
     };
@@ -123,6 +163,8 @@ export async function POST() {
     };
 
     const result = computeBiologicalAge(input);
+    const body = await readJsonBody(request);
+    const source = normalizeSource(body?.source);
 
     await supabase
       .from("profiles")
@@ -132,12 +174,52 @@ export async function POST() {
       })
       .eq("user_id", userId);
 
-    return NextResponse.json({ success: true, result });
-  } catch (err: any) {
+    const { data: historyPoint } = await supabase
+      .from("biological_age_history")
+      .insert({
+        user_id: userId,
+        assessment_id: assessment.id,
+        chronological_age: result.chronologicalAge,
+        biological_age: result.biologicalAge,
+        age_delta: result.ageDelta,
+        score: result.score,
+        accuracy_score: result.accuracyScore,
+        category: result.category,
+        source,
+        result,
+      })
+      .select("id, chronological_age, biological_age, age_delta, score, accuracy_score, category, source, created_at")
+      .single();
+
+    return NextResponse.json({ success: true, result, history: historyPoint || null });
+  } catch (err: unknown) {
     console.error("Biological age error:", err);
+    const message = err instanceof Error ? err.message : "Server error";
     return NextResponse.json(
-      { error: err.message || "Server error" },
+      { error: message },
       { status: 500 }
     );
   }
+}
+
+async function readJsonBody(request: NextRequest) {
+  try {
+    return await request.json();
+  } catch {
+    return null;
+  }
+}
+
+function normalizeSource(value: unknown) {
+  return value === "wearable" || value === "simulation" || value === "system"
+    ? value
+    : "assessment";
+}
+
+function isMissingHistoryTable(error: { message?: string; code?: string }) {
+  return (
+    error.code === "PGRST205" ||
+    error.message?.includes("biological_age_history") ||
+    error.message?.includes("schema cache")
+  );
 }
