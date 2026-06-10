@@ -20,6 +20,9 @@ export default function Footer() {
             <Link href="/pricing" className="transition hover:text-white">
               Pricing
             </Link>
+            <Link href="/optimization" className="transition hover:text-white">
+              Optimize
+            </Link>
             <Link href="/dashboard" className="transition hover:text-white">
               Dashboard
             </Link>

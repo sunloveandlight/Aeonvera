@@ -33,6 +33,7 @@ export default function Header() {
 
   const navItems = [
     { href: "/pricing", label: "Pricing", public: true },
+    { href: "/optimization", label: "Optimize", public: true, featured: true },
     { href: "/dashboard", label: "Dashboard" },
     { href: "/assessment", label: "Assessment" },
     { href: "/report", label: "Report" },
@@ -52,7 +53,7 @@ export default function Header() {
         </Link>
 
         {/* NAV */}
-        <nav className="hidden items-center gap-7 md:flex">
+        <nav className="hidden items-center gap-4 md:flex">
           {navItems
             .filter((item) => item.public || authenticated)
             .map((item) => {
@@ -63,7 +64,13 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`premium-nav-link ${active ? "premium-nav-link-active" : ""}`}
+                  className={
+                    item.featured
+                      ? `premium-nav-action px-4 text-xs font-medium leading-none transition ${
+                          active ? "premium-nav-link-active" : ""
+                        }`
+                      : `premium-nav-link ${active ? "premium-nav-link-active" : ""}`
+                  }
                 >
                   {item.label}
                 </Link>
@@ -121,7 +128,11 @@ export default function Header() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/75"
+                  className={
+                    item.featured
+                      ? "premium-nav-action h-10 justify-start px-3 text-sm"
+                      : "rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/75"
+                  }
                 >
                   {item.label}
                 </Link>
