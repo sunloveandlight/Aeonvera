@@ -103,16 +103,21 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
   const biometricDuration = `${Math.max(4.6, Math.min(8.4, (60 / restingHeartRate.bpm) * 6.3))}s`;
 
   return (
-    <div className="hero-stage relative flex h-full overflow-hidden rounded-xl border border-white/10 p-6 md:p-7">
+    <Link
+      href="/optimization"
+      aria-label="Open optimization"
+      className="hero-stage group relative flex h-full cursor-pointer overflow-hidden rounded-xl border border-white/10 p-6 transition hover:border-white/[0.18] md:p-7"
+    >
       <div className="relative z-10 flex h-full w-full flex-col">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-white">Healthspan overview</p>
             <p className="mt-1 text-sm text-white/50">Updated from your latest assessment</p>
           </div>
-          <div className="premium-status rounded-md px-3 py-1 text-sm font-medium text-white/70">
-            Optimal
-          </div>
+          <span className="premium-action inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition group-hover:opacity-95">
+            Optimize
+            <ArrowRight size={14} />
+          </span>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[0.88fr_1.12fr] lg:items-stretch">
@@ -191,7 +196,7 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
           ))}
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

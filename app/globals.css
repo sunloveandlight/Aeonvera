@@ -360,6 +360,10 @@ body::after {
   animation: age-signal-progress-spin 44s linear infinite;
 }
 
+.optimization-age-signal__progress {
+  stroke: url("#optimization-age-signal-gradient");
+}
+
 .age-signal__inner {
   stroke: rgba(255, 255, 255, 0.1);
   stroke-width: 1;
@@ -452,6 +456,11 @@ body::after {
   width: 1.8rem;
   height: 1.2rem;
   overflow: visible;
+}
+
+.optimization-heartbeat-monitor {
+  width: 3.4rem;
+  height: 2.15rem;
 }
 
 .dashboard-heartbeat-monitor__line {
