@@ -44,7 +44,7 @@ export async function GET() {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("biological_age_history")
-      .select("id, chronological_age, biological_age, age_delta, score, accuracy_score, category, source, created_at")
+      .select("id, chronological_age, biological_age, age_delta, score, accuracy_score, category, source, result, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(24);
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
         source,
         result,
       })
-      .select("id, chronological_age, biological_age, age_delta, score, accuracy_score, category, source, created_at")
+      .select("id, chronological_age, biological_age, age_delta, score, accuracy_score, category, source, result, created_at")
       .single();
 
     return NextResponse.json({ success: true, result, history: historyPoint || null });

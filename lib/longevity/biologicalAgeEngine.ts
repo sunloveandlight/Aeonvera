@@ -43,6 +43,13 @@ export type AssessmentInput = {
   triglycerides?: number;
   fasting_insulin?: number;
   hscrp?: number;
+  albumin?: number;
+  creatinine?: number;
+  lymphocyte_pct?: number;
+  mean_cell_volume?: number;
+  red_cell_distribution_width?: number;
+  alkaline_phosphatase?: number;
+  white_blood_cell_count?: number;
 
   // ─── BODY COMPOSITION (optional) ───
   body_fat_pct?: number;
@@ -105,6 +112,10 @@ export type BiologicalAgeResult = {
   score: number;
   accuracyScore: number;
   category: "excellent" | "good" | "average" | "poor";
+  clinicalAge?: number;
+  clinicalAgeDelta?: number;
+  clinicalModel?: "phenoage_lite";
+  clinicalCompleteness?: number;
   factors: BiologicalAgeFactor[];
   summary: string;
   missingDataPoints: string[];
@@ -157,6 +168,16 @@ export function computeBiologicalAge(
   totalWeight += DOMAIN_WEIGHTS.metabolic;
 
   /**
+   * ─── CLINICAL BIOMARKER AGE ───
+   * PhenoAge-inspired lab layer. It only affects the final estimate when
+   * enough of the clinical panel is available.
+   */
+  const clinical = computeClinicalBiomarkerAge(input, missingDataPoints);
+  if (clinical) {
+    factors.push(...clinical.factors);
+  }
+
+  /**
    * ─── BODY COMPOSITION ───
    */
   const body = computeBodyComposition(input, missingDataPoints);
@@ -207,9 +228,12 @@ export function computeBiologicalAge(
   /**
    * ─── FINAL COMPUTATION ───
    */
-  const ageDelta = totalWeight > 0
+  const lifestyleAgeDelta = totalWeight > 0
     ? weightedDelta / totalWeight
     : weightedDelta;
+  const ageDelta = clinical
+    ? blendAgeDeltas(lifestyleAgeDelta, clinical.delta, clinical.completeness)
+    : lifestyleAgeDelta;
 
   const biologicalAge = Math.max(
     18,
@@ -234,6 +258,10 @@ export function computeBiologicalAge(
     score,
     accuracyScore,
     category,
+    clinicalAge: clinical?.clinicalAge,
+    clinicalAgeDelta: clinical?.delta,
+    clinicalModel: clinical ? "phenoage_lite" : undefined,
+    clinicalCompleteness: clinical?.completeness,
     factors: factors
       .filter((f) => f.impact !== 0)
       .sort((a, b) => Math.abs(b.impact) - Math.abs(a.impact)),
@@ -715,6 +743,97 @@ function computeBodyComposition(
   }
 
   return { delta, factors };
+}
+
+/**
+ * =========================
+ * CLINICAL BIOMARKER AGE
+ * PhenoAge-inspired layer using the published biomarker set. This is a
+ * product estimate, not a medical diagnostic model.
+ * =========================
+ */
+function computeClinicalBiomarkerAge(
+  input: AssessmentInput,
+  missing: string[]
+): {
+  clinicalAge: number;
+  delta: number;
+  completeness: number;
+  factors: BiologicalAgeFactor[];
+} | null {
+  const clinicalFields: Array<{
+    key: keyof AssessmentInput;
+    label: string;
+  }> = [
+    { key: "albumin", label: "Albumin" },
+    { key: "creatinine", label: "Creatinine" },
+    { key: "fasting_glucose", label: "Fasting glucose" },
+    { key: "hscrp", label: "C-reactive protein / hsCRP" },
+    { key: "lymphocyte_pct", label: "Lymphocyte %" },
+    { key: "mean_cell_volume", label: "Mean cell volume" },
+    { key: "red_cell_distribution_width", label: "Red cell distribution width" },
+    { key: "alkaline_phosphatase", label: "Alkaline phosphatase" },
+    { key: "white_blood_cell_count", label: "White blood cell count" },
+  ];
+  const present = clinicalFields.filter(({ key }) => input[key] != null);
+  const completeness = Math.round((present.length / clinicalFields.length) * 100);
+
+  clinicalFields
+    .filter(({ key }) => input[key] == null)
+    .forEach(({ label }) => missing.push(label));
+
+  if (present.length < 6) return null;
+
+  const albumin = normalizeAlbumin(input.albumin ?? 4.4);
+  const creatinine = normalizeCreatinine(input.creatinine ?? 0.9);
+  const glucose = normalizeGlucose(input.fasting_glucose ?? 90);
+  const crp = normalizeCrp(input.hscrp ?? 0.8);
+  const lymphocyte = input.lymphocyte_pct ?? 30;
+  const mcv = input.mean_cell_volume ?? 90;
+  const rdw = input.red_cell_distribution_width ?? 13;
+  const alkPhos = input.alkaline_phosphatase ?? 70;
+  const wbc = input.white_blood_cell_count ?? 6;
+
+  const xb =
+    -19.907 -
+    0.0336 * albumin +
+    0.0095 * creatinine +
+    0.1953 * glucose +
+    0.0954 * Math.log(Math.max(0.01, crp)) -
+    0.012 * lymphocyte +
+    0.0268 * mcv +
+    0.3306 * rdw +
+    0.0019 * alkPhos +
+    0.0554 * wbc +
+    0.0804 * input.age;
+
+  const mortalityScore =
+    1 - Math.exp((-Math.exp(xb) * (Math.exp(120 * 0.0076927) - 1)) / 0.0076927);
+  const boundedMortality = Math.max(0.000001, Math.min(0.999999, mortalityScore));
+  const clinicalAge =
+    141.50225 + Math.log(-0.00553 * Math.log(1 - boundedMortality)) / 0.09165;
+  const boundedAge = Math.max(18, Math.min(120, clinicalAge));
+  const delta = Number((boundedAge - input.age).toFixed(1));
+
+  return {
+    clinicalAge: Math.round(boundedAge),
+    delta,
+    completeness,
+    factors: [
+      {
+        domain: "Clinical Biomarker Age",
+        impact: delta,
+        label:
+          delta < -1
+            ? `Clinical biomarkers estimate ${Math.abs(delta).toFixed(1)} years below chronological age`
+            : delta > 1
+            ? `Clinical biomarkers estimate ${delta.toFixed(1)} years above chronological age`
+            : "Clinical biomarkers align closely with chronological age",
+        status: delta < -1 ? "positive" : delta > 1 ? "negative" : "neutral",
+        dataQuality: present.length === clinicalFields.length ? "measured" : "estimated",
+      },
+    ],
+  };
 }
 
 /**
@@ -1325,6 +1444,13 @@ function computeAccuracyScore(input: AssessmentInput): number {
     "triglycerides",
     "fasting_insulin",
     "hscrp",
+    "albumin",
+    "creatinine",
+    "lymphocyte_pct",
+    "mean_cell_volume",
+    "red_cell_distribution_width",
+    "alkaline_phosphatase",
+    "white_blood_cell_count",
     "body_fat_pct",
     "waist_cm",
     "testosterone",
@@ -1363,6 +1489,35 @@ function computeAccuracyScore(input: AssessmentInput): number {
 function computeOverallScore(ageDelta: number): number {
   const score = 50 - ageDelta * 4;
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function blendAgeDeltas(
+  lifestyleDelta: number,
+  clinicalDelta: number,
+  clinicalCompleteness: number
+) {
+  const clinicalWeight = Math.max(
+    0.2,
+    Math.min(0.5, clinicalCompleteness / 200)
+  );
+  const lifestyleWeight = 1 - clinicalWeight;
+  return lifestyleDelta * lifestyleWeight + clinicalDelta * clinicalWeight;
+}
+
+function normalizeAlbumin(value: number) {
+  return value <= 10 ? value * 10 : value;
+}
+
+function normalizeCreatinine(value: number) {
+  return value < 20 ? value * 88.4 : value;
+}
+
+function normalizeGlucose(value: number) {
+  return value > 25 ? value / 18 : value;
+}
+
+function normalizeCrp(value: number) {
+  return value > 3 ? value / 10 : value;
 }
 
 function classifyCategory(

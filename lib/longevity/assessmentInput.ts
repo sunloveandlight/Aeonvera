@@ -33,6 +33,13 @@ export function buildAssessmentInput(assessment: AssessmentRow): AssessmentInput
     triglycerides: safeNum(assessment.triglycerides),
     fasting_insulin: safeNum(assessment.fasting_insulin),
     hscrp: safeNum(assessment.hscrp),
+    albumin: safeNum(assessment.albumin),
+    creatinine: safeNum(assessment.creatinine),
+    lymphocyte_pct: safeNum(assessment.lymphocyte_pct),
+    mean_cell_volume: safeNum(assessment.mean_cell_volume),
+    red_cell_distribution_width: safeNum(assessment.red_cell_distribution_width),
+    alkaline_phosphatase: safeNum(assessment.alkaline_phosphatase),
+    white_blood_cell_count: safeNum(assessment.white_blood_cell_count),
 
     body_fat_pct: safeNum(assessment.body_fat_pct),
     waist_cm: safeNum(assessment.waist_cm),

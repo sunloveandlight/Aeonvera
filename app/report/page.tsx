@@ -48,6 +48,13 @@ type AssessmentData = {
   triglycerides?: string;
   fasting_insulin?: string;
   hscrp?: string;
+  albumin?: string;
+  creatinine?: string;
+  lymphocyte_pct?: string;
+  mean_cell_volume?: string;
+  red_cell_distribution_width?: string;
+  alkaline_phosphatase?: string;
+  white_blood_cell_count?: string;
   // body
   body_fat_pct?: string;
   waist_cm?: string;
@@ -79,6 +86,12 @@ type BioAgeHistoryPoint = {
   accuracy_score?: number | string | null;
   category?: string | null;
   source?: string | null;
+  result?: {
+    clinicalAge?: number;
+    clinicalAgeDelta?: number;
+    clinicalModel?: string;
+    clinicalCompleteness?: number;
+  } | null;
   created_at: string;
 };
 
@@ -108,6 +121,13 @@ const OPTIONAL_FIELDS: { key: keyof AssessmentData; label: string }[] = [
   { key: "triglycerides", label: "Triglycerides" },
   { key: "fasting_insulin", label: "Fasting Insulin" },
   { key: "hscrp", label: "hsCRP Inflammation" },
+  { key: "albumin", label: "Albumin" },
+  { key: "creatinine", label: "Creatinine" },
+  { key: "lymphocyte_pct", label: "Lymphocyte %" },
+  { key: "mean_cell_volume", label: "Mean Cell Volume" },
+  { key: "red_cell_distribution_width", label: "Red Cell Distribution Width" },
+  { key: "alkaline_phosphatase", label: "Alkaline Phosphatase" },
+  { key: "white_blood_cell_count", label: "White Blood Cell Count" },
   { key: "body_fat_pct", label: "Body Fat %" },
   { key: "waist_cm", label: "Waist Circumference" },
   { key: "anxiety_level", label: "Anxiety Level" },
@@ -631,6 +651,7 @@ function BioAgeHistoryCard({
   });
   const first = displayPoints[0];
   const latest = displayPoints[displayPoints.length - 1];
+  const latestClinical = history.find((point) => point.result?.clinicalAge)?.result;
   const change = first && latest
     ? Number((latest.biological - first.biological).toFixed(1))
     : 0;
@@ -700,6 +721,27 @@ function BioAgeHistoryCard({
               </div>
             ))}
           </div>
+          {latestClinical?.clinicalAge && (
+            <div className="mt-3 rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="micro-label">Clinical Biomarker Layer</p>
+                  <p className="mt-2 text-sm leading-6 text-white/42">
+                    PhenoAge-style lab model active at {latestClinical.clinicalCompleteness || 0}% completeness.
+                  </p>
+                </div>
+                <div className="text-left sm:text-right">
+                  <p className="text-2xl font-light royal-text">
+                    {latestClinical.clinicalAge}
+                    <span className="ml-1 text-sm text-white/25">yrs</span>
+                  </p>
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/25">
+                    Clinical estimate
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <p className="text-sm leading-7 text-white/38">
