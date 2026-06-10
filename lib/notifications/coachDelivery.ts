@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { JarvisMessage } from "@/lib/voice/jarvisResponseEngine";
 import type { LongevityAlert } from "@/lib/coach/longevityCoach";
 import { sendCoachEmail } from "./email";
+import { sendCoachPushNotifications } from "./push";
 
 type StoredAlert = LongevityAlert & {
   id?: string;
@@ -117,34 +118,46 @@ export async function deliverCoachNotifications({
     });
   }
 
-  const activePushSubscriptions = pushEnabled
-    ? await countActivePushSubscriptions(supabase, userId)
-    : 0;
+  const pushResult = pushEnabled
+    ? await sendCoachPushNotifications({
+        supabase,
+        userId,
+        payload: {
+          title,
+          message,
+          url: "/dashboard",
+          actions: jarvis.actions,
+        },
+      })
+    : {
+        status: "skipped" as const,
+        sent: 0,
+        failed: 0,
+        error: "Push notifications disabled",
+      };
 
   await recordDelivery({
     supabase,
     userId,
     alertId: primaryAlert.id,
     channel: "push",
-    status: pushEnabled && activePushSubscriptions > 0 ? "pending" : "skipped",
+    status: pushResult.status,
+    provider: "web-push",
     title,
     message,
-    error: !pushEnabled
-      ? "Push notifications disabled"
-      : activePushSubscriptions > 0
-      ? "Push provider not configured yet"
-      : "No active push subscription registered",
+    error: "error" in pushResult ? pushResult.error : undefined,
     payload: {
       actions: jarvis.actions,
       tone: jarvis.tone,
-      active_subscriptions: activePushSubscriptions,
+      sent: pushResult.sent,
+      failed: pushResult.failed,
     },
   });
 
   return {
     in_app: "sent",
     email: emailEnabled && !quietHoursActive ? "processed" : "skipped",
-    push: pushEnabled && activePushSubscriptions > 0 ? "queued" : "skipped",
+    push: pushResult.status,
   };
 }
 
@@ -212,27 +225,6 @@ async function loadPreferences(
     user?.user_metadata?.notification_preferences ||
     {}
   );
-}
-
-async function countActivePushSubscriptions(
-  supabase: SupabaseClient,
-  userId: string
-) {
-  const { count, error } = await supabase
-    .from("push_subscriptions")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("enabled", true);
-
-  if (error) {
-    if (!isMissingNotificationTable(error)) {
-      console.error("[Push Subscription Error]", error.message);
-    }
-
-    return 0;
-  }
-
-  return count || 0;
 }
 
 function isQuietHoursActive(prefs: NotificationPreferences) {

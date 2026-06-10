@@ -75,6 +75,98 @@ export default function NotificationPreferencesPanel() {
     }
   }
 
+  async function enableBrowserPush(next: Preferences) {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      throw new Error("Push notifications are not supported in this browser.");
+    }
+
+    const configResponse = await fetch("/api/notifications/push-subscriptions", {
+      credentials: "include",
+    });
+    const config = await configResponse.json();
+
+    if (!config.publicKey) {
+      throw new Error("Push notifications need VAPID keys configured first.");
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission !== "granted") {
+      throw new Error("Browser notification permission was not granted.");
+    }
+
+    const registration = await navigator.serviceWorker.register(
+      "/aeonvera-push-worker.js"
+    );
+    const existingSubscription =
+      await registration.pushManager.getSubscription();
+    const subscription =
+      existingSubscription ||
+      (await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(config.publicKey),
+      }));
+
+    const serialized = subscription.toJSON();
+    const response = await fetch("/api/notifications/push-subscriptions", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        platform: "web",
+        subscription: serialized,
+        endpoint: serialized.endpoint,
+        keys: serialized.keys,
+        device_name: navigator.userAgent,
+        enabled: true,
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Push subscription failed.");
+    }
+
+    await save(next);
+  }
+
+  async function disableBrowserPush(next: Preferences) {
+    await fetch("/api/notifications/push-subscriptions", {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ enabled: false }),
+    }).catch(() => null);
+
+    await save(next);
+  }
+
+  async function handlePushPreference(pushEnabled: boolean) {
+    const next = { ...preferences, push_enabled: pushEnabled };
+
+    try {
+      setSaving(true);
+      setMessage(null);
+      setPreferences(next);
+
+      if (pushEnabled) {
+        await enableBrowserPush(next);
+        setMessage("Push notifications are connected for this browser.");
+        return;
+      }
+
+      await disableBrowserPush(next);
+      setMessage("Push notifications disabled.");
+    } catch (error) {
+      setPreferences(preferences);
+      setMessage(
+        error instanceof Error ? error.message : "Push preference failed to save."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function sendTestCoachMessage() {
     try {
       setTesting(true);
@@ -112,8 +204,9 @@ export default function NotificationPreferencesPanel() {
           </h2>
           <p className="mt-2 text-sm leading-7 text-white/45">
             Daily coach outputs can now be delivered beyond the dashboard.
-            Email is active when Resend is configured; push registration is ready
-            for web, iOS, and Android clients.
+            Email is active when Resend is configured; browser push is active
+            when VAPID keys are configured. iOS and Android will plug into this
+            same preference system.
           </p>
           {message && (
             <p className="mt-3 text-sm leading-6 royal-text">{message}</p>
@@ -133,9 +226,7 @@ export default function NotificationPreferencesPanel() {
           <div className="executive-panel-soft rounded-lg p-4">
             <Toggle
               enabled={preferences.push_enabled}
-              onChange={(pushEnabled) =>
-                save({ ...preferences, push_enabled: pushEnabled })
-              }
+              onChange={handlePushPreference}
               label="Push notification delivery"
             />
           </div>
@@ -159,4 +250,17 @@ export default function NotificationPreferencesPanel() {
       </div>
     </div>
   );
+}
+
+function urlBase64ToUint8Array(value: string) {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  const base64 = `${value}${padding}`.replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let index = 0; index < rawData.length; index++) {
+    outputArray[index] = rawData.charCodeAt(index);
+  }
+
+  return outputArray;
 }
