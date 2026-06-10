@@ -14,6 +14,31 @@ type Question = {
   options: string[];
 };
 
+type ProtocolAction = {
+  domain: string;
+  action: string;
+  why: string;
+  cadence: string;
+  impact: "low" | "medium" | "high";
+};
+
+type OptimizationProtocol = {
+  summary: string;
+  focus_domains: string[];
+  primary_protocol: ProtocolAction[];
+  weekly_sequence: Array<{
+    week: string;
+    focus: string;
+    actions: string[];
+  }>;
+  tracking_metrics: Array<{
+    metric: string;
+    target: string;
+    source: string;
+  }>;
+  coach_message: string;
+};
+
 const QUESTIONS: Question[] = [
   {
     id: "priority",
@@ -65,20 +90,11 @@ const QUESTIONS: Question[] = [
   },
 ];
 
-const DOMAINS = [
-  "Sleep architecture",
-  "Resting heart rate",
-  "HRV",
-  "VO2 max",
-  "Strength",
-  "Mobility",
-  "Glucose",
-  "Lipids",
-  "Body composition",
-  "Cognition",
-  "Stress load",
-  "Nutrition",
-];
+const IMPACT_WIDTH = {
+  high: 92,
+  medium: 72,
+  low: 54,
+};
 
 export default function OptimizationPage() {
   const router = useRouter();
@@ -87,6 +103,9 @@ export default function OptimizationPage() {
   const [context, setContext] = useState("");
   const [showMap, setShowMap] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [generatingProtocol, setGeneratingProtocol] = useState(false);
+  const [protocol, setProtocol] = useState<OptimizationProtocol | null>(null);
+  const [protocolMessage, setProtocolMessage] = useState<string | null>(null);
 
   const question = QUESTIONS[step];
   const answeredCount = Object.keys(answers).length;
@@ -131,9 +150,44 @@ export default function OptimizationPage() {
     setAnswers((current) => ({ ...current, [question.id]: value }));
   }
 
+  async function buildOptimizationProtocol() {
+    setGeneratingProtocol(true);
+    setProtocolMessage(null);
+
+    try {
+      const response = await fetch("/api/optimization/protocol", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          answers,
+          context,
+          questions: QUESTIONS,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not build optimization protocol.");
+      }
+
+      setProtocol(data.protocol.protocol as OptimizationProtocol);
+      setShowMap(true);
+    } catch (error) {
+      setProtocolMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not build optimization protocol."
+      );
+    } finally {
+      setGeneratingProtocol(false);
+    }
+  }
+
   function nextQuestion() {
     if (step === QUESTIONS.length - 1 && answers[question.id]) {
-      setShowMap(true);
+      void buildOptimizationProtocol();
       return;
     }
 
@@ -298,13 +352,23 @@ export default function OptimizationPage() {
                   <button
                     type="button"
                     onClick={nextQuestion}
-                    disabled={!answers[question.id]}
+                    disabled={!answers[question.id] || generatingProtocol}
                     className="premium-action inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    {step === QUESTIONS.length - 1 ? "Build map" : "Next question"}
+                    {generatingProtocol
+                      ? "Building map"
+                      : step === QUESTIONS.length - 1
+                      ? "Build map"
+                      : "Next question"}
                     <ArrowRight size={16} />
                   </button>
                 </div>
+
+                {protocolMessage && (
+                  <p className="mt-4 rounded-lg border border-white/[0.08] bg-white/[0.025] p-4 text-sm leading-6 text-white/55">
+                    {protocolMessage}
+                  </p>
+                )}
               </>
             ) : (
               <div className="space-y-5">
@@ -314,32 +378,64 @@ export default function OptimizationPage() {
                       <Sparkles size={18} />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-white/80">First optimization map is ready</p>
+                      <p className="text-sm font-medium text-white/80">Optimization protocol is ready</p>
                       <p className="mt-1 text-xs leading-5 text-white/40">
-                        Next we connect this intake to the coach engine, health state, and wearable history.
+                        {protocol?.coach_message || protocol?.summary || "Aeonvera generated your first adaptive optimization protocol."}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {DOMAINS.map((domain, index) => (
-                    <div key={domain} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                  {(protocol?.primary_protocol || []).map((item, index) => (
+                    <div key={`${item.domain}-${item.action}`} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
                       <div className="mb-3 flex items-center justify-between gap-3">
-                        <p className="text-sm text-white/68">{domain}</p>
+                        <p className="text-sm text-white/68">{item.domain}</p>
                         <span className="text-[10px] uppercase tracking-[0.14em] text-white/28">
-                          {index < 4 ? "Priority" : "Track"}
+                          {item.impact}
                         </span>
                       </div>
+                      <p className="mb-3 text-xs leading-5 text-white/42">{item.action}</p>
                       <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
                         <div
                           className="living-bar h-full rounded-full"
-                          style={{ width: `${82 - index * 3}%` }}
+                          style={{ width: `${IMPACT_WIDTH[item.impact] - index * 2}%` }}
                         />
                       </div>
                     </div>
                   ))}
                 </div>
+
+                {protocol?.weekly_sequence?.length ? (
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {protocol.weekly_sequence.slice(0, 3).map((sequence) => (
+                      <div key={sequence.week} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                        <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+                          {sequence.week}
+                        </p>
+                        <p className="mt-2 text-sm font-medium text-white/70">
+                          {sequence.focus}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
+                {protocol?.tracking_metrics?.length ? (
+                  <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                    <p className="micro-label">Tracking</p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {protocol.tracking_metrics.slice(0, 4).map((metric) => (
+                        <div key={metric.metric}>
+                          <p className="text-sm text-white/68">{metric.metric}</p>
+                          <p className="mt-1 text-xs leading-5 text-white/38">
+                            {metric.target}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
 
                 <button
                   type="button"
@@ -348,6 +444,8 @@ export default function OptimizationPage() {
                     setAnswers({});
                     setContext("");
                     setShowMap(false);
+                    setProtocol(null);
+                    setProtocolMessage(null);
                   }}
                   className="premium-action-secondary inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium"
                 >
