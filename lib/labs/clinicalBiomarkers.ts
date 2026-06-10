@@ -46,7 +46,7 @@ export const CLINICAL_BIOMARKERS: BiomarkerDefinition[] = [
   },
   {
     key: "lymphocyte_pct",
-    labels: ["lymphocyte %", "lymphocytes %", "lymphocyte percent", "lymphocytes"],
+    labels: ["lymphocyte %", "lymphocytes %", "lymphocyte percent", "lymphocyte pct", "lymphocytes"],
     units: ["%"],
   },
   {
@@ -74,6 +74,7 @@ export const CLINICAL_BIOMARKERS: BiomarkerDefinition[] = [
 const KEY_ALIASES = new Map<string, ClinicalBiomarkerKey>(
   CLINICAL_BIOMARKERS.flatMap((biomarker) => [
     [biomarker.key, biomarker.key] as const,
+    [normalizeLabel(biomarker.key), biomarker.key] as const,
     ...biomarker.labels.map((label) => [normalizeLabel(label), biomarker.key] as const),
   ])
 );
