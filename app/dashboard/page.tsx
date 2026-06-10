@@ -145,6 +145,35 @@ type LabTrend = {
   target: string;
 };
 
+type ImprovementLoop = {
+  status: "improving" | "declining" | "stable" | "building";
+  phase4Complete: boolean;
+  phase5Ready: boolean;
+  latestBiologicalAge: number | null;
+  baselineBiologicalAge: number | null;
+  biologicalAgeChange: number | null;
+  latestAgeDelta: number | null;
+  ageDeltaChange: number | null;
+  scoreChange: number | null;
+  daysTracked: number;
+  pacePer30Days: number | null;
+  projected90DayChange: number | null;
+  headline: string;
+  summary: string;
+  drivers: Array<{
+    label: string;
+    value: string;
+    status: "positive" | "negative" | "neutral";
+    detail: string;
+  }>;
+  nextActions: Array<{
+    domain: string;
+    action: string;
+    reason: string;
+    impact: "low" | "medium" | "high";
+  }>;
+};
+
 type WearableMetricRow = {
   provider?: string | null;
   recorded_at?: string | null;
@@ -184,6 +213,7 @@ export default function DashboardPage() {
   const [healthState, setHealthState] = useState<HealthState | null>(null);
   const [bioAgeHistory, setBioAgeHistory] = useState<BioAgeHistoryPoint[]>([]);
   const [bioAgeSimulations, setBioAgeSimulations] = useState<BioAgeSimulation[]>([]);
+  const [improvementLoop, setImprovementLoop] = useState<ImprovementLoop | null>(null);
   const [labRows, setLabRows] = useState<LabBiomarkerRow[]>([]);
   const [labTrends, setLabTrends] = useState<LabTrend[]>([]);
   const [labPayload, setLabPayload] = useState("");
@@ -253,6 +283,7 @@ export default function DashboardPage() {
           optimizationRes,
           bioAgeHistoryRes,
           bioAgeSimulatorRes,
+          improvementLoopRes,
           labsRes,
           labTrendsRes,
         ] = await Promise.all([
@@ -315,6 +346,10 @@ export default function DashboardPage() {
           }).then((response) => response.json()).catch(() => null),
 
           fetch("/api/longevity/simulator", {
+            credentials: "include",
+          }).then((response) => response.json()).catch(() => null),
+
+          fetch("/api/longevity/improvement-loop", {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
 
@@ -386,6 +421,9 @@ export default function DashboardPage() {
         }
         if (bioAgeSimulatorRes?.simulations) {
           setBioAgeSimulations(bioAgeSimulatorRes.simulations);
+        }
+        if (improvementLoopRes?.loop) {
+          setImprovementLoop(improvementLoopRes.loop);
         }
         if (labsRes.data) {
           setLabRows(labsRes.data as LabBiomarkerRow[]);
@@ -1049,6 +1087,13 @@ export default function DashboardPage() {
           onStartAssessment={() => router.push("/assessment")}
         />
 
+        <ImprovementLoopPanel
+          loop={improvementLoop}
+          hasAssessment={hasAssessment}
+          onOpenOptimization={() => router.push("/optimization")}
+          onStartAssessment={() => router.push("/assessment")}
+        />
+
         <LabImportPanel
           labRows={labRows}
           labTrends={labTrends}
@@ -1352,6 +1397,101 @@ function BioAgeSimulationPanel({
   );
 }
 
+function ImprovementLoopPanel({
+  loop,
+  hasAssessment,
+  onOpenOptimization,
+  onStartAssessment,
+}: {
+  loop: ImprovementLoop | null;
+  hasAssessment: boolean;
+  onOpenOptimization: () => void;
+  onStartAssessment: () => void;
+}) {
+  const action = hasAssessment ? onOpenOptimization : onStartAssessment;
+
+  return (
+    <Card
+      title="BIOLOGICAL AGE IMPROVEMENT LOOP"
+      actionLabel={hasAssessment ? "Prepare phase 5" : "Start assessment"}
+      onClick={action}
+    >
+      {hasAssessment && loop ? (
+        <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
+          <div className="flex flex-col justify-between rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+            <div>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="micro-label">Phase 4 Status</p>
+                <span className={improvementStatusClassName(loop.status)}>
+                  {loop.status}
+                </span>
+              </div>
+              <p className="text-2xl font-light leading-tight text-white/82">
+                {loop.headline}
+              </p>
+              <p className="mt-4 text-sm leading-7 text-white/42">
+                {loop.summary}
+              </p>
+            </div>
+
+            <div className="mt-6 grid grid-cols-3 gap-2">
+              {[
+                ["Tracked", `${loop.daysTracked}d`],
+                ["30d pace", loop.pacePer30Days == null ? "new" : `${loop.pacePer30Days > 0 ? "+" : ""}${loop.pacePer30Days}`],
+                ["Phase 5", loop.phase5Ready ? "ready" : "building"],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
+                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">{label}</p>
+                  <p className="mt-2 text-sm text-white/62">{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {loop.drivers.slice(0, 4).map((driver) => (
+                <div
+                  key={`${driver.label}-${driver.value}`}
+                  className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4"
+                >
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                      {driver.label}
+                    </p>
+                    <span className={driverStatusClassName(driver.status)}>
+                      {driver.value}
+                    </span>
+                  </div>
+                  <p className="line-clamp-3 text-xs leading-5 text-white/38">
+                    {driver.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {loop.nextActions[0] && (
+              <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                <p className="micro-label mb-3">Next Action</p>
+                <p className="text-sm leading-6 text-white/70">
+                  {loop.nextActions[0].action}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-white/36">
+                  {loop.nextActions[0].reason}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm leading-7 text-white/38">
+          Generate biological age history, import labs, and build an optimization protocol to close Phase 4.
+        </p>
+      )}
+    </Card>
+  );
+}
+
 function LabImportPanel({
   labRows,
   labTrends,
@@ -1627,4 +1767,21 @@ function labTrendClassName(status: LabTrend["status"]) {
   if (status === "worsening") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
   if (status === "stable") return `${base} text-white/34 bg-white/[0.025]`;
   return `${base} text-white/28 bg-white/[0.02]`;
+}
+
+function improvementStatusClassName(status: ImprovementLoop["status"]) {
+  const base = "rounded-md px-2.5 py-1 text-[8px] uppercase tracking-[0.14em]";
+
+  if (status === "improving") return `${base} royal-text bg-white/[0.035]`;
+  if (status === "declining") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
+  if (status === "stable") return `${base} text-white/38 bg-white/[0.025]`;
+  return `${base} text-white/28 bg-white/[0.02]`;
+}
+
+function driverStatusClassName(status: ImprovementLoop["drivers"][number]["status"]) {
+  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+
+  if (status === "positive") return `${base} royal-text bg-white/[0.035]`;
+  if (status === "negative") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
+  return `${base} text-white/30 bg-white/[0.025]`;
 }

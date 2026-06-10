@@ -123,6 +123,35 @@ type LabTrend = {
   target: string;
 };
 
+type ImprovementLoop = {
+  status: "improving" | "declining" | "stable" | "building";
+  phase4Complete: boolean;
+  phase5Ready: boolean;
+  latestBiologicalAge: number | null;
+  baselineBiologicalAge: number | null;
+  biologicalAgeChange: number | null;
+  latestAgeDelta: number | null;
+  ageDeltaChange: number | null;
+  scoreChange: number | null;
+  daysTracked: number;
+  pacePer30Days: number | null;
+  projected90DayChange: number | null;
+  headline: string;
+  summary: string;
+  drivers: Array<{
+    label: string;
+    value: string;
+    status: "positive" | "negative" | "neutral";
+    detail: string;
+  }>;
+  nextActions: Array<{
+    domain: string;
+    action: string;
+    reason: string;
+    impact: "low" | "medium" | "high";
+  }>;
+};
+
 const OPTIONAL_FIELDS: { key: keyof AssessmentData; label: string }[] = [
   { key: "resting_hr", label: "Resting Heart Rate" },
   { key: "blood_pressure_systolic", label: "Blood Pressure" },
@@ -167,6 +196,7 @@ export default function ReportPage() {
   const [bioAgeHistory, setBioAgeHistory] = useState<BioAgeHistoryPoint[]>([]);
   const [bioAgeSimulations, setBioAgeSimulations] = useState<BioAgeSimulation[]>([]);
   const [labTrends, setLabTrends] = useState<LabTrend[]>([]);
+  const [improvementLoop, setImprovementLoop] = useState<ImprovementLoop | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -174,7 +204,15 @@ export default function ReportPage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { router.replace("/login"); return; }
 
-        const [reportRes, profileRes, assessmentRes, historyRes, simulatorRes, labTrendsRes] = await Promise.all([
+        const [
+          reportRes,
+          profileRes,
+          assessmentRes,
+          historyRes,
+          simulatorRes,
+          labTrendsRes,
+          improvementLoopRes,
+        ] = await Promise.all([
           supabase
             .from("longevity_reports")
             .select("report, created_at, risk_score, primary_goal")
@@ -201,6 +239,9 @@ export default function ReportPage() {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
           fetch("/api/labs/trends", {
+            credentials: "include",
+          }).then((response) => response.json()).catch(() => null),
+          fetch("/api/longevity/improvement-loop", {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
         ]);
@@ -232,6 +273,7 @@ export default function ReportPage() {
         if (historyRes?.history) setBioAgeHistory(historyRes.history);
         if (simulatorRes?.simulations) setBioAgeSimulations(simulatorRes.simulations);
         if (labTrendsRes?.trends) setLabTrends(labTrendsRes.trends);
+        if (improvementLoopRes?.loop) setImprovementLoop(improvementLoopRes.loop);
 
         if (!reportRes.data) setError("No report found. Complete your assessment first.");
       } catch {
@@ -485,6 +527,11 @@ export default function ReportPage() {
             onOpenOptimization={() => router.push("/optimization")}
           />
         </div>
+
+        <ImprovementLoopCard
+          loop={improvementLoop}
+          onOpenOptimization={() => router.push("/optimization")}
+        />
 
         <LabTrendsCard trends={labTrends} />
 
@@ -829,6 +876,81 @@ function BioAgeSimulationCard({
   );
 }
 
+function ImprovementLoopCard({
+  loop,
+  onOpenOptimization,
+}: {
+  loop: ImprovementLoop | null;
+  onOpenOptimization: () => void;
+}) {
+  return (
+    <Card title="BIOLOGICAL AGE IMPROVEMENT LOOP" onClick={onOpenOptimization} actionLabel="Open optimization">
+      {loop ? (
+        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <p className="micro-label">Phase 4 Completion</p>
+              <span className={improvementStatusClassName(loop.status)}>
+                {loop.status}
+              </span>
+            </div>
+            <p className="text-2xl font-light leading-tight text-white/82">
+              {loop.headline}
+            </p>
+            <p className="mt-4 text-sm leading-7 text-white/42">
+              {loop.summary}
+            </p>
+            <div className="mt-6 grid grid-cols-3 gap-2">
+              {[
+                ["Phase 4", loop.phase4Complete ? "closed" : "building"],
+                ["Phase 5", loop.phase5Ready ? "ready" : "building"],
+                ["90d pace", loop.projected90DayChange == null ? "new" : `${loop.projected90DayChange > 0 ? "+" : ""}${loop.projected90DayChange}`],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
+                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">{label}</p>
+                  <p className="mt-2 text-sm text-white/62">{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {loop.drivers.slice(0, 4).map((driver) => (
+              <div
+                key={`${driver.label}-${driver.value}`}
+                className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4"
+              >
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                    {driver.label}
+                  </p>
+                  <span className={driverStatusClassName(driver.status)}>
+                    {driver.value}
+                  </span>
+                </div>
+                <p className="line-clamp-3 text-xs leading-5 text-white/38">
+                  {driver.detail}
+                </p>
+              </div>
+            ))}
+            {loop.nextActions[0] && (
+              <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 sm:col-span-2">
+                <p className="micro-label mb-3">Next Protocol Move</p>
+                <p className="text-sm leading-6 text-white/70">{loop.nextActions[0].action}</p>
+                <p className="mt-2 text-xs leading-5 text-white/36">{loop.nextActions[0].reason}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm leading-7 text-white/38">
+          Generate another biological-age point to activate the improvement loop.
+        </p>
+      )}
+    </Card>
+  );
+}
+
 function LabTrendsCard({ trends }: { trends: LabTrend[] }) {
   return (
     <Card title="CLINICAL LAB TRENDS">
@@ -876,4 +998,21 @@ function labTrendClassName(status: LabTrend["status"]) {
   if (status === "worsening") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
   if (status === "stable") return `${base} text-white/34 bg-white/[0.025]`;
   return `${base} text-white/28 bg-white/[0.02]`;
+}
+
+function improvementStatusClassName(status: ImprovementLoop["status"]) {
+  const base = "rounded-md px-2.5 py-1 text-[8px] uppercase tracking-[0.14em]";
+
+  if (status === "improving") return `${base} royal-text bg-white/[0.035]`;
+  if (status === "declining") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
+  if (status === "stable") return `${base} text-white/38 bg-white/[0.025]`;
+  return `${base} text-white/28 bg-white/[0.02]`;
+}
+
+function driverStatusClassName(status: ImprovementLoop["drivers"][number]["status"]) {
+  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+
+  if (status === "positive") return `${base} royal-text bg-white/[0.035]`;
+  if (status === "negative") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
+  return `${base} text-white/30 bg-white/[0.025]`;
 }
