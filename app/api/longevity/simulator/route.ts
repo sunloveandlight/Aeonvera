@@ -1,0 +1,226 @@
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import {
+  computeBiologicalAge,
+  type AssessmentInput,
+  type BiologicalAgeResult,
+} from "@/lib/longevity/biologicalAgeEngine";
+import { buildAssessmentInput } from "@/lib/longevity/assessmentInput";
+
+type CookieToSet = {
+  name: string;
+  value: string;
+  options?: Parameters<Awaited<ReturnType<typeof cookies>>["set"]>[2];
+};
+
+type SimulationScenario = {
+  id: string;
+  title: string;
+  domain: string;
+  action: string;
+  horizon: string;
+  apply: (input: AssessmentInput) => AssessmentInput;
+};
+
+async function getSupabaseUser() {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet: CookieToSet[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+}
+
+export async function GET() {
+  try {
+    const supabaseUser = await getSupabaseUser();
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const supabase = getSupabaseAdmin();
+    const { data: assessment, error: assessmentError } = await supabase
+      .from("longevity_assessments")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (assessmentError || !assessment) {
+      return NextResponse.json(
+        { error: "No assessment found." },
+        { status: 404 }
+      );
+    }
+
+    const input = buildAssessmentInput(assessment);
+    const baseline = computeBiologicalAge(input);
+    const simulations = SCENARIOS.map((scenario) =>
+      buildSimulation(scenario, baseline, input)
+    )
+      .sort((a, b) => b.projectedAgeDeltaImprovement - a.projectedAgeDeltaImprovement)
+      .slice(0, 5);
+
+    return NextResponse.json({
+      baseline: summarizeResult(baseline),
+      simulations,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to run biological age simulator.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+function buildSimulation(
+  scenario: SimulationScenario,
+  baseline: BiologicalAgeResult,
+  input: AssessmentInput
+) {
+  const simulated = computeBiologicalAge(scenario.apply(input));
+  const projectedAgeDeltaImprovement = Number(
+    (baseline.ageDelta - simulated.ageDelta).toFixed(1)
+  );
+  const projectedBiologicalAgeImprovement = Number(
+    (baseline.biologicalAge - simulated.biologicalAge).toFixed(1)
+  );
+
+  return {
+    id: scenario.id,
+    title: scenario.title,
+    domain: scenario.domain,
+    action: scenario.action,
+    horizon: scenario.horizon,
+    projectedAgeDeltaImprovement,
+    projectedBiologicalAgeImprovement,
+    projectedBiologicalAge: simulated.biologicalAge,
+    projectedScore: simulated.score,
+    confidence: simulated.accuracyScore,
+    keyDrivers: simulated.factors
+      .filter((factor) => factor.status === "positive")
+      .slice(0, 3)
+      .map((factor) => factor.label),
+  };
+}
+
+function summarizeResult(result: BiologicalAgeResult) {
+  return {
+    chronologicalAge: result.chronologicalAge,
+    biologicalAge: result.biologicalAge,
+    ageDelta: result.ageDelta,
+    score: result.score,
+    accuracyScore: result.accuracyScore,
+    category: result.category,
+  };
+}
+
+const SCENARIOS: SimulationScenario[] = [
+  {
+    id: "sleep-recovery",
+    title: "Stabilize sleep and recovery",
+    domain: "Recovery",
+    action: "Move sleep toward 7.5-8 hours, raise sleep quality, and reduce pre-bed stimulation.",
+    horizon: "30-60 days",
+    apply: (input) => ({
+      ...input,
+      sleep_hours: Math.max(input.sleep_hours, 7.8),
+      sleep_quality: Math.max(input.sleep_quality, 8),
+      recovery_quality: Math.max(input.recovery_quality ?? 0, 8),
+      screen_time_before_bed: "no",
+    }),
+  },
+  {
+    id: "cardiorespiratory-capacity",
+    title: "Increase cardiorespiratory capacity",
+    domain: "Cardiovascular",
+    action: "Improve VO2 max, resting heart rate, and HRV through zone 2 plus interval work.",
+    horizon: "60-90 days",
+    apply: (input) => ({
+      ...input,
+      resting_hr: input.resting_hr ? Math.min(input.resting_hr, 58) : 58,
+      vo2_max: input.vo2_max ? Math.max(input.vo2_max * 1.15, 42) : 42,
+      hrv: input.hrv ? Math.max(input.hrv * 1.2, 55) : 55,
+      exercise_days: Math.max(input.exercise_days, 5),
+    }),
+  },
+  {
+    id: "metabolic-reset",
+    title: "Tighten metabolic markers",
+    domain: "Metabolic",
+    action: "Move glucose, triglycerides, insulin, inflammation, and HDL into a stronger range.",
+    horizon: "60-120 days",
+    apply: (input) => ({
+      ...input,
+      fasting_glucose: input.fasting_glucose
+        ? Math.min(input.fasting_glucose, 90)
+        : 90,
+      hba1c: input.hba1c ? Math.min(input.hba1c, 5.2) : 5.2,
+      hdl: input.hdl ? Math.max(input.hdl, 60) : 60,
+      triglycerides: input.triglycerides
+        ? Math.min(input.triglycerides, 100)
+        : 100,
+      fasting_insulin: input.fasting_insulin
+        ? Math.min(input.fasting_insulin, 6)
+        : 6,
+      hscrp: input.hscrp ? Math.min(input.hscrp, 1) : 1,
+    }),
+  },
+  {
+    id: "body-composition",
+    title: "Improve body composition",
+    domain: "Composition",
+    action: "Reduce waist load and excess adiposity while preserving lean tissue.",
+    horizon: "90-120 days",
+    apply: (input) => ({
+      ...input,
+      weight_kg: input.weight_kg * 0.94,
+      body_fat_pct: input.body_fat_pct
+        ? Math.max(input.body_fat_pct * 0.88, 10)
+        : input.body_fat_pct,
+      waist_cm: input.waist_cm ? Math.max(input.waist_cm - 6, 70) : input.waist_cm,
+      strength_training: true,
+    }),
+  },
+  {
+    id: "strength-movement",
+    title: "Build strength consistency",
+    domain: "Movement",
+    action: "Lift consistently, raise weekly movement frequency, and make training non-negotiable.",
+    horizon: "30-90 days",
+    apply: (input) => ({
+      ...input,
+      exercise_days: Math.max(input.exercise_days, 5),
+      strength_training: true,
+    }),
+  },
+  {
+    id: "stress-resilience",
+    title: "Lower chronic stress load",
+    domain: "Neuroendocrine",
+    action: "Bring stress and anxiety down while increasing connection, purpose, and recovery capacity.",
+    horizon: "30-90 days",
+    apply: (input) => ({
+      ...input,
+      stress_level: Math.min(input.stress_level, 3),
+      anxiety_level: input.anxiety_level ? Math.min(input.anxiety_level, 3) : 3,
+      social_connection: input.social_connection
+        ? Math.max(input.social_connection, 8)
+        : 8,
+      purpose_score: input.purpose_score ? Math.max(input.purpose_score, 8) : 8,
+    }),
+  },
+];

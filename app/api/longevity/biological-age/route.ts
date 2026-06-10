@@ -5,8 +5,8 @@ import { createServerClient } from "@supabase/ssr";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import {
   computeBiologicalAge,
-  AssessmentInput,
 } from "@/lib/longevity/biologicalAgeEngine";
+import { buildAssessmentInput } from "@/lib/longevity/assessmentInput";
 
 type CookieToSet = {
   name: string;
@@ -92,76 +92,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const safeNum = (v: unknown): number | undefined => {
-      const n = Number(v);
-      return !isNaN(n) && v !== "" && v != null ? n : undefined;
-    };
-
-    const input: AssessmentInput = {
-      // Required
-      age: Number(assessment.age) || 30,
-      sex: assessment.sex || "unknown",
-      height_cm: Number(assessment.height_cm) || 170,
-      weight_kg: Number(assessment.weight_kg) || 70,
-      sleep_hours: Number(assessment.sleep_hours) || 7,
-      sleep_quality: Number(assessment.sleep_quality) || 5,
-      exercise_days: Number(assessment.exercise_days) || 0,
-      strength_training: assessment.strength_training?.toLowerCase() === "yes",
-      diet_type: assessment.diet_type || "standard",
-      alcohol_use: assessment.alcohol_use || "none",
-      smoking: assessment.smoking || "never",
-      stress_level: Number(assessment.stress_level) || 5,
-      primary_goal: assessment.primary_goal || "",
-
-      // Cardiovascular
-      resting_hr: safeNum(assessment.resting_hr),
-      blood_pressure_systolic: safeNum(assessment.blood_pressure_systolic),
-      blood_pressure_diastolic: safeNum(assessment.blood_pressure_diastolic),
-      vo2_max: safeNum(assessment.vo2_max),
-      hrv: safeNum(assessment.hrv),
-
-      // Metabolic
-      fasting_glucose: safeNum(assessment.fasting_glucose),
-      hba1c: safeNum(assessment.hba1c),
-      total_cholesterol: safeNum(assessment.total_cholesterol),
-      ldl: safeNum(assessment.ldl),
-      hdl: safeNum(assessment.hdl),
-      triglycerides: safeNum(assessment.triglycerides),
-      fasting_insulin: safeNum(assessment.fasting_insulin),
-      hscrp: safeNum(assessment.hscrp),
-
-      // Body
-      body_fat_pct: safeNum(assessment.body_fat_pct),
-      waist_cm: safeNum(assessment.waist_cm),
-
-      // Sleep extras
-      recovery_quality: safeNum(assessment.recovery_quality),
-      screen_time_before_bed: assessment.screen_time_before_bed || undefined,
-
-      // Lifestyle
-      water_intake: assessment.water_intake || undefined,
-      fasting_type: assessment.fasting_type || undefined,
-      supplements: assessment.supplements || undefined,
-      sunlight_hours: assessment.sunlight_hours || undefined,
-      cold_exposure: assessment.cold_exposure || undefined,
-
-      // Mental
-      anxiety_level: safeNum(assessment.anxiety_level),
-      cognitive_score: safeNum(assessment.cognitive_score),
-      social_connection: safeNum(assessment.social_connection),
-      purpose_score: safeNum(assessment.purpose_score),
-
-      // Hormones
-      testosterone: safeNum(assessment.testosterone),
-      cortisol: safeNum(assessment.cortisol),
-
-      // Family
-      family_heart_disease: assessment.family_heart_disease || undefined,
-      family_cancer: assessment.family_cancer || undefined,
-      family_diabetes: assessment.family_diabetes || undefined,
-      family_longevity: assessment.family_longevity || undefined,
-    };
-
+    const input = buildAssessmentInput(assessment);
     const result = computeBiologicalAge(input);
     const body = await readJsonBody(request);
     const source = normalizeSource(body?.source);

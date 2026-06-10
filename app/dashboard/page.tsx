@@ -109,6 +109,20 @@ type BioAgeHistoryPoint = {
   created_at: string;
 };
 
+type BioAgeSimulation = {
+  id: string;
+  title: string;
+  domain: string;
+  action: string;
+  horizon: string;
+  projectedAgeDeltaImprovement: number;
+  projectedBiologicalAgeImprovement: number;
+  projectedBiologicalAge: number;
+  projectedScore: number;
+  confidence: number;
+  keyDrivers: string[];
+};
+
 type WearableMetricRow = {
   provider?: string | null;
   recorded_at?: string | null;
@@ -147,6 +161,7 @@ export default function DashboardPage() {
   const [generationMessage, setGenerationMessage] = useState<string | null>(null);
   const [healthState, setHealthState] = useState<HealthState | null>(null);
   const [bioAgeHistory, setBioAgeHistory] = useState<BioAgeHistoryPoint[]>([]);
+  const [bioAgeSimulations, setBioAgeSimulations] = useState<BioAgeSimulation[]>([]);
   const [wearableRows, setWearableRows] = useState<WearableMetricRow[]>([]);
   const [wearableConnections, setWearableConnections] = useState<WearableConnection[]>([]);
   const [wearableSyncing, setWearableSyncing] = useState<string | null>(null);
@@ -209,6 +224,7 @@ export default function DashboardPage() {
           notificationRes,
           optimizationRes,
           bioAgeHistoryRes,
+          bioAgeSimulatorRes,
         ] = await Promise.all([
           supabase
             .from("longevity_reports")
@@ -267,6 +283,10 @@ export default function DashboardPage() {
           fetch("/api/longevity/biological-age", {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
+
+          fetch("/api/longevity/simulator", {
+            credentials: "include",
+          }).then((response) => response.json()).catch(() => null),
         ]);
 
         if (reportRes.data) setReport(reportRes.data);
@@ -322,6 +342,9 @@ export default function DashboardPage() {
         }
         if (bioAgeHistoryRes?.history) {
           setBioAgeHistory(bioAgeHistoryRes.history);
+        }
+        if (bioAgeSimulatorRes?.simulations) {
+          setBioAgeSimulations(bioAgeSimulatorRes.simulations);
         }
 
         setLoading(false);
@@ -900,6 +923,13 @@ export default function DashboardPage() {
           </div>
         )}
 
+        <BioAgeSimulationPanel
+          simulations={bioAgeSimulations}
+          hasAssessment={hasAssessment}
+          onOpenOptimization={() => router.push("/optimization")}
+          onStartAssessment={() => router.push("/assessment")}
+        />
+
         <div
           role="button"
           tabIndex={0}
@@ -1090,6 +1120,107 @@ export default function DashboardPage() {
   );
 }
 
+function BioAgeSimulationPanel({
+  simulations,
+  hasAssessment,
+  onOpenOptimization,
+  onStartAssessment,
+}: {
+  simulations: BioAgeSimulation[];
+  hasAssessment: boolean;
+  onOpenOptimization: () => void;
+  onStartAssessment: () => void;
+}) {
+  const topSimulation = simulations[0];
+
+  return (
+    <Card
+      title="BIOLOGICAL AGE SIMULATOR"
+      actionLabel={hasAssessment ? "Open optimization" : "Start assessment"}
+      onClick={hasAssessment ? onOpenOptimization : onStartAssessment}
+    >
+      {hasAssessment && topSimulation ? (
+        <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-stretch">
+          <div className="flex flex-col justify-between rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+            <div>
+              <p className="micro-label mb-5">Highest Leverage Scenario</p>
+              <div className="flex items-end gap-3">
+                <p className="metric-display text-5xl font-light leading-none royal-text">
+                  {formatYears(topSimulation.projectedAgeDeltaImprovement)}
+                </p>
+                <p className="mb-1 text-xs uppercase tracking-[0.14em] text-white/25">
+                  yrs potential
+                </p>
+              </div>
+              <p className="mt-5 text-lg font-light leading-7 text-white/80">
+                {topSimulation.title}
+              </p>
+              <p className="mt-3 text-sm leading-7 text-white/42">
+                {topSimulation.action}
+              </p>
+            </div>
+            <div className="mt-6 flex items-center justify-between border-t border-white/[0.06] pt-4">
+              <span className="text-[10px] uppercase tracking-[0.14em] text-white/25">
+                {topSimulation.horizon}
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.14em] text-white/45">
+                {topSimulation.confidence}% confidence
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {simulations.slice(0, 4).map((simulation, index) => (
+              <div
+                key={simulation.id}
+                className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4 transition duration-300 hover:border-white/[0.12] hover:bg-white/[0.035]"
+              >
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <span className="royal-text text-xs tabular-nums">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+                    {simulation.domain}
+                  </span>
+                </div>
+                <p className="text-sm font-light leading-6 text-white/76">
+                  {simulation.title}
+                </p>
+                <div className="mt-4 flex items-end justify-between gap-3">
+                  <span className="text-xs leading-5 text-white/34">
+                    Projected age {simulation.projectedBiologicalAge}
+                  </span>
+                  <span className="text-sm royal-text">
+                    {formatYears(simulation.projectedAgeDeltaImprovement)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <p className="max-w-2xl text-sm leading-7 text-white/42">
+            {hasAssessment
+              ? "Run a fresh biological age score to unlock projected intervention scenarios."
+              : "Complete your assessment so Aeonvera can simulate which changes would move your biological age first."}
+          </p>
+          <button
+            onClick={(event) => {
+              event.stopPropagation();
+              if (hasAssessment) onOpenOptimization();
+              else onStartAssessment();
+            }}
+            className="premium-action inline-flex h-10 items-center justify-center rounded-md px-5 text-[10px] uppercase tracking-[0.14em] transition hover:opacity-90"
+          >
+            {hasAssessment ? "Open Optimization" : "Start Assessment"}
+          </button>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function BioAgeTrend({
   history,
   currentBioAge,
@@ -1202,4 +1333,8 @@ function BioAgeTrend({
       </div>
     </div>
   );
+}
+
+function formatYears(value: number) {
+  return value > 0 ? value.toFixed(1) : "0.0";
 }
