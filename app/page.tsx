@@ -413,19 +413,19 @@ export default function HomePage() {
                     pathLength={100}
                     d="M4 22 H20 L25 13 L32 30 L39 9 L45 22 H60"
                   />
-                  <circle
-                    className="dashboard-heartbeat-monitor__light"
-                    r="2.7"
+                  <path
+                    className="dashboard-heartbeat-monitor__trace dashboard-heartbeat-monitor__trace--halo"
+                    pathLength={100}
                     filter="url(#dashboard-heartbeat-light-glow)"
-                  >
-                    <animateMotion
-                      dur={`${Math.max(1.8, Math.min(3.2, 120 / restingHeartRate.bpm))}s`}
-                      repeatCount="indefinite"
-                      rotate="auto"
-                    >
-                      <mpath href="#dashboard-heartbeat-path" />
-                    </animateMotion>
-                  </circle>
+                    style={{ "--heartbeat-duration": `${Math.max(1.8, Math.min(3.2, 120 / restingHeartRate.bpm))}s` } as CSSProperties}
+                    d="M4 22 H20 L25 13 L32 30 L39 9 L45 22 H60"
+                  />
+                  <path
+                    className="dashboard-heartbeat-monitor__trace dashboard-heartbeat-monitor__trace--core"
+                    pathLength={100}
+                    style={{ "--heartbeat-duration": `${Math.max(1.8, Math.min(3.2, 120 / restingHeartRate.bpm))}s` } as CSSProperties}
+                    d="M4 22 H20 L25 13 L32 30 L39 9 L45 22 H60"
+                  />
                 </svg>
               </div>
               <h2 className="max-w-xl text-3xl font-light leading-tight md:text-5xl">
