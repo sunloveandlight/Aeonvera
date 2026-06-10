@@ -10,6 +10,9 @@ type StoredAlert = LongevityAlert & {
 type NotificationPreferences = {
   email_enabled?: boolean | null;
   push_enabled?: boolean | null;
+  quiet_hours_start?: string | null;
+  quiet_hours_end?: string | null;
+  timezone?: string | null;
 };
 
 export async function deliverCoachNotifications({
@@ -39,12 +42,24 @@ export async function deliverCoachNotifications({
   const prefs = await loadPreferences(supabase, userId, userResult.data.user);
   const emailEnabled = prefs.email_enabled !== false;
   const pushEnabled = prefs.push_enabled === true;
+  const quietHoursActive = isQuietHoursActive(prefs);
   const email = userResult.data.user?.email;
   const primaryAlert = alerts[0];
   const title = buildTitle(primaryAlert);
   const message = buildMessage(jarvis, primaryAlert);
 
-  if (emailEnabled && email) {
+  await recordDelivery({
+    supabase,
+    userId,
+    alertId: primaryAlert.id,
+    channel: "in_app",
+    status: "sent",
+    title,
+    message,
+    payload: { actions: jarvis.actions, tone: jarvis.tone },
+  });
+
+  if (emailEnabled && email && !quietHoursActive) {
     const emailResult = await sendCoachEmail({
       to: email,
       subject: title,
@@ -74,6 +89,12 @@ export async function deliverCoachNotifications({
       payload: { actions: jarvis.actions, tone: jarvis.tone },
     });
   } else {
+    const skippedReason = !email
+      ? "User email not found"
+      : !emailEnabled
+      ? "Email notifications disabled"
+      : "Quiet hours active";
+
     await recordDelivery({
       supabase,
       userId,
@@ -82,26 +103,49 @@ export async function deliverCoachNotifications({
       status: "skipped",
       title,
       message,
-      error: email ? "Email notifications disabled" : "User email not found",
-      payload: { actions: jarvis.actions, tone: jarvis.tone },
+      error: skippedReason,
+      payload: {
+        actions: jarvis.actions,
+        tone: jarvis.tone,
+        quiet_hours: {
+          active: quietHoursActive,
+          start: prefs.quiet_hours_start,
+          end: prefs.quiet_hours_end,
+          timezone: prefs.timezone,
+        },
+      },
     });
   }
+
+  const activePushSubscriptions = pushEnabled
+    ? await countActivePushSubscriptions(supabase, userId)
+    : 0;
 
   await recordDelivery({
     supabase,
     userId,
     alertId: primaryAlert.id,
     channel: "push",
-    status: pushEnabled ? "pending" : "skipped",
+    status: pushEnabled && activePushSubscriptions > 0 ? "pending" : "skipped",
     title,
     message,
-    error: pushEnabled
+    error: !pushEnabled
+      ? "Push notifications disabled"
+      : activePushSubscriptions > 0
       ? "Push provider not configured yet"
-      : "Push notifications disabled",
-    payload: { actions: jarvis.actions, tone: jarvis.tone },
+      : "No active push subscription registered",
+    payload: {
+      actions: jarvis.actions,
+      tone: jarvis.tone,
+      active_subscriptions: activePushSubscriptions,
+    },
   });
 
-  return { email: emailEnabled ? "processed" : "skipped", push: "queued" };
+  return {
+    in_app: "sent",
+    email: emailEnabled && !quietHoursActive ? "processed" : "skipped",
+    push: pushEnabled && activePushSubscriptions > 0 ? "queued" : "skipped",
+  };
 }
 
 async function recordDelivery({
@@ -155,7 +199,7 @@ async function loadPreferences(
 ) {
   const { data, error } = await supabase
     .from("notification_preferences")
-    .select("email_enabled, push_enabled")
+    .select("email_enabled, push_enabled, quiet_hours_start, quiet_hours_end, timezone")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -170,11 +214,78 @@ async function loadPreferences(
   );
 }
 
+async function countActivePushSubscriptions(
+  supabase: SupabaseClient,
+  userId: string
+) {
+  const { count, error } = await supabase
+    .from("push_subscriptions")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("enabled", true);
+
+  if (error) {
+    if (!isMissingNotificationTable(error)) {
+      console.error("[Push Subscription Error]", error.message);
+    }
+
+    return 0;
+  }
+
+  return count || 0;
+}
+
+function isQuietHoursActive(prefs: NotificationPreferences) {
+  const start = parseTime(prefs.quiet_hours_start || "22:00");
+  const end = parseTime(prefs.quiet_hours_end || "07:00");
+
+  if (start === null || end === null || start === end) return false;
+
+  const current = currentMinutesForTimezone(prefs.timezone || "UTC");
+
+  if (start < end) {
+    return current >= start && current < end;
+  }
+
+  return current >= start || current < end;
+}
+
+function currentMinutesForTimezone(timezone: string) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(new Date());
+    const hour = Number(parts.find((part) => part.type === "hour")?.value || 0);
+    const minute = Number(parts.find((part) => part.type === "minute")?.value || 0);
+
+    return hour * 60 + minute;
+  } catch {
+    const now = new Date();
+    return now.getUTCHours() * 60 + now.getUTCMinutes();
+  }
+}
+
+function parseTime(value: string) {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value);
+  if (!match) return null;
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+
+  if (hour > 23 || minute > 59) return null;
+
+  return hour * 60 + minute;
+}
+
 function isMissingNotificationTable(error: { message?: string; code?: string }) {
   return (
     error.code === "PGRST205" ||
     error.message?.includes("notification_preferences") ||
     error.message?.includes("notification_deliveries") ||
+    error.message?.includes("push_subscriptions") ||
     error.message?.includes("schema cache")
   );
 }

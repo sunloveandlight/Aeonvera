@@ -25,6 +25,7 @@ export default function NotificationPreferencesPanel() {
   const [preferences, setPreferences] = useState<Preferences>(DEFAULT_PREFS);
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     fetch("/api/notifications/preferences", { credentials: "include" })
@@ -74,6 +75,33 @@ export default function NotificationPreferencesPanel() {
     }
   }
 
+  async function sendTestCoachMessage() {
+    try {
+      setTesting(true);
+      setMessage(null);
+
+      const response = await fetch("/api/notifications/test-coach", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Test coach message failed.");
+      }
+
+      const emailState = data.delivery?.email || "skipped";
+      const pushState = data.delivery?.push || "skipped";
+      setMessage(`Test coach message created. Email: ${emailState}. Push: ${pushState}.`);
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Test coach message failed."
+      );
+    } finally {
+      setTesting(false);
+    }
+  }
+
   return (
     <div className="executive-panel rounded-lg p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
@@ -119,6 +147,14 @@ export default function NotificationPreferencesPanel() {
             Synced from latest sleep duration. Add wearable sleep data for a more
             accurate quiet window.
           </p>
+          <button
+            type="button"
+            onClick={sendTestCoachMessage}
+            disabled={saving || testing}
+            className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {testing ? "Sending test" : "Send test coach message"}
+          </button>
         </div>
       </div>
     </div>
