@@ -58,6 +58,38 @@ type CoachNotification = {
   sent_at?: string | null;
 };
 
+type OptimizationProtocol = {
+  summary?: string;
+  focus_domains?: string[];
+  primary_protocol?: Array<{
+    domain?: string;
+    action?: string;
+    why?: string;
+    cadence?: string;
+    impact?: "low" | "medium" | "high";
+  }>;
+  weekly_sequence?: Array<{
+    week?: string;
+    focus?: string;
+    actions?: string[];
+  }>;
+  tracking_metrics?: Array<{
+    metric?: string;
+    target?: string;
+    source?: string;
+  }>;
+  coach_message?: string;
+};
+
+type OptimizationProtocolRow = {
+  id: string;
+  protocol: OptimizationProtocol;
+  summary: string | null;
+  focus_domains: string[] | null;
+  status: "generated" | "fallback" | "failed";
+  created_at: string;
+};
+
 type HealthState = {
   baseline?: Record<string, number>;
   risk_scores?: Record<string, number>;
@@ -94,6 +126,8 @@ export default function DashboardPage() {
   const [report, setReport] = useState<Report | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [coachNotifications, setCoachNotifications] = useState<CoachNotification[]>([]);
+  const [optimizationProtocol, setOptimizationProtocol] =
+    useState<OptimizationProtocolRow | null>(null);
   const [hasAssessment, setHasAssessment] = useState(false);
   const [assessmentAge, setAssessmentAge] = useState<number | null>(null);
   const [accuracyScore, setAccuracyScore] = useState<number>(40);
@@ -160,6 +194,7 @@ export default function DashboardPage() {
           wearableRes,
           connectionRes,
           notificationRes,
+          optimizationRes,
         ] = await Promise.all([
           supabase
             .from("longevity_reports")
@@ -206,6 +241,14 @@ export default function DashboardPage() {
           fetch("/api/notifications/deliveries", {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
+
+          supabase
+            .from("optimization_protocols")
+            .select("id, protocol, summary, focus_domains, status, created_at")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
         ]);
 
         if (reportRes.data) setReport(reportRes.data);
@@ -255,6 +298,9 @@ export default function DashboardPage() {
         }
         if (notificationRes?.notifications) {
           setCoachNotifications(notificationRes.notifications);
+        }
+        if (optimizationRes.data) {
+          setOptimizationProtocol(optimizationRes.data as OptimizationProtocolRow);
         }
 
         setLoading(false);
@@ -534,6 +580,17 @@ export default function DashboardPage() {
           body: alert.recommendation,
           status: alert.severity,
         }));
+  const activeProtocol = optimizationProtocol?.protocol || null;
+  const protocolActions = activeProtocol?.primary_protocol || [];
+  const protocolFocus =
+    activeProtocol?.focus_domains ||
+    optimizationProtocol?.focus_domains ||
+    protocolActions.map((action) => action.domain || "Optimization").slice(0, 3);
+  const protocolSummary =
+    activeProtocol?.coach_message ||
+    optimizationProtocol?.summary ||
+    activeProtocol?.summary ||
+    "Build your first optimization protocol so Aeonvera can coach from your goals and constraints.";
 
   return (
     <PageContainer>
@@ -816,6 +873,81 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label={optimizationProtocol ? "Open active optimization protocol" : "Build optimization protocol"}
+          onClick={() => router.push("/optimization")}
+          onKeyDown={(event) => {
+            if (isInteractiveTarget(event.target)) return;
+            if (event.key !== "Enter" && event.key !== " ") return;
+
+            event.preventDefault();
+            router.push("/optimization");
+          }}
+          className="executive-panel-soft quiet-lift cursor-pointer rounded-lg border border-white/[0.08] p-5 transition hover:border-white/[0.16]"
+        >
+          <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+            <div>
+              <div className="mb-3 flex items-center gap-3">
+                <p className="micro-label">Active Optimization Protocol</p>
+                <span className="rounded-md border border-white/[0.08] px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] text-white/32">
+                  {optimizationProtocol ? optimizationProtocol.status : "not built"}
+                </span>
+              </div>
+              <p className="max-w-2xl text-sm leading-7 text-white/55">
+                {protocolSummary}
+              </p>
+              <button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  router.push("/optimization");
+                }}
+                className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+              >
+                {optimizationProtocol ? "Open protocol" : "Build protocol"}
+              </button>
+            </div>
+
+            {optimizationProtocol ? (
+              <div className="grid gap-3 sm:grid-cols-3">
+                {protocolActions.slice(0, 3).map((action, index) => (
+                  <div
+                    key={`${action.domain || "protocol"}-${index}`}
+                    className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4"
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-sm text-white/68">
+                        {action.domain || protocolFocus[index] || "Focus"}
+                      </p>
+                      <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                        {action.impact || "active"}
+                      </span>
+                    </div>
+                    <p className="line-clamp-3 text-xs leading-5 text-white/38">
+                      {action.action || "Follow your active optimization protocol."}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-3">
+                {["Sleep", "Metabolic", "Movement"].map((domain) => (
+                  <div
+                    key={domain}
+                    className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4"
+                  >
+                    <p className="text-sm text-white/58">{domain}</p>
+                    <p className="mt-2 text-xs leading-5 text-white/32">
+                      Waiting for intake
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* ═══════════════════════════════════════
             PHASE 2 — WEARABLE DATA
