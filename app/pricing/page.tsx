@@ -354,13 +354,13 @@ export default function PricingPage() {
                 disabled={loadingPlan !== null}
                 className="membership-current-card quiet-lift rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <div className="flex flex-col justify-between gap-8 md:flex-row md:items-start">
+                <div className="membership-card-top flex flex-col justify-between gap-8 md:flex-row md:items-start">
                   <div>
-                    <div className="mb-7 flex size-12 items-center justify-center rounded-lg bg-white/[0.06] text-white/82">
+                    <div className="membership-card-emblem flex size-12 items-center justify-center rounded-lg bg-white/[0.06] text-white/82">
                       <ShieldCheck size={22} />
                     </div>
                     <p className="micro-label">Current plan</p>
-                    <h2 className="mt-4 text-3xl font-light text-white md:text-5xl">
+                    <h2 className="membership-card-title text-3xl font-light text-white md:text-5xl">
                       {ownedCopy.title}
                     </h2>
                     <p className="mt-5 max-w-2xl text-sm leading-7 text-white/55">
@@ -401,15 +401,17 @@ export default function PricingPage() {
                     disabled={loadingPlan !== null}
                     className="membership-upgrade-card quiet-lift rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <div className="mb-7 flex size-12 items-center justify-center rounded-lg bg-white/[0.06] text-white/86">
-                      {upgradePlan.id === "sovereign" ? <Crown size={22} /> : <Sparkles size={22} />}
+                    <div className="membership-card-top">
+                      <div className="membership-card-emblem flex size-12 items-center justify-center rounded-lg bg-white/[0.06] text-white/86">
+                        {upgradePlan.id === "sovereign" ? <Crown size={22} /> : <Sparkles size={22} />}
+                      </div>
+                      <p className="micro-label">
+                        {upgradePlan.id === "sovereign" ? "Executive upgrade" : "Optimization upgrade"}
+                      </p>
+                      <h2 className="membership-card-title text-3xl font-light text-white md:text-4xl">
+                        {upgradePlan.name}
+                      </h2>
                     </div>
-                    <p className="micro-label">
-                      {upgradePlan.id === "sovereign" ? "Executive upgrade" : "Optimization upgrade"}
-                    </p>
-                    <h2 className="mt-4 text-3xl font-light text-white md:text-4xl">
-                      {upgradePlan.name}
-                    </h2>
                     <p className="mt-5 text-sm leading-7 text-white/55">
                       {upgradePlan.id === "sovereign"
                         ? "Move directly into the full executive digital-twin path."
