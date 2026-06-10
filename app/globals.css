@@ -455,7 +455,7 @@ body::after {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 46 100;
+  stroke-dasharray: 46 154;
   stroke-dashoffset: 146;
   animation: dashboard-heartbeat-trace var(--heartbeat-duration, 2.2s) linear infinite;
 }
@@ -483,7 +483,7 @@ body::after {
     opacity: 0.92;
   }
   100% {
-    stroke-dashoffset: 0;
+    stroke-dashoffset: -100;
     opacity: 0.18;
   }
 }
