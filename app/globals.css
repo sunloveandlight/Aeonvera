@@ -761,6 +761,21 @@ body::after {
   text-shadow: none;
 }
 
+button.premium-button-primary,
+a.premium-button-primary,
+button.premium-action,
+a.premium-action,
+button.royal-gradient,
+a.royal-gradient {
+  cursor: pointer;
+}
+
+.premium-button-primary:disabled,
+.premium-action:disabled,
+.royal-gradient:disabled {
+  cursor: not-allowed;
+}
+
 .premium-button-primary::before,
 .premium-action::before,
 .royal-gradient::before {
@@ -1014,6 +1029,16 @@ body::after {
     border-color 320ms ease,
     box-shadow 320ms ease,
     background 320ms ease;
+}
+
+button.membership-current-card,
+button.membership-upgrade-card {
+  cursor: pointer;
+}
+
+.membership-current-card:disabled,
+.membership-upgrade-card:disabled {
+  cursor: not-allowed;
 }
 
 .membership-current-card {
