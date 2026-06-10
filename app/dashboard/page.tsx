@@ -123,6 +123,14 @@ type BioAgeSimulation = {
   keyDrivers: string[];
 };
 
+type LabBiomarkerRow = {
+  id: string;
+  canonical_key: string;
+  value: number | string;
+  unit?: string | null;
+  measured_at: string;
+};
+
 type WearableMetricRow = {
   provider?: string | null;
   recorded_at?: string | null;
@@ -162,6 +170,11 @@ export default function DashboardPage() {
   const [healthState, setHealthState] = useState<HealthState | null>(null);
   const [bioAgeHistory, setBioAgeHistory] = useState<BioAgeHistoryPoint[]>([]);
   const [bioAgeSimulations, setBioAgeSimulations] = useState<BioAgeSimulation[]>([]);
+  const [labRows, setLabRows] = useState<LabBiomarkerRow[]>([]);
+  const [labPayload, setLabPayload] = useState("");
+  const [labImportFile, setLabImportFile] = useState<File | null>(null);
+  const [labImporting, setLabImporting] = useState(false);
+  const [labMessage, setLabMessage] = useState<string | null>(null);
   const [wearableRows, setWearableRows] = useState<WearableMetricRow[]>([]);
   const [wearableConnections, setWearableConnections] = useState<WearableConnection[]>([]);
   const [wearableSyncing, setWearableSyncing] = useState<string | null>(null);
@@ -225,6 +238,7 @@ export default function DashboardPage() {
           optimizationRes,
           bioAgeHistoryRes,
           bioAgeSimulatorRes,
+          labsRes,
         ] = await Promise.all([
           supabase
             .from("longevity_reports")
@@ -287,6 +301,13 @@ export default function DashboardPage() {
           fetch("/api/longevity/simulator", {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
+
+          supabase
+            .from("lab_biomarkers")
+            .select("id, canonical_key, value, unit, measured_at")
+            .eq("user_id", user.id)
+            .order("measured_at", { ascending: false })
+            .limit(18),
         ]);
 
         if (reportRes.data) setReport(reportRes.data);
@@ -345,6 +366,9 @@ export default function DashboardPage() {
         }
         if (bioAgeSimulatorRes?.simulations) {
           setBioAgeSimulations(bioAgeSimulatorRes.simulations);
+        }
+        if (labsRes.data) {
+          setLabRows(labsRes.data as LabBiomarkerRow[]);
         }
 
         setLoading(false);
@@ -536,6 +560,59 @@ export default function DashboardPage() {
       );
     } finally {
       setWearableSyncing(null);
+    }
+  }
+
+  async function handleLabImport() {
+    if (labImporting) return;
+    if (!labPayload.trim() && !labImportFile) {
+      setLabMessage("Add lab values or upload a report before importing.");
+      return;
+    }
+
+    try {
+      setLabImporting(true);
+      setLabMessage("Importing clinical biomarkers...");
+
+      const formData = new FormData();
+      if (labPayload.trim()) formData.append("payload", labPayload.trim());
+      if (labImportFile) formData.append("file", labImportFile);
+
+      const response = await fetch("/api/labs/import", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Lab import failed.");
+      }
+
+      if (data.inserted) {
+        setLabRows((prev) => [...data.inserted, ...prev].slice(0, 18));
+      }
+      if (data.biologicalAge?.result?.biologicalAge) {
+        setProfile((prev) =>
+          prev
+            ? { ...prev, biological_age: data.biologicalAge.result.biologicalAge }
+            : prev
+        );
+      }
+      if (data.biologicalAge?.history) {
+        setBioAgeHistory((prev) => [
+          data.biologicalAge.history,
+          ...prev,
+        ].slice(0, 24));
+      }
+
+      setLabPayload("");
+      setLabImportFile(null);
+      setLabMessage(`Imported ${data.inserted?.length || 0} biomarkers and refreshed biological age.`);
+    } catch (err) {
+      setLabMessage(err instanceof Error ? err.message : "Lab import failed.");
+    } finally {
+      setLabImporting(false);
     }
   }
 
@@ -943,6 +1020,17 @@ export default function DashboardPage() {
           onStartAssessment={() => router.push("/assessment")}
         />
 
+        <LabImportPanel
+          labRows={labRows}
+          labPayload={labPayload}
+          labImportFileName={labImportFile?.name || null}
+          labImporting={labImporting}
+          labMessage={labMessage}
+          onLabPayloadChange={setLabPayload}
+          onLabImportFileChange={setLabImportFile}
+          onLabImport={handleLabImport}
+        />
+
         <div
           role="button"
           tabIndex={0}
@@ -1234,6 +1322,124 @@ function BioAgeSimulationPanel({
   );
 }
 
+function LabImportPanel({
+  labRows,
+  labPayload,
+  labImportFileName,
+  labImporting,
+  labMessage,
+  onLabPayloadChange,
+  onLabImportFileChange,
+  onLabImport,
+}: {
+  labRows: LabBiomarkerRow[];
+  labPayload: string;
+  labImportFileName: string | null;
+  labImporting: boolean;
+  labMessage: string | null;
+  onLabPayloadChange: (value: string) => void;
+  onLabImportFileChange: (file: File | null) => void;
+  onLabImport: () => void;
+}) {
+  return (
+    <Card title="CLINICAL LAB IMPORT" actionLabel="Import clinical labs" onClick={onLabImport}>
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div>
+          <p className="text-sm leading-7 text-white/45">
+            Upload bloodwork or enter values manually to activate the clinical biomarker layer.
+          </p>
+          {labMessage && (
+            <p className="mt-3 text-sm leading-6 royal-text">{labMessage}</p>
+          )}
+
+          <textarea
+            value={labPayload}
+            onChange={(event) => onLabPayloadChange(event.target.value)}
+            onClick={(event) => event.stopPropagation()}
+            placeholder='{"records":[{"canonicalKey":"albumin","value":4.6,"unit":"g/dL"},{"canonicalKey":"creatinine","value":0.9,"unit":"mg/dL"}]}'
+            className="executive-input mt-5 h-32 w-full resize-none rounded-lg p-4 text-xs leading-5 placeholder:text-white/16"
+          />
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
+            <label
+              onClick={(event) => event.stopPropagation()}
+              className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.025] px-4 py-3 text-xs text-white/50 transition hover:border-white/[0.16] hover:text-white/70"
+            >
+              <span className="min-w-0 truncate">
+                {labImportFileName || "Upload PDF, CSV, text, or image"}
+              </span>
+              <span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-white/30">
+                Choose
+              </span>
+              <input
+                type="file"
+                accept="application/pdf,text/plain,text/csv,.pdf,.csv,.txt,image/png,image/jpeg,image/webp,image/heic,image/heif"
+                className="sr-only"
+                onChange={(event) =>
+                  onLabImportFileChange(event.target.files?.[0] || null)
+                }
+              />
+            </label>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onLabImport();
+              }}
+              disabled={labImporting}
+              className="premium-action inline-flex h-12 items-center justify-center rounded-md px-5 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {labImporting ? "Importing" : "Import Labs"}
+            </button>
+          </div>
+          {labImportFileName && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onLabImportFileChange(null);
+              }}
+              className="mt-3 text-left text-[9px] uppercase tracking-[0.14em] text-white/28 transition hover:text-white/55"
+            >
+              Remove upload
+            </button>
+          )}
+        </div>
+
+        <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <p className="micro-label">Clinical Panel</p>
+            <span className="text-[10px] uppercase tracking-[0.14em] text-white/30">
+              {labRows.length} values
+            </span>
+          </div>
+          {labRows.length ? (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {labRows.slice(0, 8).map((row) => (
+                <div
+                  key={`${row.id}-${row.canonical_key}`}
+                  className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3"
+                >
+                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+                    {formatLabKey(row.canonical_key)}
+                  </p>
+                  <p className="mt-2 text-sm text-white/70">
+                    {Number(row.value).toString()} {row.unit || ""}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm leading-7 text-white/38">
+              Waiting for albumin, creatinine, glucose, hsCRP, lymphocytes, MCV, RDW, alkaline phosphatase, and WBC.
+            </p>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 function BioAgeTrend({
   history,
   currentBioAge,
@@ -1350,4 +1556,13 @@ function BioAgeTrend({
 
 function formatYears(value: number) {
   return value > 0 ? value.toFixed(1) : "0.0";
+}
+
+function formatLabKey(value: string) {
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .replace("Hscrp", "hsCRP")
+    .replace("Mcv", "MCV")
+    .replace("Wbc", "WBC");
 }

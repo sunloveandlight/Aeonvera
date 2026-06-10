@@ -5,6 +5,7 @@ import {
   type BiologicalAgeResult,
 } from "@/lib/longevity/biologicalAgeEngine";
 import { buildAssessmentInput } from "@/lib/longevity/assessmentInput";
+import { loadLatestLabInputValues } from "@/lib/labs/latestLabInputs";
 
 type RefreshSource = "assessment" | "wearable" | "simulation" | "system";
 
@@ -104,6 +105,7 @@ async function buildWearableEnhancedInput({
   assessment: Record<string, unknown>;
 }) {
   const input = buildAssessmentInput(assessment);
+  const labInput = await loadLatestLabInputValues({ supabase, userId });
   const { data } = await supabase
     .from("health_metrics")
     .select("metric, value, measured_at")
@@ -121,6 +123,7 @@ async function buildWearableEnhancedInput({
 
   return {
     ...input,
+    ...labInput,
     sleep_hours: latest.sleep_hours ?? input.sleep_hours,
     resting_hr: latest.resting_heart_rate ?? input.resting_hr,
     hrv: latest.heart_rate_variability ?? input.hrv,

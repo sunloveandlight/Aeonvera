@@ -7,6 +7,7 @@ import {
   computeBiologicalAge,
 } from "@/lib/longevity/biologicalAgeEngine";
 import { buildAssessmentInput } from "@/lib/longevity/assessmentInput";
+import { loadLatestLabInputValues } from "@/lib/labs/latestLabInputs";
 
 type CookieToSet = {
   name: string;
@@ -92,7 +93,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const input = buildAssessmentInput(assessment);
+    const input = {
+      ...buildAssessmentInput(assessment),
+      ...(await loadLatestLabInputValues({ supabase, userId })),
+    };
     const result = computeBiologicalAge(input);
     const body = await readJsonBody(request);
     const source = normalizeSource(body?.source);

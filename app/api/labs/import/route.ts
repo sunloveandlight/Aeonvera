@@ -1,0 +1,227 @@
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
+import { createClient } from "@/lib/supabase/server";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import {
+  normalizeClinicalBiomarkers,
+  parseClinicalBiomarkerText,
+  type ParsedClinicalBiomarker,
+} from "@/lib/labs/clinicalBiomarkers";
+import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAge";
+
+let openaiClient: OpenAI | null = null;
+
+function getOpenAI() {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("Missing OPENAI_API_KEY for lab image import.");
+  }
+
+  if (!openaiClient) {
+    openaiClient = new OpenAI({ apiKey });
+  }
+
+  return openaiClient;
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { biomarkers, source } = await parseImportRequest(request);
+
+    if (biomarkers.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "No supported lab biomarkers found. Upload a readable report or enter albumin, creatinine, glucose, hsCRP, lymphocytes, MCV, RDW, alkaline phosphatase, and WBC.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const admin = getSupabaseAdmin();
+    const measuredAt = new Date().toISOString();
+    const rows = biomarkers.map((biomarker) => ({
+      user_id: user.id,
+      canonical_key: biomarker.canonicalKey,
+      value: biomarker.value,
+      unit: biomarker.unit || null,
+      raw_label: biomarker.rawLabel || null,
+      reference_range: biomarker.referenceRange || null,
+      source,
+      measured_at: measuredAt,
+    }));
+
+    const { data: inserted, error: insertError } = await admin
+      .from("lab_biomarkers")
+      .insert(rows)
+      .select("id, canonical_key, value, unit, raw_label, measured_at");
+
+    if (insertError) {
+      return NextResponse.json(
+        {
+          error:
+            "Lab tables are not live yet. Apply supabase/migrations/20260610150000_lab_biomarkers.sql in Supabase, then try again.",
+          details: insertError.message,
+        },
+        { status: 500 }
+      );
+    }
+
+    const biologicalAge = await refreshBiologicalAgeForUser({
+      supabase: admin,
+      userId: user.id,
+      source: "system",
+    });
+
+    return NextResponse.json({
+      success: true,
+      source,
+      inserted: inserted || [],
+      biologicalAge,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Lab import failed.";
+
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+async function parseImportRequest(request: NextRequest): Promise<{
+  biomarkers: ParsedClinicalBiomarker[];
+  source: "upload" | "manual" | "image" | "pdf" | "csv" | "text";
+}> {
+  const contentType = request.headers.get("content-type") || "";
+
+  if (contentType.includes("multipart/form-data")) {
+    const form = await request.formData();
+    const payload = String(form.get("payload") || "").trim();
+    const manual = normalizeClinicalBiomarkers(safeJson(payload));
+    const file = form.get("file");
+
+    if (file instanceof File) {
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error("Lab upload must be 10MB or smaller.");
+      }
+
+      if (file.type.startsWith("image/")) {
+        return {
+          biomarkers: mergeBiomarkers([
+            ...manual,
+            ...(await extractBiomarkersFromImage(file)),
+          ]),
+          source: "image",
+        };
+      }
+
+      const text = await file.text();
+      const source = file.type.includes("pdf")
+        ? "pdf"
+        : file.type.includes("csv") || file.name.toLowerCase().endsWith(".csv")
+        ? "csv"
+        : "text";
+
+      return {
+        biomarkers: mergeBiomarkers([
+          ...manual,
+          ...parseClinicalBiomarkerText(text),
+          ...normalizeClinicalBiomarkers(safeJson(text)),
+        ]),
+        source,
+      };
+    }
+
+    return {
+      biomarkers: mergeBiomarkers([
+        ...manual,
+        ...parseClinicalBiomarkerText(payload),
+      ]),
+      source: "manual",
+    };
+  }
+
+  const body = await request.json();
+  return {
+    biomarkers: normalizeClinicalBiomarkers(body),
+    source: "manual",
+  };
+}
+
+async function extractBiomarkersFromImage(file: File) {
+  const bytes = Buffer.from(await file.arrayBuffer()).toString("base64");
+  const dataUrl = `data:${file.type};base64,${bytes}`;
+
+  const completion = await getOpenAI().chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0,
+    max_tokens: 900,
+    messages: [
+      {
+        role: "system",
+        content:
+          "Extract clinical lab biomarkers from lab report screenshots. Return raw JSON only.",
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text:
+              "Read this lab report image and return JSON exactly like {\"records\":[{\"canonicalKey\":\"albumin|creatinine|fasting_glucose|hscrp|lymphocyte_pct|mean_cell_volume|red_cell_distribution_width|alkaline_phosphatase|white_blood_cell_count\",\"value\":number,\"unit\":\"string\",\"rawLabel\":\"string\",\"referenceRange\":\"string\"}]}. Include only values clearly visible.",
+          },
+          {
+            type: "image_url",
+            image_url: { url: dataUrl },
+          },
+        ],
+      },
+    ],
+  });
+
+  const raw = completion.choices[0]?.message?.content?.trim();
+  if (!raw) return [];
+
+  return normalizeClinicalBiomarkers(safeJson(stripJsonFences(raw)));
+}
+
+function mergeBiomarkers(biomarkers: ParsedClinicalBiomarker[]) {
+  return Array.from(
+    biomarkers
+      .filter((biomarker) => Number.isFinite(biomarker.value))
+      .reduce<Map<string, ParsedClinicalBiomarker>>((map, biomarker) => {
+        if (!map.has(biomarker.canonicalKey)) {
+          map.set(biomarker.canonicalKey, biomarker);
+        }
+
+        return map;
+      }, new Map())
+      .values()
+  );
+}
+
+function safeJson(value: string | null) {
+  if (!value) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function stripJsonFences(value: string) {
+  return value
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+}
