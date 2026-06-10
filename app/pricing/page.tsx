@@ -352,27 +352,25 @@ export default function PricingPage() {
                 type="button"
                 onClick={() => handleBillingPortal(activePlan)}
                 disabled={loadingPlan !== null}
-                className="membership-current-card quiet-lift rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
+                className="membership-current-card quiet-lift flex flex-col items-start rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <div className="membership-card-top flex flex-col justify-between gap-8 md:flex-row md:items-start">
-                  <div>
-                    <div className="membership-card-emblem flex size-12 items-center justify-center rounded-lg bg-white/[0.06] text-white/82">
-                      <ShieldCheck size={22} />
-                    </div>
-                    <p className="micro-label">Current plan</p>
-                    <h2 className="membership-card-title text-3xl font-light text-white md:text-5xl">
-                      {ownedCopy.title}
-                    </h2>
-                    <p className="mt-5 max-w-2xl text-sm leading-7 text-white/55">
-                      {ownedCopy.body}
-                    </p>
+                <div className="membership-card-top w-full">
+                  <div className="membership-card-emblem flex size-12 items-center justify-center rounded-lg bg-white/[0.06] text-white/82">
+                    <ShieldCheck size={22} />
                   </div>
-                  <div className="premium-status shrink-0 rounded-md px-3 py-1.5 text-xs font-medium">
-                    Active
-                  </div>
+                  <p className="micro-label">Current plan</p>
+                  <h2 className="membership-card-title text-3xl font-light text-white md:text-4xl">
+                    {ownedCopy.title}
+                  </h2>
+                  <p className="mt-5 max-w-2xl text-sm leading-7 text-white/55">
+                    {ownedCopy.body}
+                  </p>
+                </div>
+                <div className="premium-status membership-active-badge rounded-md px-3 py-1.5 text-xs font-medium">
+                  Active
                 </div>
 
-                <div className="mt-9 grid gap-3 sm:grid-cols-2">
+                <div className="mt-9 grid w-full gap-3 sm:grid-cols-2">
                   {ownedCopy.owned.map((item) => (
                     <div key={item} className="flex gap-3 rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 text-sm leading-6 text-white/68">
                       <Check size={16} className="mt-1 shrink-0 royal-text" />
@@ -381,7 +379,7 @@ export default function PricingPage() {
                   ))}
                 </div>
 
-                <div className="mt-9 flex items-center justify-between gap-4 border-t border-white/[0.07] pt-5">
+                <div className="mt-9 flex w-full items-center justify-between gap-4 border-t border-white/[0.07] pt-5">
                   <span className="text-sm text-white/42">
                     Opens billing, invoices, payment method, and cancellation settings.
                   </span>
@@ -399,9 +397,9 @@ export default function PricingPage() {
                     type="button"
                     onClick={() => handleBillingPortal(upgradePlan.id)}
                     disabled={loadingPlan !== null}
-                    className="membership-upgrade-card quiet-lift rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
+                    className="membership-upgrade-card quiet-lift flex flex-col items-start rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <div className="membership-card-top">
+                    <div className="membership-card-top w-full">
                       <div className="membership-card-emblem flex size-12 items-center justify-center rounded-lg bg-white/[0.06] text-white/86">
                         {upgradePlan.id === "sovereign" ? <Crown size={22} /> : <Sparkles size={22} />}
                       </div>

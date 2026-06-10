@@ -1066,6 +1066,12 @@ button.membership-upgrade-card {
   margin-top: 1rem;
 }
 
+.membership-active-badge {
+  position: absolute;
+  top: 1.75rem;
+  right: 1.75rem;
+}
+
 .membership-current-card {
   min-height: 34rem;
 }
