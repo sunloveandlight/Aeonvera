@@ -12,10 +12,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -99,10 +96,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(request);
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -135,4 +129,28 @@ function normalizePlatform(value: unknown): PushPlatform | null {
   return value === "web" || value === "ios" || value === "android"
     ? value
     : null;
+}
+
+async function getAuthenticatedUser(request: NextRequest) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    return user;
+  }
+
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+
+  if (!token) {
+    return null;
+  }
+
+  const admin = getSupabaseAdmin();
+  const {
+    data: { user: bearerUser },
+  } = await admin.auth.getUser(token);
+
+  return bearerUser;
 }
