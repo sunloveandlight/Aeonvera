@@ -14,6 +14,7 @@ import {
   Switch,
   Text,
   TextInput,
+  Vibration,
   View,
 } from "react-native";
 import { createClient, type Session } from "@supabase/supabase-js";
@@ -23,7 +24,7 @@ import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 
-type ActiveView = "today" | "inbox" | "settings";
+type ActiveView = "today" | "inbox" | "message" | "settings";
 
 type CoachMessage = {
   id: string;
@@ -212,6 +213,10 @@ export default function App() {
   const messageListOffsetY = useRef(0);
   const selectedMessageOffsetY = useRef<number | null>(null);
   const appUrl = useMemo(() => WEB_URL.replace(/\/$/, ""), []);
+  const selectedMessage = useMemo(
+    () => coachMessages.find((message) => message.id === selectedMessageId) || null,
+    [coachMessages, selectedMessageId]
+  );
 
   const openPath = useCallback(
     async (path: string) => {
@@ -373,8 +378,9 @@ export default function App() {
         setSelectedAlertId(alertId);
         setSelectedMessageId(null);
         setInboxNotice("Opened from your coach notification.");
-        setActiveView("inbox");
+        setActiveView("message");
         setNotificationFocusTick((current) => current + 1);
+        playSoftHaptic();
         void loadCompanionData(session);
         return;
       }
@@ -387,10 +393,11 @@ export default function App() {
       const path = data?.path || data?.url;
 
       if (path?.startsWith("/companion")) {
-        setActiveView(path.includes("focus=coach") ? "inbox" : "today");
+        setActiveView(path.includes("focus=coach") ? "message" : "today");
         if (path.includes("focus=coach")) {
           selectedMessageOffsetY.current = null;
           setNotificationFocusTick((current) => current + 1);
+          playSoftHaptic();
         }
         void loadCompanionData(session);
         return;
@@ -401,16 +408,42 @@ export default function App() {
         return;
       }
 
-      setActiveView("inbox");
+      setActiveView("message");
       selectedMessageOffsetY.current = null;
       setNotificationFocusTick((current) => current + 1);
+      playSoftHaptic();
       void loadCompanionData(session);
     },
     [loadCompanionData, openPath, session]
   );
 
+  const recordNotificationResponse = useCallback(
+    async (action: "done" | "later", data?: NotificationTapData) => {
+      if (!supabase || !session) return;
+
+      await supabase.from("behavior_events").insert({
+        user_id: session.user.id,
+        type: "coach_notification",
+        event_type: `coach_notification_${action}`,
+        action: action === "done" ? "Acknowledged coach signal" : "Saved coach signal for later",
+        outcome: action,
+        payload: {
+          alert_id: data?.alertId || data?.alert_id || null,
+          source: "mobile_push_action",
+        },
+      });
+    },
+    [session]
+  );
+
   useEffect(() => {
     if (Platform.OS === "android") {
+      void Notifications.setNotificationChannelAsync("coach-updates", {
+        name: "Coach updates",
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 120],
+        lightColor: "#f2dc9c",
+      });
       void Notifications.setNotificationChannelAsync("protocol-reminders", {
         name: "Protocol reminders",
         importance: Notifications.AndroidImportance.HIGH,
@@ -419,11 +452,50 @@ export default function App() {
       });
     }
 
+    if (Platform.OS === "ios" || Platform.OS === "android") {
+      void Notifications.setNotificationCategoryAsync("coach-message", [
+        {
+          identifier: "open",
+          buttonTitle: "Open",
+          options: { opensAppToForeground: true },
+        },
+        {
+          identifier: "later",
+          buttonTitle: "Later",
+          options: { opensAppToForeground: true },
+        },
+        {
+          identifier: "done",
+          buttonTitle: "Done",
+          options: { opensAppToForeground: true },
+        },
+      ]).catch(() => null);
+    }
+
     const responseSubscription =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        handleNotificationTap(
-          response.notification.request.content.data as NotificationTapData | undefined
-        );
+        const actionIdentifier = response.actionIdentifier;
+        const data = response.notification.request.content.data as
+          | NotificationTapData
+          | undefined;
+
+        if (actionIdentifier === "later") {
+          void recordNotificationResponse("later", data);
+          setActiveView("today");
+          setInboxNotice("Coach message saved for later.");
+          playSoftHaptic();
+          return;
+        }
+
+        if (actionIdentifier === "done") {
+          void recordNotificationResponse("done", data);
+          setActiveView("today");
+          setInboxNotice("Noted. Aeonvera marked this signal as acknowledged.");
+          playSoftHaptic();
+          return;
+        }
+
+        handleNotificationTap(data);
       });
 
     void Notifications.getLastNotificationResponseAsync().then((response) => {
@@ -434,7 +506,7 @@ export default function App() {
     });
 
     return () => responseSubscription.remove();
-  }, [handleNotificationTap]);
+  }, [handleNotificationTap, recordNotificationResponse]);
 
   async function signIn() {
     if (!supabase) {
@@ -804,22 +876,32 @@ export default function App() {
                 <Text style={styles.cardLabel}>Aeonvera Account</Text>
                 <Text style={styles.smallTitle}>{authStatus}</Text>
               </View>
-              <Pressable style={styles.compactButton} onPress={() => void signOut()}>
-                <Text style={styles.compactButtonText}>Sign out</Text>
-              </Pressable>
+              <View style={styles.statusActions}>
+                <Pressable style={styles.compactButton} onPress={() => setActiveView("settings")}>
+                  <Text style={styles.compactButtonText}>Controls</Text>
+                </Pressable>
+                <Pressable style={styles.compactButton} onPress={() => void signOut()}>
+                  <Text style={styles.compactButtonText}>Sign out</Text>
+                </Pressable>
+              </View>
             </View>
 
             <View style={styles.tabs}>
-              {(["today", "inbox", "settings"] as ActiveView[]).map((view) => (
+              {(["today", "inbox"] as ActiveView[]).map((view) => (
                 <Pressable
                   key={view}
-                  style={[styles.tab, activeView === view && styles.activeTab]}
+                  style={[
+                    styles.tab,
+                    (activeView === view || (activeView === "message" && view === "inbox")) &&
+                      styles.activeTab,
+                  ]}
                   onPress={() => setActiveView(view)}
                 >
                   <Text
                     style={[
                       styles.tabText,
-                      activeView === view && styles.activeTabText,
+                      (activeView === view || (activeView === "message" && view === "inbox")) &&
+                        styles.activeTabText,
                     ]}
                   >
                     {view}
@@ -860,6 +942,33 @@ export default function App() {
                 }}
                 openPath={openPath}
                 selectedMessageId={selectedMessageId}
+              />
+            ) : null}
+
+            {activeView === "message" ? (
+              <MessageDetailView
+                message={selectedMessage || coachMessages[0] || null}
+                onBack={() => {
+                  playSoftHaptic();
+                  setActiveView("inbox");
+                }}
+                onDone={() => {
+                  playSoftHaptic();
+                  setActiveView("today");
+                }}
+                onOpen={() => {
+                  const message = selectedMessage || coachMessages[0] || null;
+                  if (message) {
+                    void openMessage(message, openPath);
+                  } else {
+                    void openPath("/companion");
+                  }
+                }}
+                onRemindLater={() => {
+                  playSoftHaptic();
+                  setActiveView("today");
+                  setInboxNotice("Coach signal held for later.");
+                }}
               />
             ) : null}
 
@@ -910,6 +1019,7 @@ function TodayView({
     repeat?: ReminderRepeat
   ) => Promise<void>;
 }) {
+  const [expandedActionKey, setExpandedActionKey] = useState<string | null>(null);
   const adherenceByAction = buildLatestAdherenceByAction(adherenceEvents);
   const groupedActions = groupActionsByScope(latestActions);
   const completedCount = latestActions.filter(
@@ -926,9 +1036,25 @@ function TodayView({
   const secondarySections = ACTION_SECTIONS.filter(
     (section) => section.scope !== "today" && groupedActions[section.scope].length
   );
+  const focusActions = todayActions.length ? todayActions : fallbackFocusActions;
+  const primaryAction = focusActions[0] || null;
+  const primaryActionKey = primaryAction ? getActionKey(primaryAction) : null;
+  const activeActionKey = expandedActionKey || primaryActionKey;
 
   return (
     <>
+      <View style={styles.dailyBriefPanel}>
+        <Text style={styles.cardLabel}>Daily Brief</Text>
+        <Text style={styles.briefTitle}>What matters now</Text>
+        <Text style={styles.briefCopy}>{latestMessage}</Text>
+        {primaryAction ? (
+          <View style={styles.briefAction}>
+            <Text style={styles.selectedMessageLabel}>Highest leverage</Text>
+            <Text style={styles.compactMessageTitle}>{primaryAction.action}</Text>
+          </View>
+        ) : null}
+      </View>
+
       <View style={styles.panel}>
         <Text style={styles.cardLabel}>Today&apos;s Protocol</Text>
         <Text style={styles.cardTitle}>{protocol ? "Active protocol" : "Build protocol"}</Text>
@@ -952,6 +1078,25 @@ function TodayView({
         <View style={styles.actionList}>
           {latestActions.length ? (
             <>
+              {primaryAction ? (
+                <View style={styles.primaryActionCard}>
+                  <Text style={styles.cardLabel}>Now</Text>
+                  <Text style={styles.primaryActionTitle}>{primaryAction.action}</Text>
+                  {primaryAction.why ? (
+                    <Text style={styles.cardCopy}>{primaryAction.why}</Text>
+                  ) : null}
+                  <Pressable
+                    style={styles.button}
+                    onPress={() => {
+                      playSoftHaptic();
+                      setExpandedActionKey(primaryActionKey);
+                    }}
+                  >
+                    <Text style={styles.buttonText}>Start action</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+
               <View style={styles.actionSection}>
                 <View style={styles.sectionHeader}>
                   <View style={styles.sectionText}>
@@ -962,18 +1107,26 @@ function TodayView({
                   </View>
                   <Text style={styles.sectionCount}>{groupedActions.today.length}</Text>
                 </View>
-                {(todayActions.length ? todayActions : fallbackFocusActions).map((action) => (
-                  <ProtocolActionRow
-                    key={`${action.action}-${action.actionIndex}`}
-                    action={action}
-                    adherenceEvent={adherenceByAction[action.action || ""]}
-                    localReminder={
-                      protocol ? localReminders[getReminderKey(protocol.id, action)] : undefined
-                    }
-                    recordAdherence={recordAdherence}
-                    scheduleActionReminder={scheduleActionReminder}
-                  />
-                ))}
+                {focusActions.map((action) => {
+                  const actionKey = getActionKey(action);
+                  return (
+                    <ProtocolActionRow
+                      key={actionKey}
+                      action={action}
+                      expanded={activeActionKey === actionKey}
+                      adherenceEvent={adherenceByAction[action.action || ""]}
+                      localReminder={
+                        protocol ? localReminders[getReminderKey(protocol.id, action)] : undefined
+                      }
+                      onToggle={() => {
+                        playSoftHaptic();
+                        setExpandedActionKey(activeActionKey === actionKey ? null : actionKey);
+                      }}
+                      recordAdherence={recordAdherence}
+                      scheduleActionReminder={scheduleActionReminder}
+                    />
+                  );
+                })}
               </View>
 
               {secondarySections.length ? (
@@ -995,13 +1148,18 @@ function TodayView({
                         </View>
                         {visibleActions.map((action) => (
                           <ProtocolActionRow
-                            key={`${action.action}-${action.actionIndex}`}
+                            key={getActionKey(action)}
                             action={action}
-                            compact
+                            compact={activeActionKey !== getActionKey(action)}
+                            expanded={activeActionKey === getActionKey(action)}
                             adherenceEvent={adherenceByAction[action.action || ""]}
                             localReminder={
                               protocol ? localReminders[getReminderKey(protocol.id, action)] : undefined
                             }
+                            onToggle={() => {
+                              playSoftHaptic();
+                              setExpandedActionKey(getActionKey(action));
+                            }}
                             recordAdherence={recordAdherence}
                             scheduleActionReminder={scheduleActionReminder}
                           />
@@ -1030,12 +1188,6 @@ function TodayView({
         </Pressable>
       </View>
 
-      <View style={styles.panel}>
-        <Text style={styles.cardLabel}>Coach Signal</Text>
-        <Text style={styles.cardTitle}>Latest guidance</Text>
-        <Text style={styles.cardCopy}>{latestMessage}</Text>
-      </View>
-
       <View style={styles.shortcutGrid}>
         {shortcuts.map((item) => (
           <Pressable
@@ -1049,6 +1201,62 @@ function TodayView({
         ))}
       </View>
     </>
+  );
+}
+
+function MessageDetailView({
+  message,
+  onBack,
+  onDone,
+  onOpen,
+  onRemindLater,
+}: {
+  message: CoachMessage | null;
+  onBack: () => void;
+  onDone: () => void;
+  onOpen: () => void;
+  onRemindLater: () => void;
+}) {
+  if (!message) {
+    return (
+      <View style={styles.panel}>
+        <Text style={styles.cardLabel}>Coach Signal</Text>
+        <Text style={styles.cardTitle}>Nothing new right now</Text>
+        <Text style={styles.cardCopy}>
+          Aeonvera will bring the next important signal here when it arrives.
+        </Text>
+        <Pressable style={styles.button} onPress={onBack}>
+          <Text style={styles.buttonText}>Open inbox</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.detailPanel}>
+      <View style={styles.detailHeader}>
+        <Text style={styles.cardLabel}>Coach Signal</Text>
+        <Pressable style={styles.textButton} onPress={onBack}>
+          <Text style={styles.textButtonText}>Inbox</Text>
+        </Pressable>
+      </View>
+      <Text style={styles.detailTitle}>{message.title}</Text>
+      <Text style={styles.messageDate}>{formatDate(message.created_at)}</Text>
+      <Text style={styles.detailCopy}>{message.message}</Text>
+      <View style={styles.detailActions}>
+        <Pressable style={styles.button} onPress={onOpen}>
+          <Text style={styles.buttonText}>Open protocol</Text>
+        </Pressable>
+        <View style={styles.secondaryActionRow}>
+          <Pressable style={styles.secondaryAction} onPress={onDone}>
+            <Text style={styles.secondaryActionText}>Done</Text>
+          </Pressable>
+          <Pressable style={styles.secondaryAction} onPress={onRemindLater}>
+            <Text style={styles.secondaryActionText}>Later</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -1144,15 +1352,19 @@ function InboxView({
 function ProtocolActionRow({
   action,
   compact = false,
+  expanded = false,
   adherenceEvent,
   localReminder,
+  onToggle,
   recordAdherence,
   scheduleActionReminder,
 }: {
   action: ScheduledProtocolAction;
   compact?: boolean;
+  expanded?: boolean;
   adherenceEvent?: AdherenceEvent;
   localReminder?: LocalReminder;
+  onToggle?: () => void;
   recordAdherence: (
     action: ProtocolAction,
     actionIndex: number,
@@ -1167,7 +1379,14 @@ function ProtocolActionRow({
   ) => Promise<void>;
 }) {
   return (
-    <View style={[styles.actionItem, compact && styles.compactActionItem]}>
+    <Pressable
+      style={[
+        styles.actionItem,
+        compact && styles.compactActionItem,
+        expanded && styles.expandedActionItem,
+      ]}
+      onPress={onToggle}
+    >
       <Text style={styles.actionIndex}>{action.actionIndex + 1}</Text>
       <View style={styles.actionBody}>
         <View style={styles.actionHeader}>
@@ -1177,36 +1396,42 @@ function ProtocolActionRow({
         <Text style={styles.actionMeta}>
           {[action.domain, action.cadence, action.impact].filter(Boolean).join(" / ")}
         </Text>
-        {!compact && action.why ? <Text style={styles.actionWhy}>{action.why}</Text> : null}
-        {!compact ? (
+        {expanded && action.why ? <Text style={styles.actionWhy}>{action.why}</Text> : null}
+        {expanded ? (
           <View style={styles.adherenceControls}>
             <Pressable
               style={styles.adherenceButton}
-              onPress={() =>
-                void recordAdherence(action, action.actionIndex, "success", action.scope)
-              }
+              onPress={() => {
+                playSoftHaptic();
+                void recordAdherence(action, action.actionIndex, "success", action.scope);
+              }}
             >
               <Text style={styles.adherenceButtonText}>Done</Text>
             </Pressable>
             <Pressable
               style={styles.adherenceButton}
-              onPress={() =>
-                void recordAdherence(action, action.actionIndex, "failure", action.scope)
-              }
+              onPress={() => {
+                playSoftHaptic();
+                void recordAdherence(action, action.actionIndex, "failure", action.scope);
+              }}
             >
               <Text style={styles.adherenceButtonText}>Skip</Text>
             </Pressable>
             <Pressable
               style={styles.adherenceButton}
-              onPress={() =>
-                void recordAdherence(action, action.actionIndex, "unknown", action.scope)
-              }
+              onPress={() => {
+                playSoftHaptic();
+                void recordAdherence(action, action.actionIndex, "unknown", action.scope);
+              }}
             >
               <Text style={styles.adherenceButtonText}>Later</Text>
             </Pressable>
             <Pressable
               style={[styles.adherenceButton, styles.reminderButton]}
-              onPress={() => chooseReminderPreset(action, scheduleActionReminder)}
+              onPress={() => {
+                playSoftHaptic();
+                chooseReminderPreset(action, scheduleActionReminder);
+              }}
             >
               <Text style={styles.adherenceButtonText}>Remind</Text>
             </Pressable>
@@ -1219,7 +1444,7 @@ function ProtocolActionRow({
           </Text>
         ) : null}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -1515,6 +1740,21 @@ function getReminderKey(protocolId: string, action: ScheduledProtocolAction) {
   return `${protocolId}:${action.actionIndex}:${action.action}`;
 }
 
+function getActionKey(action: ScheduledProtocolAction) {
+  return `${action.actionIndex}:${action.action || "action"}`;
+}
+
+function playSoftHaptic() {
+  if (Platform.OS === "ios") {
+    Vibration.vibrate(8);
+    return;
+  }
+
+  if (Platform.OS === "android") {
+    Vibration.vibrate(12);
+  }
+}
+
 function formatReminderDate(date: Date) {
   return new Intl.DateTimeFormat(undefined, {
     weekday: "short",
@@ -1585,6 +1825,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
+  },
+  statusActions: {
+    alignItems: "flex-end",
+    gap: 8,
   },
   tabs: {
     flexDirection: "row",
@@ -1665,6 +1909,17 @@ const styles = StyleSheet.create({
     letterSpacing: 1.8,
     textTransform: "uppercase",
   },
+  textButton: {
+    minHeight: 32,
+    justifyContent: "center",
+  },
+  textButtonText: {
+    color: "rgba(238,214,154,0.86)",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.3,
+    textTransform: "uppercase",
+  },
   compactButton: {
     height: 38,
     alignItems: "center",
@@ -1684,6 +1939,33 @@ const styles = StyleSheet.create({
   actionList: {
     gap: 18,
     marginTop: 18,
+  },
+  dailyBriefPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.22)",
+    backgroundColor: "rgba(218,188,115,0.065)",
+    borderRadius: 10,
+    padding: 18,
+  },
+  briefTitle: {
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 24,
+    fontWeight: "300",
+    lineHeight: 30,
+  },
+  briefCopy: {
+    color: "rgba(255,255,255,0.54)",
+    fontSize: 14,
+    lineHeight: 22,
+    marginTop: 12,
+  },
+  briefAction: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    marginTop: 16,
+    padding: 12,
   },
   protocolStats: {
     flexDirection: "row",
@@ -1766,12 +2048,35 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12,
   },
+  primaryActionCard: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.2)",
+    borderRadius: 8,
+    backgroundColor: "rgba(218,188,115,0.055)",
+    padding: 14,
+  },
+  primaryActionTitle: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 18,
+    fontWeight: "300",
+    lineHeight: 24,
+  },
   actionItem: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.018)",
     flexDirection: "row",
     gap: 12,
+    padding: 12,
   },
   compactActionItem: {
     gap: 10,
+    padding: 10,
+  },
+  expandedActionItem: {
+    borderColor: "rgba(218,188,115,0.24)",
+    backgroundColor: "rgba(218,188,115,0.055)",
   },
   actionIndex: {
     width: 26,
@@ -1883,6 +2188,56 @@ const styles = StyleSheet.create({
   messageList: {
     gap: 12,
     marginTop: 18,
+  },
+  detailPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.24)",
+    backgroundColor: "rgba(218,188,115,0.06)",
+    borderRadius: 10,
+    padding: 20,
+  },
+  detailHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  detailTitle: {
+    color: "rgba(255,255,255,0.94)",
+    fontSize: 26,
+    fontWeight: "300",
+    lineHeight: 32,
+    marginTop: 6,
+  },
+  detailCopy: {
+    color: "rgba(255,255,255,0.56)",
+    fontSize: 15,
+    lineHeight: 24,
+    marginTop: 18,
+  },
+  detailActions: {
+    marginTop: 8,
+  },
+  secondaryActionRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 10,
+  },
+  secondaryAction: {
+    flex: 1,
+    minHeight: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.025)",
+  },
+  secondaryActionText: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.3,
+    textTransform: "uppercase",
   },
   messageItem: {
     borderWidth: 1,

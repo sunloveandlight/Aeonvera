@@ -206,6 +206,8 @@ async function sendExpoPushSubscriptions({
             title: payload.title,
             body: payload.message,
             sound: "default",
+            categoryId: "coach-message",
+            channelId: "coach-updates",
             data: {
               url: payload.url || "/companion?focus=coach",
               actions: payload.actions || [],
