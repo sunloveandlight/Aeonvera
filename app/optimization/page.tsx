@@ -112,6 +112,16 @@ type ScenarioPreset = {
   horizon: string;
 };
 
+type SavedFutureSelfScenario = {
+  id: string;
+  title: string;
+  description: string | null;
+  scenario_ids: string[];
+  share_token: string;
+  is_public: boolean;
+  created_at: string;
+};
+
 const QUESTIONS: Question[] = [
   {
     id: "priority",
@@ -202,6 +212,9 @@ export default function OptimizationPage() {
   const [futureSelf, setFutureSelf] = useState<FutureSelfProjection | null>(null);
   const [scenarioPresets, setScenarioPresets] = useState<ScenarioPreset[]>([]);
   const [selectedScenarioIds, setSelectedScenarioIds] = useState<string[]>([]);
+  const [savedScenarios, setSavedScenarios] = useState<SavedFutureSelfScenario[]>([]);
+  const [savingScenario, setSavingScenario] = useState(false);
+  const [saveScenarioMessage, setSaveScenarioMessage] = useState<string | null>(null);
   const [runningProjection, setRunningProjection] = useState(false);
   const [projectionMessage, setProjectionMessage] = useState<string | null>(null);
 
@@ -234,6 +247,21 @@ export default function OptimizationPage() {
             setBaseSimulatorControls(data.controls || null);
             setFutureSelf(data.futureSelf || null);
             setScenarioPresets(data.scenarioPresets || []);
+          }
+        })
+        .catch(() => null);
+
+      fetch("/api/longevity/future-self/scenarios", { credentials: "include" })
+        .then((response) => response.json())
+        .then((data) => {
+          if (!cancelled) {
+            if (Array.isArray(data?.scenarios)) {
+              setSavedScenarios(data.scenarios);
+            }
+
+            if (data?.migrationRequired) {
+              setSaveScenarioMessage(data.message);
+            }
           }
         })
         .catch(() => null);
@@ -360,6 +388,54 @@ export default function OptimizationPage() {
       controls: simulatorControls,
       projection,
     });
+  }
+
+  async function saveFutureSelfScenario() {
+    const projection = simulatorProjection || futureSelf?.optimized || null;
+    if (!simulatorControls || !futureSelf || !projection) return;
+
+    setSavingScenario(true);
+    setSaveScenarioMessage(null);
+
+    const activeTitles = scenarioPresets
+      .filter((scenario) => selectedScenarioIds.includes(scenario.id))
+      .map((scenario) => scenario.title);
+
+    try {
+      const response = await fetch("/api/longevity/future-self/scenarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: activeTitles.length
+            ? activeTitles.slice(0, 3).join(" + ")
+            : "My 180-day optimized self",
+          description: futureSelf.summary,
+          scenarioIds: selectedScenarioIds,
+          controls: simulatorControls,
+          projection,
+          futureSelf,
+          isPublic: true,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not save scenario.");
+      }
+
+      setSavedScenarios((current) => [
+        data.scenario,
+        ...current.filter((scenario) => scenario.id !== data.scenario.id),
+      ]);
+      setSaveScenarioMessage("Saved. Your shareable future-self page is ready.");
+    } catch (error) {
+      setSaveScenarioMessage(
+        error instanceof Error ? error.message : "Could not save scenario."
+      );
+    } finally {
+      setSavingScenario(false);
+    }
   }
 
   function updateSimulatorControl(key: keyof SimulatorControls, value: number) {
@@ -684,7 +760,10 @@ export default function OptimizationPage() {
           <FutureSelfComparisonPanel
             futureSelf={futureSelf}
             onBuildProtocol={() => void buildProtocolFromProjection()}
+            onSaveScenario={() => void saveFutureSelfScenario()}
             buildingProtocol={generatingProtocol}
+            savingScenario={savingScenario}
+            saveMessage={saveScenarioMessage}
           />
         )}
 
@@ -695,6 +774,13 @@ export default function OptimizationPage() {
             runningProjection={runningProjection}
             onToggleScenario={toggleScenario}
             onRunProjection={() => void runProjection()}
+          />
+        )}
+
+        {(savedScenarios.length > 0 || saveScenarioMessage) && (
+          <SavedFutureSelfScenariosPanel
+            scenarios={savedScenarios}
+            message={saveScenarioMessage}
           />
         )}
 
@@ -832,11 +918,17 @@ function VitalSignalClock() {
 function FutureSelfComparisonPanel({
   futureSelf,
   onBuildProtocol,
+  onSaveScenario,
   buildingProtocol,
+  savingScenario,
+  saveMessage,
 }: {
   futureSelf: FutureSelfProjection;
   onBuildProtocol: () => void;
+  onSaveScenario: () => void;
   buildingProtocol: boolean;
+  savingScenario: boolean;
+  saveMessage: string | null;
 }) {
   const chart = buildFutureSelfChart(futureSelf.trajectory);
   const finalPoint = futureSelf.trajectory[futureSelf.trajectory.length - 1];
@@ -953,6 +1045,19 @@ function FutureSelfComparisonPanel({
           >
             {buildingProtocol ? "Building protocol" : "Build protocol from future self"}
           </button>
+          <button
+            type="button"
+            onClick={onSaveScenario}
+            disabled={savingScenario}
+            className="premium-action-secondary inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {savingScenario ? "Saving scenario" : "Save shareable scenario"}
+          </button>
+          {saveMessage && (
+            <p className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 text-sm leading-6 text-white/48">
+              {saveMessage}
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -1033,6 +1138,66 @@ function ScenarioStackPanel({
   );
 }
 
+function SavedFutureSelfScenariosPanel({
+  scenarios,
+  message,
+}: {
+  scenarios: SavedFutureSelfScenario[];
+  message: string | null;
+}) {
+  return (
+    <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
+      <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="micro-label">Saved Future Selves</p>
+          <h2 className="mt-3 text-3xl font-light text-white">
+            Reopen or share your strongest scenarios.
+          </h2>
+        </div>
+        {message && (
+          <p className="max-w-sm text-sm leading-6 text-white/42">
+            {message}
+          </p>
+        )}
+      </div>
+
+      {scenarios.length ? (
+        <div className="grid gap-3 md:grid-cols-3">
+          {scenarios.slice(0, 6).map((scenario) => (
+            <Link
+              key={scenario.id}
+              href={`/future-self/${scenario.share_token}`}
+              className="quiet-lift flex min-h-44 flex-col rounded-lg border border-white/[0.07] bg-white/[0.025] p-5 transition hover:border-white/[0.16]"
+            >
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                  Shareable
+                </span>
+                <span className="royal-text text-sm">
+                  {scenario.scenario_ids.length || 1}
+                </span>
+              </div>
+              <p className="text-lg font-light leading-7 text-white/80">
+                {scenario.title}
+              </p>
+              <p className="mt-3 line-clamp-3 text-xs leading-5 text-white/38">
+                {scenario.description || "Saved future-self projection."}
+              </p>
+              <p className="mt-auto pt-4 text-[9px] uppercase tracking-[0.14em] text-white/24">
+                {formatScenarioDate(scenario.created_at)}
+              </p>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm leading-7 text-white/42">
+          Save a future-self projection to create a public read-only scenario page.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function HeartbeatMonitor() {
   return (
     <svg
@@ -1100,4 +1265,15 @@ function futureSelfImpactClassName(impact: "low" | "medium" | "high") {
   if (impact === "high") return `${base} royal-text bg-white/[0.035]`;
   if (impact === "medium") return `${base} text-white/42 bg-white/[0.025]`;
   return `${base} text-white/28 bg-white/[0.02]`;
+}
+
+function formatScenarioDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Saved scenario";
+
+  return new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
 }

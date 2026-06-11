@@ -1,0 +1,193 @@
+import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { FUTURE_SELF_SCENARIOS } from "@/lib/longevity/futureSelfSimulator";
+
+type CookieToSet = {
+  name: string;
+  value: string;
+  options?: Parameters<Awaited<ReturnType<typeof cookies>>["set"]>[2];
+};
+
+const SELECT_FIELDS =
+  "id,title,description,scenario_ids,controls,projection,future_self,share_token,is_public,created_at,updated_at";
+
+export async function GET() {
+  try {
+    const user = await requireUser();
+    const admin = getSupabaseAdmin();
+    const { data, error } = await admin
+      .from("future_self_scenarios")
+      .select(SELECT_FIELDS)
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(12);
+
+    if (error) {
+      if (isMissingTableError(error)) {
+        return NextResponse.json({
+          scenarios: [],
+          migrationRequired: true,
+          message: "Apply the future_self_scenarios Supabase migration to save scenarios.",
+        });
+      }
+
+      throw error;
+    }
+
+    return NextResponse.json({ scenarios: data || [] });
+  } catch (error) {
+    if (error instanceof FutureSelfScenarioError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
+    const message =
+      error instanceof Error ? error.message : "Could not load saved scenarios.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await requireUser();
+    const body = await readJsonBody(request);
+    const scenarioIds = sanitizeScenarioIds(body?.scenarioIds);
+    const futureSelf = safeRecord(body?.futureSelf);
+    const projection = safeRecord(body?.projection);
+    const controls = safeRecord(body?.controls);
+    const title = sanitizeText(body?.title, 88) || buildScenarioTitle(scenarioIds);
+    const description =
+      sanitizeText(body?.description, 220) ||
+      sanitizeText(futureSelf.summary, 220) ||
+      "Saved future-self projection.";
+
+    const admin = getSupabaseAdmin();
+    const { data, error } = await admin
+      .from("future_self_scenarios")
+      .insert({
+        user_id: user.id,
+        title,
+        description,
+        scenario_ids: scenarioIds,
+        controls,
+        projection,
+        future_self: futureSelf,
+        is_public: body?.isPublic !== false,
+      })
+      .select(SELECT_FIELDS)
+      .single();
+
+    if (error) {
+      if (isMissingTableError(error)) {
+        return NextResponse.json(
+          {
+            error:
+              "The future_self_scenarios table is not live yet. Apply the Supabase migration, then save again.",
+          },
+          { status: 500 }
+        );
+      }
+
+      throw error;
+    }
+
+    return NextResponse.json({ scenario: data });
+  } catch (error) {
+    if (error instanceof FutureSelfScenarioError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
+    const message =
+      error instanceof Error ? error.message : "Could not save future-self scenario.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+async function requireUser() {
+  const supabase = await getSupabaseUserClient();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    throw new FutureSelfScenarioError("Unauthorized", 401);
+  }
+
+  return user;
+}
+
+async function getSupabaseUserClient() {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll(); },
+        setAll(cookiesToSet: CookieToSet[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+}
+
+async function readJsonBody(request: NextRequest) {
+  try {
+    return await request.json();
+  } catch {
+    return {};
+  }
+}
+
+function sanitizeScenarioIds(value: unknown) {
+  if (!Array.isArray(value)) return [];
+
+  const allowed = new Set(FUTURE_SELF_SCENARIOS.map((scenario) => scenario.id));
+  return Array.from(
+    new Set(
+      value.filter(
+        (scenarioId): scenarioId is string =>
+          typeof scenarioId === "string" && allowed.has(scenarioId)
+      )
+    )
+  ).slice(0, 5);
+}
+
+function buildScenarioTitle(scenarioIds: string[]) {
+  const titles = FUTURE_SELF_SCENARIOS
+    .filter((scenario) => scenarioIds.includes(scenario.id))
+    .map((scenario) => scenario.title);
+
+  if (!titles.length) return "My 180-day optimized self";
+  if (titles.length === 1) return titles[0];
+  return titles.slice(0, 3).join(" + ");
+}
+
+function sanitizeText(value: unknown, maxLength: number) {
+  if (typeof value !== "string") return "";
+  return value.trim().replace(/\s+/g, " ").slice(0, maxLength);
+}
+
+function safeRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+function isMissingTableError(error: { code?: string; message?: string }) {
+  return (
+    error.code === "42P01" ||
+    error.message?.includes("future_self_scenarios") ||
+    error.message?.includes("schema cache")
+  );
+}
+
+class FutureSelfScenarioError extends Error {
+  constructor(message: string, readonly status: number) {
+    super(message);
+  }
+}
