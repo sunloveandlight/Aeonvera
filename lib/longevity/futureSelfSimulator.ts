@@ -30,6 +30,15 @@ export type FutureSelfLever = {
   direction: "increase" | "decrease";
 };
 
+export type FutureSelfScenario = {
+  id: string;
+  title: string;
+  domain: string;
+  description: string;
+  horizon: string;
+  apply: (controls: FutureSelfControls) => FutureSelfControls;
+};
+
 export type FutureSelfProjection = {
   baseline: ReturnType<typeof summarizeResult>;
   optimized: ReturnType<typeof summarizeResult> & {
@@ -43,9 +52,74 @@ export type FutureSelfProjection = {
   headline: string;
   summary: string;
   horizonDays: number;
+  activeScenarios: Array<Omit<FutureSelfScenario, "apply">>;
 };
 
 const HORIZON_DAYS = [0, 30, 60, 90, 180];
+
+export const FUTURE_SELF_SCENARIOS: FutureSelfScenario[] = [
+  {
+    id: "lose-20-pounds",
+    title: "Lose 20 pounds",
+    domain: "Composition",
+    description: "Project the biological-age effect of reducing body mass while keeping strength work active.",
+    horizon: "90-180 days",
+    apply: (controls) => ({
+      ...controls,
+      weight_kg: clamp(round(controls.weight_kg - 9.1, 1), 45, 180),
+      exercise_days: Math.max(controls.exercise_days, 4),
+    }),
+  },
+  {
+    id: "vo2-15",
+    title: "Improve VO2 max 15%",
+    domain: "Cardiovascular",
+    description: "Model a focused aerobic block that lifts cardiorespiratory capacity.",
+    horizon: "60-120 days",
+    apply: (controls) => ({
+      ...controls,
+      vo2_max: clamp(round(controls.vo2_max * 1.15, 1), 20, 70),
+      resting_hr: clamp(round(controls.resting_hr - 3, 0), 40, 100),
+      exercise_days: Math.max(controls.exercise_days, 5),
+    }),
+  },
+  {
+    id: "sleep-30",
+    title: "Sleep 30 more minutes",
+    domain: "Recovery",
+    description: "Add half an hour of sleep opportunity and project the recovery effect.",
+    horizon: "30-60 days",
+    apply: (controls) => ({
+      ...controls,
+      sleep_hours: clamp(round(controls.sleep_hours + 0.5, 1), 4, 10),
+      stress_level: clamp(round(controls.stress_level - 1, 0), 1, 10),
+    }),
+  },
+  {
+    id: "stress-reset",
+    title: "Lower stress two points",
+    domain: "Neuroendocrine",
+    description: "Simulate a sustained recovery protocol that lowers chronic stress load.",
+    horizon: "30-90 days",
+    apply: (controls) => ({
+      ...controls,
+      stress_level: clamp(round(controls.stress_level - 2, 0), 1, 10),
+      resting_hr: clamp(round(controls.resting_hr - 2, 0), 40, 100),
+    }),
+  },
+  {
+    id: "training-consistency",
+    title: "Train five days weekly",
+    domain: "Movement",
+    description: "Project a consistent weekly rhythm of strength and aerobic training.",
+    horizon: "60-120 days",
+    apply: (controls) => ({
+      ...controls,
+      exercise_days: Math.max(controls.exercise_days, 5),
+      vo2_max: clamp(round(controls.vo2_max * 1.08, 1), 20, 70),
+    }),
+  },
+];
 
 export function buildDefaultFutureSelfControls(input: AssessmentInput): FutureSelfControls {
   return {
@@ -76,14 +150,35 @@ export function normalizeFutureSelfControls(
   };
 }
 
+export function applyFutureSelfScenarios(
+  controls: FutureSelfControls,
+  scenarioIds: string[]
+) {
+  const scenarioMap = new Map(FUTURE_SELF_SCENARIOS.map((scenario) => [scenario.id, scenario]));
+
+  return scenarioIds.reduce((nextControls, scenarioId) => {
+    const scenario = scenarioMap.get(scenarioId);
+    return scenario ? scenario.apply(nextControls) : nextControls;
+  }, controls);
+}
+
+export function summarizeFutureSelfScenarios(scenarioIds: string[]) {
+  const ids = new Set(scenarioIds);
+  return FUTURE_SELF_SCENARIOS.filter((scenario) => ids.has(scenario.id)).map(
+    scenarioSummary
+  );
+}
+
 export function buildFutureSelfProjection({
   input,
   controls,
   horizonDays = 180,
+  activeScenarioIds = [],
 }: {
   input: AssessmentInput;
   controls: FutureSelfControls;
   horizonDays?: number;
+  activeScenarioIds?: string[];
 }): FutureSelfProjection {
   const baseline = computeBiologicalAge(input);
   const optimized = computeBiologicalAge(applyFutureSelfControls(input, controls));
@@ -133,6 +228,7 @@ export function buildFutureSelfProjection({
         : "Current and optimized trajectories are currently close.",
     summary: buildSummary({ projectedBiologicalAgeImprovement, levers }),
     horizonDays,
+    activeScenarios: summarizeFutureSelfScenarios(activeScenarioIds),
   };
 }
 
@@ -279,4 +375,14 @@ function round(value: number, decimals: number) {
 
 function impactScore(value: FutureSelfLever["impact"]) {
   return value === "high" ? 3 : value === "medium" ? 2 : 1;
+}
+
+function scenarioSummary(scenario: FutureSelfScenario) {
+  return {
+    id: scenario.id,
+    title: scenario.title,
+    domain: scenario.domain,
+    description: scenario.description,
+    horizon: scenario.horizon,
+  };
 }

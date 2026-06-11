@@ -101,6 +101,15 @@ type FutureSelfProjection = {
   headline: string;
   summary: string;
   horizonDays: number;
+  activeScenarios?: ScenarioPreset[];
+};
+
+type ScenarioPreset = {
+  id: string;
+  title: string;
+  domain: string;
+  description: string;
+  horizon: string;
 };
 
 const QUESTIONS: Question[] = [
@@ -188,8 +197,11 @@ export default function OptimizationPage() {
   const [protocolMessage, setProtocolMessage] = useState<string | null>(null);
   const [bioAgeSimulations, setBioAgeSimulations] = useState<BioAgeSimulation[]>([]);
   const [simulatorControls, setSimulatorControls] = useState<SimulatorControls | null>(null);
+  const [baseSimulatorControls, setBaseSimulatorControls] = useState<SimulatorControls | null>(null);
   const [simulatorProjection, setSimulatorProjection] = useState<SimulatorProjection | null>(null);
   const [futureSelf, setFutureSelf] = useState<FutureSelfProjection | null>(null);
+  const [scenarioPresets, setScenarioPresets] = useState<ScenarioPreset[]>([]);
+  const [selectedScenarioIds, setSelectedScenarioIds] = useState<string[]>([]);
   const [runningProjection, setRunningProjection] = useState(false);
   const [projectionMessage, setProjectionMessage] = useState<string | null>(null);
 
@@ -219,7 +231,9 @@ export default function OptimizationPage() {
           if (!cancelled && data?.simulations) {
             setBioAgeSimulations(data.simulations);
             setSimulatorControls(data.controls || null);
+            setBaseSimulatorControls(data.controls || null);
             setFutureSelf(data.futureSelf || null);
+            setScenarioPresets(data.scenarioPresets || []);
           }
         })
         .catch(() => null);
@@ -303,7 +317,7 @@ export default function OptimizationPage() {
     }
   }
 
-  async function runProjection(nextControls = simulatorControls) {
+  async function runProjection(nextControls = baseSimulatorControls || simulatorControls) {
     if (!nextControls) return;
 
     setRunningProjection(true);
@@ -314,7 +328,10 @@ export default function OptimizationPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ controls: nextControls }),
+        body: JSON.stringify({
+          controls: nextControls,
+          scenarioIds: selectedScenarioIds,
+        }),
       });
       const data = await response.json();
 
@@ -325,6 +342,7 @@ export default function OptimizationPage() {
       setSimulatorControls(data.controls);
       setSimulatorProjection(data.projection);
       setFutureSelf(data.futureSelf || null);
+      setScenarioPresets(data.scenarioPresets || scenarioPresets);
     } catch (error) {
       setProjectionMessage(
         error instanceof Error ? error.message : "Could not run projection."
@@ -335,16 +353,26 @@ export default function OptimizationPage() {
   }
 
   async function buildProtocolFromProjection() {
-    if (!simulatorControls || !simulatorProjection) return;
+    const projection = simulatorProjection || futureSelf?.optimized || null;
+    if (!simulatorControls || !projection) return;
 
     await buildOptimizationProtocol({
       controls: simulatorControls,
-      projection: simulatorProjection,
+      projection,
     });
   }
 
   function updateSimulatorControl(key: keyof SimulatorControls, value: number) {
     setSimulatorControls((current) => current ? { ...current, [key]: value } : current);
+    setBaseSimulatorControls((current) => current ? { ...current, [key]: value } : current);
+  }
+
+  function toggleScenario(scenarioId: string) {
+    setSelectedScenarioIds((current) =>
+      current.includes(scenarioId)
+        ? current.filter((id) => id !== scenarioId)
+        : [...current, scenarioId]
+    );
   }
 
   if (!authChecked) {
@@ -660,6 +688,16 @@ export default function OptimizationPage() {
           />
         )}
 
+        {scenarioPresets.length > 0 && simulatorControls && (
+          <ScenarioStackPanel
+            scenarios={scenarioPresets}
+            selectedScenarioIds={selectedScenarioIds}
+            runningProjection={runningProjection}
+            onToggleScenario={toggleScenario}
+            onRunProjection={() => void runProjection()}
+          />
+        )}
+
         {simulatorControls && (
           <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
             <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
@@ -916,6 +954,80 @@ function FutureSelfComparisonPanel({
             {buildingProtocol ? "Building protocol" : "Build protocol from future self"}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ScenarioStackPanel({
+  scenarios,
+  selectedScenarioIds,
+  runningProjection,
+  onToggleScenario,
+  onRunProjection,
+}: {
+  scenarios: ScenarioPreset[];
+  selectedScenarioIds: string[];
+  runningProjection: boolean;
+  onToggleScenario: (scenarioId: string) => void;
+  onRunProjection: () => void;
+}) {
+  return (
+    <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
+      <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="micro-label">Scenario stack</p>
+          <h2 className="mt-3 text-3xl font-light text-white">
+            Combine changes and compare the future.
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={onRunProjection}
+          disabled={runningProjection}
+          className="premium-action inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {runningProjection ? "Projecting" : selectedScenarioIds.length ? "Run stacked projection" : "Run projection"}
+        </button>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-5">
+        {scenarios.map((scenario) => {
+          const selected = selectedScenarioIds.includes(scenario.id);
+
+          return (
+            <button
+              key={scenario.id}
+              type="button"
+              onClick={() => onToggleScenario(scenario.id)}
+              className={`quiet-lift min-h-52 rounded-lg border p-4 text-left transition ${
+                selected
+                  ? "border-white/[0.18] bg-white/[0.065]"
+                  : "border-white/[0.07] bg-white/[0.025]"
+              }`}
+            >
+              <div className="flex h-full flex-col">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                    {scenario.domain}
+                  </span>
+                  <span className={selected ? "royal-text text-sm" : "text-sm text-white/22"}>
+                    {selected ? "on" : "off"}
+                  </span>
+                </div>
+                <p className="text-base font-light leading-6 text-white/78">
+                  {scenario.title}
+                </p>
+                <p className="mt-3 line-clamp-4 text-xs leading-5 text-white/38">
+                  {scenario.description}
+                </p>
+                <p className="mt-auto pt-4 text-[9px] uppercase tracking-[0.14em] text-white/24">
+                  {scenario.horizon}
+                </p>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

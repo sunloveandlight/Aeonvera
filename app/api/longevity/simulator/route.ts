@@ -10,6 +10,8 @@ import {
 import { buildAssessmentInput } from "@/lib/longevity/assessmentInput";
 import { loadLatestLabInputValues } from "@/lib/labs/latestLabInputs";
 import {
+  FUTURE_SELF_SCENARIOS,
+  applyFutureSelfScenarios,
   buildDefaultFutureSelfControls,
   buildFutureSelfProjection,
   normalizeFutureSelfControls,
@@ -67,6 +69,7 @@ export async function GET() {
       baseline: summarizeResult(baseline),
       controls,
       futureSelf,
+      scenarioPresets: summarizeScenarioPresets(),
       simulations,
     });
   } catch (error) {
@@ -85,14 +88,24 @@ export async function POST(request: NextRequest) {
     const input = await getLatestAssessmentInput();
     const baseline = computeBiologicalAge(input);
     const body = await readJsonBody(request);
-    const controls = normalizeControls(body?.controls, buildControls(input));
-    const futureSelf = buildFutureSelfProjection({ input, controls });
+    const scenarioIds = sanitizeScenarioIds(body?.scenarioIds);
+    const manualControls = normalizeControls(body?.controls, buildControls(input));
+    const controls = scenarioIds.length
+      ? applyFutureSelfScenarios(manualControls, scenarioIds)
+      : manualControls;
+    const futureSelf = buildFutureSelfProjection({
+      input,
+      controls,
+      activeScenarioIds: scenarioIds,
+    });
     const projected = futureSelf.optimized;
 
     return NextResponse.json({
       baseline: summarizeResult(baseline),
       controls,
       futureSelf,
+      scenarioPresets: summarizeScenarioPresets(),
+      activeScenarioIds: scenarioIds,
       projection: {
         ...projected,
         projectedAgeDeltaImprovement: futureSelf.optimized.projectedAgeDeltaImprovement,
@@ -178,6 +191,30 @@ function normalizeControls(
   fallback: SimulatorControls
 ): SimulatorControls {
   return normalizeFutureSelfControls(value, fallback);
+}
+
+function sanitizeScenarioIds(value: unknown) {
+  if (!Array.isArray(value)) return [];
+
+  const allowed = new Set(FUTURE_SELF_SCENARIOS.map((scenario) => scenario.id));
+  return Array.from(
+    new Set(
+      value.filter(
+        (scenarioId): scenarioId is string =>
+          typeof scenarioId === "string" && allowed.has(scenarioId)
+      )
+    )
+  ).slice(0, 5);
+}
+
+function summarizeScenarioPresets() {
+  return FUTURE_SELF_SCENARIOS.map((scenario) => ({
+    id: scenario.id,
+    title: scenario.title,
+    domain: scenario.domain,
+    description: scenario.description,
+    horizon: scenario.horizon,
+  }));
 }
 
 async function readJsonBody(request: NextRequest) {
