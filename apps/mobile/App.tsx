@@ -159,26 +159,31 @@ const ACTION_SECTIONS: {
   scope: ActionScope;
   title: string;
   copy: string;
+  maxVisible: number;
 }[] = [
   {
     scope: "today",
     title: "Today",
     copy: "Daily actions and anything that should happen now.",
+    maxVisible: 3,
   },
   {
     scope: "week",
     title: "This Week",
     copy: "Weekly targets, training blocks, and setup actions.",
+    maxVisible: 2,
   },
   {
     scope: "check_in",
     title: "Check-ins",
     copy: "Measurements and feedback Aeonvera uses to adapt.",
+    maxVisible: 2,
   },
   {
     scope: "later",
     title: "Later",
     copy: "Lower urgency actions or items better scheduled manually.",
+    maxVisible: 1,
   },
 ];
 
@@ -907,6 +912,20 @@ function TodayView({
 }) {
   const adherenceByAction = buildLatestAdherenceByAction(adherenceEvents);
   const groupedActions = groupActionsByScope(latestActions);
+  const completedCount = latestActions.filter(
+    (action) => adherenceByAction[action.action || ""]?.outcome === "success"
+  ).length;
+  const todayActions = groupedActions.today.slice(0, 3);
+  const fallbackFocusActions = latestActions
+    .slice(0, 3)
+    .map((action, actionIndex) => ({
+      ...action,
+      actionIndex,
+      scope: classifyActionScope(action),
+    }));
+  const secondarySections = ACTION_SECTIONS.filter(
+    (section) => section.scope !== "today" && groupedActions[section.scope].length
+  );
 
   return (
     <>
@@ -914,28 +933,90 @@ function TodayView({
         <Text style={styles.cardLabel}>Today&apos;s Protocol</Text>
         <Text style={styles.cardTitle}>{protocol ? "Active protocol" : "Build protocol"}</Text>
         <Text style={styles.cardCopy}>{latestSummary}</Text>
+        {latestActions.length ? (
+          <View style={styles.protocolStats}>
+            <View style={styles.statPill}>
+              <Text style={styles.statValue}>{latestActions.length}</Text>
+              <Text style={styles.statLabel}>actions</Text>
+            </View>
+            <View style={styles.statPill}>
+              <Text style={styles.statValue}>{completedCount}</Text>
+              <Text style={styles.statLabel}>complete</Text>
+            </View>
+            <View style={styles.statPill}>
+              <Text style={styles.statValue}>{groupedActions.today.length}</Text>
+              <Text style={styles.statLabel}>today</Text>
+            </View>
+          </View>
+        ) : null}
         <View style={styles.actionList}>
           {latestActions.length ? (
-            ACTION_SECTIONS.map((section) =>
-              groupedActions[section.scope].length ? (
-                <View key={section.scope} style={styles.actionSection}>
-                  <Text style={styles.sectionTitle}>{section.title}</Text>
-                  <Text style={styles.sectionCopy}>{section.copy}</Text>
-                  {groupedActions[section.scope].map((action) => (
-                    <ProtocolActionRow
-                      key={`${action.action}-${action.actionIndex}`}
-                      action={action}
-                      adherenceEvent={adherenceByAction[action.action || ""]}
-                      localReminder={
-                        protocol ? localReminders[getReminderKey(protocol.id, action)] : undefined
-                      }
-                      recordAdherence={recordAdherence}
-                      scheduleActionReminder={scheduleActionReminder}
-                    />
-                  ))}
+            <>
+              <View style={styles.actionSection}>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.sectionText}>
+                    <Text style={styles.sectionTitle}>Today&apos;s focus</Text>
+                    <Text style={styles.sectionCopy}>
+                      The few actions that deserve attention first.
+                    </Text>
+                  </View>
+                  <Text style={styles.sectionCount}>{groupedActions.today.length}</Text>
                 </View>
-              ) : null
-            )
+                {(todayActions.length ? todayActions : fallbackFocusActions).map((action) => (
+                  <ProtocolActionRow
+                    key={`${action.action}-${action.actionIndex}`}
+                    action={action}
+                    adherenceEvent={adherenceByAction[action.action || ""]}
+                    localReminder={
+                      protocol ? localReminders[getReminderKey(protocol.id, action)] : undefined
+                    }
+                    recordAdherence={recordAdherence}
+                    scheduleActionReminder={scheduleActionReminder}
+                  />
+                ))}
+              </View>
+
+              {secondarySections.length ? (
+                <View style={styles.protocolOverview}>
+                  <Text style={styles.cardLabel}>Protocol queue</Text>
+                  {secondarySections.map((section) => {
+                    const actions = groupedActions[section.scope];
+                    const visibleActions = actions.slice(0, section.maxVisible);
+                    const hiddenCount = Math.max(actions.length - visibleActions.length, 0);
+
+                    return (
+                      <View key={section.scope} style={styles.compactSection}>
+                        <View style={styles.sectionHeader}>
+                          <View style={styles.sectionText}>
+                            <Text style={styles.compactSectionTitle}>{section.title}</Text>
+                            <Text style={styles.sectionCopy}>{section.copy}</Text>
+                          </View>
+                          <Text style={styles.sectionCount}>{actions.length}</Text>
+                        </View>
+                        {visibleActions.map((action) => (
+                          <ProtocolActionRow
+                            key={`${action.action}-${action.actionIndex}`}
+                            action={action}
+                            compact
+                            adherenceEvent={adherenceByAction[action.action || ""]}
+                            localReminder={
+                              protocol ? localReminders[getReminderKey(protocol.id, action)] : undefined
+                            }
+                            recordAdherence={recordAdherence}
+                            scheduleActionReminder={scheduleActionReminder}
+                          />
+                        ))}
+                        {hiddenCount ? (
+                          <Text style={styles.moreText}>
+                            {hiddenCount} more action{hiddenCount === 1 ? "" : "s"} held in the active protocol.
+                          </Text>
+                        ) : null}
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : null}
+            </>
           ) : (
             <Text style={styles.emptyText}>
               Answer the optimization intake to generate your first active protocol.
@@ -988,35 +1069,67 @@ function InboxView({
   openPath: (path: string) => Promise<void>;
   selectedMessageId: string | null;
 }) {
+  const selectedMessage =
+    messages.find((message) => message.id === selectedMessageId) || messages[0] || null;
+  const recentMessages = selectedMessage
+    ? messages.filter((message) => message.id !== selectedMessage.id).slice(0, 4)
+    : messages.slice(0, 4);
+
   return (
     <View style={styles.panel} onLayout={onInboxLayout}>
       <Text style={styles.cardLabel}>Coach Inbox</Text>
-      <Text style={styles.cardTitle}>{messages.length ? "Latest messages" : "No messages yet"}</Text>
+      <Text style={styles.cardTitle}>{messages.length ? "Latest coach signal" : "No messages yet"}</Text>
       {notice ? <Text style={styles.inboxNotice}>{notice}</Text> : null}
       <View style={styles.messageList} onLayout={onMessageListLayout}>
-        {messages.length ? (
-          messages.map((message) => (
+        {selectedMessage ? (
+          <>
             <Pressable
-              key={message.id}
+              key={selectedMessage.id}
               style={[
                 styles.messageItem,
-                selectedMessageId === message.id && styles.selectedMessageItem,
+                styles.featuredMessageItem,
+                selectedMessageId === selectedMessage.id && styles.selectedMessageItem,
               ]}
               onLayout={
-                selectedMessageId === message.id ? onSelectedMessageLayout : undefined
+                selectedMessageId === selectedMessage.id ? onSelectedMessageLayout : undefined
               }
-              onPress={() => void openMessage(message, openPath)}
+              onPress={() => void openMessage(selectedMessage, openPath)}
             >
-              {selectedMessageId === message.id ? (
-                <Text style={styles.selectedMessageLabel}>Selected notification</Text>
-              ) : null}
+              <Text style={styles.selectedMessageLabel}>
+                {selectedMessageId === selectedMessage.id ? "Selected notification" : "Latest"}
+              </Text>
               <View style={styles.messageHeader}>
-                <Text style={styles.messageTitle}>{message.title}</Text>
-                <Text style={styles.messageDate}>{formatDate(message.created_at)}</Text>
+                <Text style={styles.messageTitle}>{selectedMessage.title}</Text>
+                <Text style={styles.messageDate}>{formatDate(selectedMessage.created_at)}</Text>
               </View>
-              <Text style={styles.messageCopy}>{message.message}</Text>
+              <Text style={styles.messageCopy}>{selectedMessage.message}</Text>
             </Pressable>
-          ))
+
+            {recentMessages.length ? (
+              <View style={styles.recentMessages}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.compactSectionTitle}>Recent history</Text>
+                  <Text style={styles.sectionCount}>{messages.length}</Text>
+                </View>
+                {recentMessages.map((message) => (
+                  <Pressable
+                    key={message.id}
+                    style={styles.compactMessageItem}
+                    onPress={() => void openMessage(message, openPath)}
+                  >
+                    <Text style={styles.compactMessageTitle}>{message.title}</Text>
+                    <Text style={styles.messageDate}>{formatDate(message.created_at)}</Text>
+                  </Pressable>
+                ))}
+                {messages.length > recentMessages.length + 1 ? (
+                  <Text style={styles.moreText}>
+                    {messages.length - recentMessages.length - 1} older message
+                    {messages.length - recentMessages.length - 1 === 1 ? "" : "s"} archived.
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+          </>
         ) : (
           <Text style={styles.emptyText}>
             Coach messages will appear here after reports, protocols, and daily
@@ -1030,12 +1143,14 @@ function InboxView({
 
 function ProtocolActionRow({
   action,
+  compact = false,
   adherenceEvent,
   localReminder,
   recordAdherence,
   scheduleActionReminder,
 }: {
   action: ScheduledProtocolAction;
+  compact?: boolean;
   adherenceEvent?: AdherenceEvent;
   localReminder?: LocalReminder;
   recordAdherence: (
@@ -1052,7 +1167,7 @@ function ProtocolActionRow({
   ) => Promise<void>;
 }) {
   return (
-    <View style={styles.actionItem}>
+    <View style={[styles.actionItem, compact && styles.compactActionItem]}>
       <Text style={styles.actionIndex}>{action.actionIndex + 1}</Text>
       <View style={styles.actionBody}>
         <View style={styles.actionHeader}>
@@ -1062,39 +1177,41 @@ function ProtocolActionRow({
         <Text style={styles.actionMeta}>
           {[action.domain, action.cadence, action.impact].filter(Boolean).join(" / ")}
         </Text>
-        {action.why ? <Text style={styles.actionWhy}>{action.why}</Text> : null}
-        <View style={styles.adherenceControls}>
-          <Pressable
-            style={styles.adherenceButton}
-            onPress={() =>
-              void recordAdherence(action, action.actionIndex, "success", action.scope)
-            }
-          >
-            <Text style={styles.adherenceButtonText}>Done</Text>
-          </Pressable>
-          <Pressable
-            style={styles.adherenceButton}
-            onPress={() =>
-              void recordAdherence(action, action.actionIndex, "failure", action.scope)
-            }
-          >
-            <Text style={styles.adherenceButtonText}>Skip</Text>
-          </Pressable>
-          <Pressable
-            style={styles.adherenceButton}
-            onPress={() =>
-              void recordAdherence(action, action.actionIndex, "unknown", action.scope)
-            }
-          >
-            <Text style={styles.adherenceButtonText}>Later</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.adherenceButton, styles.reminderButton]}
-            onPress={() => chooseReminderPreset(action, scheduleActionReminder)}
-          >
-            <Text style={styles.adherenceButtonText}>Remind</Text>
-          </Pressable>
-        </View>
+        {!compact && action.why ? <Text style={styles.actionWhy}>{action.why}</Text> : null}
+        {!compact ? (
+          <View style={styles.adherenceControls}>
+            <Pressable
+              style={styles.adherenceButton}
+              onPress={() =>
+                void recordAdherence(action, action.actionIndex, "success", action.scope)
+              }
+            >
+              <Text style={styles.adherenceButtonText}>Done</Text>
+            </Pressable>
+            <Pressable
+              style={styles.adherenceButton}
+              onPress={() =>
+                void recordAdherence(action, action.actionIndex, "failure", action.scope)
+              }
+            >
+              <Text style={styles.adherenceButtonText}>Skip</Text>
+            </Pressable>
+            <Pressable
+              style={styles.adherenceButton}
+              onPress={() =>
+                void recordAdherence(action, action.actionIndex, "unknown", action.scope)
+              }
+            >
+              <Text style={styles.adherenceButtonText}>Later</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.adherenceButton, styles.reminderButton]}
+              onPress={() => chooseReminderPreset(action, scheduleActionReminder)}
+            >
+              <Text style={styles.adherenceButtonText}>Remind</Text>
+            </Pressable>
+          </View>
+        ) : null}
         {localReminder ? (
           <Text style={styles.reminderText}>
             Reminder {formatReminderDate(new Date(localReminder.scheduledFor))}
@@ -1568,13 +1685,66 @@ const styles = StyleSheet.create({
     gap: 18,
     marginTop: 18,
   },
+  protocolStats: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 16,
+  },
+  statPill: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  statValue: {
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 18,
+    fontWeight: "400",
+  },
+  statLabel: {
+    color: "rgba(218,188,115,0.58)",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 1,
+    marginTop: 2,
+    textTransform: "uppercase",
+  },
   actionSection: {
     gap: 12,
+  },
+  sectionHeader: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 10,
+    justifyContent: "space-between",
+  },
+  sectionText: {
+    flex: 1,
   },
   sectionTitle: {
     color: "rgba(255,255,255,0.82)",
     fontSize: 16,
     fontWeight: "400",
+  },
+  compactSectionTitle: {
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 14,
+    fontWeight: "400",
+  },
+  sectionCount: {
+    minWidth: 28,
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.22)",
+    borderRadius: 999,
+    color: "rgba(238,214,154,0.82)",
+    fontSize: 11,
+    fontWeight: "700",
+    lineHeight: 24,
+    overflow: "hidden",
+    textAlign: "center",
   },
   sectionCopy: {
     color: "rgba(255,255,255,0.38)",
@@ -1582,9 +1752,26 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: -6,
   },
+  protocolOverview: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.07)",
+    gap: 14,
+    paddingTop: 16,
+  },
+  compactSection: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.025)",
+    gap: 12,
+    padding: 12,
+  },
   actionItem: {
     flexDirection: "row",
     gap: 12,
+  },
+  compactActionItem: {
+    gap: 10,
   },
   actionIndex: {
     width: 26,
@@ -1704,6 +1891,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 14,
   },
+  featuredMessageItem: {
+    borderColor: "rgba(218,188,115,0.28)",
+    backgroundColor: "rgba(218,188,115,0.055)",
+    padding: 16,
+  },
   selectedMessageItem: {
     borderColor: "rgba(218,188,115,0.42)",
     backgroundColor: "rgba(218,188,115,0.09)",
@@ -1741,6 +1933,30 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.46)",
     fontSize: 13,
     lineHeight: 20,
+  },
+  recentMessages: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.07)",
+    gap: 10,
+    paddingTop: 14,
+  },
+  compactMessageItem: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.025)",
+    gap: 6,
+    padding: 12,
+  },
+  compactMessageTitle: {
+    color: "rgba(255,255,255,0.76)",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  moreText: {
+    color: "rgba(218,188,115,0.58)",
+    fontSize: 11,
+    lineHeight: 17,
   },
   preferenceRow: {
     alignItems: "center",
