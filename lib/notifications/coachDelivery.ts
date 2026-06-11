@@ -164,6 +164,12 @@ export async function deliverCoachNotifications({
     in_app: "sent",
     email: emailEnabled && !quietHoursActive ? "processed" : "skipped",
     push: pushResult.status,
+    push_detail: {
+      enabled: pushEnabled,
+      sent: pushResult.sent,
+      failed: pushResult.failed,
+      error: "error" in pushResult ? pushResult.error : null,
+    },
   };
 }
 

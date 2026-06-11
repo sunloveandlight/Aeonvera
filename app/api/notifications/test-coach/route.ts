@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { deliverCoachNotifications } from "@/lib/notifications/coachDelivery";
@@ -21,14 +21,15 @@ type OptimizationProtocol = {
   }>;
 };
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    const mobileUser = user || (await getBearerUser(request));
 
-    if (!user) {
+    if (!mobileUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -38,18 +39,18 @@ export async function POST() {
         admin
           .from("profiles")
           .select("display_name")
-          .eq("user_id", user.id)
+          .eq("user_id", mobileUser.id)
           .maybeSingle(),
         admin
           .from("optimization_protocols")
           .select("protocol")
-          .eq("user_id", user.id)
+          .eq("user_id", mobileUser.id)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
-        loadLabTrendsForUser(admin, user.id),
-        loadOrBuildCoachMemoryProfile(admin, user.id),
-        buildDailyIntelligenceBrief(admin, user.id),
+        loadLabTrendsForUser(admin, mobileUser.id),
+        loadOrBuildCoachMemoryProfile(admin, mobileUser.id),
+        buildDailyIntelligenceBrief(admin, mobileUser.id),
       ]);
 
     const protocol = latestProtocol?.protocol as OptimizationProtocol | undefined;
@@ -90,7 +91,7 @@ export async function POST() {
     const { data: storedAlert, error: alertError } = await admin
       .from("health_alerts")
       .insert({
-        user_id: user.id,
+        user_id: mobileUser.id,
         type: alert.type,
         severity: alert.severity,
         title: alert.title,
@@ -127,7 +128,7 @@ export async function POST() {
 
     const delivery = await deliverCoachNotifications({
       supabase: admin,
-      userId: user.id,
+      userId: mobileUser.id,
       alerts: [storedAlert],
       jarvis,
       memoryTags: [
@@ -149,6 +150,19 @@ export async function POST() {
       error instanceof Error ? error.message : "Failed to send test coach message.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+async function getBearerUser(request: NextRequest) {
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+
+  if (!token) return null;
+
+  const admin = getSupabaseAdmin();
+  const {
+    data: { user },
+  } = await admin.auth.getUser(token);
+
+  return user;
 }
 
 function pickClinicalSignal(trends: LabTrend[]) {

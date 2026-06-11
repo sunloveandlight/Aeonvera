@@ -102,6 +102,13 @@ type Preferences = {
   timezone: string;
 };
 
+type PushDeliveryDetail = {
+  enabled?: boolean;
+  sent?: number;
+  failed?: number;
+  error?: string | null;
+};
+
 const WEB_URL =
   process.env.EXPO_PUBLIC_AEONVERA_WEB_URL ||
   Constants.expoConfig?.extra?.webUrl ||
@@ -687,6 +694,48 @@ export default function App() {
     );
   }
 
+  async function sendTestCoachMessage() {
+    if (!session?.access_token) {
+      Alert.alert("Sign in required", "Sign in before sending a test message.");
+      return;
+    }
+
+    setPushStatus("Testing coach push");
+
+    const response = await fetch(`${appUrl}/api/notifications/test-coach`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const message = result?.error || "Could not send the test coach message.";
+      setPushStatus("Test failed");
+      Alert.alert("Test coach message failed", message);
+      return;
+    }
+
+    const pushState = result?.delivery?.push || "unknown";
+    const detail = result?.delivery?.push_detail as PushDeliveryDetail | undefined;
+    const sent = detail?.sent ?? 0;
+    const failed = detail?.failed ?? 0;
+    const detailLine =
+      typeof detail?.sent === "number" ? `\nNative push: ${sent} sent, ${failed} failed.` : "";
+    const errorLine = detail?.error ? `\n${detail.error}` : "";
+
+    setPushStatus(pushState === "sent" ? "Test push sent" : `Test push ${pushState}`);
+    await loadCompanionData(session);
+    setActiveView("inbox");
+    setInboxNotice("Test coach message created. Latest delivery result is below.");
+
+    Alert.alert(
+      "Test coach message",
+      `Email: ${result?.delivery?.email || "unknown"}\nPush: ${pushState}.${detailLine}${errorLine}`
+    );
+  }
+
   const latestActions = protocol?.protocol?.primary_protocol || [];
   const latestSummary =
     protocol?.summary || protocol?.protocol?.summary || "Generate your first protocol from Optimize.";
@@ -822,6 +871,7 @@ export default function App() {
                 pushStatus={pushStatus}
                 prepareNotifications={prepareNotifications}
                 savePreferences={savePreferences}
+                sendTestCoachMessage={sendTestCoachMessage}
               />
             ) : null}
           </>
@@ -1111,11 +1161,13 @@ function SettingsView({
   prepareNotifications,
   pushStatus,
   savePreferences,
+  sendTestCoachMessage,
 }: {
   preferences: Preferences | null;
   prepareNotifications: () => Promise<void>;
   pushStatus: string;
   savePreferences: (next: Partial<Preferences>) => Promise<void>;
+  sendTestCoachMessage: () => Promise<void>;
 }) {
   return (
     <>
@@ -1128,6 +1180,12 @@ function SettingsView({
         </Text>
         <Pressable style={styles.button} onPress={() => void prepareNotifications()}>
           <Text style={styles.buttonText}>Connect notifications</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.button, styles.secondaryButton]}
+          onPress={() => void sendTestCoachMessage()}
+        >
+          <Text style={styles.secondaryButtonText}>Send test coach message</Text>
         </Pressable>
       </View>
 
@@ -1495,6 +1553,19 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 1.8,
+    textTransform: "uppercase",
+  },
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.28)",
+    backgroundColor: "rgba(218,188,115,0.08)",
+    marginTop: 10,
+  },
+  secondaryButtonText: {
+    color: "rgba(238,214,154,0.9)",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1.6,
     textTransform: "uppercase",
   },
   compactButton: {

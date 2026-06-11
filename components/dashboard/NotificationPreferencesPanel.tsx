@@ -12,6 +12,13 @@ type Preferences = {
   source?: "table" | "auth_metadata" | "sleep_schedule";
 };
 
+type PushDetail = {
+  enabled?: boolean;
+  sent?: number;
+  failed?: number;
+  error?: string | null;
+};
+
 const DEFAULT_PREFS: Preferences = {
   email_enabled: true,
   push_enabled: false,
@@ -184,7 +191,15 @@ export default function NotificationPreferencesPanel() {
 
       const emailState = data.delivery?.email || "skipped";
       const pushState = data.delivery?.push || "skipped";
-      setMessage(`Test coach message created. Email: ${emailState}. Push: ${pushState}.`);
+      const pushDetail = data.delivery?.push_detail as PushDetail | undefined;
+      const pushCounts =
+        pushDetail && typeof pushDetail.sent === "number"
+          ? ` ${pushDetail.sent} sent, ${pushDetail.failed || 0} failed.`
+          : "";
+      const pushError = pushDetail?.error ? ` ${pushDetail.error}.` : "";
+      setMessage(
+        `Test coach message created. Email: ${emailState}. Push: ${pushState}.${pushCounts}${pushError}`
+      );
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Test coach message failed."
