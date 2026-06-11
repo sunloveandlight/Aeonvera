@@ -8,6 +8,13 @@ import {
   type BiologicalAgeResult,
 } from "@/lib/longevity/biologicalAgeEngine";
 import { buildAssessmentInput } from "@/lib/longevity/assessmentInput";
+import { loadLatestLabInputValues } from "@/lib/labs/latestLabInputs";
+import {
+  buildDefaultFutureSelfControls,
+  buildFutureSelfProjection,
+  normalizeFutureSelfControls,
+  type FutureSelfControls,
+} from "@/lib/longevity/futureSelfSimulator";
 
 type CookieToSet = {
   name: string;
@@ -24,14 +31,7 @@ type SimulationScenario = {
   apply: (input: AssessmentInput) => AssessmentInput;
 };
 
-type SimulatorControls = {
-  sleep_hours: number;
-  vo2_max: number;
-  weight_kg: number;
-  stress_level: number;
-  exercise_days: number;
-  resting_hr: number;
-};
+type SimulatorControls = FutureSelfControls;
 
 async function getSupabaseUser() {
   const cookieStore = await cookies();
@@ -55,6 +55,8 @@ export async function GET() {
   try {
     const input = await getLatestAssessmentInput();
     const baseline = computeBiologicalAge(input);
+    const controls = buildControls(input);
+    const futureSelf = buildFutureSelfProjection({ input, controls });
     const simulations = SCENARIOS.map((scenario) =>
       buildSimulation(scenario, baseline, input)
     )
@@ -63,7 +65,8 @@ export async function GET() {
 
     return NextResponse.json({
       baseline: summarizeResult(baseline),
-      controls: buildControls(input),
+      controls,
+      futureSelf,
       simulations,
     });
   } catch (error) {
@@ -83,27 +86,18 @@ export async function POST(request: NextRequest) {
     const baseline = computeBiologicalAge(input);
     const body = await readJsonBody(request);
     const controls = normalizeControls(body?.controls, buildControls(input));
-    const projected = computeBiologicalAge({
-      ...input,
-      sleep_hours: controls.sleep_hours,
-      vo2_max: controls.vo2_max,
-      weight_kg: controls.weight_kg,
-      stress_level: controls.stress_level,
-      exercise_days: controls.exercise_days,
-      resting_hr: controls.resting_hr,
-    });
+    const futureSelf = buildFutureSelfProjection({ input, controls });
+    const projected = futureSelf.optimized;
 
     return NextResponse.json({
       baseline: summarizeResult(baseline),
       controls,
+      futureSelf,
       projection: {
-        ...summarizeResult(projected),
-        projectedAgeDeltaImprovement: Number(
-          (baseline.ageDelta - projected.ageDelta).toFixed(1)
-        ),
-        projectedBiologicalAgeImprovement: Number(
-          (baseline.biologicalAge - projected.biologicalAge).toFixed(1)
-        ),
+        ...projected,
+        projectedAgeDeltaImprovement: futureSelf.optimized.projectedAgeDeltaImprovement,
+        projectedBiologicalAgeImprovement:
+          futureSelf.optimized.projectedBiologicalAgeImprovement,
       },
     });
   } catch (error) {
@@ -138,7 +132,10 @@ async function getLatestAssessmentInput() {
     throw new SimulatorError("No assessment found.", 404);
   }
 
-  return buildAssessmentInput(assessment);
+  return {
+    ...buildAssessmentInput(assessment),
+    ...(await loadLatestLabInputValues({ supabase, userId: user.id })),
+  };
 }
 
 function buildSimulation(
@@ -173,32 +170,14 @@ function buildSimulation(
 }
 
 function buildControls(input: AssessmentInput): SimulatorControls {
-  return {
-    sleep_hours: clamp(round(input.sleep_hours, 1), 4, 10),
-    vo2_max: clamp(round(input.vo2_max ?? 40, 1), 20, 70),
-    weight_kg: clamp(round(input.weight_kg, 1), 45, 180),
-    stress_level: clamp(round(input.stress_level, 0), 1, 10),
-    exercise_days: clamp(round(input.exercise_days, 0), 0, 7),
-    resting_hr: clamp(round(input.resting_hr ?? 65, 0), 40, 100),
-  };
+  return buildDefaultFutureSelfControls(input);
 }
 
 function normalizeControls(
   value: unknown,
   fallback: SimulatorControls
 ): SimulatorControls {
-  const controls = typeof value === "object" && value !== null
-    ? (value as Partial<Record<keyof SimulatorControls, unknown>>)
-    : {};
-
-  return {
-    sleep_hours: clamp(numberOr(controls.sleep_hours, fallback.sleep_hours), 4, 10),
-    vo2_max: clamp(numberOr(controls.vo2_max, fallback.vo2_max), 20, 70),
-    weight_kg: clamp(numberOr(controls.weight_kg, fallback.weight_kg), 45, 180),
-    stress_level: clamp(numberOr(controls.stress_level, fallback.stress_level), 1, 10),
-    exercise_days: clamp(numberOr(controls.exercise_days, fallback.exercise_days), 0, 7),
-    resting_hr: clamp(numberOr(controls.resting_hr, fallback.resting_hr), 40, 100),
-  };
+  return normalizeFutureSelfControls(value, fallback);
 }
 
 async function readJsonBody(request: NextRequest) {
@@ -207,20 +186,6 @@ async function readJsonBody(request: NextRequest) {
   } catch {
     return null;
   }
-}
-
-function numberOr(value: unknown, fallback: number) {
-  const numberValue = Number(value);
-  return Number.isFinite(numberValue) ? numberValue : fallback;
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function round(value: number, decimals: number) {
-  const factor = 10 ** decimals;
-  return Math.round(value * factor) / factor;
 }
 
 function summarizeResult(result: BiologicalAgeResult) {

@@ -73,6 +73,36 @@ type SimulatorProjection = {
   projectedBiologicalAgeImprovement: number;
 };
 
+type FutureSelfProjection = {
+  baseline: {
+    chronologicalAge: number;
+    biologicalAge: number;
+    ageDelta: number;
+    score: number;
+    accuracyScore: number;
+    category: string;
+  };
+  optimized: SimulatorProjection;
+  trajectory: Array<{
+    day: number;
+    currentBiologicalAge: number;
+    optimizedBiologicalAge: number;
+    gap: number;
+  }>;
+  levers: Array<{
+    key: keyof SimulatorControls;
+    label: string;
+    current: number;
+    optimized: number;
+    delta: number;
+    impact: "low" | "medium" | "high";
+    direction: "increase" | "decrease";
+  }>;
+  headline: string;
+  summary: string;
+  horizonDays: number;
+};
+
 const QUESTIONS: Question[] = [
   {
     id: "priority",
@@ -159,6 +189,7 @@ export default function OptimizationPage() {
   const [bioAgeSimulations, setBioAgeSimulations] = useState<BioAgeSimulation[]>([]);
   const [simulatorControls, setSimulatorControls] = useState<SimulatorControls | null>(null);
   const [simulatorProjection, setSimulatorProjection] = useState<SimulatorProjection | null>(null);
+  const [futureSelf, setFutureSelf] = useState<FutureSelfProjection | null>(null);
   const [runningProjection, setRunningProjection] = useState(false);
   const [projectionMessage, setProjectionMessage] = useState<string | null>(null);
 
@@ -188,6 +219,7 @@ export default function OptimizationPage() {
           if (!cancelled && data?.simulations) {
             setBioAgeSimulations(data.simulations);
             setSimulatorControls(data.controls || null);
+            setFutureSelf(data.futureSelf || null);
           }
         })
         .catch(() => null);
@@ -292,6 +324,7 @@ export default function OptimizationPage() {
 
       setSimulatorControls(data.controls);
       setSimulatorProjection(data.projection);
+      setFutureSelf(data.futureSelf || null);
     } catch (error) {
       setProjectionMessage(
         error instanceof Error ? error.message : "Could not run projection."
@@ -619,6 +652,14 @@ export default function OptimizationPage() {
           </div>
         )}
 
+        {futureSelf && (
+          <FutureSelfComparisonPanel
+            futureSelf={futureSelf}
+            onBuildProtocol={() => void buildProtocolFromProjection()}
+            buildingProtocol={generatingProtocol}
+          />
+        )}
+
         {simulatorControls && (
           <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
             <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
@@ -750,6 +791,136 @@ function VitalSignalClock() {
   );
 }
 
+function FutureSelfComparisonPanel({
+  futureSelf,
+  onBuildProtocol,
+  buildingProtocol,
+}: {
+  futureSelf: FutureSelfProjection;
+  onBuildProtocol: () => void;
+  buildingProtocol: boolean;
+}) {
+  const chart = buildFutureSelfChart(futureSelf.trajectory);
+  const finalPoint = futureSelf.trajectory[futureSelf.trajectory.length - 1];
+
+  return (
+    <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
+      <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="micro-label">Future self simulator</p>
+          <h2 className="mt-3 text-3xl font-light text-white">
+            Current trajectory versus optimized trajectory.
+          </h2>
+        </div>
+        <p className="max-w-sm text-sm leading-6 text-white/38">
+          {futureSelf.summary}
+        </p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+        <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
+          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm text-white/52">Projected separation</p>
+              <p className="mt-2 text-3xl font-light leading-none royal-text">
+                {finalPoint?.gap?.toFixed(1) || "0.0"} yrs
+              </p>
+            </div>
+            <div className="text-left sm:text-right">
+              <p className="text-sm text-white/52">{futureSelf.headline}</p>
+              <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/24">
+                {futureSelf.horizonDays} day horizon
+              </p>
+            </div>
+          </div>
+
+          <svg viewBox="0 0 100 60" className="h-56 w-full overflow-visible" aria-hidden="true">
+            <polyline
+              points={chart.current.join(" ")}
+              fill="none"
+              stroke="rgba(255,255,255,0.18)"
+              strokeWidth="1.8"
+              strokeDasharray="4 5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <polyline
+              points={chart.optimized.join(" ")}
+              fill="none"
+              stroke="rgba(218,188,115,0.9)"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {chart.optimized.map((point, index) => {
+              const [cx, cy] = point.split(",");
+              return (
+                <circle
+                  key={`${point}-${index}`}
+                  cx={cx}
+                  cy={cy}
+                  r={index === chart.optimized.length - 1 ? "2.8" : "1.8"}
+                  fill="rgba(248,250,252,0.92)"
+                />
+              );
+            })}
+          </svg>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            {[
+              ["Now", futureSelf.baseline.biologicalAge],
+              ["Current", finalPoint?.currentBiologicalAge ?? futureSelf.baseline.biologicalAge],
+              ["Optimized", finalPoint?.optimizedBiologicalAge ?? futureSelf.optimized.biologicalAge],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
+                <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">
+                  {label}
+                </p>
+                <p className="mt-2 text-sm text-white/64">{value} yrs</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
+            <p className="micro-label mb-4">Dominant levers</p>
+            <div className="space-y-3">
+              {futureSelf.levers.slice(0, 4).map((lever) => (
+                <div key={lever.key} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-4">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-sm text-white/68">{lever.label}</p>
+                    <span className={futureSelfImpactClassName(lever.impact)}>
+                      {lever.impact}
+                    </span>
+                  </div>
+                  <p className="text-xs leading-5 text-white/36">
+                    {lever.current} → {lever.optimized}
+                  </p>
+                </div>
+              ))}
+              {!futureSelf.levers.length && (
+                <p className="text-sm leading-7 text-white/38">
+                  Move a simulator lever to create a stronger optimized path.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onBuildProtocol}
+            disabled={buildingProtocol}
+            className="premium-action inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {buildingProtocol ? "Building protocol" : "Build protocol from future self"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HeartbeatMonitor() {
   return (
     <svg
@@ -786,4 +957,35 @@ function HeartbeatMonitor() {
       />
     </svg>
   );
+}
+
+function buildFutureSelfChart(points: FutureSelfProjection["trajectory"]) {
+  const values = points.flatMap((point) => [
+    point.currentBiologicalAge,
+    point.optimizedBiologicalAge,
+  ]);
+  const min = Math.min(...values) - 0.5;
+  const max = Math.max(...values) + 0.5;
+  const span = Math.max(1, max - min);
+  const toPoint = (
+    value: number,
+    index: number,
+  ) => {
+    const x = points.length === 1 ? 50 : (index / (points.length - 1)) * 100;
+    const y = 54 - ((value - min) / span) * 48;
+    return `${x},${y}`;
+  };
+
+  return {
+    current: points.map((point, index) => toPoint(point.currentBiologicalAge, index)),
+    optimized: points.map((point, index) => toPoint(point.optimizedBiologicalAge, index)),
+  };
+}
+
+function futureSelfImpactClassName(impact: "low" | "medium" | "high") {
+  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+
+  if (impact === "high") return `${base} royal-text bg-white/[0.035]`;
+  if (impact === "medium") return `${base} text-white/42 bg-white/[0.025]`;
+  return `${base} text-white/28 bg-white/[0.02]`;
 }
