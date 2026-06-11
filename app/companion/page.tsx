@@ -125,6 +125,18 @@ type CoachMemory = {
   confidence?: number;
 };
 
+type DailyBrief = {
+  title: string;
+  message: string;
+  href: string;
+  healthPriority: string;
+  behaviorPriority: string;
+  calendarPriority: string;
+  primaryAction: string;
+  confidence: number;
+  style: string;
+};
+
 export default function CompanionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -135,6 +147,7 @@ export default function CompanionPage() {
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null);
   const [executionSummary, setExecutionSummary] = useState<ExecutionSummary | null>(null);
   const [coachMemory, setCoachMemory] = useState<CoachMemory | null>(null);
+  const [dailyBrief, setDailyBrief] = useState<DailyBrief | null>(null);
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [schedulingCalendar, setSchedulingCalendar] = useState(false);
   const [schedulingActionKey, setSchedulingActionKey] = useState<string | null>(null);
@@ -168,6 +181,7 @@ export default function CompanionPage() {
           calendarResponse,
           executionResponse,
           memoryResponse,
+          dailyBriefResponse,
         ] = await Promise.all([
           fetch("/api/digital-twin/timeline", { credentials: "include" }),
           fetch("/api/optimization/protocols", { credentials: "include" }),
@@ -175,16 +189,25 @@ export default function CompanionPage() {
           fetch("/api/calendar/google/status", { credentials: "include" }),
           fetch("/api/execution/summary", { credentials: "include" }),
           fetch("/api/coach/memory", { credentials: "include" }),
+          fetch("/api/coach/daily-brief", { credentials: "include" }),
         ]);
-        const [twinData, protocolData, coachData, calendarData, executionData, memoryData] =
-          await Promise.all([
-            twinResponse.json(),
-            protocolResponse.json(),
-            coachResponse.json(),
-            calendarResponse.json(),
-            executionResponse.json(),
-            memoryResponse.json(),
-          ]);
+        const [
+          twinData,
+          protocolData,
+          coachData,
+          calendarData,
+          executionData,
+          memoryData,
+          dailyBriefData,
+        ] = await Promise.all([
+          twinResponse.json(),
+          protocolResponse.json(),
+          coachResponse.json(),
+          calendarResponse.json(),
+          executionResponse.json(),
+          memoryResponse.json(),
+          dailyBriefResponse.json(),
+        ]);
 
         if (!twinResponse.ok) throw new Error(twinData.error || "Companion could not load.");
 
@@ -195,6 +218,7 @@ export default function CompanionPage() {
           setCalendarStatus(calendarResponse.ok ? calendarData : null);
           setExecutionSummary(executionResponse.ok ? executionData.execution : null);
           setCoachMemory(memoryResponse.ok ? memoryData.memory : null);
+          setDailyBrief(dailyBriefResponse.ok ? dailyBriefData.brief : null);
         }
       } catch (error) {
         if (!cancelled) {
@@ -465,7 +489,7 @@ export default function CompanionPage() {
           <div className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
               <Link
-                href={twin?.intelligence?.nextMove.href || "/optimization"}
+                href={dailyBrief?.href || twin?.intelligence?.nextMove.href || "/optimization"}
                 className="quiet-lift executive-panel block rounded-lg p-6 transition hover:border-white/[0.14] md:p-7"
               >
                 <div className="mb-6 flex items-center justify-between gap-3">
@@ -473,12 +497,22 @@ export default function CompanionPage() {
                   <Sparkles size={18} className="royal-text" />
                 </div>
                 <h2 className="text-3xl font-light leading-tight text-white">
-                  {twin?.intelligence?.nextMove.title || "Run your next protocol"}
+                  {dailyBrief?.title ||
+                    twin?.intelligence?.nextMove.title ||
+                    "Run your next protocol"}
                 </h2>
                 <p className="mt-5 text-sm leading-7 text-white/48">
-                  {twin?.intelligence?.nextMove.detail ||
+                  {dailyBrief?.message ||
+                    twin?.intelligence?.nextMove.detail ||
                     "Aeonvera is ready to turn the next recommendation into a tracked action."}
                 </p>
+                {dailyBrief ? (
+                  <div className="mt-6 grid gap-2 sm:grid-cols-3">
+                    <DailyBriefSignal label="Health" value={dailyBrief.healthPriority} />
+                    <DailyBriefSignal label="Behavior" value={dailyBrief.behaviorPriority} />
+                    <DailyBriefSignal label="Calendar" value={dailyBrief.calendarPriority} />
+                  </div>
+                ) : null}
               </Link>
 
               <div className="executive-panel rounded-lg p-6 md:p-7">
@@ -765,6 +799,17 @@ function ExecutionScorePanel({ execution }: { execution: ExecutionSummary | null
           ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+function DailyBriefSignal({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-3">
+      <p className="text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/70">
+        {label}
+      </p>
+      <p className="mt-2 line-clamp-3 text-xs leading-5 text-white/44">{value}</p>
     </div>
   );
 }

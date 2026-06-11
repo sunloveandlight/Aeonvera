@@ -7,6 +7,7 @@ import type { LongevityAlert } from "@/lib/coach/longevityCoach";
 import type { LabTrend } from "@/lib/labs/labTrends";
 import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
 import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
+import { buildDailyIntelligenceBrief } from "@/lib/coach/dailyIntelligenceBrief";
 
 type OptimizationProtocol = {
   summary?: string;
@@ -32,22 +33,24 @@ export async function POST() {
     }
 
     const admin = getSupabaseAdmin();
-    const [{ data: profile }, { data: latestProtocol }, labTrends, coachMemory] = await Promise.all([
-      admin
-        .from("profiles")
-        .select("display_name")
-        .eq("user_id", user.id)
-        .maybeSingle(),
-      admin
-        .from("optimization_protocols")
-        .select("protocol")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      loadLabTrendsForUser(admin, user.id),
-      loadOrBuildCoachMemoryProfile(admin, user.id),
-    ]);
+    const [{ data: profile }, { data: latestProtocol }, labTrends, coachMemory, dailyBrief] =
+      await Promise.all([
+        admin
+          .from("profiles")
+          .select("display_name")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        admin
+          .from("optimization_protocols")
+          .select("protocol")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        loadLabTrendsForUser(admin, user.id),
+        loadOrBuildCoachMemoryProfile(admin, user.id),
+        buildDailyIntelligenceBrief(admin, user.id),
+      ]);
 
     const protocol = latestProtocol?.protocol as OptimizationProtocol | undefined;
     const clinicalSignal = pickClinicalSignal(labTrends);
@@ -105,7 +108,7 @@ export async function POST() {
     const jarvis = generateJarvisMessage({
       userName: profile?.display_name || undefined,
       preferredTone: coachMemory?.communicationStyle,
-      memoryBrief: coachMemory?.morningBrief,
+      memoryBrief: dailyBrief.message || coachMemory?.morningBrief,
       interventions: [
         {
           domain: alert.type,

@@ -3,6 +3,7 @@ import { runLongevityCoach } from "./longevityCoach";
 import { deliverCoachNotifications } from "@/lib/notifications/coachDelivery";
 import { executeAeonveraActions } from "@/lib/execution/aeonveraExecutionEngine";
 import { generateJarvisMessage } from "@/lib/voice/jarvisResponseEngine";
+import { buildDailyIntelligenceBrief } from "@/lib/coach/dailyIntelligenceBrief";
 import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
 import { buildExecutionSummary, getExecutionWindow } from "@/lib/execution/executionSummary";
 import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
@@ -120,12 +121,13 @@ export async function runCoachPipeline(userId: string) {
       .select("display_name")
       .eq("user_id", userId)
       .maybeSingle();
+    const dailyBrief = await buildDailyIntelligenceBrief(supabase, userId);
 
     const jarvis = generateJarvisMessage({
       userName: profile?.display_name || undefined,
       interventions,
       preferredTone: adaptiveContext.coachMemory?.communicationStyle,
-      memoryBrief: adaptiveContext.coachMemory?.morningBrief,
+      memoryBrief: dailyBrief.message || adaptiveContext.coachMemory?.morningBrief,
       trigger: {
         shouldTrigger: true,
         intensity: adaptiveDecision.intensity,
