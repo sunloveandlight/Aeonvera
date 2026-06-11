@@ -41,7 +41,7 @@ export function generateProactiveInterventions(params: {
   personality?: PersonalityState | null;
   memory?: any;
 }): ProactiveIntervention[] {
-  const { predictions, personality, memory } = params;
+  const { predictions, personality } = params;
 
   const p = {
     strictness: personality?.strictness ?? 50,

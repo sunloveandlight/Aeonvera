@@ -198,8 +198,10 @@ const ACTION_SECTIONS: {
 export default function App() {
   const [activeView, setActiveView] = useState<ActiveView>("today");
   const [pushStatus, setPushStatus] = useState("Not requested");
-  const [authStatus, setAuthStatus] = useState("Restoring session");
-  const [authInitializing, setAuthInitializing] = useState(true);
+  const [authStatus, setAuthStatus] = useState(
+    supabase ? "Restoring session" : "Mobile auth needs Supabase env vars"
+  );
+  const [authInitializing, setAuthInitializing] = useState(Boolean(supabase));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [session, setSession] = useState<Session | null>(null);
@@ -312,16 +314,15 @@ export default function App() {
   useEffect(() => {
     if (!selectedAlertId || !coachMessages.length) return;
 
-    const matchedMessage = coachMessages.find(
-      (message) => message.alert_id === selectedAlertId || message.id === selectedAlertId
-    );
+    const timeout = setTimeout(() => {
+      const matchedMessage = coachMessages.find(
+        (message) => message.alert_id === selectedAlertId || message.id === selectedAlertId
+      );
 
-    if (matchedMessage) {
-      setSelectedMessageId(matchedMessage.id);
-      return;
-    }
+      setSelectedMessageId(matchedMessage?.id || coachMessages[0]?.id || null);
+    }, 0);
 
-    setSelectedMessageId(coachMessages[0]?.id || null);
+    return () => clearTimeout(timeout);
   }, [coachMessages, selectedAlertId]);
 
   useEffect(() => {
@@ -344,8 +345,6 @@ export default function App() {
 
   useEffect(() => {
     if (!supabase) {
-      setAuthStatus("Mobile auth needs Supabase env vars");
-      setAuthInitializing(false);
       return;
     }
 

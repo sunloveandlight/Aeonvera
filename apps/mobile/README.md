@@ -48,5 +48,9 @@ Expo dashboard project settings.
 
 ## Next Native Steps
 
+- Before App Store or Play Store launch, create a fresh EAS/native build after
+  any native module change. `expo-calendar` is a native module, so calendar
+  support will not be production-ready until the iOS and Android binaries are
+  rebuilt and tested.
 - Add EAS build configuration
 - Add native charts for biological age and recovery trends

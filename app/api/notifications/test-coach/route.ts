@@ -71,14 +71,6 @@ export async function POST(request: NextRequest) {
       topAction?.action ||
       protocol?.focus_domains?.[0] ||
       "Your delivery settings are connected.";
-    const actions = [
-      recommendation,
-      ...(protocol?.primary_protocol || [])
-        .slice(1, 3)
-        .map((item) => item.action)
-        .filter((item): item is string => Boolean(item)),
-    ];
-
     const alert: LongevityAlert = {
       type: clinicalSignal?.type || normalizeAlertType(topAction?.domain),
       severity: clinicalSignal?.severity || (topAction?.impact === "high" ? "medium" : "low"),

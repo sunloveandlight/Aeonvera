@@ -189,7 +189,6 @@ export async function GET() {
         bioAgeRows: bioAgeRes.data,
         healthMetricRows: healthMetricRes.data,
         outcomeRows: outcomeRes.data,
-        protocolRows: protocolRes.data,
         labRows: labsRes.data,
       }),
       timeline: events.slice(0, 60),
@@ -227,7 +226,6 @@ function buildTwinIntelligence({
   bioAgeRows,
   healthMetricRows,
   outcomeRows,
-  protocolRows,
   labRows,
 }: {
   counts: Record<string, number>;
@@ -235,13 +233,11 @@ function buildTwinIntelligence({
   bioAgeRows: unknown;
   healthMetricRows: unknown;
   outcomeRows: unknown;
-  protocolRows: unknown;
   labRows: unknown;
 }): TwinIntelligence {
   const healthMetrics = asRows(healthMetricRows);
   const outcomes = asRows(outcomeRows);
   const bioAge = asRows(bioAgeRows);
-  const protocols = asRows(protocolRows);
   const labs = asRows(labRows);
   const changes = buildMetricChanges(healthMetrics);
   const worked = buildWhatWorked(outcomes, bioAge);

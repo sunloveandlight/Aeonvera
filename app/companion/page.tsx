@@ -154,11 +154,7 @@ export default function CompanionPage() {
   const [savingOutcomeKey, setSavingOutcomeKey] = useState<string | null>(null);
   const [scheduledActionKeys, setScheduledActionKeys] = useState<Record<string, boolean>>({});
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installState, setInstallState] = useState({
-    standalone: false,
-    serviceWorker: false,
-    push: false,
-  });
+  const [installState, setInstallState] = useState(() => getInstallState());
 
   useEffect(() => {
     let cancelled = false;
@@ -237,15 +233,6 @@ export default function CompanionPage() {
   }, [router]);
 
   useEffect(() => {
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (window.navigator as StandaloneNavigator).standalone === true;
-    setInstallState({
-      standalone,
-      serviceWorker: "serviceWorker" in navigator,
-      push: "PushManager" in window,
-    });
-
     function handleInstallPrompt(event: Event) {
       event.preventDefault();
       setInstallPrompt(event as BeforeInstallPromptEvent);
@@ -662,13 +649,21 @@ function ProtocolActionsCalendarPanel({
               onClick={(event) => {
                 if (isInteractiveTarget(event.target)) return;
                 if (scheduled || scheduling) return;
-                connected ? onSchedule(action, index) : onConnect();
+                if (connected) {
+                  onSchedule(action, index);
+                } else {
+                  onConnect();
+                }
               }}
               onKeyDown={(event) => {
                 if (scheduled || scheduling) return;
                 if (event.key !== "Enter" && event.key !== " ") return;
                 event.preventDefault();
-                connected ? onSchedule(action, index) : onConnect();
+                if (connected) {
+                  onSchedule(action, index);
+                } else {
+                  onConnect();
+                }
               }}
               className={`quiet-lift rounded-lg border border-white/[0.07] bg-black/15 p-4 transition hover:border-white/[0.14] ${
                 scheduled || scheduling ? "cursor-default" : "cursor-pointer"
@@ -731,7 +726,11 @@ function ProtocolActionsCalendarPanel({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
-                      connected ? onSchedule(action, index) : onConnect();
+                      if (connected) {
+                        onSchedule(action, index);
+                      } else {
+                        onConnect();
+                      }
                     }}
                     disabled={scheduling || scheduled}
                     className="premium-action inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
@@ -1115,13 +1114,21 @@ function CalendarAutomationCard({
       tabIndex={migrationRequired || scheduling ? -1 : 0}
       onClick={(event) => {
         if (migrationRequired || scheduling || isInteractiveTarget(event.target)) return;
-        connected ? onSchedule() : onConnect();
+        if (connected) {
+          onSchedule();
+        } else {
+          onConnect();
+        }
       }}
       onKeyDown={(event) => {
         if (migrationRequired || scheduling) return;
         if (event.key !== "Enter" && event.key !== " ") return;
         event.preventDefault();
-        connected ? onSchedule() : onConnect();
+        if (connected) {
+          onSchedule();
+        } else {
+          onConnect();
+        }
       }}
       className={`executive-panel rounded-lg p-5 transition hover:border-white/[0.14] ${
         migrationRequired || scheduling ? "cursor-default" : "quiet-lift cursor-pointer"
@@ -1188,6 +1195,22 @@ function CompanionCard({
   );
 }
 
-function totalSignals(counts: Record<string, number>) {
-  return Object.values(counts).reduce((sum, value) => sum + (Number(value) || 0), 0);
+function getInstallState() {
+  if (typeof window === "undefined") {
+    return {
+      standalone: false,
+      serviceWorker: false,
+      push: false,
+    };
+  }
+
+  const standalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator as StandaloneNavigator).standalone === true;
+
+  return {
+    standalone,
+    serviceWorker: "serviceWorker" in navigator,
+    push: "PushManager" in window,
+  };
 }

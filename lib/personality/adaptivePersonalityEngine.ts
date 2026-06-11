@@ -28,7 +28,6 @@ export async function updatePersonalityState(params: {
     userId,
     healthState,
     memory,
-    recentCoachOutputs,
     engagementScore,
   } = params;
 
@@ -81,7 +80,7 @@ export async function updatePersonalityState(params: {
 /**
  * STRICTNESS EVOLUTION
  */
-function computeStrictness({ healthState, engagementScore, previous, learning }: any) {
+function computeStrictness({ healthState, engagementScore, learning }: any) {
   const baseRisk =
     (healthState?.riskScores?.sleep ?? 0) +
     (healthState?.riskScores?.activity ?? 0);
@@ -98,7 +97,7 @@ function computeStrictness({ healthState, engagementScore, previous, learning }:
 /**
  * EMPATHY EVOLUTION
  */
-function computeEmpathy({ memory, healthState, engagementScore, previous, learning }: any) {
+function computeEmpathy({ memory, healthState, engagementScore, learning }: any) {
   let empathy = 50;
 
   if (memory?.dominantEmotionalTone === "negative") empathy += 20;
@@ -113,7 +112,7 @@ function computeEmpathy({ memory, healthState, engagementScore, previous, learni
 /**
  * PROACTIVITY EVOLUTION
  */
-function computeProactivity({ engagementScore, memory, previous, learning }: any) {
+function computeProactivity({ engagementScore, memory, learning }: any) {
   let p = 50;
 
   if (engagementScore < 0.4) p += 20;
