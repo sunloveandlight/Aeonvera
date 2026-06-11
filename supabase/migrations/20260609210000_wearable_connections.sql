@@ -15,3 +15,43 @@ create table if not exists public.wearable_connections (
 );
 
 alter table public.wearable_connections enable row level security;
+
+grant select, insert, update, delete on public.wearable_connections to authenticated;
+
+create index if not exists wearable_connections_user_provider_idx
+  on public.wearable_connections (user_id, provider);
+
+drop policy if exists "Users can read own wearable connections"
+  on public.wearable_connections;
+create policy "Users can read own wearable connections"
+  on public.wearable_connections
+  for select
+  to authenticated
+  using (auth.uid() = user_id);
+
+drop policy if exists "Users can insert own wearable connections"
+  on public.wearable_connections;
+create policy "Users can insert own wearable connections"
+  on public.wearable_connections
+  for insert
+  to authenticated
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can update own wearable connections"
+  on public.wearable_connections;
+create policy "Users can update own wearable connections"
+  on public.wearable_connections
+  for update
+  to authenticated
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Users can delete own wearable connections"
+  on public.wearable_connections;
+create policy "Users can delete own wearable connections"
+  on public.wearable_connections
+  for delete
+  to authenticated
+  using (auth.uid() = user_id);
+
+notify pgrst, 'reload schema';
