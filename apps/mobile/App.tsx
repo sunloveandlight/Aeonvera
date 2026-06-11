@@ -32,6 +32,12 @@ const SUPABASE_ANON_KEY =
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||
   (Constants.expoConfig?.extra?.supabaseAnonKey as string | undefined) ||
   "";
+const EAS_PROJECT_ID =
+  process.env.EXPO_PUBLIC_EAS_PROJECT_ID ||
+  Constants.easConfig?.projectId ||
+  (Constants.expoConfig?.extra?.eas as { projectId?: string } | undefined)
+    ?.projectId ||
+  "";
 
 const secureStoreAdapter = {
   getItem: (key: string) => SecureStore.getItemAsync(key),
@@ -166,13 +172,18 @@ export default function App() {
       return;
     }
 
-    const projectId =
-      Constants.easConfig?.projectId ||
-      (Constants.expoConfig?.extra?.eas as { projectId?: string } | undefined)
-        ?.projectId;
-    const token = await Notifications.getExpoPushTokenAsync(
-      projectId ? { projectId } : undefined
-    ).catch(() => null);
+    if (!EAS_PROJECT_ID) {
+      setPushStatus("Missing Expo project ID");
+      Alert.alert(
+        "Expo project ID needed",
+        "Create or connect the Expo project, add EXPO_PUBLIC_EAS_PROJECT_ID to apps/mobile/.env, then restart Expo with --clear."
+      );
+      return;
+    }
+
+    const token = await Notifications.getExpoPushTokenAsync({
+      projectId: EAS_PROJECT_ID,
+    }).catch(() => null);
 
     if (!token?.data) {
       setPushStatus("Permission granted");
