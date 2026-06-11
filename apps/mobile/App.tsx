@@ -55,6 +55,20 @@ type Protocol = {
   } | null;
 };
 
+type AdherenceOutcome = "success" | "failure" | "unknown";
+
+type AdherenceEvent = {
+  id: string;
+  protocol_id?: string | null;
+  domain?: string | null;
+  action: string;
+  outcome?: AdherenceOutcome | null;
+  success?: boolean | null;
+  notes?: string | null;
+  measured_at?: string | null;
+  created_at?: string | null;
+};
+
 type Preferences = {
   user_id: string;
   email_enabled: boolean;
@@ -117,6 +131,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [protocol, setProtocol] = useState<Protocol | null>(null);
+  const [adherenceEvents, setAdherenceEvents] = useState<AdherenceEvent[]>([]);
   const [coachMessages, setCoachMessages] = useState<CoachMessage[]>([]);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
@@ -166,8 +181,28 @@ export default function App() {
         );
       }
 
+      const latestProtocol =
+        ((protocolResult.data || [])[0] as Protocol | undefined) || null;
+      let nextAdherenceEvents: AdherenceEvent[] = [];
+
+      if (latestProtocol?.id) {
+        const adherenceResult = await supabase
+          .from("intervention_outcomes")
+          .select("id,protocol_id,domain,action,outcome,success,notes,measured_at,created_at")
+          .eq("protocol_id", latestProtocol.id)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (adherenceResult.error) {
+          setDataMessage(adherenceResult.error.message);
+        } else {
+          nextAdherenceEvents = (adherenceResult.data || []) as AdherenceEvent[];
+        }
+      }
+
       setCoachMessages((messageResult.data || []) as CoachMessage[]);
-      setProtocol(((protocolResult.data || [])[0] as Protocol | undefined) || null);
+      setProtocol(latestProtocol);
+      setAdherenceEvents(nextAdherenceEvents);
       setPreferences(
         ((preferenceResult.data as Preferences | null) || {
           user_id: currentSession.user.id,
@@ -204,6 +239,7 @@ export default function App() {
         void loadCompanionData(nextSession);
       } else {
         setProtocol(null);
+        setAdherenceEvents([]);
         setCoachMessages([]);
         setPreferences(null);
       }
@@ -300,6 +336,74 @@ export default function App() {
     if (error) {
       Alert.alert("Preferences", error.message);
     }
+  }
+
+  async function recordAdherence(
+    action: ProtocolAction,
+    actionIndex: number,
+    outcome: AdherenceOutcome
+  ) {
+    if (!supabase || !session || !protocol?.id || !action.action) return;
+
+    const notes =
+      outcome === "success"
+        ? "Completed from mobile."
+        : outcome === "failure"
+          ? "Skipped from mobile."
+          : "Rescheduled from mobile.";
+    const domain = action.domain || "Optimization";
+    const measuredAt = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from("intervention_outcomes")
+      .insert({
+        user_id: session.user.id,
+        protocol_id: protocol.id,
+        domain,
+        action: action.action,
+        outcome,
+        success: outcome === "success",
+        confidence: outcome === "unknown" ? 0.45 : 0.8,
+        notes,
+        measured_at: measuredAt,
+        followup_snapshot: {
+          source: "mobile",
+          action_index: actionIndex,
+          cadence: action.cadence || null,
+          impact: action.impact || null,
+        },
+      })
+      .select("id,protocol_id,domain,action,outcome,success,notes,measured_at,created_at")
+      .single();
+
+    if (error) {
+      Alert.alert("Action not saved", error.message);
+      return;
+    }
+
+    await supabase.from("behavior_events").insert({
+      user_id: session.user.id,
+      type: "protocol_action",
+      event_type: `protocol_action_${outcome}`,
+      domain,
+      action: action.action,
+      outcome,
+      payload: {
+        protocol_id: protocol.id,
+        action_index: actionIndex,
+        cadence: action.cadence || null,
+        impact: action.impact || null,
+        source: "mobile",
+      },
+    });
+
+    setAdherenceEvents((current) => [
+      data as AdherenceEvent,
+      ...current.filter(
+        (event) =>
+          event.protocol_id !== protocol.id || event.action !== action.action
+      ),
+    ]);
   }
 
   async function prepareNotifications() {
@@ -471,12 +575,14 @@ export default function App() {
 
             {activeView === "today" ? (
               <TodayView
+                adherenceEvents={adherenceEvents}
                 appUrl={appUrl}
                 latestActions={latestActions}
                 latestMessage={latestMessage}
                 latestSummary={latestSummary}
                 openPath={openPath}
                 protocol={protocol}
+                recordAdherence={recordAdherence}
               />
             ) : null}
 
@@ -500,19 +606,29 @@ export default function App() {
 }
 
 function TodayView({
+  adherenceEvents,
   latestActions,
   latestMessage,
   latestSummary,
   openPath,
   protocol,
+  recordAdherence,
 }: {
+  adherenceEvents: AdherenceEvent[];
   appUrl: string;
   latestActions: ProtocolAction[];
   latestMessage: string;
   latestSummary: string;
   openPath: (path: string) => Promise<void>;
   protocol: Protocol | null;
+  recordAdherence: (
+    action: ProtocolAction,
+    actionIndex: number,
+    outcome: AdherenceOutcome
+  ) => Promise<void>;
 }) {
+  const adherenceByAction = buildLatestAdherenceByAction(adherenceEvents);
+
   return (
     <>
       <View style={styles.panel}>
@@ -525,13 +641,36 @@ function TodayView({
               <View key={`${action.action}-${index}`} style={styles.actionItem}>
                 <Text style={styles.actionIndex}>{index + 1}</Text>
                 <View style={styles.actionBody}>
-                  <Text style={styles.actionTitle}>{action.action}</Text>
+                  <View style={styles.actionHeader}>
+                    <Text style={styles.actionTitle}>{action.action}</Text>
+                    <AdherencePill event={adherenceByAction[action.action || ""]} />
+                  </View>
                   <Text style={styles.actionMeta}>
                     {[action.domain, action.cadence, action.impact]
                       .filter(Boolean)
                       .join(" / ")}
                   </Text>
                   {action.why ? <Text style={styles.actionWhy}>{action.why}</Text> : null}
+                  <View style={styles.adherenceControls}>
+                    <Pressable
+                      style={styles.adherenceButton}
+                      onPress={() => void recordAdherence(action, index, "success")}
+                    >
+                      <Text style={styles.adherenceButtonText}>Done</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.adherenceButton}
+                      onPress={() => void recordAdherence(action, index, "failure")}
+                    >
+                      <Text style={styles.adherenceButtonText}>Skip</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.adherenceButton}
+                      onPress={() => void recordAdherence(action, index, "unknown")}
+                    >
+                      <Text style={styles.adherenceButtonText}>Later</Text>
+                    </Pressable>
+                  </View>
                 </View>
               </View>
             ))
@@ -680,6 +819,28 @@ function PreferenceRow({
   );
 }
 
+function AdherencePill({ event }: { event?: AdherenceEvent }) {
+  if (!event) return null;
+
+  const label =
+    event.outcome === "success"
+      ? "Done"
+      : event.outcome === "failure"
+        ? "Skipped"
+        : "Later";
+
+  return (
+    <View
+      style={[
+        styles.adherencePill,
+        event.outcome === "success" && styles.adherencePillDone,
+      ]}
+    >
+      <Text style={styles.adherencePillText}>{label}</Text>
+    </View>
+  );
+}
+
 async function openMessage(
   message: CoachMessage,
   openPath: (path: string) => Promise<void>
@@ -691,6 +852,16 @@ async function openMessage(
 function readPayloadPath(payload?: Record<string, unknown> | null) {
   const path = payload?.path || payload?.href || payload?.url;
   return typeof path === "string" && path.startsWith("/") ? path : null;
+}
+
+function buildLatestAdherenceByAction(events: AdherenceEvent[]) {
+  return events.reduce<Record<string, AdherenceEvent>>((current, event) => {
+    if (event.action && !current[event.action]) {
+      current[event.action] = event;
+    }
+
+    return current;
+  }, {});
 }
 
 function formatDate(value?: string | null) {
@@ -874,6 +1045,10 @@ const styles = StyleSheet.create({
   actionBody: {
     flex: 1,
   },
+  actionHeader: {
+    alignItems: "flex-start",
+    gap: 8,
+  },
   actionTitle: {
     color: "rgba(255,255,255,0.88)",
     fontSize: 15,
@@ -891,6 +1066,45 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     marginTop: 6,
+  },
+  adherenceControls: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 12,
+  },
+  adherenceButton: {
+    minHeight: 34,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+  },
+  adherenceButtonText: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  adherencePill: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  adherencePillDone: {
+    borderColor: "rgba(218,188,115,0.34)",
+    backgroundColor: "rgba(218,188,115,0.1)",
+  },
+  adherencePillText: {
+    color: "rgba(238,214,154,0.86)",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
   },
   shortcutGrid: {
     flexDirection: "row",

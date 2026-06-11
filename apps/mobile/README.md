@@ -34,6 +34,7 @@ Expo dashboard project settings.
 
 - Native Aeonvera companion shell
 - Native Today protocol screen
+- Native protocol adherence tracking
 - Native coach inbox
 - Native notification delivery preferences
 - Deep links into the live web app
@@ -45,5 +46,5 @@ Expo dashboard project settings.
 ## Next Native Steps
 
 - Add EAS build configuration
-- Build app-native protocol completion and adherence tracking
+- Add local reminder scheduling for protocol actions
 - Add native charts for biological age and recovery trends
