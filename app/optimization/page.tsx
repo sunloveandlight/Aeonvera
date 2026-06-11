@@ -117,8 +117,26 @@ type SavedFutureSelfScenario = {
   title: string;
   description: string | null;
   scenario_ids: string[];
+  projection?: {
+    biologicalAge?: number;
+    score?: number;
+    projectedBiologicalAgeImprovement?: number;
+    projectedAgeDeltaImprovement?: number;
+  };
+  future_self?: {
+    headline?: string;
+    summary?: string;
+    optimized?: {
+      biologicalAge?: number;
+      score?: number;
+      projectedBiologicalAgeImprovement?: number;
+    };
+  };
   share_token: string;
   is_public: boolean;
+  parent_scenario_id?: string | null;
+  version_number?: number | null;
+  protocol_id?: string | null;
   created_at: string;
 };
 
@@ -213,6 +231,7 @@ export default function OptimizationPage() {
   const [scenarioPresets, setScenarioPresets] = useState<ScenarioPreset[]>([]);
   const [selectedScenarioIds, setSelectedScenarioIds] = useState<string[]>([]);
   const [savedScenarios, setSavedScenarios] = useState<SavedFutureSelfScenario[]>([]);
+  const [comparisonScenarioIds, setComparisonScenarioIds] = useState<string[]>([]);
   const [savingScenario, setSavingScenario] = useState(false);
   const [saveScenarioMessage, setSaveScenarioMessage] = useState<string | null>(null);
   const [runningProjection, setRunningProjection] = useState(false);
@@ -400,6 +419,10 @@ export default function OptimizationPage() {
     const activeTitles = scenarioPresets
       .filter((scenario) => selectedScenarioIds.includes(scenario.id))
       .map((scenario) => scenario.title);
+    const latestScenario = savedScenarios[0] || null;
+    const versionNumber = latestScenario
+      ? Math.max(...savedScenarios.map((scenario) => scenario.version_number || 1)) + 1
+      : 1;
 
     try {
       const response = await fetch("/api/longevity/future-self/scenarios", {
@@ -416,6 +439,9 @@ export default function OptimizationPage() {
           projection,
           futureSelf,
           isPublic: true,
+          parentScenarioId:
+            latestScenario?.parent_scenario_id || latestScenario?.id || null,
+          versionNumber,
         }),
       });
       const data = await response.json();
@@ -449,6 +475,16 @@ export default function OptimizationPage() {
         ? current.filter((id) => id !== scenarioId)
         : [...current, scenarioId]
     );
+  }
+
+  function toggleComparisonScenario(scenarioId: string) {
+    setComparisonScenarioIds((current) => {
+      if (current.includes(scenarioId)) {
+        return current.filter((id) => id !== scenarioId);
+      }
+
+      return [...current.slice(-1), scenarioId];
+    });
   }
 
   if (!authChecked) {
@@ -781,6 +817,8 @@ export default function OptimizationPage() {
           <SavedFutureSelfScenariosPanel
             scenarios={savedScenarios}
             message={saveScenarioMessage}
+            comparisonScenarioIds={comparisonScenarioIds}
+            onToggleComparison={toggleComparisonScenario}
           />
         )}
 
@@ -1141,10 +1179,18 @@ function ScenarioStackPanel({
 function SavedFutureSelfScenariosPanel({
   scenarios,
   message,
+  comparisonScenarioIds,
+  onToggleComparison,
 }: {
   scenarios: SavedFutureSelfScenario[];
   message: string | null;
+  comparisonScenarioIds: string[];
+  onToggleComparison: (scenarioId: string) => void;
 }) {
+  const comparisonScenarios = comparisonScenarioIds
+    .map((id) => scenarios.find((scenario) => scenario.id === id))
+    .filter((scenario): scenario is SavedFutureSelfScenario => Boolean(scenario));
+
   return (
     <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
       <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
@@ -1162,38 +1208,113 @@ function SavedFutureSelfScenariosPanel({
       </div>
 
       {scenarios.length ? (
-        <div className="grid gap-3 md:grid-cols-3">
-          {scenarios.slice(0, 6).map((scenario) => (
-            <Link
-              key={scenario.id}
-              href={`/future-self/${scenario.share_token}`}
-              className="quiet-lift flex min-h-44 flex-col rounded-lg border border-white/[0.07] bg-white/[0.025] p-5 transition hover:border-white/[0.16]"
-            >
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
-                  Shareable
-                </span>
-                <span className="royal-text text-sm">
-                  {scenario.scenario_ids.length || 1}
-                </span>
-              </div>
-              <p className="text-lg font-light leading-7 text-white/80">
-                {scenario.title}
-              </p>
-              <p className="mt-3 line-clamp-3 text-xs leading-5 text-white/38">
-                {scenario.description || "Saved future-self projection."}
-              </p>
-              <p className="mt-auto pt-4 text-[9px] uppercase tracking-[0.14em] text-white/24">
-                {formatScenarioDate(scenario.created_at)}
-              </p>
-            </Link>
-          ))}
-        </div>
+        <>
+          <div className="grid gap-3 md:grid-cols-3">
+            {scenarios.slice(0, 6).map((scenario) => {
+              const selected = comparisonScenarioIds.includes(scenario.id);
+
+              return (
+                <div
+                  key={scenario.id}
+                  className={`quiet-lift rounded-lg border bg-white/[0.025] p-5 transition ${
+                    selected ? "border-white/[0.18]" : "border-white/[0.07] hover:border-white/[0.16]"
+                  }`}
+                >
+                  <Link
+                    href={`/future-self/${scenario.share_token}`}
+                    className="flex min-h-36 flex-col"
+                  >
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                        v{scenario.version_number || 1}
+                      </span>
+                      <span className="royal-text text-sm">
+                        {scenario.scenario_ids.length || 1}
+                      </span>
+                    </div>
+                    <p className="text-lg font-light leading-7 text-white/80">
+                      {scenario.title}
+                    </p>
+                    <p className="mt-3 line-clamp-3 text-xs leading-5 text-white/38">
+                      {scenario.description || "Saved future-self projection."}
+                    </p>
+                    <p className="mt-auto pt-4 text-[9px] uppercase tracking-[0.14em] text-white/24">
+                      {formatScenarioDate(scenario.created_at)}
+                    </p>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => onToggleComparison(scenario.id)}
+                    className="premium-action-secondary mt-4 inline-flex h-9 w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+                  >
+                    {selected ? "Selected" : "Compare"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {comparisonScenarios.length > 0 && (
+            <ScenarioComparisonPanel scenarios={comparisonScenarios} />
+          )}
+        </>
       ) : (
         <p className="text-sm leading-7 text-white/42">
           Save a future-self projection to create a public read-only scenario page.
         </p>
       )}
+    </div>
+  );
+}
+
+function ScenarioComparisonPanel({
+  scenarios,
+}: {
+  scenarios: SavedFutureSelfScenario[];
+}) {
+  return (
+    <div className="mt-5 rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
+      <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="micro-label">Scenario comparison</p>
+          <p className="mt-3 text-xl font-light text-white/82">
+            Compare saved future-self versions.
+          </p>
+        </div>
+        <p className="text-sm text-white/34">
+          Select two saved scenarios for the clearest contrast.
+        </p>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {scenarios.map((scenario) => (
+          <div key={scenario.id} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <p className="text-sm text-white/72">{scenario.title}</p>
+              <span className="royal-text text-sm">v{scenario.version_number || 1}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                ["Bio age", scenario.future_self?.optimized?.biologicalAge ?? scenario.projection?.biologicalAge],
+                ["Score", scenario.future_self?.optimized?.score ?? scenario.projection?.score],
+                ["Gain", scenario.future_self?.optimized?.projectedBiologicalAgeImprovement ?? scenario.projection?.projectedBiologicalAgeImprovement],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
+                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">
+                    {label}
+                  </p>
+                  <p className="mt-2 text-sm text-white/64">
+                    {typeof value === "number" ? value.toFixed(label === "Score" ? 0 : 1) : "--"}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-xs leading-5 text-white/36">
+              {scenario.future_self?.headline || scenario.description || "Saved projection"}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -10,19 +10,33 @@ type CookieToSet = {
   options?: Parameters<Awaited<ReturnType<typeof cookies>>["set"]>[2];
 };
 
-const SELECT_FIELDS =
+const BASE_SELECT_FIELDS =
   "id,title,description,scenario_ids,controls,projection,future_self,share_token,is_public,created_at,updated_at";
+const SELECT_FIELDS = `${BASE_SELECT_FIELDS},parent_scenario_id,version_number,protocol_id`;
+
+type ScenarioQueryResult = {
+  data: unknown;
+  error: { code?: string; message?: string } | null;
+};
 
 export async function GET() {
   try {
     const user = await requireUser();
     const admin = getSupabaseAdmin();
-    const { data, error } = await admin
+    const result = await admin
       .from("future_self_scenarios")
       .select(SELECT_FIELDS)
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(12);
+    const { data, error } = await retryWithoutPhase5LinkColumns(result, () =>
+      admin
+        .from("future_self_scenarios")
+        .select(BASE_SELECT_FIELDS)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(12)
+    );
 
     if (error) {
       if (isMissingTableError(error)) {
@@ -56,6 +70,8 @@ export async function POST(request: NextRequest) {
     const futureSelf = safeRecord(body?.futureSelf);
     const projection = safeRecord(body?.projection);
     const controls = safeRecord(body?.controls);
+    const parentScenarioId = sanitizeUuid(body?.parentScenarioId);
+    const versionNumber = Math.max(1, Math.min(99, Number(body?.versionNumber) || 1));
     const title = sanitizeText(body?.title, 88) || buildScenarioTitle(scenarioIds);
     const description =
       sanitizeText(body?.description, 220) ||
@@ -63,20 +79,39 @@ export async function POST(request: NextRequest) {
       "Saved future-self projection.";
 
     const admin = getSupabaseAdmin();
-    const { data, error } = await admin
+    const insertPayload = {
+      user_id: user.id,
+      title,
+      description,
+      scenario_ids: scenarioIds,
+      controls,
+      projection,
+      future_self: futureSelf,
+      is_public: body?.isPublic !== false,
+      parent_scenario_id: parentScenarioId || null,
+      version_number: versionNumber,
+    };
+    const result = await admin
       .from("future_self_scenarios")
-      .insert({
-        user_id: user.id,
-        title,
-        description,
-        scenario_ids: scenarioIds,
-        controls,
-        projection,
-        future_self: futureSelf,
-        is_public: body?.isPublic !== false,
-      })
+      .insert(insertPayload)
       .select(SELECT_FIELDS)
       .single();
+    const { data, error } = await retryInsertWithoutPhase5LinkColumns(result, () =>
+      admin
+        .from("future_self_scenarios")
+        .insert({
+          user_id: user.id,
+          title,
+          description,
+          scenario_ids: scenarioIds,
+          controls,
+          projection,
+          future_self: futureSelf,
+          is_public: body?.isPublic !== false,
+        })
+        .select(BASE_SELECT_FIELDS)
+        .single()
+    );
 
     if (error) {
       if (isMissingTableError(error)) {
@@ -173,6 +208,13 @@ function sanitizeText(value: unknown, maxLength: number) {
   return value.trim().replace(/\s+/g, " ").slice(0, maxLength);
 }
 
+function sanitizeUuid(value: unknown) {
+  if (typeof value !== "string") return "";
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    ? value
+    : "";
+}
+
 function safeRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return value as Record<string, unknown>;
@@ -184,6 +226,37 @@ function isMissingTableError(error: { code?: string; message?: string }) {
     error.message?.includes("future_self_scenarios") ||
     error.message?.includes("schema cache")
   );
+}
+
+function isMissingPhase5LinkColumn(error: { code?: string; message?: string } | null) {
+  return (
+    error?.code === "PGRST204" ||
+    error?.message?.includes("parent_scenario_id") ||
+    error?.message?.includes("version_number") ||
+    error?.message?.includes("protocol_id")
+  );
+}
+
+async function retryWithoutPhase5LinkColumns(
+  result: ScenarioQueryResult,
+  fallback: () => PromiseLike<ScenarioQueryResult>
+) {
+  if (isMissingPhase5LinkColumn(result.error)) {
+    return fallback();
+  }
+
+  return result;
+}
+
+async function retryInsertWithoutPhase5LinkColumns(
+  result: ScenarioQueryResult,
+  fallback: () => PromiseLike<ScenarioQueryResult>
+) {
+  if (isMissingPhase5LinkColumn(result.error)) {
+    return fallback();
+  }
+
+  return result;
 }
 
 class FutureSelfScenarioError extends Error {

@@ -87,6 +87,7 @@ export default function SharedFutureSelfPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [generatingProtocol, setGeneratingProtocol] = useState(false);
   const [protocol, setProtocol] = useState<OptimizationProtocol | null>(null);
+  const [protocolHistory, setProtocolHistory] = useState<OptimizationProtocol[]>([]);
   const [protocolMessage, setProtocolMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -133,6 +134,36 @@ export default function SharedFutureSelfPage() {
     };
   }, [params.shareToken]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProtocolHistory() {
+      try {
+        const response = await fetch("/api/optimization/protocols", {
+          credentials: "include",
+        });
+        const data = await response.json();
+
+        if (!cancelled && Array.isArray(data?.protocols)) {
+          setProtocolHistory(
+            data.protocols
+              .map((row: { protocol?: OptimizationProtocol }) => row.protocol)
+              .filter(Boolean)
+              .slice(0, 4)
+          );
+        }
+      } catch {
+        if (!cancelled) setProtocolHistory([]);
+      }
+    }
+
+    void loadProtocolHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const trajectory = useMemo(
     () => scenario?.future_self.trajectory || [],
     [scenario]
@@ -159,6 +190,7 @@ export default function SharedFutureSelfPage() {
             controls: scenario.controls,
             projection: scenario.projection,
           },
+          sourceScenarioShareToken: scenario.share_token,
         }),
       });
       const data = await response.json();
@@ -172,6 +204,10 @@ export default function SharedFutureSelfPage() {
       }
 
       setProtocol(data.protocol.protocol as OptimizationProtocol);
+      setProtocolHistory((current) => [
+        data.protocol.protocol as OptimizationProtocol,
+        ...current,
+      ].slice(0, 4));
       setProtocolMessage("Protocol generated and saved to your account.");
     } catch (error) {
       setProtocolMessage(
@@ -359,10 +395,50 @@ export default function SharedFutureSelfPage() {
                 <GeneratedProtocolReport protocol={protocol} />
               </div>
             )}
+
+            {!protocol && protocolHistory.length > 0 && (
+              <div className="lg:col-span-2">
+                <ProtocolHistoryPanel protocols={protocolHistory} />
+              </div>
+            )}
           </div>
         ) : null}
       </div>
     </PageContainer>
+  );
+}
+
+function ProtocolHistoryPanel({ protocols }: { protocols: OptimizationProtocol[] }) {
+  return (
+    <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
+      <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="micro-label">Protocol History</p>
+          <h2 className="mt-3 text-3xl font-light text-white">
+            Recent optimization plans.
+          </h2>
+        </div>
+        <p className="max-w-sm text-sm leading-6 text-white/42">
+          Your latest generated protocols stay available as your scenario versions evolve.
+        </p>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {protocols.map((item, index) => (
+          <div key={`${item.summary}-${index}`} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                Protocol {String(index + 1).padStart(2, "0")}
+              </span>
+              <span className="royal-text text-sm">
+                {item.focus_domains?.[0] || "Focus"}
+              </span>
+            </div>
+            <p className="text-sm leading-7 text-white/62">{item.summary}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

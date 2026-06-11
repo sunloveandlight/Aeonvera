@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
     const questions = sanitizeQuestions(body.questions);
     const context = sanitizeContext(body.context);
     const projectionContext = sanitizeProjectionContext(body.projectionContext);
+    const sourceScenarioShareToken = sanitizeShareToken(body.sourceScenarioShareToken);
     const enrichedContext = appendProjectionContext(context, projectionContext);
 
     if (
@@ -190,6 +191,14 @@ export async function POST(request: NextRequest) {
       message: generated.protocol.coach_message || generated.protocol.summary,
     });
 
+    if (sourceScenarioShareToken) {
+      await linkScenarioProtocol({
+        userId: user.id,
+        shareToken: sourceScenarioShareToken,
+        protocolId: protocolResult.data.id,
+      });
+    }
+
     return NextResponse.json({
       success: true,
       intake: intakeResult.data,
@@ -199,6 +208,34 @@ export async function POST(request: NextRequest) {
     const message =
       error instanceof Error ? error.message : "Failed to build optimization protocol.";
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+async function linkScenarioProtocol({
+  userId,
+  shareToken,
+  protocolId,
+}: {
+  userId: string;
+  shareToken: string;
+  protocolId: string;
+}) {
+  try {
+    const admin = getSupabaseAdmin();
+    const { error } = await admin
+      .from("future_self_scenarios")
+      .update({ protocol_id: protocolId })
+      .eq("user_id", userId)
+      .eq("share_token", shareToken);
+
+    if (error && !isMissingScenarioLinkColumn(error)) {
+      console.error("[Scenario Protocol Link Error]", error.message);
+    }
+  } catch (error) {
+    console.error(
+      "[Scenario Protocol Link Error]",
+      error instanceof Error ? error.message : error
+    );
   }
 }
 
@@ -660,6 +697,14 @@ function sanitizeProjectionContext(value: unknown): ProjectionContext | null {
   return { controls, projection };
 }
 
+function sanitizeShareToken(value: unknown) {
+  if (typeof value !== "string") return "";
+
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    ? value
+    : "";
+}
+
 function appendProjectionContext(
   context: string,
   projectionContext: ProjectionContext | null
@@ -809,6 +854,16 @@ function isMissingNotificationTable(error: { message?: string; code?: string }) 
   return (
     error.code === "PGRST205" ||
     error.message?.includes("notification_deliveries") ||
+    error.message?.includes("schema cache")
+  );
+}
+
+function isMissingScenarioLinkColumn(error: { message?: string; code?: string }) {
+  return (
+    error.code === "PGRST204" ||
+    error.code === "PGRST205" ||
+    error.message?.includes("protocol_id") ||
+    error.message?.includes("future_self_scenarios") ||
     error.message?.includes("schema cache")
   );
 }
