@@ -6,12 +6,45 @@ import { useParams } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 
+type ProtocolAction = {
+  domain: string;
+  action: string;
+  why: string;
+  cadence: string;
+  impact: "low" | "medium" | "high";
+};
+
+type OptimizationProtocol = {
+  summary: string;
+  focus_domains: string[];
+  primary_protocol: ProtocolAction[];
+  weekly_sequence: Array<{
+    week: string;
+    focus: string;
+    actions: string[];
+  }>;
+  tracking_metrics: Array<{
+    metric: string;
+    target: string;
+    source: string;
+  }>;
+  coach_message: string;
+};
+
 type SharedScenario = {
   title: string;
   description: string | null;
   scenario_ids: string[];
   share_token: string;
   created_at: string;
+  controls: Record<string, number>;
+  projection: {
+    biologicalAge?: number;
+    ageDelta?: number;
+    score?: number;
+    projectedAgeDeltaImprovement?: number;
+    projectedBiologicalAgeImprovement?: number;
+  };
   future_self: {
     baseline?: {
       biologicalAge?: number;
@@ -52,6 +85,9 @@ export default function SharedFutureSelfPage() {
   const [scenario, setScenario] = useState<SharedScenario | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const [generatingProtocol, setGeneratingProtocol] = useState(false);
+  const [protocol, setProtocol] = useState<OptimizationProtocol | null>(null);
+  const [protocolMessage, setProtocolMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -103,6 +139,48 @@ export default function SharedFutureSelfPage() {
   );
   const chart = useMemo(() => buildChart(trajectory), [trajectory]);
   const finalPoint = trajectory[trajectory.length - 1];
+
+  async function generateProtocolFromScenario() {
+    if (!scenario) return;
+
+    setGeneratingProtocol(true);
+    setProtocolMessage(null);
+
+    try {
+      const response = await fetch("/api/optimization/protocol", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          answers: buildScenarioAnswers(scenario),
+          questions: buildScenarioQuestions(),
+          context: buildScenarioContext(scenario),
+          projectionContext: {
+            controls: scenario.controls,
+            projection: scenario.projection,
+          },
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Sign in to generate a private protocol from this scenario.");
+        }
+
+        throw new Error(data.error || "Could not generate protocol.");
+      }
+
+      setProtocol(data.protocol.protocol as OptimizationProtocol);
+      setProtocolMessage("Protocol generated and saved to your account.");
+    } catch (error) {
+      setProtocolMessage(
+        error instanceof Error ? error.message : "Could not generate protocol."
+      );
+    } finally {
+      setGeneratingProtocol(false);
+    }
+  }
 
   return (
     <PageContainer>
@@ -206,6 +284,35 @@ export default function SharedFutureSelfPage() {
 
             <div className="flex flex-col gap-6">
               <div className="executive-panel rounded-lg p-6 md:p-7">
+                <p className="micro-label mb-5">Scenario Protocol</p>
+                <p className="text-sm leading-7 text-white/46">
+                  Generate a private protocol from this future-self projection and save it to your Aeonvera account.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void generateProtocolFromScenario()}
+                  disabled={generatingProtocol}
+                  className="premium-action mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {generatingProtocol ? "Generating protocol" : "Generate protocol"}
+                  <ArrowRight size={16} />
+                </button>
+                {protocolMessage && (
+                  <p className="mt-4 rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 text-sm leading-6 text-white/48">
+                    {protocolMessage}
+                  </p>
+                )}
+                {protocolMessage?.startsWith("Sign in") && (
+                  <Link
+                    href="/login?mode=signin"
+                    className="premium-action-secondary mt-3 inline-flex h-10 w-full items-center justify-center rounded-md px-4 text-sm font-medium"
+                  >
+                    Sign in
+                  </Link>
+                )}
+              </div>
+
+              <div className="executive-panel rounded-lg p-6 md:p-7">
                 <p className="micro-label mb-5">Scenario Stack</p>
                 <div className="space-y-3">
                   {(scenario.future_self.activeScenarios || []).map((activeScenario) => (
@@ -246,11 +353,133 @@ export default function SharedFutureSelfPage() {
                 </div>
               </div>
             </div>
+
+            {protocol && (
+              <div className="lg:col-span-2">
+                <GeneratedProtocolReport protocol={protocol} />
+              </div>
+            )}
           </div>
         ) : null}
       </div>
     </PageContainer>
   );
+}
+
+function GeneratedProtocolReport({ protocol }: { protocol: OptimizationProtocol }) {
+  return (
+    <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
+      <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="micro-label">Generated Protocol</p>
+          <h2 className="mt-3 text-3xl font-light text-white">
+            Your future-self operating plan.
+          </h2>
+        </div>
+        <p className="max-w-sm text-sm leading-6 text-white/42">
+          {protocol.coach_message || protocol.summary}
+        </p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <div>
+          <p className="mb-5 text-sm leading-7 text-white/52">{protocol.summary}</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {protocol.primary_protocol.slice(0, 6).map((action) => (
+              <div key={`${action.domain}-${action.action}`} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm text-white/70">{action.domain}</p>
+                  <span className={impactClassName(action.impact)}>
+                    {action.impact}
+                  </span>
+                </div>
+                <p className="text-xs leading-5 text-white/42">{action.action}</p>
+                <p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-white/24">
+                  {action.cadence}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+            <p className="micro-label mb-4">Weekly Sequence</p>
+            <div className="space-y-3">
+              {protocol.weekly_sequence.slice(0, 4).map((week) => (
+                <div key={week.week} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-4">
+                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                    {week.week}
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-white/70">{week.focus}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/36">
+                    {week.actions.slice(0, 2).join(" / ")}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+            <p className="micro-label mb-4">Tracking Metrics</p>
+            <div className="space-y-3">
+              {protocol.tracking_metrics.slice(0, 5).map((metric) => (
+                <div key={metric.metric}>
+                  <p className="text-sm text-white/68">{metric.metric}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/36">
+                    {metric.target} / {metric.source}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function buildScenarioQuestions() {
+  return [
+    {
+      id: "priority",
+      domain: "Future Self",
+      prompt: "What should Aeonvera optimize from this shared scenario?",
+      options: ["Biological-age reduction", "Recovery", "Metabolic health", "Performance"],
+    },
+  ];
+}
+
+function buildScenarioAnswers(scenario: SharedScenario) {
+  const primaryLever = scenario.future_self.levers?.[0]?.label || "Biological-age reduction";
+
+  return {
+    priority: primaryLever,
+  };
+}
+
+function buildScenarioContext(scenario: SharedScenario) {
+  const levers = (scenario.future_self.levers || [])
+    .slice(0, 5)
+    .map((lever) => `${lever.label}: ${lever.current} to ${lever.optimized}`)
+    .join("; ");
+  const stack = (scenario.future_self.activeScenarios || [])
+    .map((activeScenario) => activeScenario.title)
+    .join(", ");
+  const improvement = scenario.projection.projectedBiologicalAgeImprovement;
+
+  return [
+    `Generate a protocol from saved Future Self scenario: ${scenario.title}.`,
+    scenario.future_self.summary ? `Scenario summary: ${scenario.future_self.summary}` : null,
+    scenario.future_self.headline ? `Scenario headline: ${scenario.future_self.headline}` : null,
+    Number.isFinite(improvement)
+      ? `Projected biological-age improvement: ${improvement} years.`
+      : null,
+    levers ? `Target levers: ${levers}.` : null,
+    stack ? `Scenario stack: ${stack}.` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function buildChart(points: SharedScenario["future_self"]["trajectory"]) {
