@@ -20,6 +20,7 @@ type CalendarEventInput = {
   title: string;
   description?: string | null;
   scheduledFor: string;
+  scheduledLocal?: string;
   durationMinutes: number;
   recurrence?: "none" | "daily" | "weekly";
   timeZone?: string;
@@ -200,15 +201,19 @@ export async function createGoogleCalendarEvent({
   const scheduledFor = new Date(event.scheduledFor);
   const durationMinutes = Math.max(10, Math.min(240, event.durationMinutes || 30));
   const end = new Date(scheduledFor.getTime() + durationMinutes * 60 * 1000);
+  const wallClockStart = normalizeWallClockDateTime(event.scheduledLocal);
+  const wallClockEnd = wallClockStart
+    ? addMinutesToWallClock(wallClockStart, durationMinutes)
+    : null;
   const body: Record<string, unknown> = {
     summary: event.title,
     description: event.description || "Scheduled by Aeonvera.",
     start: {
-      dateTime: scheduledFor.toISOString(),
+      dateTime: wallClockStart || scheduledFor.toISOString(),
       timeZone: event.timeZone || "UTC",
     },
     end: {
-      dateTime: end.toISOString(),
+      dateTime: wallClockEnd || end.toISOString(),
       timeZone: event.timeZone || "UTC",
     },
     reminders: {
@@ -246,6 +251,26 @@ export async function createGoogleCalendarEvent({
   }
 
   return payload as { id?: string; htmlLink?: string };
+}
+
+function normalizeWallClockDateTime(value?: string) {
+  if (!value) return null;
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value) ? value : null;
+}
+
+function addMinutesToWallClock(value: string, minutes: number) {
+  const [datePart, timePart] = value.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute, second] = timePart.split(":").map(Number);
+  const date = new Date(year, month - 1, day, hour, minute + minutes, second);
+  return toLocalDateTimeInput(date);
+}
+
+function toLocalDateTimeInput(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
 async function requestToken(tokenUrl: string, body: URLSearchParams): Promise<TokenResponse> {

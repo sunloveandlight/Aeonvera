@@ -186,6 +186,7 @@ export default function CompanionPage() {
     const scheduledFor = new Date();
     scheduledFor.setDate(scheduledFor.getDate() + 1);
     scheduledFor.setHours(9, 0, 0, 0);
+    const scheduledLocal = toLocalDateTimePayload(scheduledFor);
 
     try {
       const response = await fetch("/api/calendar/google/events", {
@@ -201,6 +202,7 @@ export default function CompanionPage() {
           actionScope: "week",
           protocolId: protocol.id,
           scheduledFor: scheduledFor.toISOString(),
+          scheduledLocal,
           durationMinutes: 45,
           recurrence: "weekly",
           timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
@@ -328,6 +330,13 @@ export default function CompanionPage() {
       </div>
     </PageContainer>
   );
+}
+
+function toLocalDateTimePayload(date: Date) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours()
+  )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
 function InstallCompanionCard({

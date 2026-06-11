@@ -13,6 +13,7 @@ type CalendarBody = {
   actionScope?: "today" | "week" | "check_in" | "later";
   protocolId?: string;
   scheduledFor?: string;
+  scheduledLocal?: string;
   durationMinutes?: number;
   recurrence?: "none" | "daily" | "weekly";
   timeZone?: string;
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
         title,
         description,
         scheduledFor,
+        scheduledLocal: normalizeScheduledLocal(body.scheduledLocal),
         durationMinutes,
         recurrence,
         timeZone: body.timeZone || "UTC",
@@ -91,7 +93,12 @@ export async function POST(request: NextRequest) {
         recurrence,
         html_link: event.htmlLink || null,
         status: "scheduled",
-        payload: { source: "aeonvera", google_event: event },
+        payload: {
+          source: "aeonvera",
+          google_event: event,
+          scheduled_local: normalizeScheduledLocal(body.scheduledLocal),
+          time_zone: body.timeZone || "UTC",
+        },
       })
       .select("id,provider_event_id,html_link,scheduled_for,recurrence")
       .single();
@@ -113,6 +120,8 @@ export async function POST(request: NextRequest) {
         provider_event_id: event.id || null,
         action_scope: normalizeActionScope(body.actionScope),
         scheduled_for: scheduledFor,
+        scheduled_local: normalizeScheduledLocal(body.scheduledLocal),
+        time_zone: body.timeZone || "UTC",
         recurrence,
         source: "google_calendar",
       },
@@ -152,6 +161,11 @@ function normalizeScheduledFor(value: unknown) {
     return "";
   }
   return date.toISOString();
+}
+
+function normalizeScheduledLocal(value: unknown) {
+  if (typeof value !== "string") return "";
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value) ? value : "";
 }
 
 function normalizeDuration(value: unknown) {
