@@ -158,9 +158,10 @@ Notifications.setNotificationHandler({
 });
 
 const shortcuts = [
-  { label: "Twin", title: "Digital Twin", path: "/digital-twin" },
-  { label: "Optimize", title: "Optimization", path: "/optimization" },
-  { label: "Report", title: "Report", path: "/report" },
+  { label: "Dashboard", title: "Healthspan command center", path: "/dashboard" },
+  { label: "Optimize", title: "AI protocol builder", path: "/optimization" },
+  { label: "Twin", title: "Digital twin timeline", path: "/digital-twin" },
+  { label: "Report", title: "Longevity intelligence", path: "/report" },
 ];
 
 const ACTION_SECTIONS: {
@@ -214,6 +215,7 @@ export default function App() {
     Record<string, NativeCalendarEvent>
   >({});
   const [coachMessages, setCoachMessages] = useState<CoachMessage[]>([]);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [inboxNotice, setInboxNotice] = useState<string | null>(null);
@@ -655,6 +657,14 @@ export default function App() {
           event.protocol_id !== protocol.id || event.action !== action.action
       ),
     ]);
+    setActionNotice(
+      outcome === "success"
+        ? "Marked complete. Aeonvera will use this as a positive execution signal."
+        : outcome === "failure"
+          ? "Marked skipped. Aeonvera will look for friction patterns."
+          : "Saved for later. Aeonvera will keep this action in your active queue."
+    );
+    playSoftHaptic();
   }
 
   async function scheduleActionReminder(
@@ -727,6 +737,11 @@ export default function App() {
       },
     });
 
+    setActionNotice(
+      `Reminder scheduled ${formatReminderDate(scheduledFor)}${
+        repeat === "once" ? "" : `, ${repeat}`
+      }.`
+    );
     Alert.alert(
       "Reminder scheduled",
       `Aeonvera will remind you ${formatReminderDate(scheduledFor)}${
@@ -841,6 +856,11 @@ export default function App() {
       });
     }
 
+    setActionNotice(
+      `Calendar block added ${formatReminderDate(scheduledFor)} in ${
+        calendar.title || "your calendar"
+      }.`
+    );
     playSoftHaptic();
     Alert.alert(
       "Added to calendar",
@@ -1037,7 +1057,7 @@ export default function App() {
             {activeView === "today" ? (
               <TodayView
                 adherenceEvents={adherenceEvents}
-                appUrl={appUrl}
+                actionNotice={actionNotice}
                 latestActions={latestActions}
                 latestMessage={latestMessage}
                 latestSummary={latestSummary}
@@ -1048,6 +1068,7 @@ export default function App() {
                 scheduleActionToNativeCalendar={scheduleActionToNativeCalendar}
                 nativeCalendarEvents={nativeCalendarEvents}
                 localReminders={localReminders}
+                setActionNotice={setActionNotice}
               />
             ) : null}
 
@@ -1113,6 +1134,7 @@ export default function App() {
 
 function TodayView({
   adherenceEvents,
+  actionNotice,
   latestActions,
   latestMessage,
   latestSummary,
@@ -1123,9 +1145,10 @@ function TodayView({
   recordAdherence,
   scheduleActionReminder,
   scheduleActionToNativeCalendar,
+  setActionNotice,
 }: {
   adherenceEvents: AdherenceEvent[];
-  appUrl: string;
+  actionNotice: string | null;
   latestActions: ProtocolAction[];
   latestMessage: string;
   latestSummary: string;
@@ -1149,6 +1172,7 @@ function TodayView({
     action: ScheduledProtocolAction,
     preset?: ReminderPreset
   ) => Promise<void>;
+  setActionNotice: (message: string | null) => void;
 }) {
   const [expandedActionKey, setExpandedActionKey] = useState<string | null>(null);
   const adherenceByAction = buildLatestAdherenceByAction(adherenceEvents);
@@ -1206,6 +1230,12 @@ function TodayView({
             </View>
           </View>
         ) : null}
+        {actionNotice ? (
+          <Pressable style={styles.actionNotice} onPress={() => setActionNotice(null)}>
+            <Text style={styles.actionNoticeLabel}>Updated</Text>
+            <Text style={styles.actionNoticeText}>{actionNotice}</Text>
+          </Pressable>
+        ) : null}
         <View style={styles.actionList}>
           {latestActions.length ? (
             <>
@@ -1220,10 +1250,21 @@ function TodayView({
                     style={styles.button}
                     onPress={() => {
                       playSoftHaptic();
-                      setExpandedActionKey(primaryActionKey);
+                      if (activeActionKey === primaryActionKey) {
+                        setActionNotice(
+                          "Action controls are already open. Choose Done, Later, Remind, or Calendar below."
+                        );
+                      } else {
+                        setExpandedActionKey(primaryActionKey);
+                        setActionNotice(
+                          "Action controls opened. You can complete it, save it for later, set a reminder, or add it to your calendar."
+                        );
+                      }
                     }}
                   >
-                    <Text style={styles.buttonText}>Start action</Text>
+                    <Text style={styles.buttonText}>
+                      {activeActionKey === primaryActionKey ? "Controls open" : "Open action controls"}
+                    </Text>
                   </Pressable>
                 </View>
               ) : null}
@@ -1339,7 +1380,55 @@ function TodayView({
           </Pressable>
         ))}
       </View>
+      <View style={styles.mobileCommandPanel}>
+        <Text style={styles.cardLabel}>Connected Intelligence</Text>
+        <Text style={styles.cardTitle}>What this app controls</Text>
+        <View style={styles.mobileCommandGrid}>
+          <MobileCommandStat
+            label="Signals"
+            value={String(Math.max(1, latestActions.length ? 3 : 1))}
+            detail="Coach, protocol, and execution context."
+          />
+          <MobileCommandStat
+            label="Reminders"
+            value={String(Object.keys(localReminders).length)}
+            detail="Native nudges created on this phone."
+          />
+          <MobileCommandStat
+            label="Calendar"
+            value={String(Object.keys(nativeCalendarEvents).length)}
+            detail="Device calendar blocks scheduled."
+          />
+          <MobileCommandStat
+            label="Complete"
+            value={String(completedCount)}
+            detail="Actions logged into Aeonvera memory."
+          />
+        </View>
+        <Text style={styles.mobileCommandCopy}>
+          The full website remains the deep cockpit. The mobile app is becoming the execution layer:
+          fast actions, native reminders, calendar blocks, and coach signals.
+        </Text>
+      </View>
     </>
+  );
+}
+
+function MobileCommandStat({
+  detail,
+  label,
+  value,
+}: {
+  detail: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.mobileCommandStat}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.mobileCommandValue}>{value}</Text>
+      <Text style={styles.mobileCommandDetail}>{detail}</Text>
+    </View>
   );
 }
 
@@ -2180,6 +2269,27 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 16,
   },
+  actionNotice: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.24)",
+    borderRadius: 8,
+    backgroundColor: "rgba(218,188,115,0.075)",
+    marginTop: 14,
+    padding: 12,
+  },
+  actionNoticeLabel: {
+    color: "rgba(238,214,154,0.82)",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 1.3,
+    marginBottom: 6,
+    textTransform: "uppercase",
+  },
+  actionNoticeText: {
+    color: "rgba(255,255,255,0.68)",
+    fontSize: 13,
+    lineHeight: 19,
+  },
   statPill: {
     flex: 1,
     borderWidth: 1,
@@ -2380,10 +2490,11 @@ const styles = StyleSheet.create({
   },
   shortcutGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 10,
   },
   shortcut: {
-    flex: 1,
+    width: "48%",
     minHeight: 86,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
@@ -2396,6 +2507,46 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.84)",
     fontSize: 13,
     lineHeight: 18,
+  },
+  mobileCommandPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    backgroundColor: "rgba(255,255,255,0.028)",
+    borderRadius: 10,
+    padding: 18,
+  },
+  mobileCommandGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 16,
+  },
+  mobileCommandStat: {
+    width: "48%",
+    minHeight: 116,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    padding: 12,
+  },
+  mobileCommandValue: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 28,
+    fontWeight: "300",
+    marginTop: 2,
+  },
+  mobileCommandDetail: {
+    color: "rgba(255,255,255,0.4)",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 8,
+  },
+  mobileCommandCopy: {
+    color: "rgba(255,255,255,0.46)",
+    fontSize: 13,
+    lineHeight: 21,
+    marginTop: 16,
   },
   messageList: {
     gap: 12,
