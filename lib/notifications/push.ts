@@ -34,6 +34,8 @@ type PushPayload = {
   message: string;
   url?: string;
   actions?: string[];
+  alertId?: string;
+  target?: "coach_inbox" | "dashboard" | "companion";
 };
 
 export async function sendCoachPushNotifications({
@@ -156,8 +158,10 @@ async function sendWebPushSubscriptions({
           JSON.stringify({
             title: payload.title,
             body: payload.message,
-            url: payload.url || "/dashboard",
+            url: payload.url || "/companion?focus=coach",
             actions: payload.actions || [],
+            alertId: payload.alertId,
+            target: payload.target || "coach_inbox",
           })
         );
         sent++;
@@ -203,8 +207,10 @@ async function sendExpoPushSubscriptions({
             body: payload.message,
             sound: "default",
             data: {
-              url: payload.url || "/dashboard",
+              url: payload.url || "/companion?focus=coach",
               actions: payload.actions || [],
+              alertId: payload.alertId,
+              target: payload.target || "coach_inbox",
             },
           }))
         ),

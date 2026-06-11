@@ -128,8 +128,10 @@ export async function deliverCoachNotifications({
         payload: {
           title,
           message,
-          url: "/dashboard",
+          url: "/companion?focus=coach",
           actions: jarvis.actions,
+          alertId: primaryAlert.id,
+          target: "coach_inbox",
         },
       })
     : {

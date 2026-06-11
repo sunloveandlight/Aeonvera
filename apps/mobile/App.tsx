@@ -26,6 +26,7 @@ type ActiveView = "today" | "inbox" | "settings";
 
 type CoachMessage = {
   id: string;
+  alert_id?: string | null;
   title: string;
   message: string;
   status?: string | null;
@@ -82,6 +83,14 @@ type LocalReminder = {
   notificationId: string;
   repeat: ReminderRepeat;
   scheduledFor: string;
+};
+
+type NotificationTapData = {
+  path?: string;
+  url?: string;
+  target?: string;
+  alertId?: string;
+  alert_id?: string;
 };
 
 type Preferences = {
@@ -175,7 +184,8 @@ const ACTION_SECTIONS: {
 export default function App() {
   const [activeView, setActiveView] = useState<ActiveView>("today");
   const [pushStatus, setPushStatus] = useState("Not requested");
-  const [authStatus, setAuthStatus] = useState("Signed out");
+  const [authStatus, setAuthStatus] = useState("Restoring session");
+  const [authInitializing, setAuthInitializing] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [session, setSession] = useState<Session | null>(null);
@@ -185,6 +195,9 @@ export default function App() {
   const [adherenceEvents, setAdherenceEvents] = useState<AdherenceEvent[]>([]);
   const [localReminders, setLocalReminders] = useState<Record<string, LocalReminder>>({});
   const [coachMessages, setCoachMessages] = useState<CoachMessage[]>([]);
+  const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const [inboxNotice, setInboxNotice] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
   const appUrl = useMemo(() => WEB_URL.replace(/\/$/, ""), []);
@@ -206,7 +219,7 @@ export default function App() {
       const [messageResult, protocolResult, preferenceResult] = await Promise.all([
         supabase
           .from("notification_deliveries")
-          .select("id,title,message,status,payload,created_at,sent_at")
+          .select("id,alert_id,title,message,status,payload,created_at,sent_at")
           .eq("channel", "in_app")
           .order("created_at", { ascending: false })
           .limit(12),
@@ -271,15 +284,36 @@ export default function App() {
   );
 
   useEffect(() => {
+    if (!selectedAlertId || !coachMessages.length) return;
+
+    const matchedMessage = coachMessages.find(
+      (message) => message.alert_id === selectedAlertId || message.id === selectedAlertId
+    );
+
+    if (matchedMessage) {
+      setSelectedMessageId(matchedMessage.id);
+      return;
+    }
+
+    setSelectedMessageId(coachMessages[0]?.id || null);
+  }, [coachMessages, selectedAlertId]);
+
+  useEffect(() => {
     if (!supabase) {
       setAuthStatus("Mobile auth needs Supabase env vars");
+      setAuthInitializing(false);
       return;
     }
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setAuthStatus(data.session ? "Signed in" : "Signed out");
+      setAuthInitializing(false);
       void loadCompanionData(data.session);
+    }).catch((error) => {
+      setAuthStatus("Signed out");
+      setAuthInitializing(false);
+      setDataMessage(error instanceof Error ? error.message : "Session could not be restored.");
     });
 
     const {
@@ -287,6 +321,7 @@ export default function App() {
     } = supabase.auth.onAuthStateChange((_, nextSession) => {
       setSession(nextSession);
       setAuthStatus(nextSession ? "Signed in" : "Signed out");
+      setAuthInitializing(false);
       if (nextSession) {
         void loadCompanionData(nextSession);
       } else {
@@ -300,6 +335,43 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, [loadCompanionData]);
 
+  const handleNotificationTap = useCallback(
+    (data?: NotificationTapData) => {
+      const alertId = data?.alertId || data?.alert_id || null;
+
+      if (data?.target === "coach_inbox" || alertId) {
+        setSelectedAlertId(alertId);
+        setSelectedMessageId(null);
+        setInboxNotice("Opened from your coach notification.");
+        setActiveView("inbox");
+        void loadCompanionData(session);
+        return;
+      }
+
+      if (data?.url && /^https?:\/\//i.test(data.url)) {
+        void Linking.openURL(data.url);
+        return;
+      }
+
+      const path = data?.path || data?.url;
+
+      if (path?.startsWith("/companion")) {
+        setActiveView(path.includes("focus=coach") ? "inbox" : "today");
+        void loadCompanionData(session);
+        return;
+      }
+
+      if (path?.startsWith("/")) {
+        void openPath(path);
+        return;
+      }
+
+      setActiveView("inbox");
+      void loadCompanionData(session);
+    },
+    [loadCompanionData, openPath, session]
+  );
+
   useEffect(() => {
     if (Platform.OS === "android") {
       void Notifications.setNotificationChannelAsync("protocol-reminders", {
@@ -312,25 +384,20 @@ export default function App() {
 
     const responseSubscription =
       Notifications.addNotificationResponseReceivedListener((response) => {
-        const data = response.notification.request.content.data as
-          | { path?: string; url?: string }
-          | undefined;
-
-        if (data?.url) {
-          void Linking.openURL(data.url);
-          return;
-        }
-
-        if (data?.path) {
-          void openPath(data.path);
-          return;
-        }
-
-        setActiveView("inbox");
+        handleNotificationTap(
+          response.notification.request.content.data as NotificationTapData | undefined
+        );
       });
 
+    void Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (!response) return;
+      handleNotificationTap(
+        response.notification.request.content.data as NotificationTapData | undefined
+      );
+    });
+
     return () => responseSubscription.remove();
-  }, [openPath]);
+  }, [handleNotificationTap]);
 
   async function signIn() {
     if (!supabase) {
@@ -650,7 +717,15 @@ export default function App() {
           </Text>
         </View>
 
-        {!session ? (
+        {authInitializing ? (
+          <View style={styles.panel}>
+            <Text style={styles.cardLabel}>Aeonvera Account</Text>
+            <Text style={styles.cardTitle}>Restoring session</Text>
+            <Text style={styles.cardCopy}>
+              Aeonvera is securely reopening your mobile companion.
+            </Text>
+          </View>
+        ) : !session ? (
           <View style={styles.panel}>
             <Text style={styles.cardLabel}>Aeonvera Account</Text>
             <Text style={styles.cardTitle}>{authStatus}</Text>
@@ -733,7 +808,12 @@ export default function App() {
             ) : null}
 
             {activeView === "inbox" ? (
-              <InboxView messages={coachMessages} openPath={openPath} />
+              <InboxView
+                messages={coachMessages}
+                notice={inboxNotice}
+                openPath={openPath}
+                selectedMessageId={selectedMessageId}
+              />
             ) : null}
 
             {activeView === "settings" ? (
@@ -851,23 +931,34 @@ function TodayView({
 
 function InboxView({
   messages,
+  notice,
   openPath,
+  selectedMessageId,
 }: {
   messages: CoachMessage[];
+  notice: string | null;
   openPath: (path: string) => Promise<void>;
+  selectedMessageId: string | null;
 }) {
   return (
     <View style={styles.panel}>
       <Text style={styles.cardLabel}>Coach Inbox</Text>
       <Text style={styles.cardTitle}>{messages.length ? "Latest messages" : "No messages yet"}</Text>
+      {notice ? <Text style={styles.inboxNotice}>{notice}</Text> : null}
       <View style={styles.messageList}>
         {messages.length ? (
           messages.map((message) => (
             <Pressable
               key={message.id}
-              style={styles.messageItem}
+              style={[
+                styles.messageItem,
+                selectedMessageId === message.id && styles.selectedMessageItem,
+              ]}
               onPress={() => void openMessage(message, openPath)}
             >
+              {selectedMessageId === message.id ? (
+                <Text style={styles.selectedMessageLabel}>Selected notification</Text>
+              ) : null}
               <View style={styles.messageHeader}>
                 <Text style={styles.messageTitle}>{message.title}</Text>
                 <Text style={styles.messageDate}>{formatDate(message.created_at)}</Text>
@@ -1561,6 +1652,24 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.18)",
     borderRadius: 8,
     padding: 14,
+  },
+  selectedMessageItem: {
+    borderColor: "rgba(218,188,115,0.42)",
+    backgroundColor: "rgba(218,188,115,0.09)",
+  },
+  selectedMessageLabel: {
+    color: "rgba(238,214,154,0.9)",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 1.4,
+    marginBottom: 10,
+    textTransform: "uppercase",
+  },
+  inboxNotice: {
+    color: "rgba(238,214,154,0.76)",
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 10,
   },
   messageHeader: {
     gap: 8,
