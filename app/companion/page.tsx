@@ -31,12 +31,27 @@ type TwinPayload = {
   counts?: Record<string, number>;
 };
 
+type ProtocolAction = {
+  domain?: string;
+  action?: string;
+  why?: string;
+  cadence?: string;
+  impact?: "low" | "medium" | "high";
+};
+
+type ActionScope = "today" | "week" | "check_in" | "later";
+
 type Protocol = {
   id: string;
   summary?: string | null;
   focus_domains?: string[] | null;
   status?: string | null;
   created_at?: string;
+  protocol?: {
+    summary?: string;
+    primary_protocol?: ProtocolAction[];
+    coach_message?: string;
+  } | null;
 };
 
 type CoachMessage = {
@@ -68,6 +83,8 @@ export default function CompanionPage() {
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null);
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [schedulingCalendar, setSchedulingCalendar] = useState(false);
+  const [schedulingActionKey, setSchedulingActionKey] = useState<string | null>(null);
+  const [scheduledActionKeys, setScheduledActionKeys] = useState<Record<string, boolean>>({});
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installState, setInstallState] = useState({
     standalone: false,
@@ -160,6 +177,7 @@ export default function CompanionPage() {
     () => protocol?.focus_domains?.slice(0, 3).join(" / ") || "Optimization",
     [protocol]
   );
+  const protocolActions = protocol?.protocol?.primary_protocol || [];
 
   async function installCompanion() {
     if (!installPrompt) return;
@@ -221,6 +239,58 @@ export default function CompanionPage() {
       );
     } finally {
       setSchedulingCalendar(false);
+    }
+  }
+
+  async function scheduleActionToCalendar(action: ProtocolAction, actionIndex: number) {
+    if (!protocol || !action.action) return;
+
+    if (!calendarStatus?.connected) {
+      window.location.href = "/api/calendar/google/connect";
+      return;
+    }
+
+    const actionKey = `${protocol.id}:${actionIndex}:${action.action}`;
+    const scope = classifyActionScope(action);
+    const scheduledFor = getActionScheduleDate(scope, actionIndex);
+    const scheduledLocal = toLocalDateTimePayload(scheduledFor);
+    const recurrence = getActionRecurrence(scope, action);
+
+    setSchedulingActionKey(actionKey);
+    setCalendarMessage(null);
+
+    try {
+      const response = await fetch("/api/calendar/google/events", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `Aeonvera: ${action.action}`,
+          description: action.why || protocol.summary || "Aeonvera scheduled this action.",
+          action: action.action,
+          actionScope: scope,
+          protocolId: protocol.id,
+          scheduledFor: scheduledFor.toISOString(),
+          scheduledLocal,
+          durationMinutes: getActionDuration(scope, action),
+          recurrence,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Action could not be scheduled.");
+      }
+
+      setScheduledActionKeys((current) => ({ ...current, [actionKey]: true }));
+      setCalendarMessage("Action scheduled in Google Calendar.");
+    } catch (error) {
+      setCalendarMessage(
+        error instanceof Error ? error.message : "Action could not be scheduled."
+      );
+    } finally {
+      setSchedulingActionKey(null);
     }
   }
 
@@ -324,6 +394,18 @@ export default function CompanionPage() {
               href="/dashboard"
             />
 
+            <ProtocolActionsCalendarPanel
+              actions={protocolActions}
+              connected={calendarStatus?.connected === true}
+              protocolId={protocol?.id}
+              scheduledActionKeys={scheduledActionKeys}
+              schedulingActionKey={schedulingActionKey}
+              onConnect={() => {
+                window.location.href = "/api/calendar/google/connect";
+              }}
+              onSchedule={(action, index) => void scheduleActionToCalendar(action, index)}
+            />
+
             <NotificationPreferencesPanel />
           </div>
         )}
@@ -337,6 +419,166 @@ function toLocalDateTimePayload(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
     date.getHours()
   )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function ProtocolActionsCalendarPanel({
+  actions,
+  connected,
+  onConnect,
+  onSchedule,
+  protocolId,
+  scheduledActionKeys,
+  schedulingActionKey,
+}: {
+  actions: ProtocolAction[];
+  connected: boolean;
+  onConnect: () => void;
+  onSchedule: (action: ProtocolAction, index: number) => void;
+  protocolId?: string;
+  scheduledActionKeys: Record<string, boolean>;
+  schedulingActionKey: string | null;
+}) {
+  if (!actions.length) {
+    return null;
+  }
+
+  return (
+    <div className="executive-panel rounded-lg p-6 md:p-7">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <p className="micro-label">Action Scheduling</p>
+        <CalendarClock size={18} className="royal-text" />
+      </div>
+      <div className="space-y-4">
+        {actions.slice(0, 6).map((action, index) => {
+          const scope = classifyActionScope(action);
+          const actionKey = `${protocolId}:${index}:${action.action}`;
+          const scheduled = scheduledActionKeys[actionKey];
+          const scheduling = schedulingActionKey === actionKey;
+
+          return (
+            <div
+              key={actionKey}
+              className="rounded-lg border border-white/[0.07] bg-black/15 p-4"
+            >
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <span className="rounded-md bg-white/[0.035] px-2 py-1 text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/80">
+                      {scopeLabel(scope)}
+                    </span>
+                    {action.cadence && (
+                      <span className="rounded-md bg-white/[0.025] px-2 py-1 text-[8px] uppercase tracking-[0.14em] text-white/32">
+                        {action.cadence}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="text-lg font-light leading-snug text-white/86">
+                    {action.action || "Protocol action"}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-white/42">
+                    {action.why || "Schedule this action into your calendar."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={connected ? () => onSchedule(action, index) : onConnect}
+                  disabled={scheduling || scheduled}
+                  className="premium-action inline-flex h-10 shrink-0 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  {scheduled
+                    ? "Scheduled"
+                    : scheduling
+                      ? "Scheduling"
+                      : connected
+                        ? "Schedule"
+                        : "Connect"}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function classifyActionScope(action: ProtocolAction): ActionScope {
+  const text = [action.domain, action.action, action.cadence, action.why]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    /(measure|check|track|log|record|weigh|weight|metric|retest|lab|blood|hrv|resting heart|sleep score|recovery score|biomarker)/.test(
+      text
+    )
+  ) {
+    return "check_in";
+  }
+
+  if (
+    /(weekly|week|2x|3x|4x|twice|three times|session|sessions|zone 2|strength|resistance|meal prep|review)/.test(
+      text
+    )
+  ) {
+    return "week";
+  }
+
+  if (/(daily|today|morning|evening|nightly|bedtime|wake|walk|hydrate|meal)/.test(text)) {
+    return "today";
+  }
+
+  return "later";
+}
+
+function getActionScheduleDate(scope: ActionScope, actionIndex: number) {
+  const date = new Date();
+
+  if (scope === "today") {
+    date.setDate(date.getDate() + 1);
+    date.setHours(8 + Math.min(actionIndex, 3), 0, 0, 0);
+    return date;
+  }
+
+  if (scope === "check_in") {
+    date.setDate(date.getDate() + 1);
+    date.setHours(8, 0, 0, 0);
+    return date;
+  }
+
+  if (scope === "week") {
+    date.setDate(date.getDate() + 2 + (actionIndex % 3));
+    date.setHours(9 + (actionIndex % 2), 0, 0, 0);
+    return date;
+  }
+
+  date.setDate(date.getDate() + 3);
+  date.setHours(11, 0, 0, 0);
+  return date;
+}
+
+function getActionDuration(scope: ActionScope, action: ProtocolAction) {
+  const text = [action.domain, action.action, action.cadence].join(" ").toLowerCase();
+  if (scope === "check_in") return 15;
+  if (/strength|zone 2|training|workout|session|resistance/.test(text)) return 60;
+  if (/walk|meal|nutrition|sleep|wind/.test(text)) return 30;
+  return 45;
+}
+
+function getActionRecurrence(scope: ActionScope, action: ProtocolAction) {
+  const text = [action.domain, action.action, action.cadence, action.why]
+    .join(" ")
+    .toLowerCase();
+  if (scope === "today" || /daily|nightly|morning|evening/.test(text)) return "daily";
+  if (scope === "week" || /weekly|week|session|sessions/.test(text)) return "weekly";
+  return "none";
+}
+
+function scopeLabel(scope: ActionScope) {
+  if (scope === "check_in") return "Check-in";
+  if (scope === "week") return "This week";
+  if (scope === "later") return "Later";
+  return "Today";
 }
 
 function InstallCompanionCard({
