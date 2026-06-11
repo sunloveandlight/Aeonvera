@@ -70,10 +70,16 @@ function buildMessage(params: {
     case "urgent":
       return `${name}Critical pattern detected in ${top?.domain}. Immediate attention required. ${top?.reason || ""}`;
     case "direct":
+      if (top?.domain === "activity" && /execution|skipped|scheduled|score/i.test(top.reason || "")) {
+        return `${name}${top.reason} Today I recommend: ${top.action}`;
+      }
       return `${name}Focus area: ${top?.domain}. ${top?.reason}.`;
     case "supportive":
       return `${name}I'm seeing stress in ${top?.domain}, but nothing critical.`;
     default:
+      if (/execution|skipped|scheduled|score/i.test(top?.reason || "")) {
+        return `${name}${top?.reason} Next step: ${top?.action}`;
+      }
       return `${name}Current optimization focus: ${top?.domain}.`;
   }
 }

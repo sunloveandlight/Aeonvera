@@ -1,5 +1,6 @@
 import type { LongevityAlert } from "./longevityCoach";
 import type { LabTrend } from "@/lib/labs/labTrends";
+import type { ExecutionSummary } from "@/lib/execution/executionSummary";
 
 type OptimizationAction = {
   domain?: string;
@@ -52,6 +53,7 @@ export type AdaptiveCoachContext = {
   latestReport?: ReportRow | null;
   recentBehaviorEvents: BehaviorEventRow[];
   labTrends?: LabTrend[];
+  executionSummary?: ExecutionSummary | null;
 };
 
 export type AdaptiveCoachDecision = {
@@ -147,6 +149,9 @@ export function buildAdaptiveCoachDecision({
   const labSignals = buildLabTrendSignals(context.labTrends || [])
     .filter((signal) => !recentTags.has(signal.tag))
     .sort((a, b) => b.priority - a.priority);
+  const executionSignals = buildExecutionSignals(context.executionSummary)
+    .filter((signal) => !recentTags.has(signal.tag))
+    .sort((a, b) => b.priority - a.priority);
   const unrepeatedBaseAlerts = baseAlerts.filter(
     (alert) => !recentTags.has(alertTag(alert))
   );
@@ -164,6 +169,12 @@ export function buildAdaptiveCoachDecision({
     const primaryLabTrend = labSignals[0];
     alerts.push(signalToAlert(primaryLabTrend));
     memoryTags.push(primaryLabTrend.tag);
+  }
+
+  if (executionSignals.length > 0) {
+    const primaryExecutionSignal = executionSignals[0];
+    alerts.push(signalToAlert(primaryExecutionSignal));
+    memoryTags.push(primaryExecutionSignal.tag);
   }
 
   if (alerts.length === 0 && optimizationProtocol) {
@@ -202,6 +213,8 @@ export function buildAdaptiveCoachDecision({
       ? "Meaningful health trend detected."
       : labSignals.length
       ? "Meaningful clinical biomarker trend detected."
+      : executionSignals.length
+      ? "Execution pattern requires coach adjustment."
       : optimizationProtocol
       ? "Active optimization protocol nudge due."
       : "Coach alert due.",
@@ -299,6 +312,72 @@ function buildLabTrendSignals(trends: LabTrend[]): TrendSignal[] {
       },
     ];
   });
+}
+
+function buildExecutionSignals(summary?: ExecutionSummary | null): TrendSignal[] {
+  if (!summary || summary.status === "building") return [];
+
+  const signals: TrendSignal[] = [];
+
+  if (summary.total >= 3 && summary.score < 50) {
+    signals.push({
+      domain: "activity",
+      title: "Execution needs simplifying",
+      message: `Your execution score is ${summary.score}% this week. ${summary.skipped} action${summary.skipped === 1 ? "" : "s"} were skipped.`,
+      recommendation:
+        summary.topSkippedPattern?.actions?.[0] ||
+        "Choose one smaller protocol action today and remove the lowest-priority item.",
+      severity: summary.score < 35 ? "high" : "medium",
+      confidence: 0.86,
+      priority: summary.score < 35 ? 11 : 9,
+      tag: "execution:low-adherence",
+    });
+  }
+
+  if (summary.topSkippedPattern && summary.topSkippedPattern.count >= 2) {
+    signals.push({
+      domain: executionDomain(summary.topSkippedPattern.label),
+      title: `${summary.topSkippedPattern.label} is being skipped`,
+      message: `${summary.topSkippedPattern.label} actions were skipped ${summary.topSkippedPattern.count} times this week.`,
+      recommendation:
+        summary.topSkippedPattern.actions[0] ||
+        `Reduce the ${summary.topSkippedPattern.label.toLowerCase()} target and schedule it earlier in the day.`,
+      severity: summary.topSkippedPattern.count >= 3 ? "medium" : "low",
+      confidence: 0.8,
+      priority: summary.topSkippedPattern.count >= 3 ? 8 : 6,
+      tag: `execution:skipped:${summary.topSkippedPattern.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    });
+  }
+
+  if (summary.scheduled > 0 && summary.total === 0) {
+    signals.push({
+      domain: "risk",
+      title: "Calendar is scheduled, completion is missing",
+      message: `${summary.scheduled} calendar block${summary.scheduled === 1 ? "" : "s"} are scheduled, but no completion signal was recorded this week.`,
+      recommendation:
+        "After the next protocol block, mark it Done, Skip, or Later so Aeonvera can adapt.",
+      severity: "low",
+      confidence: 0.72,
+      priority: 5,
+      tag: "execution:scheduled-no-feedback",
+    });
+  }
+
+  if (summary.total >= 3 && summary.score >= 80) {
+    signals.push({
+      domain: "activity",
+      title: "Execution is strong",
+      message: `Your execution score is ${summary.score}% this week across ${summary.total} actions.`,
+      recommendation:
+        "Keep the current protocol stable for another week so Aeonvera can confirm the pattern.",
+      severity: "low",
+      confidence: 0.74,
+      priority: 4,
+      tag: "execution:strong-adherence",
+    });
+  }
+
+  return signals;
 }
 
 function groupMetrics(metrics: HealthMetricRow[]) {
@@ -421,6 +500,17 @@ function normalizeDomain(domain?: string): LongevityAlert["type"] {
   }
 
   return "risk";
+}
+
+function executionDomain(label?: string): LongevityAlert["type"] {
+  const value = label?.toLowerCase() || "";
+
+  if (value.includes("sleep")) return "sleep";
+  if (value.includes("nutrition")) return "nutrition";
+  if (value.includes("training") || value.includes("activity")) return "activity";
+  if (value.includes("check")) return "risk";
+
+  return "activity";
 }
 
 function buildTrendRecommendation(metric: string) {

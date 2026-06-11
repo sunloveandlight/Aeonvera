@@ -4,6 +4,7 @@ import { deliverCoachNotifications } from "@/lib/notifications/coachDelivery";
 import { executeAeonveraActions } from "@/lib/execution/aeonveraExecutionEngine";
 import { generateJarvisMessage } from "@/lib/voice/jarvisResponseEngine";
 import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
+import { buildExecutionSummary, getExecutionWindow } from "@/lib/execution/executionSummary";
 import type { LongevityAlert } from "./longevityCoach";
 import {
   buildAdaptiveCoachDecision,
@@ -196,7 +197,14 @@ async function loadAdaptiveCoachContext(
 ): Promise<AdaptiveCoachContext> {
   const since = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [metricsResult, notificationsResult, reportResult, behaviorResult, labTrends] =
+  const [
+    metricsResult,
+    notificationsResult,
+    reportResult,
+    behaviorResult,
+    labTrends,
+    executionSummary,
+  ] =
     await Promise.all([
       supabase
         .from("health_metrics")
@@ -226,6 +234,7 @@ async function loadAdaptiveCoachContext(
         .order("created_at", { ascending: false })
         .limit(20),
       loadLabTrendsForUser(supabase, userId),
+      loadExecutionSummaryForCoach(supabase, userId),
     ]);
 
   return {
@@ -234,7 +243,44 @@ async function loadAdaptiveCoachContext(
     latestReport: reportResult.data || null,
     recentBehaviorEvents: behaviorResult.data || [],
     labTrends,
+    executionSummary,
   };
+}
+
+async function loadExecutionSummaryForCoach(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string
+) {
+  const window = getExecutionWindow();
+  const [outcomesResult, calendarResult] = await Promise.all([
+    supabase
+      .from("intervention_outcomes")
+      .select("domain, action, outcome, success, notes, measured_at, created_at")
+      .eq("user_id", userId)
+      .gte("created_at", window.startIso)
+      .order("created_at", { ascending: false })
+      .limit(80),
+    supabase
+      .from("calendar_events")
+      .select("action, action_scope, recurrence, scheduled_for, status, created_at")
+      .eq("user_id", userId)
+      .gte("scheduled_for", window.startIso)
+      .order("scheduled_for", { ascending: false })
+      .limit(80),
+  ]);
+
+  if (outcomesResult.error && !isMissingExecutionTable(outcomesResult.error)) {
+    console.error("[Coach Execution Outcomes Error]", outcomesResult.error.message);
+  }
+
+  if (calendarResult.error && !isMissingExecutionTable(calendarResult.error)) {
+    console.error("[Coach Calendar Events Error]", calendarResult.error.message);
+  }
+
+  return buildExecutionSummary({
+    calendarEvents: calendarResult.error ? [] : calendarResult.data || [],
+    outcomes: outcomesResult.error ? [] : outcomesResult.data || [],
+  });
 }
 
 async function recordCoachOutput({
@@ -293,6 +339,16 @@ function isMissingOptimizationTable(error: { message?: string; code?: string }) 
   return (
     error.code === "PGRST205" ||
     error.message?.includes("optimization_protocols") ||
+    error.message?.includes("schema cache")
+  );
+}
+
+function isMissingExecutionTable(error: { message?: string; code?: string }) {
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    error.message?.includes("intervention_outcomes") ||
+    error.message?.includes("calendar_events") ||
     error.message?.includes("schema cache")
   );
 }
