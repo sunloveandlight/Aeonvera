@@ -33,13 +33,17 @@ Expo dashboard project settings.
 ## Current Scope
 
 - Native Aeonvera companion shell
+- Native Today protocol screen
+- Native coach inbox
+- Native notification delivery preferences
 - Deep links into the live web app
 - Native Supabase email/password sign-in
 - Native iOS/Android notification token registration
 - Backend bridge into Aeonvera's existing coach notification system
+- Push response routing into the companion experience
 
 ## Next Native Steps
 
-- Create app-native coach inbox
-- Create app-native today protocol screen
 - Add EAS build configuration
+- Build app-native protocol completion and adherence tracking
+- Add native charts for biological age and recovery trends
