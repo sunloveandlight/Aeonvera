@@ -46,6 +46,18 @@ type CoachMessage = {
   created_at?: string;
 };
 
+type CalendarStatus = {
+  connected: boolean;
+  migrationRequired?: boolean;
+  message?: string;
+  connection?: {
+    provider: string;
+    status: string;
+    calendar_id?: string;
+    connected_at?: string;
+  } | null;
+};
+
 export default function CompanionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -53,6 +65,9 @@ export default function CompanionPage() {
   const [twin, setTwin] = useState<TwinPayload | null>(null);
   const [protocols, setProtocols] = useState<Protocol[]>([]);
   const [coachMessages, setCoachMessages] = useState<CoachMessage[]>([]);
+  const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null);
+  const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
+  const [schedulingCalendar, setSchedulingCalendar] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installState, setInstallState] = useState({
     standalone: false,
@@ -74,15 +89,17 @@ export default function CompanionPage() {
       }
 
       try {
-        const [twinResponse, protocolResponse, coachResponse] = await Promise.all([
+        const [twinResponse, protocolResponse, coachResponse, calendarResponse] = await Promise.all([
           fetch("/api/digital-twin/timeline", { credentials: "include" }),
           fetch("/api/optimization/protocols", { credentials: "include" }),
           fetch("/api/notifications/deliveries", { credentials: "include" }),
+          fetch("/api/calendar/google/status", { credentials: "include" }),
         ]);
-        const [twinData, protocolData, coachData] = await Promise.all([
+        const [twinData, protocolData, coachData, calendarData] = await Promise.all([
           twinResponse.json(),
           protocolResponse.json(),
           coachResponse.json(),
+          calendarResponse.json(),
         ]);
 
         if (!twinResponse.ok) throw new Error(twinData.error || "Companion could not load.");
@@ -91,6 +108,7 @@ export default function CompanionPage() {
           setTwin(twinData);
           setProtocols(protocolData.protocols || []);
           setCoachMessages(coachData.notifications || []);
+          setCalendarStatus(calendarResponse.ok ? calendarData : null);
         }
       } catch (error) {
         if (!cancelled) {
@@ -149,6 +167,59 @@ export default function CompanionPage() {
     await installPrompt.prompt();
     await installPrompt.userChoice.catch(() => null);
     setInstallPrompt(null);
+  }
+
+  async function scheduleProtocolToCalendar() {
+    if (!protocol) {
+      setCalendarMessage("Generate an optimization protocol before scheduling.");
+      return;
+    }
+
+    if (!calendarStatus?.connected) {
+      window.location.href = "/api/calendar/google/connect";
+      return;
+    }
+
+    setSchedulingCalendar(true);
+    setCalendarMessage(null);
+
+    const scheduledFor = new Date();
+    scheduledFor.setDate(scheduledFor.getDate() + 1);
+    scheduledFor.setHours(9, 0, 0, 0);
+
+    try {
+      const response = await fetch("/api/calendar/google/events", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `Aeonvera protocol: ${protocolFocus}`,
+          description:
+            protocol.summary ||
+            "Aeonvera scheduled this protocol block from your companion view.",
+          action: protocol.summary || protocolFocus,
+          actionScope: "week",
+          protocolId: protocol.id,
+          scheduledFor: scheduledFor.toISOString(),
+          durationMinutes: 45,
+          recurrence: "weekly",
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Calendar event could not be scheduled.");
+      }
+
+      setCalendarMessage("Protocol scheduled in Google Calendar.");
+    } catch (error) {
+      setCalendarMessage(
+        error instanceof Error ? error.message : "Calendar event could not be scheduled."
+      );
+    } finally {
+      setSchedulingCalendar(false);
+    }
   }
 
   return (
@@ -231,14 +302,25 @@ export default function CompanionPage() {
                 detail={protocol?.summary || "Generate a protocol to activate daily execution."}
                 href="/optimization"
               />
-              <CompanionCard
-                icon={MessageCircle}
-                label="Coach Inbox"
-                title={coachMessages[0]?.title || "No coach message yet"}
-                detail={coachMessages[0]?.message || "Daily coach messages will appear here as the system learns."}
-                href="/dashboard"
+              <CalendarAutomationCard
+                connected={calendarStatus?.connected === true}
+                migrationRequired={calendarStatus?.migrationRequired === true}
+                message={calendarMessage || calendarStatus?.message}
+                scheduling={schedulingCalendar}
+                onConnect={() => {
+                  window.location.href = "/api/calendar/google/connect";
+                }}
+                onSchedule={() => void scheduleProtocolToCalendar()}
               />
             </div>
+
+            <CompanionCard
+              icon={MessageCircle}
+              label="Coach Inbox"
+              title={coachMessages[0]?.title || "No coach message yet"}
+              detail={coachMessages[0]?.message || "Daily coach messages will appear here as the system learns."}
+              href="/dashboard"
+            />
 
             <NotificationPreferencesPanel />
           </div>
@@ -307,6 +389,56 @@ function InstallCompanionCard({
           Install companion
         </button>
       )}
+    </div>
+  );
+}
+
+function CalendarAutomationCard({
+  connected,
+  message,
+  migrationRequired,
+  onConnect,
+  onSchedule,
+  scheduling,
+}: {
+  connected: boolean;
+  message?: string | null;
+  migrationRequired: boolean;
+  onConnect: () => void;
+  onSchedule: () => void;
+  scheduling: boolean;
+}) {
+  return (
+    <div className="executive-panel rounded-lg p-5">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <p className="micro-label">Calendar</p>
+        <CalendarClock size={17} className="royal-text" />
+      </div>
+      <h3 className="text-2xl font-light leading-tight text-white/86">
+        {connected ? "Google connected" : "Connect Google"}
+      </h3>
+      <p className="mt-4 text-sm leading-7 text-white/42">
+        {connected
+          ? "Schedule protocol blocks into Google Calendar so execution leaves Aeonvera and lands on the day."
+          : "Connect Google Calendar to let Aeonvera schedule workouts, walks, check-ins, and protocol blocks."}
+      </p>
+      {message && (
+        <p className="mt-4 text-xs leading-5 text-[#dabc73]/80">{message}</p>
+      )}
+      <button
+        type="button"
+        onClick={connected ? onSchedule : onConnect}
+        disabled={migrationRequired || scheduling}
+        className="premium-action mt-5 inline-flex h-10 w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+      >
+        {migrationRequired
+          ? "Migration needed"
+          : connected
+            ? scheduling
+              ? "Scheduling"
+              : "Schedule protocol"
+            : "Connect calendar"}
+      </button>
     </div>
   );
 }

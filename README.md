@@ -16,6 +16,33 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Google Calendar Setup
+
+Aeonvera can connect Google Calendar and schedule protocol blocks.
+
+Required environment variables:
+
+```bash
+GOOGLE_CALENDAR_CLIENT_ID=your_google_oauth_client_id
+GOOGLE_CALENDAR_CLIENT_SECRET=your_google_oauth_client_secret
+GOOGLE_CALENDAR_SCOPES=https://www.googleapis.com/auth/calendar.events
+```
+
+Use this redirect URI in Google Cloud OAuth:
+
+```bash
+https://www.aeonvera.com/api/calendar/google/callback
+```
+
+For local testing, also add:
+
+```bash
+http://localhost:3000/api/calendar/google/callback
+```
+
+Apply `supabase/migrations/20260611170000_calendar_execution.sql` before using
+calendar scheduling live.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
