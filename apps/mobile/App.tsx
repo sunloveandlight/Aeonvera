@@ -76,6 +76,11 @@ type AdherenceEvent = {
   created_at?: string | null;
 };
 
+type LocalReminder = {
+  notificationId: string;
+  scheduledFor: string;
+};
+
 type Preferences = {
   user_id: string;
   email_enabled: boolean;
@@ -122,6 +127,15 @@ const supabase =
       })
     : null;
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+
 const shortcuts = [
   { label: "Twin", title: "Digital Twin", path: "/digital-twin" },
   { label: "Optimize", title: "Optimization", path: "/optimization" },
@@ -166,6 +180,7 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [protocol, setProtocol] = useState<Protocol | null>(null);
   const [adherenceEvents, setAdherenceEvents] = useState<AdherenceEvent[]>([]);
+  const [localReminders, setLocalReminders] = useState<Record<string, LocalReminder>>({});
   const [coachMessages, setCoachMessages] = useState<CoachMessage[]>([]);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
@@ -283,6 +298,15 @@ export default function App() {
   }, [loadCompanionData]);
 
   useEffect(() => {
+    if (Platform.OS === "android") {
+      void Notifications.setNotificationChannelAsync("protocol-reminders", {
+        name: "Protocol reminders",
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: "#f2dc9c",
+      });
+    }
+
     const responseSubscription =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data as
@@ -443,6 +467,77 @@ export default function App() {
           event.protocol_id !== protocol.id || event.action !== action.action
       ),
     ]);
+  }
+
+  async function scheduleActionReminder(
+    action: ScheduledProtocolAction,
+    scope: ActionScope
+  ) {
+    if (!supabase || !session || !protocol?.id || !action.action) return;
+
+    if (Platform.OS !== "ios" && Platform.OS !== "android") {
+      Alert.alert("Native only", "Protocol reminders are available in the mobile app.");
+      return;
+    }
+
+    const current = await Notifications.getPermissionsAsync();
+    const finalPermission = isNotificationPermissionGranted(current)
+      ? current
+      : await Notifications.requestPermissionsAsync();
+
+    if (!isNotificationPermissionGranted(finalPermission)) {
+      Alert.alert("Reminder not scheduled", "Notification permission was not granted.");
+      return;
+    }
+
+    const scheduledFor = getReminderDate(scope);
+    const notificationId = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Aeonvera protocol reminder",
+        body: action.action,
+        data: {
+          path: "/companion",
+          protocol_id: protocol.id,
+          action: action.action,
+          action_scope: scope,
+        },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: scheduledFor,
+      },
+    });
+
+    const reminderKey = getReminderKey(protocol.id, action);
+    setLocalReminders((current) => ({
+      ...current,
+      [reminderKey]: {
+        notificationId,
+        scheduledFor: scheduledFor.toISOString(),
+      },
+    }));
+
+    await supabase.from("behavior_events").insert({
+      user_id: session.user.id,
+      type: "protocol_reminder",
+      event_type: "protocol_reminder_scheduled",
+      domain: action.domain || "Optimization",
+      action: action.action,
+      outcome: "scheduled",
+      payload: {
+        protocol_id: protocol.id,
+        notification_id: notificationId,
+        action_index: action.actionIndex,
+        action_scope: scope,
+        scheduled_for: scheduledFor.toISOString(),
+        source: "mobile",
+      },
+    });
+
+    Alert.alert(
+      "Reminder scheduled",
+      `Aeonvera will remind you ${formatReminderDate(scheduledFor)}.`
+    );
   }
 
   async function prepareNotifications() {
@@ -622,6 +717,8 @@ export default function App() {
                 openPath={openPath}
                 protocol={protocol}
                 recordAdherence={recordAdherence}
+                scheduleActionReminder={scheduleActionReminder}
+                localReminders={localReminders}
               />
             ) : null}
 
@@ -649,21 +746,28 @@ function TodayView({
   latestActions,
   latestMessage,
   latestSummary,
+  localReminders,
   openPath,
   protocol,
   recordAdherence,
+  scheduleActionReminder,
 }: {
   adherenceEvents: AdherenceEvent[];
   appUrl: string;
   latestActions: ProtocolAction[];
   latestMessage: string;
   latestSummary: string;
+  localReminders: Record<string, LocalReminder>;
   openPath: (path: string) => Promise<void>;
   protocol: Protocol | null;
   recordAdherence: (
     action: ProtocolAction,
     actionIndex: number,
     outcome: AdherenceOutcome,
+    scope: ActionScope
+  ) => Promise<void>;
+  scheduleActionReminder: (
+    action: ScheduledProtocolAction,
     scope: ActionScope
   ) => Promise<void>;
 }) {
@@ -688,7 +792,11 @@ function TodayView({
                       key={`${action.action}-${action.actionIndex}`}
                       action={action}
                       adherenceEvent={adherenceByAction[action.action || ""]}
+                      localReminder={
+                        protocol ? localReminders[getReminderKey(protocol.id, action)] : undefined
+                      }
                       recordAdherence={recordAdherence}
+                      scheduleActionReminder={scheduleActionReminder}
                     />
                   ))}
                 </View>
@@ -769,14 +877,21 @@ function InboxView({
 function ProtocolActionRow({
   action,
   adherenceEvent,
+  localReminder,
   recordAdherence,
+  scheduleActionReminder,
 }: {
   action: ScheduledProtocolAction;
   adherenceEvent?: AdherenceEvent;
+  localReminder?: LocalReminder;
   recordAdherence: (
     action: ProtocolAction,
     actionIndex: number,
     outcome: AdherenceOutcome,
+    scope: ActionScope
+  ) => Promise<void>;
+  scheduleActionReminder: (
+    action: ScheduledProtocolAction,
     scope: ActionScope
   ) => Promise<void>;
 }) {
@@ -817,7 +932,18 @@ function ProtocolActionRow({
           >
             <Text style={styles.adherenceButtonText}>Later</Text>
           </Pressable>
+          <Pressable
+            style={[styles.adherenceButton, styles.reminderButton]}
+            onPress={() => void scheduleActionReminder(action, action.scope)}
+          >
+            <Text style={styles.adherenceButtonText}>Remind</Text>
+          </Pressable>
         </View>
+        {localReminder ? (
+          <Text style={styles.reminderText}>
+            Reminder {formatReminderDate(new Date(localReminder.scheduledFor))}
+          </Text>
+        ) : null}
       </View>
     </View>
   );
@@ -998,6 +1124,40 @@ function getScopeDate(scope: ActionScope) {
   }
 
   return date.toISOString().slice(0, 10);
+}
+
+function getReminderDate(scope: ActionScope) {
+  const date = new Date();
+
+  if (scope === "today") {
+    date.setHours(date.getHours() + 1, 0, 0, 0);
+    if (date.getTime() <= Date.now() + 60_000) {
+      date.setMinutes(date.getMinutes() + 10);
+    }
+    return date;
+  }
+
+  if (scope === "week" || scope === "check_in") {
+    date.setDate(date.getDate() + 1);
+    date.setHours(scope === "check_in" ? 8 : 9, 0, 0, 0);
+    return date;
+  }
+
+  date.setDate(date.getDate() + 2);
+  date.setHours(9, 0, 0, 0);
+  return date;
+}
+
+function getReminderKey(protocolId: string, action: ScheduledProtocolAction) {
+  return `${protocolId}:${action.actionIndex}:${action.action}`;
+}
+
+function formatReminderDate(date: Date) {
+  return new Intl.DateTimeFormat(undefined, {
+    weekday: "short",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
 }
 
 function formatDate(value?: string | null) {
@@ -1219,6 +1379,7 @@ const styles = StyleSheet.create({
   },
   adherenceControls: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
     marginTop: 12,
   },
@@ -1236,6 +1397,17 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
     letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  reminderButton: {
+    borderColor: "rgba(218,188,115,0.28)",
+    backgroundColor: "rgba(218,188,115,0.08)",
+  },
+  reminderText: {
+    color: "rgba(218,188,115,0.64)",
+    fontSize: 11,
+    letterSpacing: 0.8,
+    marginTop: 10,
     textTransform: "uppercase",
   },
   adherencePill: {
