@@ -37,6 +37,7 @@ Expo dashboard project settings.
 - Native cadence-aware protocol adherence tracking
 - Native local protocol reminders
 - Configurable reminder timing presets
+- Once, daily, and weekly reminder repeat options
 - Native coach inbox
 - Native notification delivery preferences
 - Deep links into the live web app
@@ -48,5 +49,4 @@ Expo dashboard project settings.
 ## Next Native Steps
 
 - Add EAS build configuration
-- Add repeat schedules for recurring protocol actions
 - Add native charts for biological age and recovery trends

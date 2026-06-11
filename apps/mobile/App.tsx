@@ -44,6 +44,7 @@ type ProtocolAction = {
 
 type ActionScope = "today" | "week" | "check_in" | "later";
 type ReminderPreset = "default" | "soon" | "tomorrow";
+type ReminderRepeat = "once" | "daily" | "weekly";
 
 type ScheduledProtocolAction = ProtocolAction & {
   actionIndex: number;
@@ -79,6 +80,7 @@ type AdherenceEvent = {
 
 type LocalReminder = {
   notificationId: string;
+  repeat: ReminderRepeat;
   scheduledFor: string;
 };
 
@@ -473,7 +475,8 @@ export default function App() {
   async function scheduleActionReminder(
     action: ScheduledProtocolAction,
     scope: ActionScope,
-    preset: ReminderPreset = "default"
+    preset: ReminderPreset = "default",
+    repeat: ReminderRepeat = "once"
   ) {
     if (!supabase || !session || !protocol?.id || !action.action) return;
 
@@ -493,6 +496,7 @@ export default function App() {
     }
 
     const scheduledFor = getReminderDate(scope, preset);
+    const trigger = getReminderTrigger(scheduledFor, repeat);
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: "Aeonvera protocol reminder",
@@ -503,12 +507,10 @@ export default function App() {
           action: action.action,
           action_scope: scope,
           reminder_preset: preset,
+          reminder_repeat: repeat,
         },
       },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: scheduledFor,
-      },
+      trigger,
     });
 
     const reminderKey = getReminderKey(protocol.id, action);
@@ -516,6 +518,7 @@ export default function App() {
       ...current,
       [reminderKey]: {
         notificationId,
+        repeat,
         scheduledFor: scheduledFor.toISOString(),
       },
     }));
@@ -533,6 +536,7 @@ export default function App() {
         action_index: action.actionIndex,
         action_scope: scope,
         reminder_preset: preset,
+        reminder_repeat: repeat,
         scheduled_for: scheduledFor.toISOString(),
         source: "mobile",
       },
@@ -540,7 +544,9 @@ export default function App() {
 
     Alert.alert(
       "Reminder scheduled",
-      `Aeonvera will remind you ${formatReminderDate(scheduledFor)}.`
+      `Aeonvera will remind you ${formatReminderDate(scheduledFor)}${
+        repeat === "once" ? "" : `, ${repeat}`
+      }.`
     );
   }
 
@@ -773,7 +779,8 @@ function TodayView({
   scheduleActionReminder: (
     action: ScheduledProtocolAction,
     scope: ActionScope,
-    preset?: ReminderPreset
+    preset?: ReminderPreset,
+    repeat?: ReminderRepeat
   ) => Promise<void>;
 }) {
   const adherenceByAction = buildLatestAdherenceByAction(adherenceEvents);
@@ -898,7 +905,8 @@ function ProtocolActionRow({
   scheduleActionReminder: (
     action: ScheduledProtocolAction,
     scope: ActionScope,
-    preset?: ReminderPreset
+    preset?: ReminderPreset,
+    repeat?: ReminderRepeat
   ) => Promise<void>;
 }) {
   return (
@@ -948,6 +956,7 @@ function ProtocolActionRow({
         {localReminder ? (
           <Text style={styles.reminderText}>
             Reminder {formatReminderDate(new Date(localReminder.scheduledFor))}
+            {localReminder.repeat === "once" ? "" : ` / ${localReminder.repeat}`}
           </Text>
         ) : null}
       </View>
@@ -960,21 +969,48 @@ function chooseReminderPreset(
   scheduleActionReminder: (
     action: ScheduledProtocolAction,
     scope: ActionScope,
-    preset?: ReminderPreset
+    preset?: ReminderPreset,
+    repeat?: ReminderRepeat
   ) => Promise<void>
 ) {
   Alert.alert("Reminder time", "When should Aeonvera remind you?", [
     {
       text: "Default",
-      onPress: () => void scheduleActionReminder(action, action.scope, "default"),
+      onPress: () => chooseReminderRepeat(action, scheduleActionReminder, "default"),
     },
     {
       text: "Soon",
-      onPress: () => void scheduleActionReminder(action, action.scope, "soon"),
+      onPress: () => chooseReminderRepeat(action, scheduleActionReminder, "soon"),
     },
     {
       text: "Tomorrow",
-      onPress: () => void scheduleActionReminder(action, action.scope, "tomorrow"),
+      onPress: () => chooseReminderRepeat(action, scheduleActionReminder, "tomorrow"),
+    },
+  ]);
+}
+
+function chooseReminderRepeat(
+  action: ScheduledProtocolAction,
+  scheduleActionReminder: (
+    action: ScheduledProtocolAction,
+    scope: ActionScope,
+    preset?: ReminderPreset,
+    repeat?: ReminderRepeat
+  ) => Promise<void>,
+  preset: ReminderPreset
+) {
+  Alert.alert("Repeat", "Should this reminder repeat?", [
+    {
+      text: "Once",
+      onPress: () => void scheduleActionReminder(action, action.scope, preset, "once"),
+    },
+    {
+      text: "Daily",
+      onPress: () => void scheduleActionReminder(action, action.scope, preset, "daily"),
+    },
+    {
+      text: "Weekly",
+      onPress: () => void scheduleActionReminder(action, action.scope, preset, "weekly"),
     },
   ]);
 }
@@ -1187,6 +1223,33 @@ function getReminderDate(scope: ActionScope, preset: ReminderPreset = "default")
   date.setDate(date.getDate() + 2);
   date.setHours(9, 0, 0, 0);
   return date;
+}
+
+function getReminderTrigger(
+  scheduledFor: Date,
+  repeat: ReminderRepeat
+): Notifications.NotificationTriggerInput {
+  if (repeat === "daily") {
+    return {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: scheduledFor.getHours(),
+      minute: scheduledFor.getMinutes(),
+    };
+  }
+
+  if (repeat === "weekly") {
+    return {
+      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+      weekday: scheduledFor.getDay() + 1,
+      hour: scheduledFor.getHours(),
+      minute: scheduledFor.getMinutes(),
+    };
+  }
+
+  return {
+    type: Notifications.SchedulableTriggerInputTypes.DATE,
+    date: scheduledFor,
+  };
 }
 
 function getReminderKey(protocolId: string, action: ScheduledProtocolAction) {
