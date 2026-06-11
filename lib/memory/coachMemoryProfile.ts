@@ -38,12 +38,15 @@ type CalendarRow = {
   created_at?: string | null;
 };
 
+const COACH_MEMORY_PROFILE_VERSION = 2;
+
 export type CoachMemoryProfile = {
   communicationStyle: "encouraging" | "accountability" | "direct" | "balanced";
   motivationProfile: {
     primaryDriver: string;
     needs: string;
     toneReason: string;
+    version?: number;
   };
   failurePatterns: Array<{
     label: string;
@@ -68,6 +71,7 @@ export async function loadOrBuildCoachMemoryProfile(
   const existing = await loadStoredProfile(supabase, userId);
   const isFresh =
     existing &&
+    existing.motivationProfile.version === COACH_MEMORY_PROFILE_VERSION &&
     Date.now() - new Date(existing.lastComputedAt).getTime() < 6 * 60 * 60 * 1000;
 
   if (isFresh) return existing;
@@ -294,6 +298,7 @@ function buildMotivationProfile({
   const hardest = failurePatterns[0]?.label || "follow-through";
 
   return {
+    version: COACH_MEMORY_PROFILE_VERSION,
     primaryDriver:
       executionScore >= 80
         ? "momentum"
@@ -348,7 +353,7 @@ function buildMorningBrief({
     return `Good morning. Execution is strong at ${executionScore}%. Keep the protocol stable today so the pattern compounds.`;
   }
 
-  return `Good morning. You completed ${completed} of ${total} actions and skipped ${skipped}. ${strongest ? `${strongest} is working best. ` : ""}Today is about one clean follow-through.`;
+  return `Good morning. You completed ${completed} of ${total} actions and skipped ${skipped}. ${strongest ? `Your ${domainPhrase(strongest)} protocol has the strongest follow-through. ` : ""}Today is about one clean follow-through.`;
 }
 
 function buildConfidence(total: number, coachOutputs: number, feedback: number) {
@@ -368,6 +373,18 @@ function normalizeCommunicationStyle(value: unknown): CoachMemoryProfile["commun
 function normalizeDomainLabel(value: unknown) {
   const domain = typeof value === "string" && value.trim() ? value.trim() : "Optimization";
   return domain.slice(0, 60);
+}
+
+function domainPhrase(domain: string) {
+  const value = domain.toLowerCase();
+
+  if (value.includes("stress")) return "stress-reduction";
+  if (value.includes("sleep")) return "sleep";
+  if (value.includes("training") || value.includes("activity")) return "training";
+  if (value.includes("nutrition")) return "nutrition";
+  if (value.includes("recovery")) return "recovery";
+
+  return domain;
 }
 
 function safeObject(value: unknown) {

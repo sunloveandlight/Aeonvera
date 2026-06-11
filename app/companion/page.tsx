@@ -3,7 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Bell, Brain, CalendarClock, Dna, MessageCircle, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Bell,
+  Brain,
+  CalendarClock,
+  Dna,
+  MessageCircle,
+  Sparkles,
+  Target,
+} from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import NotificationPreferencesPanel from "@/components/dashboard/NotificationPreferencesPanel";
 import { supabase } from "@/lib/supabase/client";
@@ -94,6 +103,28 @@ type ExecutionSummary = {
   }>;
 };
 
+type CoachMemory = {
+  communicationStyle: "encouraging" | "accountability" | "direct" | "balanced";
+  motivationProfile?: {
+    primaryDriver?: string;
+    needs?: string;
+    toneReason?: string;
+  };
+  failurePatterns?: Array<{
+    label: string;
+    count: number;
+    actions: string[];
+  }>;
+  bestInterventions?: Array<{
+    domain: string;
+    action: string;
+    successCount: number;
+  }>;
+  domainScores?: Record<string, number>;
+  morningBrief?: string;
+  confidence?: number;
+};
+
 export default function CompanionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -103,6 +134,7 @@ export default function CompanionPage() {
   const [coachMessages, setCoachMessages] = useState<CoachMessage[]>([]);
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null);
   const [executionSummary, setExecutionSummary] = useState<ExecutionSummary | null>(null);
+  const [coachMemory, setCoachMemory] = useState<CoachMemory | null>(null);
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [schedulingCalendar, setSchedulingCalendar] = useState(false);
   const [schedulingActionKey, setSchedulingActionKey] = useState<string | null>(null);
@@ -135,20 +167,24 @@ export default function CompanionPage() {
           coachResponse,
           calendarResponse,
           executionResponse,
+          memoryResponse,
         ] = await Promise.all([
           fetch("/api/digital-twin/timeline", { credentials: "include" }),
           fetch("/api/optimization/protocols", { credentials: "include" }),
           fetch("/api/notifications/deliveries", { credentials: "include" }),
           fetch("/api/calendar/google/status", { credentials: "include" }),
           fetch("/api/execution/summary", { credentials: "include" }),
+          fetch("/api/coach/memory", { credentials: "include" }),
         ]);
-        const [twinData, protocolData, coachData, calendarData, executionData] = await Promise.all([
-          twinResponse.json(),
-          protocolResponse.json(),
-          coachResponse.json(),
-          calendarResponse.json(),
-          executionResponse.json(),
-        ]);
+        const [twinData, protocolData, coachData, calendarData, executionData, memoryData] =
+          await Promise.all([
+            twinResponse.json(),
+            protocolResponse.json(),
+            coachResponse.json(),
+            calendarResponse.json(),
+            executionResponse.json(),
+            memoryResponse.json(),
+          ]);
 
         if (!twinResponse.ok) throw new Error(twinData.error || "Companion could not load.");
 
@@ -158,6 +194,7 @@ export default function CompanionPage() {
           setCoachMessages(coachData.notifications || []);
           setCalendarStatus(calendarResponse.ok ? calendarData : null);
           setExecutionSummary(executionResponse.ok ? executionData.execution : null);
+          setCoachMemory(memoryResponse.ok ? memoryData.memory : null);
         }
       } catch (error) {
         if (!cancelled) {
@@ -367,10 +404,18 @@ export default function CompanionPage() {
       const executionResponse = await fetch("/api/execution/summary", {
         credentials: "include",
       });
+      const memoryResponse = await fetch("/api/coach/memory", {
+        credentials: "include",
+      });
       const executionData = await executionResponse.json();
+      const memoryData = await memoryResponse.json();
 
       if (executionResponse.ok) {
         setExecutionSummary(executionData.execution || null);
+      }
+
+      if (memoryResponse.ok) {
+        setCoachMemory(memoryData.memory || null);
       }
 
       setCalendarMessage(
@@ -482,6 +527,8 @@ export default function CompanionPage() {
             </div>
 
             <ExecutionScorePanel execution={executionSummary} />
+
+            <PersonalAgentMemoryPanel memory={coachMemory} />
 
             <CompanionCard
               icon={MessageCircle}
@@ -733,11 +780,113 @@ function ExecutionStat({ label, value }: { label: string; value: number }) {
   );
 }
 
+function PersonalAgentMemoryPanel({ memory }: { memory: CoachMemory | null }) {
+  const friction = memory?.failurePatterns?.[0];
+  const strongest = memory?.bestInterventions?.[0];
+  const confidence = Math.round((memory?.confidence || 0) * 100);
+  const styleLabel = memory ? coachStyleLabel(memory.communicationStyle) : "Building";
+
+  return (
+    <div className="executive-panel rounded-lg p-6 md:p-7">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <p className="micro-label">Personal Agent Memory</p>
+        <Target size={18} className="royal-text" />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-md bg-white/[0.035] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/80">
+              {styleLabel}
+            </span>
+            <span className="rounded-md bg-white/[0.025] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-white/30">
+              {confidence || 0}% confidence
+            </span>
+          </div>
+
+          <h3 className="mt-5 text-2xl font-light leading-tight text-white/88">
+            {memory?.morningBrief ||
+              "Aeonvera is learning how you respond, where follow-through breaks, and what interventions actually work."}
+          </h3>
+
+          <p className="mt-4 text-sm leading-7 text-white/42">
+            {memory?.motivationProfile?.needs ||
+              "Mark actions Done, Skip, or Later to shape the coach's memory."}
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+          <MemoryStat
+            label="Friction"
+            value={friction ? friction.label : "Learning"}
+            detail={
+              friction
+                ? `${friction.count} skipped this week`
+                : "No repeated failure pattern yet"
+            }
+          />
+          <MemoryStat
+            label="Strongest"
+            value={strongest ? readableDomain(strongest.domain) : "Learning"}
+            detail={
+              strongest
+                ? `${strongest.successCount} successful completions`
+                : "No strongest intervention yet"
+            }
+          />
+          <MemoryStat
+            label="Driver"
+            value={memory?.motivationProfile?.primaryDriver || "Small wins"}
+            detail="Current motivation model"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MemoryStat({
+  detail,
+  label,
+  value,
+}: {
+  detail: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+      <p className="micro-label">{label}</p>
+      <p className="mt-3 text-lg font-light leading-snug text-white/86">{value}</p>
+      <p className="mt-2 text-xs leading-5 text-white/36">{detail}</p>
+    </div>
+  );
+}
+
 function executionStatusLabel(status: ExecutionSummary["status"]) {
   if (status === "strong") return "Strong";
   if (status === "steady") return "Steady";
   if (status === "needs_attention") return "Needs adjustment";
   return "Building";
+}
+
+function coachStyleLabel(style: CoachMemory["communicationStyle"]) {
+  if (style === "encouraging") return "Encouraging coach";
+  if (style === "accountability") return "Accountability coach";
+  if (style === "direct") return "Direct coach";
+  return "Balanced coach";
+}
+
+function readableDomain(domain: string) {
+  const value = domain.toLowerCase();
+
+  if (value.includes("stress")) return "Stress reduction";
+  if (value.includes("sleep")) return "Sleep";
+  if (value.includes("training") || value.includes("activity")) return "Training";
+  if (value.includes("nutrition")) return "Nutrition";
+  if (value.includes("recovery")) return "Recovery";
+
+  return domain;
 }
 
 function classifyActionScope(action: ProtocolAction): ActionScope {
