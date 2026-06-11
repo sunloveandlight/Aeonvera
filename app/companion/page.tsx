@@ -73,6 +73,27 @@ type CalendarStatus = {
   } | null;
 };
 
+type ExecutionSummary = {
+  score: number;
+  total: number;
+  completed: number;
+  skipped: number;
+  deferred: number;
+  scheduled: number;
+  status: "building" | "needs_attention" | "steady" | "strong";
+  headline: string;
+  topSkippedPattern?: {
+    label: string;
+    count: number;
+    actions: string[];
+  } | null;
+  skippedPatterns: Array<{
+    label: string;
+    count: number;
+    actions: string[];
+  }>;
+};
+
 export default function CompanionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -81,6 +102,7 @@ export default function CompanionPage() {
   const [protocols, setProtocols] = useState<Protocol[]>([]);
   const [coachMessages, setCoachMessages] = useState<CoachMessage[]>([]);
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null);
+  const [executionSummary, setExecutionSummary] = useState<ExecutionSummary | null>(null);
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [schedulingCalendar, setSchedulingCalendar] = useState(false);
   const [schedulingActionKey, setSchedulingActionKey] = useState<string | null>(null);
@@ -106,17 +128,25 @@ export default function CompanionPage() {
       }
 
       try {
-        const [twinResponse, protocolResponse, coachResponse, calendarResponse] = await Promise.all([
+        const [
+          twinResponse,
+          protocolResponse,
+          coachResponse,
+          calendarResponse,
+          executionResponse,
+        ] = await Promise.all([
           fetch("/api/digital-twin/timeline", { credentials: "include" }),
           fetch("/api/optimization/protocols", { credentials: "include" }),
           fetch("/api/notifications/deliveries", { credentials: "include" }),
           fetch("/api/calendar/google/status", { credentials: "include" }),
+          fetch("/api/execution/summary", { credentials: "include" }),
         ]);
-        const [twinData, protocolData, coachData, calendarData] = await Promise.all([
+        const [twinData, protocolData, coachData, calendarData, executionData] = await Promise.all([
           twinResponse.json(),
           protocolResponse.json(),
           coachResponse.json(),
           calendarResponse.json(),
+          executionResponse.json(),
         ]);
 
         if (!twinResponse.ok) throw new Error(twinData.error || "Companion could not load.");
@@ -126,6 +156,7 @@ export default function CompanionPage() {
           setProtocols(protocolData.protocols || []);
           setCoachMessages(coachData.notifications || []);
           setCalendarStatus(calendarResponse.ok ? calendarData : null);
+          setExecutionSummary(executionResponse.ok ? executionData.execution : null);
         }
       } catch (error) {
         if (!cancelled) {
@@ -386,6 +417,8 @@ export default function CompanionPage() {
               />
             </div>
 
+            <ExecutionScorePanel execution={executionSummary} />
+
             <CompanionCard
               icon={MessageCircle}
               label="Coach Inbox"
@@ -500,6 +533,73 @@ function ProtocolActionsCalendarPanel({
       </div>
     </div>
   );
+}
+
+function ExecutionScorePanel({ execution }: { execution: ExecutionSummary | null }) {
+  const score = execution?.score ?? 0;
+  const label = execution ? executionStatusLabel(execution.status) : "Building";
+
+  return (
+    <div className="executive-panel rounded-lg p-6 md:p-7">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <p className="micro-label">Execution Intelligence</p>
+        <Brain size={18} className="royal-text" />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
+        <div>
+          <div className="flex items-end gap-3">
+            <p className="text-6xl font-light leading-none text-white">{score}</p>
+            <p className="mb-2 text-xs uppercase tracking-[0.14em] text-white/28">
+              score
+            </p>
+          </div>
+          <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[#dabc73]/80">
+            {label}
+          </p>
+        </div>
+        <div>
+          <h3 className="text-2xl font-light leading-tight text-white/88">
+            {execution?.headline ||
+              "Execution score appears after protocol actions are completed, skipped, or scheduled."}
+          </h3>
+          <div className="mt-5 grid gap-3 sm:grid-cols-4">
+            <ExecutionStat label="Done" value={execution?.completed || 0} />
+            <ExecutionStat label="Skipped" value={execution?.skipped || 0} />
+            <ExecutionStat label="Later" value={execution?.deferred || 0} />
+            <ExecutionStat label="Calendar" value={execution?.scheduled || 0} />
+          </div>
+          {execution?.topSkippedPattern ? (
+            <div className="mt-5 rounded-lg border border-white/[0.07] bg-black/15 p-4">
+              <p className="micro-label">Skipped pattern</p>
+              <p className="mt-3 text-sm leading-6 text-white/50">
+                {execution.topSkippedPattern.label} skipped{" "}
+                {execution.topSkippedPattern.count} time
+                {execution.topSkippedPattern.count === 1 ? "" : "s"} this week.
+              </p>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExecutionStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-3">
+      <p className="text-2xl font-light text-white/86">{value}</p>
+      <p className="mt-1 text-[8px] uppercase tracking-[0.14em] text-white/30">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function executionStatusLabel(status: ExecutionSummary["status"]) {
+  if (status === "strong") return "Strong";
+  if (status === "steady") return "Steady";
+  if (status === "needs_attention") return "Needs adjustment";
+  return "Building";
 }
 
 function classifyActionScope(action: ProtocolAction): ActionScope {
