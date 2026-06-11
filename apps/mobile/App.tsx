@@ -156,12 +156,11 @@ export default function App() {
     }
 
     const current = await Notifications.getPermissionsAsync();
-    const finalStatus =
-      current.status === "granted"
-        ? current.status
-        : (await Notifications.requestPermissionsAsync()).status;
+    const finalPermission = isNotificationPermissionGranted(current)
+      ? current
+      : await Notifications.requestPermissionsAsync();
 
-    if (finalStatus !== "granted") {
+    if (!isNotificationPermissionGranted(finalPermission)) {
       setPushStatus("Permission not granted");
       Alert.alert("Notifications", "Notification permission was not granted.");
       return;
@@ -295,6 +294,11 @@ export default function App() {
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+function isNotificationPermissionGranted(permission: unknown) {
+  const result = permission as { granted?: boolean; status?: string };
+  return result.granted === true || result.status === "granted";
 }
 
 const styles = StyleSheet.create({
