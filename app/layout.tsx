@@ -19,6 +19,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AEONVERA",
   description: "Longevity Intelligence Platform",
+  applicationName: "Aeonvera",
+  appleWebApp: {
+    capable: true,
+    title: "Aeonvera",
+    statusBarStyle: "black-translucent",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    icon: "/aeonvera-app-icon.svg",
+    apple: "/aeonvera-app-icon.svg",
+  },
 };
 
 export default function RootLayout({

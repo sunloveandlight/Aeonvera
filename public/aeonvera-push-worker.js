@@ -10,8 +10,8 @@ self.addEventListener("push", (event) => {
   const title = data.title || fallback.title;
   const options = {
     body: data.body || fallback.body,
-    icon: "/window.svg",
-    badge: "/window.svg",
+    icon: "/aeonvera-app-icon.svg",
+    badge: "/aeonvera-app-icon.svg",
     data: {
       url: data.url || fallback.url,
     },
