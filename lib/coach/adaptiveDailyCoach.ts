@@ -1,6 +1,7 @@
 import type { LongevityAlert } from "./longevityCoach";
 import type { LabTrend } from "@/lib/labs/labTrends";
 import type { ExecutionSummary } from "@/lib/execution/executionSummary";
+import type { CoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
 
 type OptimizationAction = {
   domain?: string;
@@ -54,6 +55,7 @@ export type AdaptiveCoachContext = {
   recentBehaviorEvents: BehaviorEventRow[];
   labTrends?: LabTrend[];
   executionSummary?: ExecutionSummary | null;
+  coachMemory?: CoachMemoryProfile | null;
 };
 
 export type AdaptiveCoachDecision = {
@@ -177,6 +179,12 @@ export function buildAdaptiveCoachDecision({
     memoryTags.push(primaryExecutionSignal.tag);
   }
 
+  const memorySignal = buildCoachMemorySignal(context.coachMemory, recentTags);
+  if (memorySignal) {
+    alerts.push(signalToAlert(memorySignal));
+    memoryTags.push(memorySignal.tag);
+  }
+
   if (alerts.length === 0 && optimizationProtocol) {
     const protocolAlert = buildProtocolAlert(optimizationProtocol);
 
@@ -215,6 +223,8 @@ export function buildAdaptiveCoachDecision({
       ? "Meaningful clinical biomarker trend detected."
       : executionSignals.length
       ? "Execution pattern requires coach adjustment."
+      : memorySignal
+      ? "Personal coach memory requires a proactive nudge."
       : optimizationProtocol
       ? "Active optimization protocol nudge due."
       : "Coach alert due.",
@@ -378,6 +388,35 @@ function buildExecutionSignals(summary?: ExecutionSummary | null): TrendSignal[]
   }
 
   return signals;
+}
+
+function buildCoachMemorySignal(
+  memory: CoachMemoryProfile | null | undefined,
+  recentTags: Set<string>
+): TrendSignal | null {
+  if (!memory?.morningBrief || recentTags.has("memory:morning-brief")) {
+    return null;
+  }
+
+  if (memory.confidence < 0.35) return null;
+
+  const failurePattern = memory.failurePatterns[0];
+  const bestIntervention = memory.bestInterventions[0];
+  const recommendation =
+    failurePattern?.actions?.[0] ||
+    bestIntervention?.action ||
+    "Complete one protocol action today and mark the result.";
+
+  return {
+    domain: failurePattern ? executionDomain(failurePattern.label) : "activity",
+    title: "Personal coach memory",
+    message: memory.morningBrief,
+    recommendation,
+    severity: memory.communicationStyle === "accountability" ? "medium" : "low",
+    confidence: memory.confidence,
+    priority: memory.communicationStyle === "accountability" ? 7 : 5,
+    tag: "memory:morning-brief",
+  };
 }
 
 function groupMetrics(metrics: HealthMetricRow[]) {

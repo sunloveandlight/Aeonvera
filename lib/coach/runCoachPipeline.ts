@@ -5,6 +5,7 @@ import { executeAeonveraActions } from "@/lib/execution/aeonveraExecutionEngine"
 import { generateJarvisMessage } from "@/lib/voice/jarvisResponseEngine";
 import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
 import { buildExecutionSummary, getExecutionWindow } from "@/lib/execution/executionSummary";
+import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
 import type { LongevityAlert } from "./longevityCoach";
 import {
   buildAdaptiveCoachDecision,
@@ -123,6 +124,8 @@ export async function runCoachPipeline(userId: string) {
     const jarvis = generateJarvisMessage({
       userName: profile?.display_name || undefined,
       interventions,
+      preferredTone: adaptiveContext.coachMemory?.communicationStyle,
+      memoryBrief: adaptiveContext.coachMemory?.morningBrief,
       trigger: {
         shouldTrigger: true,
         intensity: adaptiveDecision.intensity,
@@ -204,6 +207,7 @@ async function loadAdaptiveCoachContext(
     behaviorResult,
     labTrends,
     executionSummary,
+    coachMemory,
   ] =
     await Promise.all([
       supabase
@@ -235,6 +239,7 @@ async function loadAdaptiveCoachContext(
         .limit(20),
       loadLabTrendsForUser(supabase, userId),
       loadExecutionSummaryForCoach(supabase, userId),
+      loadOrBuildCoachMemoryProfile(supabase, userId),
     ]);
 
   return {
@@ -244,6 +249,7 @@ async function loadAdaptiveCoachContext(
     recentBehaviorEvents: behaviorResult.data || [],
     labTrends,
     executionSummary,
+    coachMemory,
   };
 }
 

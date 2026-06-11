@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { deliverCoachNotifications } from "@/lib/notifications/coachDelivery";
-import type { JarvisMessage } from "@/lib/voice/jarvisResponseEngine";
+import { generateJarvisMessage } from "@/lib/voice/jarvisResponseEngine";
 import type { LongevityAlert } from "@/lib/coach/longevityCoach";
 import type { LabTrend } from "@/lib/labs/labTrends";
 import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
+import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
 
 type OptimizationProtocol = {
   summary?: string;
@@ -31,7 +32,7 @@ export async function POST() {
     }
 
     const admin = getSupabaseAdmin();
-    const [{ data: profile }, { data: latestProtocol }, labTrends] = await Promise.all([
+    const [{ data: profile }, { data: latestProtocol }, labTrends, coachMemory] = await Promise.all([
       admin
         .from("profiles")
         .select("display_name")
@@ -45,6 +46,7 @@ export async function POST() {
         .limit(1)
         .maybeSingle(),
       loadLabTrendsForUser(admin, user.id),
+      loadOrBuildCoachMemoryProfile(admin, user.id),
     ]);
 
     const protocol = latestProtocol?.protocol as OptimizationProtocol | undefined;
@@ -100,21 +102,35 @@ export async function POST() {
       return NextResponse.json({ error: alertError.message }, { status: 500 });
     }
 
-    const jarvis: JarvisMessage = {
-      mode: "notification",
-      tone: protocol ? "direct" : "neutral",
-      message: profile?.display_name
-        ? `${profile.display_name}, ${message}`
-        : message,
-      actions,
-    };
+    const jarvis = generateJarvisMessage({
+      userName: profile?.display_name || undefined,
+      preferredTone: coachMemory?.communicationStyle,
+      memoryBrief: coachMemory?.morningBrief,
+      interventions: [
+        {
+          domain: alert.type,
+          action: recommendation,
+          reason: message,
+          priority: alert.severity === "high" ? 10 : alert.severity === "medium" ? 7 : 4,
+        },
+      ],
+      trigger: {
+        shouldTrigger: true,
+        intensity: alert.severity === "high" ? "high" : "medium",
+        mode: "notification",
+        selectedInterventions: [],
+      },
+    });
 
     const delivery = await deliverCoachNotifications({
       supabase: admin,
       userId: user.id,
       alerts: [storedAlert],
       jarvis,
-      memoryTags: clinicalSignal ? [`lab:${clinicalSignal.canonicalKey}:${clinicalSignal.status}`] : [],
+      memoryTags: [
+        ...(clinicalSignal ? [`lab:${clinicalSignal.canonicalKey}:${clinicalSignal.status}`] : []),
+        ...(coachMemory ? ["memory:test-coach"] : []),
+      ],
     });
 
     return NextResponse.json({
@@ -122,6 +138,8 @@ export async function POST() {
       delivery,
       protocol_context: Boolean(protocol),
       clinical_context: Boolean(clinicalSignal),
+      memory_context: Boolean(coachMemory),
+      communication_style: coachMemory?.communicationStyle || null,
     });
   } catch (error) {
     const message =
