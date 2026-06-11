@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 type TimelineEvent = {
   id: string;
-  type: "assessment" | "biological_age" | "lab" | "protocol" | "report" | "coach" | "scenario" | "wearable";
+  type: "assessment" | "biological_age" | "lab" | "protocol" | "report" | "coach" | "scenario" | "wearable" | "outcome";
   title: string;
   detail: string;
   occurred_at: string;
@@ -38,6 +38,7 @@ export async function GET() {
       scenarioRes,
       healthStateRes,
       wearableRes,
+      outcomeRes,
     ] = await Promise.all([
       safeQuery(() =>
         admin
@@ -119,6 +120,14 @@ export async function GET() {
           .order("recorded_at", { ascending: false })
           .limit(16)
       ),
+      safeQuery(() =>
+        admin
+          .from("intervention_outcomes")
+          .select("id, domain, action, success, outcome, confidence, notes, measured_at, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(16)
+      ),
     ]);
 
     const events = [
@@ -130,6 +139,7 @@ export async function GET() {
       ...mapCoach(coachRes.data),
       ...mapScenarios(scenarioRes.data),
       ...mapWearables(wearableRes.data),
+      ...mapOutcomes(outcomeRes.data),
     ].sort((a, b) => Date.parse(b.occurred_at) - Date.parse(a.occurred_at));
 
     return NextResponse.json({
@@ -144,6 +154,7 @@ export async function GET() {
         reports: reportRes.data?.length || 0,
         scenarios: scenarioRes.data?.length || 0,
         wearableMetrics: wearableRes.data?.length || 0,
+        outcomes: outcomeRes.data?.length || 0,
       },
     });
   } catch (error) {
@@ -256,6 +267,18 @@ function mapWearables(rows: unknown): TimelineEvent[] {
     occurred_at: text(row.recorded_at),
     signal: `${text(row.value)}${row.unit ? ` ${text(row.unit)}` : ""}`,
     href: "/dashboard",
+  }));
+}
+
+function mapOutcomes(rows: unknown): TimelineEvent[] {
+  return asRows(rows).map((row) => ({
+    id: `outcome-${row.id}`,
+    type: "outcome",
+    title: `${labelize(row.domain)} outcome tracked`,
+    detail: text(row.action) || text(row.notes) || "Intervention result recorded.",
+    occurred_at: text(row.measured_at) || text(row.created_at),
+    signal: text(row.outcome) || (row.success ? "success" : "tracked"),
+    href: "/digital-twin",
   }));
 }
 

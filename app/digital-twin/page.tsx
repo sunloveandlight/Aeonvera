@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Activity, ArrowRight, Brain, Clock3, Dna, FileText, FlaskConical, HeartPulse, Sparkles, type LucideIcon } from "lucide-react";
+import { Activity, ArrowRight, Brain, Clock3, Dna, FileText, FlaskConical, HeartPulse, Printer, Sparkles, type LucideIcon } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import { supabase } from "@/lib/supabase/client";
 
 type TimelineEvent = {
   id: string;
-  type: "assessment" | "biological_age" | "lab" | "protocol" | "report" | "coach" | "scenario" | "wearable";
+  type: "assessment" | "biological_age" | "lab" | "protocol" | "report" | "coach" | "scenario" | "wearable" | "outcome";
   title: string;
   detail: string;
   occurred_at: string;
@@ -39,6 +39,7 @@ const TYPE_FILTERS: Array<TimelineEvent["type"] | "all"> = [
   "lab",
   "scenario",
   "wearable",
+  "outcome",
   "coach",
   "report",
   "assessment",
@@ -49,6 +50,7 @@ const MODEL_INPUTS: Array<[string, keyof DigitalTwinPayload["counts"], LucideIco
   ["Biological age points", "biologicalAgePoints", HeartPulse],
   ["Clinical biomarkers", "labs", FlaskConical],
   ["Future scenarios", "scenarios", Dna],
+  ["Outcomes", "outcomes", Sparkles],
   ["Reports", "reports", FileText],
 ];
 
@@ -57,6 +59,14 @@ export default function DigitalTwinPage() {
   const [payload, setPayload] = useState<DigitalTwinPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const [outcomeMessage, setOutcomeMessage] = useState<string | null>(null);
+  const [savingOutcome, setSavingOutcome] = useState(false);
+  const [outcomeForm, setOutcomeForm] = useState({
+    domain: "Recovery",
+    action: "",
+    outcome: "success",
+    notes: "",
+  });
   const [activeType, setActiveType] = useState<TimelineEvent["type"] | "all">("all");
 
   useEffect(() => {
@@ -113,6 +123,49 @@ export default function DigitalTwinPage() {
   const latestBioAge = payload?.profile?.biological_age;
   const insight = payload?.state?.insights?.[0] || "Your living health model is assembling from assessments, labs, protocols, coach signals, and wearable data.";
 
+  async function saveOutcome() {
+    if (!outcomeForm.action.trim()) {
+      setOutcomeMessage("Add the action you tested before saving an outcome.");
+      return;
+    }
+
+    setSavingOutcome(true);
+    setOutcomeMessage(null);
+
+    try {
+      const response = await fetch("/api/digital-twin/outcomes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          domain: outcomeForm.domain,
+          action: outcomeForm.action,
+          outcome: outcomeForm.outcome,
+          confidence: outcomeForm.outcome === "unknown" ? 0.5 : 0.8,
+          notes: outcomeForm.notes,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not save outcome.");
+      }
+
+      setOutcomeMessage("Outcome saved. Your Digital Twin timeline will learn from this.");
+      setOutcomeForm((current) => ({ ...current, action: "", notes: "" }));
+
+      const timelineResponse = await fetch("/api/digital-twin/timeline", {
+        credentials: "include",
+      });
+      const timelineData = await timelineResponse.json();
+      if (timelineResponse.ok) setPayload(timelineData);
+    } catch (error) {
+      setOutcomeMessage(error instanceof Error ? error.message : "Could not save outcome.");
+    } finally {
+      setSavingOutcome(false);
+    }
+  }
+
   return (
     <PageContainer>
       <div className="py-16">
@@ -126,12 +179,20 @@ export default function DigitalTwinPage() {
               {insight}
             </p>
           </div>
-          <Link
-            href="/optimization"
-            className="premium-action inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
-          >
-            Optimize <ArrowRight size={16} />
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/optimization"
+              className="premium-action inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+            >
+              Optimize <ArrowRight size={16} />
+            </Link>
+            <Link
+              href="/physician-export"
+              className="premium-action-secondary inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+            >
+              Export <Printer size={16} />
+            </Link>
+          </div>
         </div>
 
         {loading ? (
@@ -165,20 +226,77 @@ export default function DigitalTwinPage() {
             </div>
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[0.78fr_1.22fr]">
-              <div className="executive-panel rounded-lg p-6 md:p-7">
-                <p className="micro-label mb-5">Model Inputs</p>
-                <div className="space-y-3">
-                  {MODEL_INPUTS.map(([label, key, Icon]) => (
-                    <div key={String(label)} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <Icon size={16} className="royal-text" />
-                          <p className="text-sm text-white/68">{String(label)}</p>
+              <div className="space-y-6">
+                <div className="executive-panel rounded-lg p-6 md:p-7">
+                  <p className="micro-label mb-5">Model Inputs</p>
+                  <div className="space-y-3">
+                    {MODEL_INPUTS.map(([label, key, Icon]) => (
+                      <div key={String(label)} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <Icon size={16} className="royal-text" />
+                            <p className="text-sm text-white/68">{String(label)}</p>
+                          </div>
+                          <p className="text-sm text-white/44">{String(payload.counts[key] || 0)}</p>
                         </div>
-                        <p className="text-sm text-white/44">{String(payload.counts[key] || 0)}</p>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+
+                <div className="executive-panel rounded-lg p-6 md:p-7">
+                  <p className="micro-label mb-5">Outcome Tracking</p>
+                  <div className="space-y-3">
+                    <select
+                      value={outcomeForm.domain}
+                      onChange={(event) =>
+                        setOutcomeForm((current) => ({ ...current, domain: event.target.value }))
+                      }
+                      className="h-11 w-full rounded-md border border-white/[0.08] bg-black/40 px-3 text-sm text-white/70 outline-none"
+                    >
+                      {["Recovery", "Movement", "Nutrition", "Metabolic", "Stress", "Sleep"].map((domain) => (
+                        <option key={domain}>{domain}</option>
+                      ))}
+                    </select>
+                    <input
+                      value={outcomeForm.action}
+                      onChange={(event) =>
+                        setOutcomeForm((current) => ({ ...current, action: event.target.value }))
+                      }
+                      className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/70 outline-none"
+                      placeholder="Action tested"
+                    />
+                    <select
+                      value={outcomeForm.outcome}
+                      onChange={(event) =>
+                        setOutcomeForm((current) => ({ ...current, outcome: event.target.value }))
+                      }
+                      className="h-11 w-full rounded-md border border-white/[0.08] bg-black/40 px-3 text-sm text-white/70 outline-none"
+                    >
+                      <option value="success">Improved</option>
+                      <option value="failure">Did not improve</option>
+                      <option value="unknown">Still learning</option>
+                    </select>
+                    <textarea
+                      value={outcomeForm.notes}
+                      onChange={(event) =>
+                        setOutcomeForm((current) => ({ ...current, notes: event.target.value }))
+                      }
+                      className="min-h-24 w-full resize-none rounded-md border border-white/[0.08] bg-white/[0.025] p-3 text-sm leading-6 text-white/70 outline-none"
+                      placeholder="Before / after notes, symptom changes, adherence, or metric shift"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void saveOutcome()}
+                      disabled={savingOutcome}
+                      className="premium-action inline-flex h-11 w-full items-center justify-center rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {savingOutcome ? "Saving outcome" : "Save outcome"}
+                    </button>
+                    {outcomeMessage && (
+                      <p className="text-sm leading-6 text-white/45">{outcomeMessage}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
