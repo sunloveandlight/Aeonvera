@@ -8,9 +8,25 @@ type PushResult =
 
 type SendableWebPushRow = {
   id: string;
+  platform: "web";
   endpoint: string;
   p256dh: string;
   auth: string;
+};
+
+type SendableNativePushRow = {
+  id: string;
+  platform: "ios" | "android";
+  token: string;
+};
+
+type PushSubscriptionRow = {
+  id: string;
+  platform: "web" | "ios" | "android";
+  endpoint?: string | null;
+  p256dh?: string | null;
+  auth?: string | null;
+  token?: string | null;
 };
 
 type PushPayload = {
@@ -33,22 +49,10 @@ export async function sendCoachPushNotifications({
   const privateKey = process.env.VAPID_PRIVATE_KEY;
   const subject = process.env.VAPID_SUBJECT || "mailto:support@aeonvera.app";
 
-  if (!publicKey || !privateKey) {
-    return {
-      status: "skipped",
-      sent: 0,
-      failed: 0,
-      error: "Missing VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY",
-    };
-  }
-
-  webPush.setVapidDetails(subject, publicKey, privateKey);
-
   const { data, error } = await supabase
     .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth")
+    .select("id, platform, endpoint, p256dh, auth, token")
     .eq("user_id", userId)
-    .eq("platform", "web")
     .eq("enabled", true);
 
   if (error) {
@@ -60,20 +64,80 @@ export async function sendCoachPushNotifications({
     };
   }
 
-  const subscriptions = (data || []).filter(
+  const rows = (data || []) as PushSubscriptionRow[];
+  const webSubscriptions = rows.filter(
     (subscription): subscription is SendableWebPushRow =>
+      subscription.platform === "web" &&
       Boolean(subscription.endpoint && subscription.p256dh && subscription.auth)
   );
+  const nativeSubscriptions = rows.filter(
+    (subscription): subscription is SendableNativePushRow =>
+      (subscription.platform === "ios" || subscription.platform === "android") &&
+      isExpoPushToken(subscription.token)
+  );
 
-  if (!subscriptions.length) {
+  if (!webSubscriptions.length && !nativeSubscriptions.length) {
     return {
       status: "skipped",
       sent: 0,
       failed: 0,
-      error: "No active web push subscription registered",
+      error: "No active push subscription registered",
     };
   }
 
+  let sent = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  if (webSubscriptions.length) {
+    if (!publicKey || !privateKey) {
+      failed += webSubscriptions.length;
+      errors.push("Missing VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY");
+    } else {
+      webPush.setVapidDetails(subject, publicKey, privateKey);
+      const webResult = await sendWebPushSubscriptions({
+        supabase,
+        subscriptions: webSubscriptions,
+        payload,
+      });
+      sent += webResult.sent;
+      failed += webResult.failed;
+      if (webResult.error) errors.push(webResult.error);
+    }
+  }
+
+  if (nativeSubscriptions.length) {
+    const nativeResult = await sendExpoPushSubscriptions({
+      supabase,
+      subscriptions: nativeSubscriptions,
+      payload,
+    });
+    sent += nativeResult.sent;
+    failed += nativeResult.failed;
+    if (nativeResult.error) errors.push(nativeResult.error);
+  }
+
+  if (sent > 0) {
+    return { status: "sent", sent, failed };
+  }
+
+  return {
+    status: "failed",
+    sent,
+    failed,
+    error: errors.join("; ") || "Push send failed",
+  };
+}
+
+async function sendWebPushSubscriptions({
+  supabase,
+  subscriptions,
+  payload,
+}: {
+  supabase: SupabaseClient;
+  subscriptions: SendableWebPushRow[];
+  payload: PushPayload;
+}) {
   let sent = 0;
   let failed = 0;
   let lastError = "";
@@ -99,28 +163,108 @@ export async function sendCoachPushNotifications({
         sent++;
       } catch (error) {
         failed++;
-        lastError = error instanceof Error ? error.message : "Push send failed";
+        lastError = error instanceof Error ? error.message : "Web push send failed";
 
         if (isExpiredPushSubscription(error)) {
-          await supabase
-            .from("push_subscriptions")
-            .update({ enabled: false, updated_at: new Date().toISOString() })
-            .eq("id", subscription.id);
+          await disablePushSubscription(supabase, subscription.id);
         }
       }
     })
   );
 
-  if (sent > 0) {
-    return { status: "sent", sent, failed };
+  return { sent, failed, error: lastError };
+}
+
+async function sendExpoPushSubscriptions({
+  supabase,
+  subscriptions,
+  payload,
+}: {
+  supabase: SupabaseClient;
+  subscriptions: SendableNativePushRow[];
+  payload: PushPayload;
+}) {
+  let sent = 0;
+  let failed = 0;
+  let lastError = "";
+
+  for (const chunk of chunkArray(subscriptions, 100)) {
+    try {
+      const response = await fetch("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+          chunk.map((subscription) => ({
+            to: subscription.token,
+            title: payload.title,
+            body: payload.message,
+            sound: "default",
+            data: {
+              url: payload.url || "/dashboard",
+              actions: payload.actions || [],
+            },
+          }))
+        ),
+      });
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        failed += chunk.length;
+        lastError = result?.errors?.[0]?.message || "Expo push send failed";
+        continue;
+      }
+
+      const tickets = Array.isArray(result?.data) ? result.data : [result?.data];
+      for (let index = 0; index < chunk.length; index++) {
+        const ticket = tickets[index];
+
+        if (ticket?.status === "ok") {
+          sent++;
+          continue;
+        }
+
+        failed++;
+        lastError = ticket?.message || "Expo push ticket failed";
+
+        if (ticket?.details?.error === "DeviceNotRegistered") {
+          await disablePushSubscription(supabase, chunk[index].id);
+        }
+      }
+    } catch (error) {
+      failed += chunk.length;
+      lastError = error instanceof Error ? error.message : "Expo push send failed";
+    }
   }
 
-  return {
-    status: "failed",
-    sent,
-    failed,
-    error: lastError || "Push send failed",
-  };
+  return { sent, failed, error: lastError };
+}
+
+function isExpoPushToken(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    (/^ExpoPushToken\[[\w-]+\]$/.test(value) ||
+      /^ExponentPushToken\[[\w-]+\]$/.test(value))
+  );
+}
+
+function chunkArray<T>(items: T[], size: number) {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
+}
+
+async function disablePushSubscription(supabase: SupabaseClient, id: string) {
+  await supabase
+    .from("push_subscriptions")
+    .update({ enabled: false, updated_at: new Date().toISOString() })
+    .eq("id", id);
 }
 
 function isExpiredPushSubscription(error: unknown) {
