@@ -106,6 +106,7 @@ export default function CompanionPage() {
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [schedulingCalendar, setSchedulingCalendar] = useState(false);
   const [schedulingActionKey, setSchedulingActionKey] = useState<string | null>(null);
+  const [savingOutcomeKey, setSavingOutcomeKey] = useState<string | null>(null);
   const [scheduledActionKeys, setScheduledActionKeys] = useState<Record<string, boolean>>({});
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installState, setInstallState] = useState({
@@ -325,6 +326,69 @@ export default function CompanionPage() {
     }
   }
 
+  async function recordActionOutcome(
+    action: ProtocolAction,
+    actionIndex: number,
+    outcome: "success" | "failure" | "unknown"
+  ) {
+    if (!protocol || !action.action) return;
+
+    const outcomeKey = `${protocol.id}:${actionIndex}:${outcome}`;
+    const notes =
+      outcome === "success"
+        ? "Marked done from companion protocol action."
+        : outcome === "failure"
+          ? "Marked skipped from companion protocol action."
+          : "Marked later from companion protocol action.";
+
+    setSavingOutcomeKey(outcomeKey);
+    setCalendarMessage(null);
+
+    try {
+      const response = await fetch("/api/digital-twin/outcomes", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          protocolId: protocol.id,
+          domain: action.domain || protocolFocus,
+          action: action.action,
+          outcome,
+          confidence: outcome === "success" ? 0.86 : outcome === "failure" ? 0.78 : 0.62,
+          notes,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Action outcome could not be saved.");
+      }
+
+      const executionResponse = await fetch("/api/execution/summary", {
+        credentials: "include",
+      });
+      const executionData = await executionResponse.json();
+
+      if (executionResponse.ok) {
+        setExecutionSummary(executionData.execution || null);
+      }
+
+      setCalendarMessage(
+        outcome === "success"
+          ? "Action marked done."
+          : outcome === "failure"
+            ? "Action marked skipped."
+            : "Action moved to later."
+      );
+    } catch (error) {
+      setCalendarMessage(
+        error instanceof Error ? error.message : "Action outcome could not be saved."
+      );
+    } finally {
+      setSavingOutcomeKey(null);
+    }
+  }
+
   return (
     <PageContainer>
       <div className="py-14">
@@ -433,10 +497,14 @@ export default function CompanionPage() {
               protocolId={protocol?.id}
               scheduledActionKeys={scheduledActionKeys}
               schedulingActionKey={schedulingActionKey}
+              savingOutcomeKey={savingOutcomeKey}
               onConnect={() => {
                 window.location.href = "/api/calendar/google/connect";
               }}
               onSchedule={(action, index) => void scheduleActionToCalendar(action, index)}
+              onRecordOutcome={(action, index, outcome) =>
+                void recordActionOutcome(action, index, outcome)
+              }
             />
 
             <NotificationPreferencesPanel />
@@ -454,20 +522,34 @@ function toLocalDateTimePayload(date: Date) {
   )}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
+function isInteractiveTarget(target: EventTarget | null) {
+  return target instanceof HTMLElement
+    ? Boolean(target.closest("button, input, label, select, textarea, a"))
+    : false;
+}
+
 function ProtocolActionsCalendarPanel({
   actions,
   connected,
   onConnect,
+  onRecordOutcome,
   onSchedule,
   protocolId,
+  savingOutcomeKey,
   scheduledActionKeys,
   schedulingActionKey,
 }: {
   actions: ProtocolAction[];
   connected: boolean;
   onConnect: () => void;
+  onRecordOutcome: (
+    action: ProtocolAction,
+    index: number,
+    outcome: "success" | "failure" | "unknown"
+  ) => void;
   onSchedule: (action: ProtocolAction, index: number) => void;
   protocolId?: string;
+  savingOutcomeKey: string | null;
   scheduledActionKeys: Record<string, boolean>;
   schedulingActionKey: string | null;
 }) {
@@ -487,11 +569,29 @@ function ProtocolActionsCalendarPanel({
           const actionKey = `${protocolId}:${index}:${action.action}`;
           const scheduled = scheduledActionKeys[actionKey];
           const scheduling = schedulingActionKey === actionKey;
+          const savingDone = savingOutcomeKey === `${protocolId}:${index}:success`;
+          const savingSkip = savingOutcomeKey === `${protocolId}:${index}:failure`;
+          const savingLater = savingOutcomeKey === `${protocolId}:${index}:unknown`;
 
           return (
             <div
               key={actionKey}
-              className="rounded-lg border border-white/[0.07] bg-black/15 p-4"
+              role="button"
+              tabIndex={scheduled || scheduling ? -1 : 0}
+              onClick={(event) => {
+                if (isInteractiveTarget(event.target)) return;
+                if (scheduled || scheduling) return;
+                connected ? onSchedule(action, index) : onConnect();
+              }}
+              onKeyDown={(event) => {
+                if (scheduled || scheduling) return;
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                connected ? onSchedule(action, index) : onConnect();
+              }}
+              className={`quiet-lift rounded-lg border border-white/[0.07] bg-black/15 p-4 transition hover:border-white/[0.14] ${
+                scheduled || scheduling ? "cursor-default" : "cursor-pointer"
+              }`}
             >
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
@@ -512,20 +612,58 @@ function ProtocolActionsCalendarPanel({
                     {action.why || "Schedule this action into your calendar."}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={connected ? () => onSchedule(action, index) : onConnect}
-                  disabled={scheduling || scheduled}
-                  className="premium-action inline-flex h-10 shrink-0 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
-                >
-                  {scheduled
-                    ? "Scheduled"
-                    : scheduling
-                      ? "Scheduling"
-                      : connected
-                        ? "Schedule"
-                        : "Connect"}
-                </button>
+                <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onRecordOutcome(action, index, "success");
+                    }}
+                    disabled={Boolean(savingOutcomeKey)}
+                    className="inline-flex h-10 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.04] px-3 text-[10px] uppercase tracking-[0.14em] text-white/68 transition hover:border-[#dabc73]/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    {savingDone ? "Saving" : "Done"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onRecordOutcome(action, index, "failure");
+                    }}
+                    disabled={Boolean(savingOutcomeKey)}
+                    className="inline-flex h-10 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.025] px-3 text-[10px] uppercase tracking-[0.14em] text-white/48 transition hover:border-white/[0.18] hover:text-white/76 disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    {savingSkip ? "Saving" : "Skip"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onRecordOutcome(action, index, "unknown");
+                    }}
+                    disabled={Boolean(savingOutcomeKey)}
+                    className="inline-flex h-10 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.025] px-3 text-[10px] uppercase tracking-[0.14em] text-white/48 transition hover:border-white/[0.18] hover:text-white/76 disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    {savingLater ? "Saving" : "Later"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      connected ? onSchedule(action, index) : onConnect();
+                    }}
+                    disabled={scheduling || scheduled}
+                    className="premium-action inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    {scheduled
+                      ? "Scheduled"
+                      : scheduling
+                        ? "Scheduling"
+                        : connected
+                          ? "Schedule"
+                          : "Connect"}
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -706,7 +844,25 @@ function InstallCompanionCard({
     : "On iPhone or iPad, use Share, then Add to Home Screen. On Android, use the browser install option.";
 
   return (
-    <div className="executive-panel rounded-lg p-5">
+    <div
+      role={canPrompt && !installState.standalone ? "button" : undefined}
+      tabIndex={canPrompt && !installState.standalone ? 0 : undefined}
+      onClick={(event) => {
+        if (!canPrompt || installState.standalone || isInteractiveTarget(event.target)) return;
+        onInstall();
+      }}
+      onKeyDown={(event) => {
+        if (!canPrompt || installState.standalone) return;
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        onInstall();
+      }}
+      className={`executive-panel rounded-lg p-5 ${
+        canPrompt && !installState.standalone
+          ? "quiet-lift cursor-pointer transition hover:border-white/[0.14]"
+          : ""
+      }`}
+    >
       <div className="mb-5 flex items-center justify-between gap-3">
         <p className="micro-label">App Mode</p>
         <Bell size={17} className="royal-text" />
@@ -760,7 +916,23 @@ function CalendarAutomationCard({
   scheduling: boolean;
 }) {
   return (
-    <div className="executive-panel rounded-lg p-5">
+    <div
+      role="button"
+      tabIndex={migrationRequired || scheduling ? -1 : 0}
+      onClick={(event) => {
+        if (migrationRequired || scheduling || isInteractiveTarget(event.target)) return;
+        connected ? onSchedule() : onConnect();
+      }}
+      onKeyDown={(event) => {
+        if (migrationRequired || scheduling) return;
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        connected ? onSchedule() : onConnect();
+      }}
+      className={`executive-panel rounded-lg p-5 transition hover:border-white/[0.14] ${
+        migrationRequired || scheduling ? "cursor-default" : "quiet-lift cursor-pointer"
+      }`}
+    >
       <div className="mb-5 flex items-center justify-between gap-3">
         <p className="micro-label">Calendar</p>
         <CalendarClock size={17} className="royal-text" />
