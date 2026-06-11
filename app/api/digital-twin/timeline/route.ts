@@ -115,7 +115,7 @@ export async function GET() {
       safeQuery(() =>
         admin
           .from("wearable_metrics")
-          .select("id, provider, metric_name, value, unit, recorded_at")
+          .select("id, provider, metric_name, metric_value, recorded_at")
           .eq("user_id", user.id)
           .order("recorded_at", { ascending: false })
           .limit(16)
@@ -265,7 +265,7 @@ function mapWearables(rows: unknown): TimelineEvent[] {
     title: `${text(row.provider) || "Wearable"} ${labelize(row.metric_name)}`.toUpperCase(),
     detail: "Wearable signal ingested.",
     occurred_at: text(row.recorded_at),
-    signal: `${text(row.value)}${row.unit ? ` ${text(row.unit)}` : ""}`,
+    signal: text(row.metric_value),
     href: "/dashboard",
   }));
 }
