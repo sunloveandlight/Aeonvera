@@ -42,6 +42,13 @@ type ProtocolAction = {
   impact?: "low" | "medium" | "high";
 };
 
+type ActionScope = "today" | "week" | "check_in" | "later";
+
+type ScheduledProtocolAction = ProtocolAction & {
+  actionIndex: number;
+  scope: ActionScope;
+};
+
 type Protocol = {
   id: string;
   summary?: string | null;
@@ -119,6 +126,33 @@ const shortcuts = [
   { label: "Twin", title: "Digital Twin", path: "/digital-twin" },
   { label: "Optimize", title: "Optimization", path: "/optimization" },
   { label: "Report", title: "Report", path: "/report" },
+];
+
+const ACTION_SECTIONS: {
+  scope: ActionScope;
+  title: string;
+  copy: string;
+}[] = [
+  {
+    scope: "today",
+    title: "Today",
+    copy: "Daily actions and anything that should happen now.",
+  },
+  {
+    scope: "week",
+    title: "This Week",
+    copy: "Weekly targets, training blocks, and setup actions.",
+  },
+  {
+    scope: "check_in",
+    title: "Check-ins",
+    copy: "Measurements and feedback Aeonvera uses to adapt.",
+  },
+  {
+    scope: "later",
+    title: "Later",
+    copy: "Lower urgency actions or items better scheduled manually.",
+  },
 ];
 
 export default function App() {
@@ -341,7 +375,8 @@ export default function App() {
   async function recordAdherence(
     action: ProtocolAction,
     actionIndex: number,
-    outcome: AdherenceOutcome
+    outcome: AdherenceOutcome,
+    scope: ActionScope
   ) {
     if (!supabase || !session || !protocol?.id || !action.action) return;
 
@@ -369,6 +404,8 @@ export default function App() {
         followup_snapshot: {
           source: "mobile",
           action_index: actionIndex,
+          action_scope: scope,
+          scheduled_for: getScopeDate(scope),
           cadence: action.cadence || null,
           impact: action.impact || null,
         },
@@ -391,6 +428,8 @@ export default function App() {
       payload: {
         protocol_id: protocol.id,
         action_index: actionIndex,
+        action_scope: scope,
+        scheduled_for: getScopeDate(scope),
         cadence: action.cadence || null,
         impact: action.impact || null,
         source: "mobile",
@@ -624,10 +663,12 @@ function TodayView({
   recordAdherence: (
     action: ProtocolAction,
     actionIndex: number,
-    outcome: AdherenceOutcome
+    outcome: AdherenceOutcome,
+    scope: ActionScope
   ) => Promise<void>;
 }) {
   const adherenceByAction = buildLatestAdherenceByAction(adherenceEvents);
+  const groupedActions = groupActionsByScope(latestActions);
 
   return (
     <>
@@ -637,43 +678,22 @@ function TodayView({
         <Text style={styles.cardCopy}>{latestSummary}</Text>
         <View style={styles.actionList}>
           {latestActions.length ? (
-            latestActions.slice(0, 4).map((action, index) => (
-              <View key={`${action.action}-${index}`} style={styles.actionItem}>
-                <Text style={styles.actionIndex}>{index + 1}</Text>
-                <View style={styles.actionBody}>
-                  <View style={styles.actionHeader}>
-                    <Text style={styles.actionTitle}>{action.action}</Text>
-                    <AdherencePill event={adherenceByAction[action.action || ""]} />
-                  </View>
-                  <Text style={styles.actionMeta}>
-                    {[action.domain, action.cadence, action.impact]
-                      .filter(Boolean)
-                      .join(" / ")}
-                  </Text>
-                  {action.why ? <Text style={styles.actionWhy}>{action.why}</Text> : null}
-                  <View style={styles.adherenceControls}>
-                    <Pressable
-                      style={styles.adherenceButton}
-                      onPress={() => void recordAdherence(action, index, "success")}
-                    >
-                      <Text style={styles.adherenceButtonText}>Done</Text>
-                    </Pressable>
-                    <Pressable
-                      style={styles.adherenceButton}
-                      onPress={() => void recordAdherence(action, index, "failure")}
-                    >
-                      <Text style={styles.adherenceButtonText}>Skip</Text>
-                    </Pressable>
-                    <Pressable
-                      style={styles.adherenceButton}
-                      onPress={() => void recordAdherence(action, index, "unknown")}
-                    >
-                      <Text style={styles.adherenceButtonText}>Later</Text>
-                    </Pressable>
-                  </View>
+            ACTION_SECTIONS.map((section) =>
+              groupedActions[section.scope].length ? (
+                <View key={section.scope} style={styles.actionSection}>
+                  <Text style={styles.sectionTitle}>{section.title}</Text>
+                  <Text style={styles.sectionCopy}>{section.copy}</Text>
+                  {groupedActions[section.scope].map((action) => (
+                    <ProtocolActionRow
+                      key={`${action.action}-${action.actionIndex}`}
+                      action={action}
+                      adherenceEvent={adherenceByAction[action.action || ""]}
+                      recordAdherence={recordAdherence}
+                    />
+                  ))}
                 </View>
-              </View>
-            ))
+              ) : null
+            )
           ) : (
             <Text style={styles.emptyText}>
               Answer the optimization intake to generate your first active protocol.
@@ -741,6 +761,63 @@ function InboxView({
             coach runs.
           </Text>
         )}
+      </View>
+    </View>
+  );
+}
+
+function ProtocolActionRow({
+  action,
+  adherenceEvent,
+  recordAdherence,
+}: {
+  action: ScheduledProtocolAction;
+  adherenceEvent?: AdherenceEvent;
+  recordAdherence: (
+    action: ProtocolAction,
+    actionIndex: number,
+    outcome: AdherenceOutcome,
+    scope: ActionScope
+  ) => Promise<void>;
+}) {
+  return (
+    <View style={styles.actionItem}>
+      <Text style={styles.actionIndex}>{action.actionIndex + 1}</Text>
+      <View style={styles.actionBody}>
+        <View style={styles.actionHeader}>
+          <Text style={styles.actionTitle}>{action.action}</Text>
+          <AdherencePill event={adherenceEvent} />
+        </View>
+        <Text style={styles.actionMeta}>
+          {[action.domain, action.cadence, action.impact].filter(Boolean).join(" / ")}
+        </Text>
+        {action.why ? <Text style={styles.actionWhy}>{action.why}</Text> : null}
+        <View style={styles.adherenceControls}>
+          <Pressable
+            style={styles.adherenceButton}
+            onPress={() =>
+              void recordAdherence(action, action.actionIndex, "success", action.scope)
+            }
+          >
+            <Text style={styles.adherenceButtonText}>Done</Text>
+          </Pressable>
+          <Pressable
+            style={styles.adherenceButton}
+            onPress={() =>
+              void recordAdherence(action, action.actionIndex, "failure", action.scope)
+            }
+          >
+            <Text style={styles.adherenceButtonText}>Skip</Text>
+          </Pressable>
+          <Pressable
+            style={styles.adherenceButton}
+            onPress={() =>
+              void recordAdherence(action, action.actionIndex, "unknown", action.scope)
+            }
+          >
+            <Text style={styles.adherenceButtonText}>Later</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -862,6 +939,65 @@ function buildLatestAdherenceByAction(events: AdherenceEvent[]) {
 
     return current;
   }, {});
+}
+
+function groupActionsByScope(actions: ProtocolAction[]) {
+  return actions.reduce<Record<ActionScope, ScheduledProtocolAction[]>>(
+    (groups, action, actionIndex) => {
+      const scope = classifyActionScope(action);
+      groups[scope].push({ ...action, actionIndex, scope });
+      return groups;
+    },
+    {
+      today: [],
+      week: [],
+      check_in: [],
+      later: [],
+    }
+  );
+}
+
+function classifyActionScope(action: ProtocolAction): ActionScope {
+  const text = [action.domain, action.action, action.cadence, action.why]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    /(measure|check|track|log|record|weigh|weight|metric|retest|lab|blood|hrv|resting heart|sleep score|recovery score|biomarker)/.test(
+      text
+    )
+  ) {
+    return "check_in";
+  }
+
+  if (
+    /(weekly|week|2x|3x|4x|twice|three times|session|sessions|zone 2|strength|resistance|meal prep|review)/.test(
+      text
+    )
+  ) {
+    return "week";
+  }
+
+  if (/(daily|today|morning|evening|nightly|bedtime|wake|walk|hydrate|meal)/.test(text)) {
+    return "today";
+  }
+
+  return "later";
+}
+
+function getScopeDate(scope: ActionScope) {
+  const date = new Date();
+
+  if (scope === "week") {
+    date.setDate(date.getDate() + 6);
+  }
+
+  if (scope === "later") {
+    date.setDate(date.getDate() + 2);
+  }
+
+  return date.toISOString().slice(0, 10);
 }
 
 function formatDate(value?: string | null) {
@@ -1023,8 +1159,22 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   actionList: {
-    gap: 12,
+    gap: 18,
     marginTop: 18,
+  },
+  actionSection: {
+    gap: 12,
+  },
+  sectionTitle: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 16,
+    fontWeight: "400",
+  },
+  sectionCopy: {
+    color: "rgba(255,255,255,0.38)",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: -6,
   },
   actionItem: {
     flexDirection: "row",

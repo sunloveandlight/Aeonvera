@@ -34,7 +34,7 @@ Expo dashboard project settings.
 
 - Native Aeonvera companion shell
 - Native Today protocol screen
-- Native protocol adherence tracking
+- Native cadence-aware protocol adherence tracking
 - Native coach inbox
 - Native notification delivery preferences
 - Deep links into the live web app
