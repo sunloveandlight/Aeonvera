@@ -113,7 +113,12 @@ export async function GET() {
           .maybeSingle()
       ),
       safeQuery(() =>
-        queryWearableMetrics(admin, user.id)
+        admin
+          .from("wearable_metrics")
+          .select("id, provider, metric_name, value, unit, recorded_at")
+          .eq("user_id", user.id)
+          .order("recorded_at", { ascending: false })
+          .limit(16)
       ),
       safeQuery(() =>
         admin
@@ -167,37 +172,6 @@ async function safeQuery<T>(query: () => PromiseLike<{ data: T | null; error: un
       : new Error(JSON.stringify(result.error));
   }
   return { data: result.error ? null : result.data };
-}
-
-async function queryWearableMetrics(
-  admin: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
-): Promise<{ data: TimelineRow[] | null; error: unknown }> {
-  const result = await admin
-    .from("wearable_metrics")
-    .select("id, provider, metric_name, value, unit, recorded_at")
-    .eq("user_id", userId)
-    .order("recorded_at", { ascending: false })
-    .limit(16);
-
-  if (!isMissingColumnError(result.error)) return result;
-
-  const fallback = await admin
-    .from("wearable_metrics")
-    .select("id, provider, metric_type, value, unit, recorded_at")
-    .eq("user_id", userId)
-    .order("recorded_at", { ascending: false })
-    .limit(16);
-
-  return {
-    data: Array.isArray(fallback.data)
-      ? fallback.data.map((row) => ({
-          ...row,
-          metric_name: row.metric_type,
-        }))
-      : null,
-    error: fallback.error,
-  };
 }
 
 function mapAssessments(rows: unknown): TimelineEvent[] {
@@ -288,7 +262,7 @@ function mapWearables(rows: unknown): TimelineEvent[] {
   return asRows(rows).map((row) => ({
     id: `wearable-${row.id}`,
     type: "wearable",
-    title: `${text(row.provider) || "Wearable"} ${labelize(row.metric_name || row.metric_type)}`.toUpperCase(),
+    title: `${text(row.provider) || "Wearable"} ${labelize(row.metric_name)}`.toUpperCase(),
     detail: "Wearable signal ingested.",
     occurred_at: text(row.recorded_at),
     signal: `${text(row.value)}${row.unit ? ` ${text(row.unit)}` : ""}`,
@@ -332,9 +306,4 @@ function isMissingTableError(error: unknown) {
     candidate.code === "PGRST205" ||
     candidate.message?.includes("schema cache")
   );
-}
-
-function isMissingColumnError(error: unknown) {
-  const candidate = error as { code?: string; message?: string };
-  return candidate.code === "42703" || candidate.code === "PGRST204";
 }
