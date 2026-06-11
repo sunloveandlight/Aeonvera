@@ -43,6 +43,7 @@ type ProtocolAction = {
 };
 
 type ActionScope = "today" | "week" | "check_in" | "later";
+type ReminderPreset = "default" | "soon" | "tomorrow";
 
 type ScheduledProtocolAction = ProtocolAction & {
   actionIndex: number;
@@ -471,7 +472,8 @@ export default function App() {
 
   async function scheduleActionReminder(
     action: ScheduledProtocolAction,
-    scope: ActionScope
+    scope: ActionScope,
+    preset: ReminderPreset = "default"
   ) {
     if (!supabase || !session || !protocol?.id || !action.action) return;
 
@@ -490,7 +492,7 @@ export default function App() {
       return;
     }
 
-    const scheduledFor = getReminderDate(scope);
+    const scheduledFor = getReminderDate(scope, preset);
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: "Aeonvera protocol reminder",
@@ -500,6 +502,7 @@ export default function App() {
           protocol_id: protocol.id,
           action: action.action,
           action_scope: scope,
+          reminder_preset: preset,
         },
       },
       trigger: {
@@ -529,6 +532,7 @@ export default function App() {
         notification_id: notificationId,
         action_index: action.actionIndex,
         action_scope: scope,
+        reminder_preset: preset,
         scheduled_for: scheduledFor.toISOString(),
         source: "mobile",
       },
@@ -768,7 +772,8 @@ function TodayView({
   ) => Promise<void>;
   scheduleActionReminder: (
     action: ScheduledProtocolAction,
-    scope: ActionScope
+    scope: ActionScope,
+    preset?: ReminderPreset
   ) => Promise<void>;
 }) {
   const adherenceByAction = buildLatestAdherenceByAction(adherenceEvents);
@@ -892,7 +897,8 @@ function ProtocolActionRow({
   ) => Promise<void>;
   scheduleActionReminder: (
     action: ScheduledProtocolAction,
-    scope: ActionScope
+    scope: ActionScope,
+    preset?: ReminderPreset
   ) => Promise<void>;
 }) {
   return (
@@ -934,7 +940,7 @@ function ProtocolActionRow({
           </Pressable>
           <Pressable
             style={[styles.adherenceButton, styles.reminderButton]}
-            onPress={() => void scheduleActionReminder(action, action.scope)}
+            onPress={() => chooseReminderPreset(action, scheduleActionReminder)}
           >
             <Text style={styles.adherenceButtonText}>Remind</Text>
           </Pressable>
@@ -947,6 +953,30 @@ function ProtocolActionRow({
       </View>
     </View>
   );
+}
+
+function chooseReminderPreset(
+  action: ScheduledProtocolAction,
+  scheduleActionReminder: (
+    action: ScheduledProtocolAction,
+    scope: ActionScope,
+    preset?: ReminderPreset
+  ) => Promise<void>
+) {
+  Alert.alert("Reminder time", "When should Aeonvera remind you?", [
+    {
+      text: "Default",
+      onPress: () => void scheduleActionReminder(action, action.scope, "default"),
+    },
+    {
+      text: "Soon",
+      onPress: () => void scheduleActionReminder(action, action.scope, "soon"),
+    },
+    {
+      text: "Tomorrow",
+      onPress: () => void scheduleActionReminder(action, action.scope, "tomorrow"),
+    },
+  ]);
 }
 
 function SettingsView({
@@ -1126,8 +1156,19 @@ function getScopeDate(scope: ActionScope) {
   return date.toISOString().slice(0, 10);
 }
 
-function getReminderDate(scope: ActionScope) {
+function getReminderDate(scope: ActionScope, preset: ReminderPreset = "default") {
   const date = new Date();
+
+  if (preset === "soon") {
+    date.setMinutes(date.getMinutes() + 30);
+    return date;
+  }
+
+  if (preset === "tomorrow") {
+    date.setDate(date.getDate() + 1);
+    date.setHours(scope === "check_in" ? 8 : 9, 0, 0, 0);
+    return date;
+  }
 
   if (scope === "today") {
     date.setHours(date.getHours() + 1, 0, 0, 0);
