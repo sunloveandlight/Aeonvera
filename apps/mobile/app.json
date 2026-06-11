@@ -21,11 +21,15 @@
       }
     },
     "extra": {
-      "webUrl": "https://www.aeonvera.com"
+      "webUrl": "https://www.aeonvera.com",
+      "eas": {
+        "projectId": "273e8224-7c4f-4753-a00a-ec3d329f2f6b"
+      }
     },
     "plugins": [
       "expo-notifications",
       "expo-secure-store"
-    ]
+    ],
+    "owner": "aeonvera"
   }
 }
