@@ -806,12 +806,12 @@ function PersonalAgentMemoryPanel({ memory }: { memory: CoachMemory | null }) {
 
           <h3 className="mt-5 text-2xl font-light leading-tight text-white/88">
             {memory?.morningBrief ||
-              "Aeonvera is learning how you respond, where follow-through breaks, and what interventions actually work."}
+              "Aeonvera is learning your natural rhythm, the places your energy resists, and the interventions your system responds to best."}
           </h3>
 
           <p className="mt-4 text-sm leading-7 text-white/42">
             {memory?.motivationProfile?.needs ||
-              "Mark actions Done, Skip, or Later to shape the coach's memory."}
+              "Mark actions Done, Skip, or Later to help the agent understand what fits your real life."}
           </p>
         </div>
 
@@ -830,8 +830,8 @@ function PersonalAgentMemoryPanel({ memory }: { memory: CoachMemory | null }) {
             value={strongest ? readableDomain(strongest.domain) : "Learning"}
             detail={
               strongest
-                ? `${strongest.successCount} successful completions`
-                : "No strongest intervention yet"
+                ? `${strongest.successCount} aligned responses`
+                : "No strongest pattern yet"
             }
           />
           <MemoryStat

@@ -38,7 +38,7 @@ type CalendarRow = {
   created_at?: string | null;
 };
 
-const COACH_MEMORY_PROFILE_VERSION = 2;
+const COACH_MEMORY_PROFILE_VERSION = 3;
 
 export type CoachMemoryProfile = {
   communicationStyle: "encouraging" | "accountability" | "direct" | "balanced";
@@ -295,7 +295,7 @@ function buildMotivationProfile({
   bestInterventions: CoachMemoryProfile["bestInterventions"];
 }) {
   const strongest = bestInterventions[0]?.domain || "consistency";
-  const hardest = failurePatterns[0]?.label || "follow-through";
+  const hardest = failurePatterns[0]?.label || "execution rhythm";
 
   return {
     version: COACH_MEMORY_PROFILE_VERSION,
@@ -309,9 +309,9 @@ function buildMotivationProfile({
       communicationStyle === "encouraging"
         ? "supportive language and smaller next steps"
         : communicationStyle === "accountability"
-          ? `firm accountability around ${hardest}`
-          : `clear focus around ${strongest}`,
-    toneReason: `Aeonvera selected ${communicationStyle} coaching from recent execution behavior.`,
+          ? `clear accountability around ${domainPhrase(hardest)} rhythm`
+          : `steady emphasis on the ${domainPhrase(strongest)} protocol`,
+    toneReason: `Aeonvera selected a ${communicationStyle} coaching style from your recent response patterns.`,
   };
 }
 
@@ -335,25 +335,25 @@ function buildMorningBrief({
   communicationStyle: CoachMemoryProfile["communicationStyle"];
 }) {
   if (!total && scheduled) {
-    return `${scheduled} protocol block${scheduled === 1 ? "" : "s"} are scheduled. Today the priority is marking completion so Aeonvera can learn.`;
+    return `${scheduled} protocol block${scheduled === 1 ? "" : "s"} are scheduled. Today is about closing the loop so Aeonvera can understand what truly fits your life.`;
   }
 
   if (!total) {
-    return "Start with one protocol action today. Aeonvera will build your personal execution memory from there.";
+    return "Begin with one deliberate protocol action today. Aeonvera will learn your rhythm from the choices you actually live.";
   }
 
   const strongest = bestInterventions[0]?.domain;
   const weakest = failurePatterns[0]?.label;
 
   if (communicationStyle === "accountability" && weakest) {
-    return `Good morning. You completed ${completed} of ${total} actions. ${weakest} is the current friction point, so today Aeonvera is narrowing the target.`;
+    return `Good morning. You completed ${completed} of ${total} actions. ${domainPhrase(weakest)} is asking for a simpler path, so today Aeonvera is narrowing the field to what is most doable.`;
   }
 
   if (executionScore >= 80) {
-    return `Good morning. Execution is strong at ${executionScore}%. Keep the protocol stable today so the pattern compounds.`;
+    return `Good morning. Your protocol rhythm is strong at ${executionScore}%. Keep the structure steady today and let the momentum compound quietly.`;
   }
 
-  return `Good morning. You completed ${completed} of ${total} actions and skipped ${skipped}. ${strongest ? `Your ${domainPhrase(strongest)} protocol has the strongest follow-through. ` : ""}Today is about one clean follow-through.`;
+  return `Good morning. You completed ${completed} of ${total} actions and skipped ${skipped}. ${strongest ? `Your ${domainPhrase(strongest)} work is the most responsive right now. ` : ""}Today is about one deliberate action that restores alignment.`;
 }
 
 function buildConfidence(total: number, coachOutputs: number, feedback: number) {
