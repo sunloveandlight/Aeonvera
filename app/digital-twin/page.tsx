@@ -28,8 +28,29 @@ type DigitalTwinPayload = {
     risk_scores?: Record<string, number>;
     updated_at?: string;
   } | null;
+  intelligence?: TwinIntelligence;
   timeline: TimelineEvent[];
   counts: Record<string, number>;
+};
+
+type TwinChange = {
+  metric: string;
+  direction: "improving" | "declining" | "stable" | "new";
+  detail: string;
+  signal: string;
+};
+
+type TwinIntelligence = {
+  summary: string;
+  modelState: string;
+  confidence: number;
+  changes: TwinChange[];
+  worked: TwinChange[];
+  nextMove: {
+    title: string;
+    detail: string;
+    href: string;
+  };
 };
 
 const TYPE_FILTERS: Array<TimelineEvent["type"] | "all"> = [
@@ -225,6 +246,10 @@ export default function DigitalTwinPage() {
               ))}
             </div>
 
+            {payload.intelligence && (
+              <DigitalTwinIntelligencePanel intelligence={payload.intelligence} />
+            )}
+
             <div className="mt-6 grid gap-6 lg:grid-cols-[0.78fr_1.22fr]">
               <div className="space-y-6">
                 <div className="executive-panel rounded-lg p-6 md:p-7">
@@ -343,6 +368,98 @@ export default function DigitalTwinPage() {
       </div>
     </PageContainer>
   );
+}
+
+function DigitalTwinIntelligencePanel({
+  intelligence,
+}: {
+  intelligence: TwinIntelligence;
+}) {
+  return (
+    <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="executive-panel rounded-lg p-6 md:p-7">
+        <div className="mb-6 flex flex-col gap-4 border-b border-white/[0.06] pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="micro-label">Twin Intelligence</p>
+            <h2 className="mt-3 text-3xl font-light text-white">
+              {intelligence.modelState} model.
+            </h2>
+          </div>
+          <div className="premium-status-neutral rounded-md px-3 py-2 text-[10px] uppercase tracking-[0.14em]">
+            {intelligence.confidence}% confidence
+          </div>
+        </div>
+        <p className="text-xl font-light leading-8 text-white/78">
+          {intelligence.summary}
+        </p>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <SignalList title="What changed" items={intelligence.changes} empty="No metric movement yet." />
+          <SignalList title="What worked" items={intelligence.worked} empty="Track an outcome to close the loop." />
+        </div>
+      </div>
+
+      <Link
+        href={intelligence.nextMove.href}
+        className="quiet-lift executive-panel block rounded-lg p-6 transition hover:border-white/[0.14] md:p-7"
+      >
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <p className="micro-label">Next Best Move</p>
+          <ArrowRight size={17} className="royal-text" />
+        </div>
+        <h3 className="text-3xl font-light leading-tight text-white">
+          {intelligence.nextMove.title}
+        </h3>
+        <p className="mt-5 text-sm leading-7 text-white/48">
+          {intelligence.nextMove.detail}
+        </p>
+      </Link>
+    </div>
+  );
+}
+
+function SignalList({
+  title,
+  items,
+  empty,
+}: {
+  title: string;
+  items: TwinChange[];
+  empty: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+      <p className="mb-4 text-[10px] uppercase tracking-[0.14em] text-white/28">
+        {title}
+      </p>
+      <div className="space-y-3">
+        {items.length ? (
+          items.map((item) => (
+            <div key={`${title}-${item.metric}-${item.signal}`} className="border-t border-white/[0.05] pt-3 first:border-t-0 first:pt-0">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-white/70">{item.metric}</p>
+                <span className={changeStatusClassName(item.direction)}>
+                  {item.signal}
+                </span>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-white/38">{item.detail}</p>
+            </div>
+          ))
+        ) : (
+          <p className="text-sm leading-6 text-white/38">{empty}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function changeStatusClassName(direction: TwinChange["direction"]) {
+  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+
+  if (direction === "improving") return `${base} royal-text bg-white/[0.035]`;
+  if (direction === "declining") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
+  if (direction === "stable") return `${base} text-white/34 bg-white/[0.025]`;
+  return `${base} text-white/28 bg-white/[0.02]`;
 }
 
 function TimelineEventCard({ event }: { event: TimelineEvent }) {
