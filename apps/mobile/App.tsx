@@ -1,8 +1,9 @@
 import "react-native-url-polyfill/auto";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
+  type LayoutChangeEvent,
   Linking,
   Platform,
   Pressable,
@@ -200,6 +201,11 @@ export default function App() {
   const [inboxNotice, setInboxNotice] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
+  const [notificationFocusTick, setNotificationFocusTick] = useState(0);
+  const scrollRef = useRef<ScrollView | null>(null);
+  const inboxOffsetY = useRef(0);
+  const messageListOffsetY = useRef(0);
+  const selectedMessageOffsetY = useRef<number | null>(null);
   const appUrl = useMemo(() => WEB_URL.replace(/\/$/, ""), []);
 
   const openPath = useCallback(
@@ -299,6 +305,24 @@ export default function App() {
   }, [coachMessages, selectedAlertId]);
 
   useEffect(() => {
+    if (activeView !== "inbox") return;
+
+    const timeout = setTimeout(() => {
+      const selectedY =
+        selectedMessageId && selectedMessageOffsetY.current !== null
+          ? inboxOffsetY.current + messageListOffsetY.current + selectedMessageOffsetY.current
+          : inboxOffsetY.current;
+
+      scrollRef.current?.scrollTo({
+        y: Math.max(selectedY - 18, 0),
+        animated: true,
+      });
+    }, 140);
+
+    return () => clearTimeout(timeout);
+  }, [activeView, coachMessages.length, notificationFocusTick, selectedMessageId]);
+
+  useEffect(() => {
     if (!supabase) {
       setAuthStatus("Mobile auth needs Supabase env vars");
       setAuthInitializing(false);
@@ -340,10 +364,12 @@ export default function App() {
       const alertId = data?.alertId || data?.alert_id || null;
 
       if (data?.target === "coach_inbox" || alertId) {
+        selectedMessageOffsetY.current = null;
         setSelectedAlertId(alertId);
         setSelectedMessageId(null);
         setInboxNotice("Opened from your coach notification.");
         setActiveView("inbox");
+        setNotificationFocusTick((current) => current + 1);
         void loadCompanionData(session);
         return;
       }
@@ -357,6 +383,10 @@ export default function App() {
 
       if (path?.startsWith("/companion")) {
         setActiveView(path.includes("focus=coach") ? "inbox" : "today");
+        if (path.includes("focus=coach")) {
+          selectedMessageOffsetY.current = null;
+          setNotificationFocusTick((current) => current + 1);
+        }
         void loadCompanionData(session);
         return;
       }
@@ -367,6 +397,8 @@ export default function App() {
       }
 
       setActiveView("inbox");
+      selectedMessageOffsetY.current = null;
+      setNotificationFocusTick((current) => current + 1);
       void loadCompanionData(session);
     },
     [loadCompanionData, openPath, session]
@@ -699,6 +731,7 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.container}
         refreshControl={
           <RefreshControl
@@ -811,6 +844,15 @@ export default function App() {
               <InboxView
                 messages={coachMessages}
                 notice={inboxNotice}
+                onInboxLayout={(event) => {
+                  inboxOffsetY.current = event.nativeEvent.layout.y;
+                }}
+                onMessageListLayout={(event) => {
+                  messageListOffsetY.current = event.nativeEvent.layout.y;
+                }}
+                onSelectedMessageLayout={(event) => {
+                  selectedMessageOffsetY.current = event.nativeEvent.layout.y;
+                }}
                 openPath={openPath}
                 selectedMessageId={selectedMessageId}
               />
@@ -932,20 +974,26 @@ function TodayView({
 function InboxView({
   messages,
   notice,
+  onInboxLayout,
+  onMessageListLayout,
+  onSelectedMessageLayout,
   openPath,
   selectedMessageId,
 }: {
   messages: CoachMessage[];
   notice: string | null;
+  onInboxLayout: (event: LayoutChangeEvent) => void;
+  onMessageListLayout: (event: LayoutChangeEvent) => void;
+  onSelectedMessageLayout: (event: LayoutChangeEvent) => void;
   openPath: (path: string) => Promise<void>;
   selectedMessageId: string | null;
 }) {
   return (
-    <View style={styles.panel}>
+    <View style={styles.panel} onLayout={onInboxLayout}>
       <Text style={styles.cardLabel}>Coach Inbox</Text>
       <Text style={styles.cardTitle}>{messages.length ? "Latest messages" : "No messages yet"}</Text>
       {notice ? <Text style={styles.inboxNotice}>{notice}</Text> : null}
-      <View style={styles.messageList}>
+      <View style={styles.messageList} onLayout={onMessageListLayout}>
         {messages.length ? (
           messages.map((message) => (
             <Pressable
@@ -954,6 +1002,9 @@ function InboxView({
                 styles.messageItem,
                 selectedMessageId === message.id && styles.selectedMessageItem,
               ]}
+              onLayout={
+                selectedMessageId === message.id ? onSelectedMessageLayout : undefined
+              }
               onPress={() => void openMessage(message, openPath)}
             >
               {selectedMessageId === message.id ? (
