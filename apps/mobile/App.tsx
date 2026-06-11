@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import { createClient, type Session } from "@supabase/supabase-js";
 import Constants from "expo-constants";
+import * as Calendar from "expo-calendar";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
@@ -84,6 +85,12 @@ type AdherenceEvent = {
 type LocalReminder = {
   notificationId: string;
   repeat: ReminderRepeat;
+  scheduledFor: string;
+};
+
+type NativeCalendarEvent = {
+  eventId: string;
+  calendarTitle: string;
   scheduledFor: string;
 };
 
@@ -201,6 +208,9 @@ export default function App() {
   const [protocol, setProtocol] = useState<Protocol | null>(null);
   const [adherenceEvents, setAdherenceEvents] = useState<AdherenceEvent[]>([]);
   const [localReminders, setLocalReminders] = useState<Record<string, LocalReminder>>({});
+  const [nativeCalendarEvents, setNativeCalendarEvents] = useState<
+    Record<string, NativeCalendarEvent>
+  >({});
   const [coachMessages, setCoachMessages] = useState<CoachMessage[]>([]);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
@@ -726,6 +736,119 @@ export default function App() {
     );
   }
 
+  async function scheduleActionToNativeCalendar(
+    action: ScheduledProtocolAction,
+    preset: ReminderPreset = "default"
+  ) {
+    if (!supabase || !session || !protocol?.id || !action.action) return;
+
+    if (Platform.OS !== "ios" && Platform.OS !== "android") {
+      Alert.alert("Native only", "Device calendar scheduling is available in the mobile app.");
+      return;
+    }
+
+    const currentPermission = await Calendar.getCalendarPermissions(true).catch(() => null);
+    const finalPermission =
+      currentPermission && isPermissionGranted(currentPermission)
+        ? currentPermission
+        : await Calendar.requestCalendarPermissions(true);
+
+    if (!isPermissionGranted(finalPermission)) {
+      Alert.alert("Calendar not connected", "Calendar permission was not granted.");
+      return;
+    }
+
+    const calendar = await getWritableDeviceCalendar();
+    if (!calendar) {
+      Alert.alert("Calendar unavailable", "No writable calendar was found on this device.");
+      return;
+    }
+
+    const scheduledFor = getReminderDate(action.scope, preset);
+    const endDate = new Date(scheduledFor.getTime() + 30 * 60 * 1000);
+    const title = `Aeonvera protocol: ${action.domain || "Optimization"}`;
+    const notes = [
+      action.action,
+      action.why ? `Why: ${action.why}` : "",
+      "Scheduled from Aeonvera mobile.",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const event = await calendar.createEvent({
+      title,
+      startDate: scheduledFor,
+      endDate,
+      notes,
+      alarms: [{ relativeOffset: -15 }],
+      url: appUrl,
+    });
+
+    const eventId = event.id;
+    const calendarEventKey = getReminderKey(protocol.id, action);
+    setNativeCalendarEvents((current) => ({
+      ...current,
+      [calendarEventKey]: {
+        eventId,
+        calendarTitle: calendar.title || "Calendar",
+        scheduledFor: scheduledFor.toISOString(),
+      },
+    }));
+
+    const provider = Platform.OS === "ios" ? "apple" : "android";
+    const calendarRecordResult = await supabase
+      .from("calendar_events")
+      .insert({
+        user_id: session.user.id,
+        protocol_id: protocol.id,
+        provider,
+        provider_event_id: eventId,
+        calendar_id: calendar.id,
+        title,
+        description: notes,
+        action: action.action,
+        action_scope: action.scope,
+        scheduled_for: scheduledFor.toISOString(),
+        duration_minutes: 30,
+        recurrence: "none",
+        status: "scheduled",
+        payload: {
+          source: "mobile_device_calendar",
+          calendar_title: calendar.title || null,
+          platform: Platform.OS,
+          action_index: action.actionIndex,
+        },
+      })
+      .select("id")
+      .maybeSingle();
+
+    if (!calendarRecordResult.error) {
+      await supabase.from("behavior_events").insert({
+        user_id: session.user.id,
+        type: "calendar_event",
+        event_type: "native_calendar_event_scheduled",
+        domain: action.domain || "Execution",
+        action: action.action,
+        outcome: "scheduled",
+        payload: {
+          protocol_id: protocol.id,
+          calendar_event_id: calendarRecordResult.data?.id || null,
+          provider,
+          provider_event_id: eventId,
+          action_scope: action.scope,
+          scheduled_for: scheduledFor.toISOString(),
+          source: "mobile_device_calendar",
+        },
+      });
+    }
+
+    playSoftHaptic();
+    Alert.alert(
+      "Added to calendar",
+      `Scheduled ${formatReminderDate(scheduledFor)} in ${calendar.title || "your calendar"}.`
+    );
+  }
+
   async function prepareNotifications() {
     if (!session?.access_token) {
       Alert.alert("Sign in required", "Sign in before registering this device.");
@@ -923,6 +1046,8 @@ export default function App() {
                 protocol={protocol}
                 recordAdherence={recordAdherence}
                 scheduleActionReminder={scheduleActionReminder}
+                scheduleActionToNativeCalendar={scheduleActionToNativeCalendar}
+                nativeCalendarEvents={nativeCalendarEvents}
                 localReminders={localReminders}
               />
             ) : null}
@@ -993,10 +1118,12 @@ function TodayView({
   latestMessage,
   latestSummary,
   localReminders,
+  nativeCalendarEvents,
   openPath,
   protocol,
   recordAdherence,
   scheduleActionReminder,
+  scheduleActionToNativeCalendar,
 }: {
   adherenceEvents: AdherenceEvent[];
   appUrl: string;
@@ -1004,6 +1131,7 @@ function TodayView({
   latestMessage: string;
   latestSummary: string;
   localReminders: Record<string, LocalReminder>;
+  nativeCalendarEvents: Record<string, NativeCalendarEvent>;
   openPath: (path: string) => Promise<void>;
   protocol: Protocol | null;
   recordAdherence: (
@@ -1017,6 +1145,10 @@ function TodayView({
     scope: ActionScope,
     preset?: ReminderPreset,
     repeat?: ReminderRepeat
+  ) => Promise<void>;
+  scheduleActionToNativeCalendar: (
+    action: ScheduledProtocolAction,
+    preset?: ReminderPreset
   ) => Promise<void>;
 }) {
   const [expandedActionKey, setExpandedActionKey] = useState<string | null>(null);
@@ -1118,12 +1250,16 @@ function TodayView({
                       localReminder={
                         protocol ? localReminders[getReminderKey(protocol.id, action)] : undefined
                       }
+                      nativeCalendarEvent={
+                        protocol ? nativeCalendarEvents[getReminderKey(protocol.id, action)] : undefined
+                      }
                       onToggle={() => {
                         playSoftHaptic();
                         setExpandedActionKey(activeActionKey === actionKey ? null : actionKey);
                       }}
                       recordAdherence={recordAdherence}
                       scheduleActionReminder={scheduleActionReminder}
+                      scheduleActionToNativeCalendar={scheduleActionToNativeCalendar}
                     />
                   );
                 })}
@@ -1156,12 +1292,16 @@ function TodayView({
                             localReminder={
                               protocol ? localReminders[getReminderKey(protocol.id, action)] : undefined
                             }
+                            nativeCalendarEvent={
+                              protocol ? nativeCalendarEvents[getReminderKey(protocol.id, action)] : undefined
+                            }
                             onToggle={() => {
                               playSoftHaptic();
                               setExpandedActionKey(getActionKey(action));
                             }}
                             recordAdherence={recordAdherence}
                             scheduleActionReminder={scheduleActionReminder}
+                            scheduleActionToNativeCalendar={scheduleActionToNativeCalendar}
                           />
                         ))}
                         {hiddenCount ? (
@@ -1355,15 +1495,18 @@ function ProtocolActionRow({
   expanded = false,
   adherenceEvent,
   localReminder,
+  nativeCalendarEvent,
   onToggle,
   recordAdherence,
   scheduleActionReminder,
+  scheduleActionToNativeCalendar,
 }: {
   action: ScheduledProtocolAction;
   compact?: boolean;
   expanded?: boolean;
   adherenceEvent?: AdherenceEvent;
   localReminder?: LocalReminder;
+  nativeCalendarEvent?: NativeCalendarEvent;
   onToggle?: () => void;
   recordAdherence: (
     action: ProtocolAction,
@@ -1376,6 +1519,10 @@ function ProtocolActionRow({
     scope: ActionScope,
     preset?: ReminderPreset,
     repeat?: ReminderRepeat
+  ) => Promise<void>;
+  scheduleActionToNativeCalendar: (
+    action: ScheduledProtocolAction,
+    preset?: ReminderPreset
   ) => Promise<void>;
 }) {
   return (
@@ -1435,12 +1582,27 @@ function ProtocolActionRow({
             >
               <Text style={styles.adherenceButtonText}>Remind</Text>
             </Pressable>
+            <Pressable
+              style={[styles.adherenceButton, styles.calendarButton]}
+              onPress={() => {
+                playSoftHaptic();
+                chooseCalendarPreset(action, scheduleActionToNativeCalendar);
+              }}
+            >
+              <Text style={styles.adherenceButtonText}>Calendar</Text>
+            </Pressable>
           </View>
         ) : null}
         {localReminder ? (
           <Text style={styles.reminderText}>
             Reminder {formatReminderDate(new Date(localReminder.scheduledFor))}
             {localReminder.repeat === "once" ? "" : ` / ${localReminder.repeat}`}
+          </Text>
+        ) : null}
+        {nativeCalendarEvent ? (
+          <Text style={styles.reminderText}>
+            Calendar {formatReminderDate(new Date(nativeCalendarEvent.scheduledFor))} /{" "}
+            {nativeCalendarEvent.calendarTitle}
           </Text>
         ) : null}
       </View>
@@ -1469,6 +1631,29 @@ function chooseReminderPreset(
     {
       text: "Tomorrow",
       onPress: () => chooseReminderRepeat(action, scheduleActionReminder, "tomorrow"),
+    },
+  ]);
+}
+
+function chooseCalendarPreset(
+  action: ScheduledProtocolAction,
+  scheduleActionToNativeCalendar: (
+    action: ScheduledProtocolAction,
+    preset?: ReminderPreset
+  ) => Promise<void>
+) {
+  Alert.alert("Calendar time", "When should Aeonvera put this on your calendar?", [
+    {
+      text: "Default",
+      onPress: () => void scheduleActionToNativeCalendar(action, "default"),
+    },
+    {
+      text: "Soon",
+      onPress: () => void scheduleActionToNativeCalendar(action, "soon"),
+    },
+    {
+      text: "Tomorrow",
+      onPress: () => void scheduleActionToNativeCalendar(action, "tomorrow"),
     },
   ]);
 }
@@ -1740,6 +1925,25 @@ function getReminderKey(protocolId: string, action: ScheduledProtocolAction) {
   return `${protocolId}:${action.actionIndex}:${action.action}`;
 }
 
+async function getWritableDeviceCalendar() {
+  try {
+    const defaultCalendar = Calendar.getDefaultCalendarSync();
+    if (defaultCalendar?.allowsModifications) {
+      return defaultCalendar;
+    }
+  } catch {
+    // Fall through to scanning writable calendars.
+  }
+
+  const calendars = await Calendar.getCalendars(Calendar.EntityTypes.EVENT);
+  return (
+    calendars.find((calendar) => calendar.allowsModifications && calendar.isPrimary) ||
+    calendars.find((calendar) => calendar.allowsModifications && calendar.isVisible !== false) ||
+    calendars.find((calendar) => calendar.allowsModifications) ||
+    null
+  );
+}
+
 function getActionKey(action: ScheduledProtocolAction) {
   return `${action.actionIndex}:${action.action || "action"}`;
 }
@@ -1774,6 +1978,11 @@ function formatDate(value?: string | null) {
 }
 
 function isNotificationPermissionGranted(permission: unknown) {
+  const result = permission as { granted?: boolean; status?: string };
+  return result.granted === true || result.status === "granted";
+}
+
+function isPermissionGranted(permission: unknown) {
   const result = permission as { granted?: boolean; status?: string };
   return result.granted === true || result.status === "granted";
 }
@@ -2140,6 +2349,10 @@ const styles = StyleSheet.create({
   reminderButton: {
     borderColor: "rgba(218,188,115,0.28)",
     backgroundColor: "rgba(218,188,115,0.08)",
+  },
+  calendarButton: {
+    borderColor: "rgba(255,255,255,0.16)",
+    backgroundColor: "rgba(255,255,255,0.045)",
   },
   reminderText: {
     color: "rgba(218,188,115,0.64)",

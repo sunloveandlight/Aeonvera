@@ -27,6 +27,14 @@
       }
     },
     "plugins": [
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Allow Aeonvera to add and manage protocol blocks in your calendar.",
+          "writeOnlyCalendarPermission": "Allow Aeonvera to add protocol blocks to your calendar.",
+          "writeOnlyAccess": true
+        }
+      ],
       "expo-notifications",
       "expo-secure-store"
     ],
