@@ -90,13 +90,16 @@ type LocalReminder = {
 
 type NativeCalendarEvent = {
   eventId: string;
+  calendarEventId?: string | null;
   calendarTitle: string;
   scheduledFor: string;
   reason?: string;
+  feedbackNotificationId?: string | null;
 };
 
 type CalendarScheduleResult = {
   eventId: string;
+  calendarEventId?: string | null;
   calendarTitle: string;
   scheduledFor: string;
   reason: string;
@@ -113,6 +116,23 @@ type NotificationTapData = {
   target?: string;
   alertId?: string;
   alert_id?: string;
+  action?: string;
+  actionIndex?: number;
+  actionScope?: ActionScope;
+  calendarEventId?: string;
+  domain?: string;
+  protocolId?: string;
+  scheduledFor?: string;
+};
+
+type PendingFeedback = {
+  action: string;
+  actionIndex: number;
+  calendarEventId?: string | null;
+  domain: string;
+  protocolId?: string | null;
+  scope: ActionScope;
+  scheduledFor?: string | null;
 };
 
 type Preferences = {
@@ -274,6 +294,7 @@ export default function App() {
   const [dailyPlan, setDailyPlan] = useState<DailyExecutionPlan | null>(null);
   const [autopilotMessage, setAutopilotMessage] = useState<string | null>(null);
   const [acceptingDailyPlan, setAcceptingDailyPlan] = useState(false);
+  const [pendingFeedback, setPendingFeedback] = useState<PendingFeedback | null>(null);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
   const [notificationFocusTick, setNotificationFocusTick] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -467,6 +488,7 @@ export default function App() {
         setDailyPlan(null);
         setAutopilotMessage(null);
         setAcceptingDailyPlan(false);
+        setPendingFeedback(null);
       }
     });
 
@@ -480,6 +502,23 @@ export default function App() {
       if (data?.target === "autopilot") {
         setActiveView("today");
         setActionNotice("Opened from Morning Autopilot. Review today's prepared plan.");
+        playSoftHaptic();
+        void loadCompanionData(session);
+        return;
+      }
+
+      if (data?.target === "action_feedback" && data.action) {
+        setPendingFeedback({
+          action: data.action,
+          actionIndex: Number(data.actionIndex || 0),
+          calendarEventId: data.calendarEventId || null,
+          domain: data.domain || "Optimization",
+          protocolId: data.protocolId || null,
+          scope: data.actionScope || "today",
+          scheduledFor: data.scheduledFor || null,
+        });
+        setActiveView("today");
+        setActionNotice("Aeonvera is ready to learn from that calendar block.");
         playSoftHaptic();
         void loadCompanionData(session);
         return;
@@ -699,6 +738,10 @@ export default function App() {
       ...next,
     };
 
+    if (next.auto_schedule_enabled === true && merged.mode !== "sovereign") {
+      merged.mode = "autopilot";
+    }
+
     if (merged.mode !== "autopilot" && merged.mode !== "sovereign") {
       merged.auto_schedule_enabled = false;
     }
@@ -876,6 +919,155 @@ export default function App() {
     await updateDailyPlanStatus("skipped");
     setActionNotice("Autopilot paused for today. Your protocol remains available below.");
     playSoftHaptic();
+  }
+
+  async function recordExecutionFeedback(
+    feedback: PendingFeedback,
+    outcome: "done" | "partly" | "missed" | "reschedule"
+  ) {
+    if (!supabase || !session) return;
+
+    const normalizedOutcome =
+      outcome === "done" ? "success" : outcome === "missed" ? "failure" : "unknown";
+    const confidence =
+      outcome === "done" ? 0.92 : outcome === "missed" ? 0.86 : outcome === "partly" ? 0.62 : 0.5;
+    const notes =
+      outcome === "done"
+        ? "Completed from mobile execution feedback."
+        : outcome === "partly"
+          ? "Partly completed from mobile execution feedback."
+          : outcome === "missed"
+            ? "Missed from mobile execution feedback."
+            : "Requested reschedule from mobile execution feedback.";
+
+    const { data, error } = await supabase
+      .from("intervention_outcomes")
+      .insert({
+        user_id: session.user.id,
+        protocol_id: feedback.protocolId || protocol?.id || null,
+        domain: feedback.domain,
+        action: feedback.action,
+        outcome: normalizedOutcome,
+        success: normalizedOutcome === "success",
+        confidence,
+        notes,
+        measured_at: new Date().toISOString(),
+        followup_snapshot: {
+          source: "mobile_execution_feedback",
+          calendar_event_id: feedback.calendarEventId || null,
+          scheduled_for: feedback.scheduledFor || null,
+          action_index: feedback.actionIndex,
+          action_scope: feedback.scope,
+          feedback_outcome: outcome,
+        },
+      })
+      .select("id,protocol_id,domain,action,outcome,success,notes,measured_at,created_at")
+      .single();
+
+    if (error) {
+      Alert.alert("Feedback not saved", error.message);
+      return;
+    }
+
+    await Promise.all([
+      supabase.from("behavior_learning_events").insert({
+        user_id: session.user.id,
+        domain: feedback.domain,
+        action: feedback.action,
+        outcome: normalizedOutcome,
+        confidence,
+        source: "manual",
+      }),
+      supabase.from("behavior_events").insert({
+        user_id: session.user.id,
+        type: "execution_feedback",
+        event_type: `calendar_action_${outcome}`,
+        domain: feedback.domain,
+        action: feedback.action,
+        outcome: normalizedOutcome,
+        payload: {
+          calendar_event_id: feedback.calendarEventId || null,
+          protocol_id: feedback.protocolId || protocol?.id || null,
+          scheduled_for: feedback.scheduledFor || null,
+          source: "mobile",
+        },
+      }),
+    ]);
+
+    if (feedback.calendarEventId) {
+      await updateCalendarFeedbackPayload(
+        feedback.calendarEventId,
+        outcome,
+        (data as AdherenceEvent).id
+      );
+    }
+
+    setAdherenceEvents((current) => [
+      data as AdherenceEvent,
+      ...current.filter((event) => event.action !== feedback.action),
+    ]);
+
+    setPendingFeedback(null);
+
+    if (outcome === "reschedule") {
+      const nextAction: ScheduledProtocolAction = {
+        action: feedback.action,
+        actionIndex: feedback.actionIndex,
+        domain: feedback.domain,
+        scope: feedback.scope,
+      };
+      const event = await scheduleActionToNativeCalendar(nextAction, "tomorrow", true);
+      const message = event
+        ? `Feedback saved. Aeonvera rescheduled it for ${formatReminderDate(new Date(event.scheduledFor))}.`
+        : "Feedback saved. Aeonvera could not create a new calendar block.";
+      setActionNotice(message);
+      Alert.alert("Feedback saved", message);
+    } else {
+      const message =
+        outcome === "done"
+          ? "Marked complete. Aeonvera will favor this pattern."
+          : outcome === "partly"
+            ? "Marked partly complete. Aeonvera will look for friction, not failure."
+            : "Marked missed. Aeonvera will adapt the timing and load.";
+      setActionNotice(message);
+      Alert.alert("Feedback saved", message);
+    }
+
+    playSoftHaptic();
+  }
+
+  async function updateCalendarFeedbackPayload(
+    calendarEventId: string,
+    outcome: "done" | "partly" | "missed" | "reschedule",
+    interventionOutcomeId: string
+  ) {
+    if (!supabase || !session) return;
+
+    const existing = await supabase
+      .from("calendar_events")
+      .select("payload")
+      .eq("id", calendarEventId)
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    const existingPayload =
+      existing.data?.payload && typeof existing.data.payload === "object"
+        ? (existing.data.payload as Record<string, unknown>)
+        : {};
+
+    await supabase
+      .from("calendar_events")
+      .update({
+        payload: {
+          ...existingPayload,
+          feedback_outcome: outcome,
+          feedback_recorded_at: new Date().toISOString(),
+          intervention_outcome_id: interventionOutcomeId,
+        },
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", calendarEventId)
+      .eq("user_id", session.user.id);
   }
 
   async function scheduleActionReminder(
@@ -1057,6 +1249,23 @@ export default function App() {
       })
       .select("id")
       .maybeSingle();
+    const calendarEventId = calendarRecordResult.data?.id || null;
+    const feedbackNotificationId = await scheduleExecutionFeedbackPrompt({
+      action,
+      calendarEventId,
+      endDate,
+      protocolId: protocol.id,
+      scheduledFor,
+    });
+
+    setNativeCalendarEvents((current) => ({
+      ...current,
+      [calendarEventKey]: {
+        ...(current[calendarEventKey] || {}),
+        calendarEventId,
+        feedbackNotificationId,
+      },
+    }));
 
     if (!calendarRecordResult.error) {
       await supabase.from("behavior_events").insert({
@@ -1068,12 +1277,13 @@ export default function App() {
         outcome: "scheduled",
         payload: {
           protocol_id: protocol.id,
-          calendar_event_id: calendarRecordResult.data?.id || null,
+          calendar_event_id: calendarEventId,
           provider,
           provider_event_id: eventId,
           action_scope: action.scope,
           scheduled_for: scheduledFor.toISOString(),
           schedule_reason: schedule.reason,
+          feedback_notification_id: feedbackNotificationId,
           source: "mobile_device_calendar",
         },
       });
@@ -1098,9 +1308,55 @@ export default function App() {
     return {
       eventId,
       calendarTitle: calendar.title || "Calendar",
+      calendarEventId,
       scheduledFor: scheduledFor.toISOString(),
       reason: schedule.reason,
     };
+  }
+
+  async function scheduleExecutionFeedbackPrompt({
+    action,
+    calendarEventId,
+    endDate,
+    protocolId,
+    scheduledFor,
+  }: {
+    action: ScheduledProtocolAction;
+    calendarEventId?: string | null;
+    endDate: Date;
+    protocolId: string;
+    scheduledFor: Date;
+  }) {
+    const permission = await Notifications.getPermissionsAsync().catch(() => null);
+    if (!permission || !isNotificationPermissionGranted(permission)) {
+      return null;
+    }
+
+    const feedbackAt = new Date(endDate.getTime() + 10 * 60 * 1000);
+    if (feedbackAt.getTime() <= Date.now() + 60 * 1000) {
+      feedbackAt.setTime(Date.now() + 5 * 60 * 1000);
+    }
+
+    return Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Aeonvera execution check",
+        body: `Did you complete ${action.action}?`,
+        data: {
+          target: "action_feedback",
+          action: action.action,
+          actionIndex: action.actionIndex,
+          actionScope: action.scope,
+          calendarEventId,
+          domain: action.domain || "Optimization",
+          protocolId,
+          scheduledFor: scheduledFor.toISOString(),
+        },
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: feedbackAt,
+      },
+    }).catch(() => null);
   }
 
   async function prepareNotifications() {
@@ -1339,6 +1595,8 @@ export default function App() {
                 skipDailyPlan={skipDailyPlan}
                 nativeCalendarEvents={nativeCalendarEvents}
                 localReminders={localReminders}
+                pendingFeedback={pendingFeedback}
+                recordExecutionFeedback={recordExecutionFeedback}
                 setActionNotice={setActionNotice}
               />
             ) : null}
@@ -1421,7 +1679,9 @@ function TodayView({
   localReminders,
   nativeCalendarEvents,
   openPath,
+  pendingFeedback,
   protocol,
+  recordExecutionFeedback,
   skipDailyPlan,
   setActionNotice,
 }: {
@@ -1439,7 +1699,12 @@ function TodayView({
   localReminders: Record<string, LocalReminder>;
   nativeCalendarEvents: Record<string, NativeCalendarEvent>;
   openPath: (path: string) => Promise<void>;
+  pendingFeedback: PendingFeedback | null;
   protocol: Protocol | null;
+  recordExecutionFeedback: (
+    feedback: PendingFeedback,
+    outcome: "done" | "partly" | "missed" | "reschedule"
+  ) => Promise<void>;
   skipDailyPlan: () => Promise<void>;
   setActionNotice: (message: string | null) => void;
 }) {
@@ -1487,6 +1752,13 @@ function TodayView({
         preferences={autopilotPreferences}
         skipDailyPlan={skipDailyPlan}
       />
+
+      {pendingFeedback ? (
+        <ExecutionFeedbackCard
+          feedback={pendingFeedback}
+          onRecord={recordExecutionFeedback}
+        />
+      ) : null}
 
       <View style={styles.panel}>
         <Text style={styles.cardLabel}>Today&apos;s Protocol</Text>
@@ -1665,6 +1937,62 @@ function TodayView({
         </Text>
       </View>
     </>
+  );
+}
+
+function ExecutionFeedbackCard({
+  feedback,
+  onRecord,
+}: {
+  feedback: PendingFeedback;
+  onRecord: (
+    feedback: PendingFeedback,
+    outcome: "done" | "partly" | "missed" | "reschedule"
+  ) => Promise<void>;
+}) {
+  const scheduledFor = feedback.scheduledFor
+    ? formatReminderDate(new Date(feedback.scheduledFor))
+    : null;
+
+  return (
+    <View style={styles.feedbackPanel}>
+      <Text style={styles.cardLabel}>Execution Feedback</Text>
+      <Text style={styles.cardTitle}>How did this block land?</Text>
+      <Text style={styles.cardCopy}>
+        {feedback.action}
+        {scheduledFor ? ` / ${scheduledFor}` : ""}
+      </Text>
+      <Text style={styles.feedbackCopy}>
+        Aeonvera will use this signal to refine timing, intensity, and the way your next day is
+        prepared.
+      </Text>
+      <View style={styles.feedbackGrid}>
+        <Pressable
+          style={[styles.feedbackButton, styles.feedbackButtonPrimary]}
+          onPress={() => void onRecord(feedback, "done")}
+        >
+          <Text style={[styles.feedbackButtonText, styles.feedbackButtonPrimaryText]}>Done</Text>
+        </Pressable>
+        <Pressable
+          style={styles.feedbackButton}
+          onPress={() => void onRecord(feedback, "partly")}
+        >
+          <Text style={styles.feedbackButtonText}>Partly</Text>
+        </Pressable>
+        <Pressable
+          style={styles.feedbackButton}
+          onPress={() => void onRecord(feedback, "missed")}
+        >
+          <Text style={styles.feedbackButtonText}>Missed</Text>
+        </Pressable>
+        <Pressable
+          style={styles.feedbackButton}
+          onPress={() => void onRecord(feedback, "reschedule")}
+        >
+          <Text style={styles.feedbackButtonText}>Reschedule</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
@@ -2849,6 +3177,51 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.68)",
     fontSize: 13,
     lineHeight: 19,
+  },
+  feedbackPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.32)",
+    borderRadius: 10,
+    backgroundColor: "rgba(218,188,115,0.09)",
+    padding: 18,
+  },
+  feedbackCopy: {
+    color: "rgba(255,255,255,0.56)",
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 10,
+  },
+  feedbackGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 16,
+  },
+  feedbackButton: {
+    minHeight: 42,
+    minWidth: "48%",
+    flexGrow: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.11)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.2)",
+    paddingHorizontal: 12,
+  },
+  feedbackButtonPrimary: {
+    borderColor: "rgba(218,188,115,0.48)",
+    backgroundColor: "rgba(218,188,115,0.92)",
+  },
+  feedbackButtonText: {
+    color: "rgba(255,255,255,0.74)",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.3,
+    textTransform: "uppercase",
+  },
+  feedbackButtonPrimaryText: {
+    color: "#080808",
   },
   modePill: {
     borderWidth: 1,
