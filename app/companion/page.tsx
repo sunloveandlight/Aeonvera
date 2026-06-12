@@ -149,6 +149,23 @@ type AgentAppliedAction = {
   detail: string;
 };
 
+type ClinicalInsight = {
+  id: string;
+  source_question?: string | null;
+  answer_summary?: string | null;
+  domains?: string[] | null;
+  concern_status?: "active" | "improving" | "unresolved" | "dismissed" | "monitoring" | null;
+  confidence?: number | string | null;
+  range_flags?: Array<{
+    marker?: string;
+    value?: string;
+    status?: string;
+  }> | null;
+  follow_up_questions?: string[] | null;
+  recommended_actions?: ProtocolAction[] | null;
+  created_at?: string | null;
+};
+
 export default function CompanionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -159,6 +176,7 @@ export default function CompanionPage() {
   const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null);
   const [executionSummary, setExecutionSummary] = useState<ExecutionSummary | null>(null);
   const [coachMemory, setCoachMemory] = useState<CoachMemory | null>(null);
+  const [clinicalInsights, setClinicalInsights] = useState<ClinicalInsight[]>([]);
   const [dailyBrief, setDailyBrief] = useState<DailyBrief | null>(null);
   const [agentMessages, setAgentMessages] = useState<AgentChatMessage[]>([
     {
@@ -205,6 +223,7 @@ export default function CompanionPage() {
           executionResponse,
           memoryResponse,
           dailyBriefResponse,
+          clinicalMemoryResponse,
         ] = await Promise.all([
           fetch("/api/digital-twin/timeline", { credentials: "include" }),
           fetch("/api/optimization/protocols", { credentials: "include" }),
@@ -213,6 +232,7 @@ export default function CompanionPage() {
           fetch("/api/execution/summary", { credentials: "include" }),
           fetch("/api/coach/memory", { credentials: "include" }),
           fetch("/api/coach/daily-brief", { credentials: "include" }),
+          fetch("/api/clinical/insights", { credentials: "include" }),
         ]);
         const [
           twinData,
@@ -222,6 +242,7 @@ export default function CompanionPage() {
           executionData,
           memoryData,
           dailyBriefData,
+          clinicalMemoryData,
         ] = await Promise.all([
           twinResponse.json(),
           protocolResponse.json(),
@@ -230,6 +251,7 @@ export default function CompanionPage() {
           executionResponse.json(),
           memoryResponse.json(),
           dailyBriefResponse.json(),
+          clinicalMemoryResponse.json(),
         ]);
 
         if (!twinResponse.ok) throw new Error(twinData.error || "Companion could not load.");
@@ -241,6 +263,9 @@ export default function CompanionPage() {
           setCalendarStatus(calendarResponse.ok ? calendarData : null);
           setExecutionSummary(executionResponse.ok ? executionData.execution : null);
           setCoachMemory(memoryResponse.ok ? memoryData.memory : null);
+          setClinicalInsights(
+            clinicalMemoryResponse.ok ? clinicalMemoryData.insights || [] : []
+          );
           setDailyBrief(dailyBriefResponse.ok ? dailyBriefData.brief : null);
         }
       } catch (error) {
@@ -511,7 +536,11 @@ export default function CompanionPage() {
       if (Array.isArray(data.actions)) {
         setAgentActions(data.actions.slice(0, 4));
 
-        if (data.actions.some((action: AgentAppliedAction) => action.type === "plan_simplified")) {
+        if (
+          data.actions.some((action: AgentAppliedAction) =>
+            ["plan_simplified", "clinical_plan_prepared"].includes(action.type)
+          )
+        ) {
           const dailyBriefResponse = await fetch("/api/coach/daily-brief", {
             credentials: "include",
           });
@@ -520,6 +549,14 @@ export default function CompanionPage() {
             setDailyBrief(dailyBriefData.brief || null);
           }
         }
+      }
+
+      const clinicalMemoryResponse = await fetch("/api/clinical/insights", {
+        credentials: "include",
+      });
+      const clinicalMemoryData = await clinicalMemoryResponse.json();
+      if (clinicalMemoryResponse.ok) {
+        setClinicalInsights(clinicalMemoryData.insights || []);
       }
     } catch (error) {
       setAgentMessages((current) => [
@@ -652,6 +689,8 @@ export default function CompanionPage() {
             />
 
             <PersonalAgentMemoryPanel memory={coachMemory} />
+
+            <ClinicalIntelligenceMemoryPanel insights={clinicalInsights} />
 
             <CompanionCard
               icon={MessageCircle}
@@ -1112,6 +1151,99 @@ function PersonalAgentMemoryPanel({ memory }: { memory: CoachMemory | null }) {
   );
 }
 
+function ClinicalIntelligenceMemoryPanel({
+  insights,
+}: {
+  insights: ClinicalInsight[];
+}) {
+  const latest = insights[0];
+  const confidence = Math.round(Number(latest?.confidence || 0) * 100);
+  const status = latest?.concern_status || "building";
+  const domains = latest?.domains?.slice(0, 4) || [];
+  const rangeFlags = latest?.range_flags?.slice(0, 3) || [];
+  const followUp = latest?.follow_up_questions?.[0];
+  const nextAction = latest?.recommended_actions?.[0];
+
+  return (
+    <div className="executive-panel rounded-lg p-6 md:p-7">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <p className="micro-label">Clinical Intelligence Memory</p>
+        <Brain size={18} className="royal-text" />
+      </div>
+
+      {latest ? (
+        <div className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md bg-white/[0.035] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/80">
+                {clinicalStatusLabel(status)}
+              </span>
+              <span className="rounded-md bg-white/[0.025] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-white/30">
+                {confidence || 0}% confidence
+              </span>
+            </div>
+            <h3 className="mt-5 text-2xl font-light leading-tight text-white/88">
+              {latest.answer_summary ||
+                "Aeonvera has stored a clinical reasoning memory for future comparisons."}
+            </h3>
+            {followUp ? (
+              <p className="mt-4 text-sm leading-7 text-white/42">{followUp}</p>
+            ) : null}
+            {domains.length ? (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {domains.map((domain) => (
+                  <span
+                    key={domain}
+                    className="rounded-md border border-white/[0.07] bg-white/[0.025] px-2.5 py-1 text-[9px] uppercase tracking-[0.13em] text-white/42"
+                  >
+                    {domain}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="space-y-3">
+            {rangeFlags.length ? (
+              rangeFlags.map((flag) => (
+                <MemoryStat
+                  key={`${flag.marker}-${flag.value}`}
+                  label={flag.status || "Signal"}
+                  value={flag.marker || "Marker"}
+                  detail={flag.value || "Tracked clinical signal"}
+                />
+              ))
+            ) : (
+              <MemoryStat
+                label="Signal"
+                value="Building"
+                detail="Ask a clinical question or upload labs to deepen this memory."
+              />
+            )}
+            {nextAction ? (
+              <MemoryStat
+                label="Next Action"
+                value={nextAction.domain || "Protocol"}
+                detail={nextAction.action || "Review the prepared clinical plan."}
+              />
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <h3 className="text-2xl font-light leading-tight text-white/88">
+            Aeonvera is ready to remember clinical conclusions.
+          </h3>
+          <p className="mt-4 text-sm leading-7 text-white/42">
+            Ask a deep health question or request a protocol. The agent will store the signal map,
+            missing data, follow-up questions, and recommended actions here.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MemoryStat({
   detail,
   label,
@@ -1128,6 +1260,15 @@ function MemoryStat({
       <p className="mt-2 text-xs leading-5 text-white/36">{detail}</p>
     </div>
   );
+}
+
+function clinicalStatusLabel(status: string) {
+  if (status === "improving") return "Improving";
+  if (status === "unresolved") return "Unresolved";
+  if (status === "dismissed") return "Dismissed";
+  if (status === "monitoring") return "Monitoring";
+  if (status === "active") return "Active";
+  return "Building";
 }
 
 function executionStatusLabel(status: ExecutionSummary["status"]) {

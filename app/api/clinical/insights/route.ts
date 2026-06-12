@@ -1,0 +1,70 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+
+export async function GET(request: NextRequest) {
+  try {
+    const user = await getAuthenticatedUser(request);
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data, error } = await getSupabaseAdmin()
+      .from("clinical_insights")
+      .select(
+        "id,source_question,answer_summary,domains,concern_status,confidence,signal_map,range_flags,follow_up_questions,recommended_actions,created_at,updated_at"
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(8);
+
+    if (error) {
+      if (isMissingTableError(error)) {
+        return NextResponse.json({
+          insights: [],
+          migrationRequired: true,
+          message: "Apply the clinical_insights migration to persist clinical memory.",
+        });
+      }
+
+      throw new Error(error.message || "Clinical memory could not load.");
+    }
+
+    return NextResponse.json({
+      insights: data || [],
+      migrationRequired: false,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Clinical memory could not load.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+async function getAuthenticatedUser(request: NextRequest) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) return user;
+
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  if (!token) return null;
+
+  const {
+    data: { user: bearerUser },
+  } = await getSupabaseAdmin().auth.getUser(token);
+
+  return bearerUser;
+}
+
+function isMissingTableError(error: { code?: string; message?: string }) {
+  return (
+    error.code === "42P01" ||
+    error.code === "PGRST205" ||
+    error.message?.includes("schema cache") ||
+    error.message?.includes("clinical_insights")
+  );
+}

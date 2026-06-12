@@ -120,6 +120,21 @@ type PreferenceRow = {
   updated_at?: string | null;
 };
 
+type ClinicalInsightRow = {
+  id?: string | null;
+  source_question?: string | null;
+  answer_summary?: string | null;
+  domains?: string[] | null;
+  concern_status?: string | null;
+  confidence?: number | string | null;
+  signal_map?: unknown;
+  range_flags?: unknown;
+  follow_up_questions?: unknown;
+  recommended_actions?: unknown;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
 type AgentAction = {
   type:
     | "plan_simplified"
@@ -170,6 +185,7 @@ type AgentContext = {
   biologicalAge: BiologicalAgeRow | null;
   assessment: AssessmentRow | null;
   healthState: HealthStateRow | null;
+  clinicalInsights: ClinicalInsightRow[];
 };
 
 const CLINICAL_LONGEVITY_DOMAINS = [
@@ -356,6 +372,16 @@ export async function answerPersonalHealthAgent({
   const xaiClinicalReview = await buildXaiClinicalReview(question, finalContext, history);
 
   if (!openai && xaiClinicalReview) {
+    await storeClinicalInsight({
+      answer: xaiClinicalReview,
+      context: finalContext,
+      question,
+      source: "agent_chat",
+      supabase,
+      toolResults,
+      userId,
+    });
+
     return {
       actions: allActions,
       answer: xaiClinicalReview,
@@ -365,9 +391,20 @@ export async function answerPersonalHealthAgent({
   }
 
   if (!openai) {
+    const fallbackAnswer = buildFallbackAnswer(question, finalContext, allActions, toolResults);
+    await storeClinicalInsight({
+      answer: fallbackAnswer,
+      context: finalContext,
+      question,
+      source: "agent_chat",
+      supabase,
+      toolResults,
+      userId,
+    });
+
     return {
       actions: allActions,
-      answer: buildFallbackAnswer(question, finalContext, allActions, toolResults),
+      answer: fallbackAnswer,
       mode: "fallback" as const,
       context: finalContext,
     };
@@ -398,6 +435,16 @@ export async function answerPersonalHealthAgent({
     const answer = completion.choices[0]?.message?.content?.trim();
 
     if (answer) {
+      await storeClinicalInsight({
+        answer,
+        context: finalContext,
+        question,
+        source: "agent_chat",
+        supabase,
+        toolResults,
+        userId,
+      });
+
       return {
         actions: allActions,
         answer,
@@ -412,9 +459,20 @@ export async function answerPersonalHealthAgent({
     );
   }
 
+  const fallbackAnswer = buildFallbackAnswer(question, finalContext, allActions, toolResults);
+  await storeClinicalInsight({
+    answer: fallbackAnswer,
+    context: finalContext,
+    question,
+    source: "agent_chat",
+    supabase,
+    toolResults,
+    userId,
+  });
+
   return {
     actions: allActions,
-    answer: buildFallbackAnswer(question, finalContext, allActions, toolResults),
+    answer: fallbackAnswer,
     mode: "fallback" as const,
     context: finalContext,
   };
@@ -459,6 +517,55 @@ async function buildXaiClinicalReview(
   }
 }
 
+async function storeClinicalInsight({
+  answer,
+  context,
+  question,
+  source,
+  supabase,
+  toolResults,
+  userId,
+}: {
+  answer: string;
+  context: AgentContext;
+  question: string;
+  source: "agent_chat" | "voice_agent" | "system";
+  supabase: SupabaseAdmin;
+  toolResults: AgentToolResults;
+  userId: string;
+}) {
+  if (!shouldStoreClinicalInsight(question, toolResults)) return;
+
+  const domains = toolResults.clinicalSignalMap
+    .filter((domain) => domain.priority === "high" || domain.present.length)
+    .slice(0, 6)
+    .map((domain) => domain.domain);
+  const concernStatus = inferConcernStatus(context, toolResults);
+
+  const { error } = await supabase.from("clinical_insights").insert({
+    user_id: userId,
+    source,
+    source_question: question.slice(0, 1200),
+    answer_summary: summarizeClinicalAnswer(answer),
+    domains,
+    concern_status: concernStatus,
+    confidence: computeClinicalInsightConfidence(toolResults),
+    signal_map: toolResults.clinicalSignalMap.slice(0, 10),
+    range_flags: toolResults.rangeFlags.slice(0, 10),
+    follow_up_questions: toolResults.followUpQuestions.slice(0, 8),
+    recommended_actions: toolResults.recommendedActions.slice(0, 8),
+    metadata: {
+      prior_insight_count: context.clinicalInsights.length,
+      answer_mode: toolResults.answerMode,
+      stored_at: new Date().toISOString(),
+    },
+  });
+
+  if (error && !isMissingTableError(error) && !error.message?.includes("clinical_insights")) {
+    console.error("[Clinical Insight Store Error]", error.message);
+  }
+}
+
 async function loadAgentContext(
   supabase: SupabaseAdmin,
   userId: string
@@ -480,6 +587,7 @@ async function loadAgentContext(
     biologicalAgeRes,
     assessmentRes,
     healthStateRes,
+    clinicalInsightRes,
   ] = await Promise.all([
       loadOrBuildCoachMemoryProfile(supabase, userId),
       safeQuery(() =>
@@ -584,6 +692,16 @@ async function loadAgentContext(
           .limit(1)
           .maybeSingle()
       ),
+      safeQuery(() =>
+        supabase
+          .from("clinical_insights")
+          .select(
+            "id,source_question,answer_summary,domains,concern_status,confidence,signal_map,range_flags,follow_up_questions,recommended_actions,created_at,updated_at"
+          )
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(8)
+      ),
     ]);
 
   return {
@@ -600,6 +718,7 @@ async function loadAgentContext(
     biologicalAge: (biologicalAgeRes.data as BiologicalAgeRow | null) || null,
     assessment: (assessmentRes.data as AssessmentRow | null) || null,
     healthState: (healthStateRes.data as HealthStateRow | null) || null,
+    clinicalInsights: ((clinicalInsightRes.data || []) as ClinicalInsightRow[]).slice(0, 8),
   };
 }
 
@@ -948,10 +1067,31 @@ function summarizeContext(context: AgentContext) {
     biologicalAge: context.biologicalAge,
     latestAssessment: compactAssessment(context.assessment),
     healthState: context.healthState,
+    clinicalMemory: summarizeClinicalMemory(context.clinicalInsights),
     recentOutcomes: context.outcomes.slice(0, 10),
     calendar: context.calendarEvents.slice(0, 8),
     notifications: context.notifications.slice(0, 4),
   };
+}
+
+function summarizeClinicalMemory(insights: ClinicalInsightRow[]) {
+  return insights.slice(0, 6).map((insight) => ({
+    question: insight.source_question,
+    summary: insight.answer_summary,
+    domains: insight.domains,
+    status: insight.concern_status,
+    confidence: insight.confidence,
+    rangeFlags: Array.isArray(insight.range_flags)
+      ? insight.range_flags
+      : [],
+    followUpQuestions: Array.isArray(insight.follow_up_questions)
+      ? insight.follow_up_questions
+      : [],
+    recommendedActions: Array.isArray(insight.recommended_actions)
+      ? insight.recommended_actions
+      : [],
+    createdAt: insight.created_at,
+  }));
 }
 
 function buildAgentToolResults(context: AgentContext, question: string): AgentToolResults {
@@ -1327,6 +1467,59 @@ function shouldPrepareClinicalPlan(question: string, toolResults: AgentToolResul
   const clinicalEnough = toolResults.answerMode === "clinical_deep_dive" || toolResults.rangeFlags.length > 0;
 
   return askedForPlan && clinicalEnough && toolResults.recommendedActions.length > 0;
+}
+
+function shouldStoreClinicalInsight(question: string, toolResults: AgentToolResults) {
+  const lower = question.toLowerCase();
+  return (
+    toolResults.answerMode === "clinical_deep_dive" ||
+    toolResults.rangeFlags.length > 0 ||
+    /(lab|biomarker|blood|sleep|metabolic|cardio|hormone|risk|protocol|longevity|optimize|clinical|doctor|health)/.test(
+      lower
+    )
+  );
+}
+
+function summarizeClinicalAnswer(answer: string) {
+  const cleaned = answer.replace(/\s+/g, " ").trim();
+  if (cleaned.length <= 520) return cleaned;
+
+  const firstSentences = cleaned
+    .split(/(?<=[.!?])\s+/)
+    .slice(0, 3)
+    .join(" ");
+
+  return (firstSentences.length >= 160 ? firstSentences : cleaned.slice(0, 520)).slice(0, 700);
+}
+
+function inferConcernStatus(context: AgentContext, toolResults: AgentToolResults) {
+  const hasNonOptimalFlag = toolResults.rangeFlags.some((flag) => flag.status !== "optimal");
+  const hasSimilarPrior = context.clinicalInsights.some((insight) => {
+    const domains = insight.domains || [];
+    return domains.some((domain) =>
+      toolResults.clinicalSignalMap
+        .filter((item) => item.priority === "high")
+        .some((item) => item.domain === domain)
+    );
+  });
+
+  if (hasNonOptimalFlag && hasSimilarPrior) return "unresolved";
+  if (hasNonOptimalFlag) return "active";
+  if (toolResults.rangeFlags.length) return "monitoring";
+  return "active";
+}
+
+function computeClinicalInsightConfidence(toolResults: AgentToolResults) {
+  const averageCompleteness =
+    toolResults.clinicalSignalMap.reduce((sum, domain) => sum + domain.completeness, 0) /
+    Math.max(1, toolResults.clinicalSignalMap.length);
+  const rangeBoost = toolResults.rangeFlags.length ? 0.12 : 0;
+  const questionBoost = toolResults.followUpQuestions.length < 3 ? 0.08 : 0;
+
+  return Math.max(
+    0.35,
+    Math.min(0.94, 0.38 + averageCompleteness / 180 + rangeBoost + questionBoost)
+  );
 }
 
 function inferAnswerMode(question: string): AgentToolResults["answerMode"] {

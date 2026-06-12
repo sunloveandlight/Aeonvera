@@ -225,6 +225,23 @@ type AgentAppliedAction = {
   detail: string;
 };
 
+type ClinicalInsight = {
+  id: string;
+  source_question?: string | null;
+  answer_summary?: string | null;
+  domains?: string[] | null;
+  concern_status?: string | null;
+  confidence?: number | string | null;
+  range_flags?: Array<{
+    marker?: string;
+    value?: string;
+    status?: string;
+  }> | null;
+  follow_up_questions?: string[] | null;
+  recommended_actions?: ProtocolAction[] | null;
+  created_at?: string | null;
+};
+
 const WEB_URL =
   process.env.EXPO_PUBLIC_AEONVERA_WEB_URL ||
   Constants.expoConfig?.extra?.webUrl ||
@@ -354,6 +371,7 @@ export default function App() {
   const [agentPrompt, setAgentPrompt] = useState("");
   const [agentThinking, setAgentThinking] = useState(false);
   const [agentActions, setAgentActions] = useState<AgentAppliedAction[]>([]);
+  const [clinicalInsights, setClinicalInsights] = useState<ClinicalInsight[]>([]);
   const [agentSuggestions, setAgentSuggestions] = useState([
     "Why this plan today?",
     "What should I do first?",
@@ -448,6 +466,21 @@ export default function App() {
           },
           ok: false,
         }));
+      const clinicalMemoryResult = await fetch(`${appUrl}/api/clinical/insights`, {
+        headers: {
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+      })
+        .then((response) =>
+          response.json().then((body) => ({
+            body,
+            ok: response.ok,
+          }))
+        )
+        .catch(() => ({
+          body: { insights: [] },
+          ok: false,
+        }));
 
       if (messageResult.error || protocolResult.error || preferenceResult.error) {
         setDataMessage(
@@ -499,6 +532,11 @@ export default function App() {
       } else if (!executionResult.ok) {
         setExecutionSummary(null);
       }
+      setClinicalInsights(
+        clinicalMemoryResult.ok
+          ? ((clinicalMemoryResult.body?.insights || []) as ClinicalInsight[])
+          : []
+      );
       setPreferences(
         ((preferenceResult.data as Preferences | null) || {
           user_id: currentSession.user.id,
@@ -1066,6 +1104,8 @@ export default function App() {
           void loadCompanionData(session);
         }
       }
+
+      await refreshClinicalInsights();
     } catch (error) {
       setAgentMessages((current) => [
         ...current,
@@ -1080,6 +1120,21 @@ export default function App() {
     } finally {
       setAgentThinking(false);
     }
+  }
+
+  async function refreshClinicalInsights() {
+    if (!session?.access_token) return;
+
+    const response = await fetch(`${appUrl}/api/clinical/insights`, {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    }).catch(() => null);
+
+    if (!response?.ok) return;
+
+    const result = await response.json().catch(() => null);
+    setClinicalInsights((result?.insights || []) as ClinicalInsight[]);
   }
 
   async function startAgentVoice() {
@@ -1184,6 +1239,7 @@ export default function App() {
       }
 
       setVoiceStatus("Aeonvera answered by voice.");
+      await refreshClinicalInsights();
       speakAgentAnswer(answer);
       playSoftHaptic();
     } catch (error) {
@@ -2108,6 +2164,7 @@ export default function App() {
               <AgentView
                 messages={agentMessages}
                 appliedActions={agentActions}
+                clinicalInsights={clinicalInsights}
                 prompt={agentPrompt}
                 suggestions={agentSuggestions}
                 thinking={agentThinking}
@@ -2533,6 +2590,7 @@ function ExecutionFeedbackCard({
 
 function AgentView({
   appliedActions,
+  clinicalInsights,
   messages,
   onCancelVoice,
   onPromptChange,
@@ -2548,6 +2606,7 @@ function AgentView({
   voiceStatus,
 }: {
   appliedActions: AgentAppliedAction[];
+  clinicalInsights: ClinicalInsight[];
   messages: AgentChatMessage[];
   onCancelVoice: () => void;
   onPromptChange: (value: string) => void;
@@ -2563,6 +2622,7 @@ function AgentView({
   voiceStatus: string | null;
 }) {
   const visibleMessages = messages.slice(-6);
+  const latestInsight = clinicalInsights[0] || null;
 
   return (
     <View style={styles.agentPanel}>
@@ -2610,6 +2670,33 @@ function AgentView({
             </Pressable>
           )}
         </View>
+      </View>
+
+      <View style={styles.clinicalMemoryPanel}>
+        <View style={styles.clinicalMemoryHeader}>
+          <Text style={styles.cardLabel}>Clinical Memory</Text>
+          <Text style={styles.clinicalMemoryStatus}>
+            {latestInsight ? clinicalStatusLabel(latestInsight.concern_status) : "Building"}
+          </Text>
+        </View>
+        <Text style={styles.clinicalMemoryTitle}>
+          {latestInsight?.answer_summary ||
+            "Ask a deep health question and Aeonvera will remember the conclusion."}
+        </Text>
+        {latestInsight?.follow_up_questions?.[0] ? (
+          <Text style={styles.clinicalMemoryCopy}>
+            {latestInsight.follow_up_questions[0]}
+          </Text>
+        ) : null}
+        {latestInsight?.domains?.length ? (
+          <View style={styles.clinicalDomainRow}>
+            {latestInsight.domains.slice(0, 3).map((domain) => (
+              <Text key={domain} style={styles.clinicalDomainPill}>
+                {domain}
+              </Text>
+            ))}
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.agentSuggestions}>
@@ -2698,6 +2785,15 @@ function MobileCommandStat({
       <Text style={styles.mobileCommandDetail}>{detail}</Text>
     </View>
   );
+}
+
+function clinicalStatusLabel(status?: string | null) {
+  if (status === "improving") return "Improving";
+  if (status === "unresolved") return "Unresolved";
+  if (status === "dismissed") return "Dismissed";
+  if (status === "monitoring") return "Monitoring";
+  if (status === "active") return "Active";
+  return "Building";
 }
 
 function WeeklyExecutionReviewCard({
@@ -4240,6 +4336,59 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "800",
     letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  clinicalMemoryPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.18)",
+    borderRadius: 10,
+    backgroundColor: "rgba(218,188,115,0.052)",
+    marginTop: 14,
+    padding: 14,
+  },
+  clinicalMemoryHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  clinicalMemoryStatus: {
+    color: "rgba(218,188,115,0.82)",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  clinicalMemoryTitle: {
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 13,
+    lineHeight: 21,
+    marginTop: 10,
+  },
+  clinicalMemoryCopy: {
+    color: "rgba(255,255,255,0.42)",
+    fontSize: 12,
+    lineHeight: 19,
+    marginTop: 9,
+  },
+  clinicalDomainRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 7,
+    marginTop: 12,
+  },
+  clinicalDomainPill: {
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 6,
+    backgroundColor: "rgba(255,255,255,0.035)",
+    color: "rgba(255,255,255,0.48)",
+    fontSize: 8,
+    fontWeight: "700",
+    letterSpacing: 0.9,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     textTransform: "uppercase",
   },
   agentSuggestion: {
