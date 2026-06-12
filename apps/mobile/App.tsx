@@ -690,7 +690,7 @@ export default function App() {
       return;
     }
 
-    const scheduledFor = getReminderDate(scope, preset);
+    const scheduledFor = getReminderDate(scope, preset, action);
     const trigger = getReminderTrigger(scheduledFor, repeat);
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
@@ -778,7 +778,7 @@ export default function App() {
       return;
     }
 
-    const scheduledFor = getReminderDate(action.scope, preset);
+    const scheduledFor = getReminderDate(action.scope, preset, action);
     const endDate = new Date(scheduledFor.getTime() + 30 * 60 * 1000);
     const title = `Aeonvera protocol: ${action.domain || "Optimization"}`;
     const notes = [
@@ -1252,12 +1252,12 @@ function TodayView({
                       playSoftHaptic();
                       if (activeActionKey === primaryActionKey) {
                         setActionNotice(
-                          "Action controls are already open. Choose Done, Later, Notify me, or Add to Calendar below."
+                          "Action controls are already open. Choose Done, Later, Schedule, or Notify only below."
                         );
                       } else {
                         setExpandedActionKey(primaryActionKey);
                         setActionNotice(
-                          "Action controls opened. You can complete it, save it for later, create a phone notification, or add it to your calendar."
+                          "Action controls opened. You can complete it, save it for later, let Aeonvera schedule it, or create a phone notification."
                         );
                       }
                     }}
@@ -1647,19 +1647,19 @@ function ProtocolActionRow({
               style={styles.adherenceButton}
               onPress={() => {
                 playSoftHaptic();
-                void recordAdherence(action, action.actionIndex, "failure", action.scope);
-              }}
-            >
-              <Text style={styles.adherenceButtonText}>Skip</Text>
-            </Pressable>
-            <Pressable
-              style={styles.adherenceButton}
-              onPress={() => {
-                playSoftHaptic();
                 void recordAdherence(action, action.actionIndex, "unknown", action.scope);
               }}
             >
               <Text style={styles.adherenceButtonText}>Later</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.adherenceButton, styles.calendarButton]}
+              onPress={() => {
+                playSoftHaptic();
+                void scheduleActionToNativeCalendar(action, "default");
+              }}
+            >
+              <Text style={styles.adherenceButtonText}>Schedule</Text>
             </Pressable>
             <Pressable
               style={[styles.adherenceButton, styles.reminderButton]}
@@ -1668,16 +1668,7 @@ function ProtocolActionRow({
                 chooseReminderPreset(action, scheduleActionReminder);
               }}
             >
-              <Text style={styles.adherenceButtonText}>Notify me</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.adherenceButton, styles.calendarButton]}
-              onPress={() => {
-                playSoftHaptic();
-                chooseCalendarPreset(action, scheduleActionToNativeCalendar);
-              }}
-            >
-              <Text style={styles.adherenceButtonText}>Add to Calendar</Text>
+              <Text style={styles.adherenceButtonText}>Notify only</Text>
             </Pressable>
           </View>
         ) : null}
@@ -1719,29 +1710,6 @@ function chooseReminderPreset(
     {
       text: "Tomorrow",
       onPress: () => chooseReminderRepeat(action, scheduleActionReminder, "tomorrow"),
-    },
-  ]);
-}
-
-function chooseCalendarPreset(
-  action: ScheduledProtocolAction,
-  scheduleActionToNativeCalendar: (
-    action: ScheduledProtocolAction,
-    preset?: ReminderPreset
-  ) => Promise<void>
-) {
-  Alert.alert("Add to Calendar", "When should Aeonvera create this calendar event?", [
-    {
-      text: "Recommended",
-      onPress: () => void scheduleActionToNativeCalendar(action, "default"),
-    },
-    {
-      text: "Soon",
-      onPress: () => void scheduleActionToNativeCalendar(action, "soon"),
-    },
-    {
-      text: "Tomorrow",
-      onPress: () => void scheduleActionToNativeCalendar(action, "tomorrow"),
     },
   ]);
 }
@@ -1949,7 +1917,11 @@ function getScopeDate(scope: ActionScope) {
   return date.toISOString().slice(0, 10);
 }
 
-function getReminderDate(scope: ActionScope, preset: ReminderPreset = "default") {
+function getReminderDate(
+  scope: ActionScope,
+  preset: ReminderPreset = "default",
+  action?: ProtocolAction
+) {
   const date = new Date();
 
   if (preset === "soon") {
@@ -1963,23 +1935,69 @@ function getReminderDate(scope: ActionScope, preset: ReminderPreset = "default")
     return date;
   }
 
+  const text = [action?.domain, action?.action, action?.cadence, action?.why]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
   if (scope === "today") {
-    date.setHours(date.getHours() + 1, 0, 0, 0);
-    if (date.getTime() <= Date.now() + 60_000) {
-      date.setMinutes(date.getMinutes() + 10);
-    }
-    return date;
+    return getRecommendedSameDaySlot(date, text);
   }
 
   if (scope === "week" || scope === "check_in") {
     date.setDate(date.getDate() + 1);
-    date.setHours(scope === "check_in" ? 8 : 9, 0, 0, 0);
+    const slot = getRecommendedHour(text, scope);
+    date.setHours(slot.hour, slot.minute, 0, 0);
     return date;
   }
 
   date.setDate(date.getDate() + 2);
-  date.setHours(9, 0, 0, 0);
+  const slot = getRecommendedHour(text, scope);
+  date.setHours(slot.hour, slot.minute, 0, 0);
   return date;
+}
+
+function getRecommendedSameDaySlot(date: Date, text: string) {
+  const slot = getRecommendedHour(text, "today");
+  date.setHours(slot.hour, slot.minute, 0, 0);
+
+  if (date.getTime() <= Date.now() + 30 * 60 * 1000) {
+    date.setHours(date.getHours() + 1, 0, 0, 0);
+  }
+
+  return date;
+}
+
+function getRecommendedHour(text: string, scope: ActionScope) {
+  if (/(sleep|bedtime|wind down|evening|night|recovery|relax|caffeine)/.test(text)) {
+    return { hour: 20, minute: 30 };
+  }
+
+  if (/(wake|morning|sunlight|weigh|weight|hrv|blood pressure|glucose|fasting)/.test(text)) {
+    return { hour: 8, minute: 0 };
+  }
+
+  if (/(zone 2|cardio|walk|steps|run|training|workout|strength|resistance|mobility)/.test(text)) {
+    return { hour: 17, minute: 30 };
+  }
+
+  if (/(meal|nutrition|protein|supplement|creatine|hydration|hydrate|food)/.test(text)) {
+    return { hour: 12, minute: 30 };
+  }
+
+  if (/(journal|meditation|breath|stress|mindfulness|reflection)/.test(text)) {
+    return { hour: 19, minute: 30 };
+  }
+
+  if (scope === "check_in") {
+    return { hour: 8, minute: 30 };
+  }
+
+  if (scope === "week") {
+    return { hour: 9, minute: 30 };
+  }
+
+  return { hour: 10, minute: 0 };
 }
 
 function getReminderTrigger(
@@ -2459,12 +2477,12 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   reminderButton: {
-    borderColor: "rgba(218,188,115,0.28)",
-    backgroundColor: "rgba(218,188,115,0.08)",
-  },
-  calendarButton: {
     borderColor: "rgba(255,255,255,0.16)",
     backgroundColor: "rgba(255,255,255,0.045)",
+  },
+  calendarButton: {
+    borderColor: "rgba(218,188,115,0.38)",
+    backgroundColor: "rgba(218,188,115,0.12)",
   },
   reminderText: {
     color: "rgba(218,188,115,0.64)",
