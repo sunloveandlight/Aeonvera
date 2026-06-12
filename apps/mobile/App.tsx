@@ -3,6 +3,8 @@ import "react-native-url-polyfill/auto";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
+  Animated,
+  Easing,
   type LayoutChangeEvent,
   Linking,
   Platform,
@@ -2935,6 +2937,83 @@ function AgentView({
       : thinking
         ? "Thinking"
         : "Speak";
+  const voiceIsAwake =
+    voiceRecording || voiceSpeaking || voicePhase === "processing" || thinking;
+  const [voicePulse] = useState(() => new Animated.Value(0));
+  const [voiceSweep] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    let pulseLoop: Animated.CompositeAnimation | null = null;
+    let sweepLoop: Animated.CompositeAnimation | null = null;
+
+    if (voiceIsAwake) {
+      pulseLoop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(voicePulse, {
+            duration: voiceRecording ? 760 : voiceSpeaking ? 980 : 1180,
+            easing: Easing.inOut(Easing.quad),
+            toValue: 1,
+            useNativeDriver: true,
+          }),
+          Animated.timing(voicePulse, {
+            duration: voiceRecording ? 760 : voiceSpeaking ? 980 : 1180,
+            easing: Easing.inOut(Easing.quad),
+            toValue: 0,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+
+      sweepLoop = Animated.loop(
+        Animated.timing(voiceSweep, {
+          duration: voiceRecording ? 1700 : voiceSpeaking ? 2200 : 2600,
+          easing: Easing.linear,
+          toValue: 1,
+          useNativeDriver: true,
+        })
+      );
+
+      pulseLoop.start();
+      sweepLoop.start();
+    } else {
+      Animated.parallel([
+        Animated.timing(voicePulse, {
+          duration: 420,
+          easing: Easing.out(Easing.quad),
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+        Animated.timing(voiceSweep, {
+          duration: 420,
+          easing: Easing.out(Easing.quad),
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+
+    return () => {
+      pulseLoop?.stop();
+      sweepLoop?.stop();
+    };
+  }, [voiceIsAwake, voicePulse, voiceRecording, voiceSpeaking, voiceSweep]);
+
+  const voicePulseScale = voicePulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, voiceRecording ? 1.08 : 1.045],
+  });
+  const voiceAuraScale = voicePulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, voiceRecording ? 1.2 : 1.12],
+  });
+  const voiceAuraOpacity = voicePulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [voiceIsAwake ? 0.16 : 0.08, voiceRecording ? 0.34 : 0.22],
+  });
+  const voiceSweepTranslate = voiceSweep.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-150, 150],
+  });
 
   return (
     <View style={styles.agentPanel}>
@@ -2986,8 +3065,7 @@ function AgentView({
         <View style={styles.voiceControls}>
           <Pressable
             style={[
-              styles.voiceButton,
-              styles.voiceButtonLarge,
+              styles.voiceButtonTouch,
               thinking && !voiceRecording && !voiceSpeaking && styles.buttonDisabled,
             ]}
             disabled={thinking && !voiceRecording && !voiceSpeaking}
@@ -3003,7 +3081,41 @@ function AgentView({
               onStartVoiceNote();
             }}
           >
-            <Text style={styles.voiceButtonPrimaryText}>{primaryVoiceLabel}</Text>
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.voiceButtonAura,
+                {
+                  opacity: voiceAuraOpacity,
+                  transform: [{ scale: voiceAuraScale }],
+                },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.voiceButtonCore,
+                voiceIsAwake && styles.voiceButtonCoreActive,
+                {
+                  transform: [{ scale: voicePulseScale }],
+                },
+              ]}
+            >
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.voiceButtonSweep,
+                  {
+                    transform: [{ translateX: voiceSweepTranslate }, { rotate: "10deg" }],
+                  },
+                ]}
+              />
+              <View style={styles.voiceIntelligenceMark}>
+                <View style={[styles.voiceIntelligenceDot, voiceIsAwake && styles.voiceIntelligenceDotActive]} />
+                <View style={[styles.voiceIntelligenceDot, styles.voiceIntelligenceDotTall, voiceIsAwake && styles.voiceIntelligenceDotActive]} />
+                <View style={[styles.voiceIntelligenceDot, voiceIsAwake && styles.voiceIntelligenceDotActive]} />
+              </View>
+              <Text style={styles.voiceButtonPrimaryText}>{primaryVoiceLabel}</Text>
+            </Animated.View>
           </Pressable>
         </View>
       </View>
@@ -5099,6 +5211,75 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     gap: 10,
+  },
+  voiceButtonTouch: {
+    flex: 1,
+    minHeight: 62,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "visible",
+  },
+  voiceButtonAura: {
+    position: "absolute",
+    left: 8,
+    right: 8,
+    top: 4,
+    bottom: 4,
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.46)",
+    borderRadius: 999,
+    backgroundColor: "rgba(218,188,115,0.2)",
+    shadowColor: "#dabc73",
+    shadowOpacity: 0.42,
+    shadowRadius: 18,
+  },
+  voiceButtonCore: {
+    width: "100%",
+    minHeight: 54,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 10,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.34)",
+    borderRadius: 999,
+    backgroundColor: "rgba(218,188,115,0.92)",
+    paddingHorizontal: 18,
+    shadowColor: "#dabc73",
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+  },
+  voiceButtonCoreActive: {
+    borderColor: "rgba(255,255,255,0.34)",
+    shadowOpacity: 0.34,
+    shadowRadius: 22,
+  },
+  voiceButtonSweep: {
+    position: "absolute",
+    width: 88,
+    height: 86,
+    backgroundColor: "rgba(255,255,255,0.22)",
+  },
+  voiceIntelligenceMark: {
+    width: 30,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 3,
+  },
+  voiceIntelligenceDot: {
+    width: 4,
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(8,8,8,0.34)",
+  },
+  voiceIntelligenceDotTall: {
+    height: 15,
+  },
+  voiceIntelligenceDotActive: {
+    backgroundColor: "rgba(8,8,8,0.62)",
   },
   voiceTranscriptPanel: {
     borderWidth: 1,
