@@ -7,6 +7,8 @@ import { buildDailyIntelligenceBrief } from "@/lib/coach/dailyIntelligenceBrief"
 import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
 import { buildExecutionSummary, getExecutionWindow } from "@/lib/execution/executionSummary";
 import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
+import { canAccess } from "@/lib/auth/permissions";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import type { LongevityAlert } from "./longevityCoach";
 import {
   buildAdaptiveCoachDecision,
@@ -26,6 +28,18 @@ export async function runCoachPipeline(userId: string) {
   if (!userId) throw new Error("Missing userId");
 
   const supabase = getSupabaseAdmin();
+  const subscription = await getUserPlanForUsage({ supabase, userId });
+
+  if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
+    return {
+      success: true,
+      alerts: [],
+      delivered: 0,
+      optimization_context: false,
+      skipped: true,
+      reason: "Proactive coach delivery is not included in this tier.",
+    };
+  }
 
   /**
    * 1. FETCH HEALTH STATE

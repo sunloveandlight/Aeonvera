@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
 
 type TimelineEvent = {
   id: string;
@@ -47,6 +48,52 @@ export async function GET() {
     }
 
     const admin = getSupabaseAdmin();
+    const { data: entitlementProfile } = await admin
+      .from("profiles")
+      .select("plan,subscription_status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const entitlement = entitlementProfile as {
+      plan?: Plan | null;
+      subscription_status?: SubscriptionStatus | null;
+    } | null;
+
+    if (
+      !canAccess(
+        entitlement?.plan || null,
+        entitlement?.subscription_status || null,
+        "digital_twin"
+      )
+    ) {
+      return NextResponse.json(
+        {
+          locked: true,
+          upgrade: {
+            minimumPlan: "sovereign",
+            message:
+              "Digital Twin timeline and modeling are included in Sovereign.",
+          },
+          intelligence: {
+            summary:
+              "Sovereign unlocks the full living timeline across biomarkers, protocols, scenarios, wearables, outcomes, and clinical memory.",
+            modelState: "Locked",
+            confidence: 0,
+            changes: [],
+            worked: [],
+            nextMove: {
+              title: "Upgrade to Sovereign",
+              detail:
+                "Open the full executive digital twin with physician-ready context and longitudinal intelligence.",
+              href: "/pricing",
+            },
+          },
+          counts: {},
+          timeline: [],
+        },
+        { status: 403 }
+      );
+    }
+
     const [
       profileRes,
       assessmentRes,

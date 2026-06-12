@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { canAccess } from "@/lib/auth/permissions";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import { deliverCoachNotifications } from "@/lib/notifications/coachDelivery";
 import { generateJarvisMessage } from "@/lib/voice/jarvisResponseEngine";
 import type { LongevityAlert } from "@/lib/coach/longevityCoach";
@@ -34,6 +36,22 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: mobileUser.id });
+
+    if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
+      return NextResponse.json(
+        {
+          error: "Proactive coach delivery is included in Elite and Sovereign.",
+          upgrade: {
+            minimumPlan: "elite",
+            message:
+              "Upgrade to Elite to receive proactive email and push coach messages.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+
     const [{ data: profile }, { data: latestProtocol }, labTrends, coachMemory, dailyBrief] =
       await Promise.all([
         admin

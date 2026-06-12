@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { buildDailyIntelligenceBrief } from "@/lib/coach/dailyIntelligenceBrief";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { canAccess } from "@/lib/auth/permissions";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 
 export async function GET() {
   try {
@@ -14,7 +16,23 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const brief = await buildDailyIntelligenceBrief(getSupabaseAdmin(), user.id);
+    const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+
+    if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
+      return NextResponse.json(
+        {
+          error: "Daily intelligence briefs are included in Elite and Sovereign.",
+          upgrade: {
+            minimumPlan: "elite",
+            message: "Upgrade to Elite to unlock proactive daily intelligence.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+
+    const brief = await buildDailyIntelligenceBrief(admin, user.id);
 
     return NextResponse.json({ brief });
   } catch (error) {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { canAccess } from "@/lib/auth/permissions";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import { ingestWearableMetrics } from "@/lib/wearables/ingestWearableMetrics";
 import { fetchOuraMetrics } from "@/lib/wearables/oura";
 import { getValidWearableAccessToken } from "@/lib/wearables/oauth";
@@ -16,8 +18,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json().catch(() => ({}));
     const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+
+    if (!canAccess(subscription.plan, subscription.status, "elite_features")) {
+      return NextResponse.json(
+        {
+          error: "Oura wearable sync is included in Elite and Sovereign.",
+          upgrade: {
+            minimumPlan: "elite",
+            message: "Upgrade to Elite to unlock live wearable sync.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
     const accessToken =
       body.accessToken ||
       (await getValidWearableAccessToken({

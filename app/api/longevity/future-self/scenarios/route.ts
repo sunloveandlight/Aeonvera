@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
 import { FUTURE_SELF_SCENARIOS } from "@/lib/longevity/futureSelfSimulator";
 
 type CookieToSet = {
@@ -23,6 +24,7 @@ export async function GET() {
   try {
     const user = await requireUser();
     const admin = getSupabaseAdmin();
+    await requireFutureSelfAccess(admin, user.id);
     const result = await admin
       .from("future_self_scenarios")
       .select(SELECT_FIELDS)
@@ -65,6 +67,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const user = await requireUser();
+    const admin = getSupabaseAdmin();
+    await requireFutureSelfAccess(admin, user.id);
     const body = await readJsonBody(request);
     const scenarioIds = sanitizeScenarioIds(body?.scenarioIds);
     const futureSelf = safeRecord(body?.futureSelf);
@@ -78,7 +82,6 @@ export async function POST(request: NextRequest) {
       sanitizeText(futureSelf.summary, 220) ||
       "Saved future-self projection.";
 
-    const admin = getSupabaseAdmin();
     const insertPayload = {
       user_id: user.id,
       title,
@@ -151,6 +154,36 @@ async function requireUser() {
   }
 
   return user;
+}
+
+async function requireFutureSelfAccess(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string
+) {
+  const { data } = await admin
+    .from("profiles")
+    .select("plan,subscription_status")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const profile = data as {
+    plan?: Plan | null;
+    subscription_status?: SubscriptionStatus | null;
+  } | null;
+
+  if (
+    canAccess(
+      profile?.plan || null,
+      profile?.subscription_status || null,
+      "future_self_simulator"
+    )
+  ) {
+    return;
+  }
+
+  throw new FutureSelfScenarioError(
+    "Future-self scenario modeling is included in Elite and Sovereign.",
+    403
+  );
 }
 
 async function getSupabaseUserClient() {

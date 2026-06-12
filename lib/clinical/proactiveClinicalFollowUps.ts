@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { canAccess } from "@/lib/auth/permissions";
 import { deliverUserNotification } from "@/lib/notifications/coachDelivery";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 
 type ClinicalInsightRow = {
   id: string;
@@ -42,6 +44,15 @@ export async function runProactiveClinicalFollowUps({
   delivery?: unknown;
   message?: string;
 }> {
+  const subscription = await getUserPlanForUsage({ supabase, userId });
+
+  if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
+    return {
+      status: "skipped",
+      message: "Proactive clinical follow-ups are not included in this tier.",
+    };
+  }
+
   const insights = await loadOpenClinicalInsights(supabase, userId);
 
   if (insights.missingMigration) {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { canAccess } from "@/lib/auth/permissions";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import { exchangeWearableCode, saveWearableConnection } from "@/lib/wearables/oauth";
 
 export async function GET(request: NextRequest) {
@@ -27,6 +29,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/login?mode=signin", request.url));
     }
 
+    const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+
+    if (!canAccess(subscription.plan, subscription.status, "elite_features")) {
+      throw new Error("WHOOP wearable sync is included in Elite and Sovereign.");
+    }
+
     const token = await exchangeWearableCode({
       provider: "whoop",
       origin: request.nextUrl.origin,
@@ -34,7 +43,7 @@ export async function GET(request: NextRequest) {
     });
 
     await saveWearableConnection({
-      supabase: getSupabaseAdmin(),
+      supabase: admin,
       userId: user.id,
       provider: "whoop",
       token,

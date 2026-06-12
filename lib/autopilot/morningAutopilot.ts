@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { canAccess } from "@/lib/auth/permissions";
 import { sendCoachEmail } from "@/lib/notifications/email";
 import { sendCoachPushNotifications } from "@/lib/notifications/push";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 
 type AutopilotMode = "manual" | "suggest" | "approve" | "autopilot" | "sovereign";
 type ActionScope = "today" | "week" | "check_in" | "later";
@@ -78,6 +80,15 @@ export async function runMorningAutopilotBrief({
   userId: string;
 }) {
   const today = toDateKey(new Date());
+  const subscription = await getUserPlanForUsage({ supabase, userId });
+
+  if (!canAccess(subscription.plan, subscription.status, "autopilot_calendar")) {
+    return {
+      status: "skipped",
+      reason: "Morning Autopilot is not included in this tier",
+    };
+  }
+
   const [autopilotPreferences, protocol, userResult, executionMemory] = await Promise.all([
     getOrCreateAutopilotPreferences(supabase, userId),
     getLatestProtocol(supabase, userId),

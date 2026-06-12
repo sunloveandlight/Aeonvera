@@ -28,6 +28,11 @@ type StandaloneNavigator = Navigator & {
 };
 
 type TwinPayload = {
+  locked?: boolean;
+  upgrade?: {
+    minimumPlan?: string;
+    message?: string;
+  };
   intelligence?: {
     summary: string;
     modelState: string;
@@ -311,7 +316,9 @@ export default function CompanionPage() {
           usageResponse.json(),
         ]);
 
-        if (!twinResponse.ok) throw new Error(twinData.error || "Companion could not load.");
+        if (!twinResponse.ok && twinResponse.status !== 403) {
+          throw new Error(twinData.error || "Companion could not load.");
+        }
 
         if (!cancelled) {
           setTwin(twinData);

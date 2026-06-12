@@ -18,6 +18,11 @@ type TimelineEvent = {
 };
 
 type DigitalTwinPayload = {
+  locked?: boolean;
+  upgrade?: {
+    minimumPlan?: string;
+    message?: string;
+  };
   profile: {
     display_name?: string | null;
     plan?: string | null;
@@ -109,7 +114,7 @@ export default function DigitalTwinPage() {
         });
         const data = await response.json();
 
-        if (!response.ok) {
+        if (!response.ok && response.status !== 403) {
           throw new Error(data.error || "Could not load digital twin.");
         }
 
@@ -224,6 +229,31 @@ export default function DigitalTwinPage() {
           <div className="executive-panel rounded-lg p-8">
             <p className="micro-label">Unavailable</p>
             <p className="mt-4 text-sm leading-7 text-white/50">{message}</p>
+          </div>
+        ) : payload?.locked ? (
+          <div className="executive-panel rounded-lg p-8 md:p-10">
+            <p className="micro-label">Sovereign Intelligence</p>
+            <h2 className="mt-4 max-w-2xl text-3xl font-light leading-tight text-white">
+              Digital Twin is the executive model layer.
+            </h2>
+            <p className="mt-5 max-w-2xl text-sm leading-7 text-white/50">
+              {payload.upgrade?.message ||
+                "Sovereign unlocks the full living timeline across biomarkers, protocols, scenarios, wearables, outcomes, and clinical memory."}
+            </p>
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/pricing"
+                className="premium-action inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+              >
+                View Sovereign <ArrowRight size={16} />
+              </Link>
+              <Link
+                href="/companion"
+                className="premium-action-secondary inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+              >
+                Open Companion
+              </Link>
+            </div>
           </div>
         ) : payload ? (
           <>

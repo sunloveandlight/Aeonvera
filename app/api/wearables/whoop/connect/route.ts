@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { canAccess } from "@/lib/auth/permissions";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import { buildAuthorizeUrl } from "@/lib/wearables/oauth";
 
 export async function GET(request: NextRequest) {
@@ -11,6 +14,15 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.redirect(new URL("/login?mode=signin", request.url));
+    }
+
+    const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+
+    if (!canAccess(subscription.plan, subscription.status, "elite_features")) {
+      const url = new URL("/pricing", request.url);
+      url.searchParams.set("upgrade", "whoop");
+      return NextResponse.redirect(url);
     }
 
     const state = crypto.randomUUID().replace(/-/g, "").slice(0, 8);

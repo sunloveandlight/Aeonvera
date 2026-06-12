@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { canAccess } from "@/lib/auth/permissions";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import {
   createGoogleCalendarEvent,
   getValidGoogleCalendarAccessToken,
@@ -27,6 +29,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+
+    if (!canAccess(subscription.plan, subscription.status, "autopilot_calendar")) {
+      return NextResponse.json(
+        {
+          error: "Calendar execution is included in Elite and Sovereign.",
+          upgrade: {
+            minimumPlan: "elite",
+            message:
+              "Upgrade to Elite to let Aeonvera schedule and execute protocol actions.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+
     const body = (await request.json().catch(() => ({}))) as CalendarBody;
     const title = sanitizeText(body.title || body.action, 140);
     const scheduledFor = normalizeScheduledFor(body.scheduledFor);
@@ -42,7 +61,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const admin = getSupabaseAdmin();
     const connection = await getValidGoogleCalendarAccessToken({
       supabase: admin,
       userId: user.id,

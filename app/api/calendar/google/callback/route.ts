@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { canAccess } from "@/lib/auth/permissions";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import {
   exchangeGoogleCalendarCode,
   saveGoogleCalendarConnection,
@@ -32,13 +34,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/login?mode=signin", request.url));
     }
 
+    const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+
+    if (!canAccess(subscription.plan, subscription.status, "autopilot_calendar")) {
+      throw new Error("Google Calendar execution is included in Elite and Sovereign.");
+    }
+
     const token = await exchangeGoogleCalendarCode({
       origin: request.nextUrl.origin,
       code,
     });
 
     await saveGoogleCalendarConnection({
-      supabase: getSupabaseAdmin(),
+      supabase: admin,
       userId: user.id,
       token,
     });
