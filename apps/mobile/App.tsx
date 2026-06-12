@@ -162,6 +162,7 @@ type AutopilotPreferences = {
 };
 
 type DailyPlanItem = ScheduledProtocolAction & {
+  adaptation_reason?: string;
   recommended_time?: string;
   execution_mode?: "manual" | "suggest" | "approve" | "notify" | "schedule";
 };
@@ -1819,7 +1820,10 @@ function TodayView({
         adjustAutopilot={adjustAutopilot}
         autopilotMessage={autopilotMessage}
         dailyPlan={dailyPlan}
+        localReminders={localReminders}
+        nativeCalendarEvents={nativeCalendarEvents}
         preferences={autopilotPreferences}
+        protocol={protocol}
         skipDailyPlan={skipDailyPlan}
       />
 
@@ -2090,7 +2094,10 @@ function AutopilotPlanCard({
   adjustAutopilot,
   autopilotMessage,
   dailyPlan,
+  localReminders,
+  nativeCalendarEvents,
   preferences,
+  protocol,
   skipDailyPlan,
 }: {
   acceptDailyPlan: () => Promise<void>;
@@ -2098,13 +2105,31 @@ function AutopilotPlanCard({
   adjustAutopilot: () => void;
   autopilotMessage: string | null;
   dailyPlan: DailyExecutionPlan | null;
+  localReminders: Record<string, LocalReminder>;
+  nativeCalendarEvents: Record<string, NativeCalendarEvent>;
   preferences: AutopilotPreferences | null;
+  protocol: Protocol | null;
   skipDailyPlan: () => Promise<void>;
 }) {
   const items = dailyPlan?.plan?.items || [];
   const mode = preferences?.mode || dailyPlan?.autopilot_mode || "approve";
   const status = dailyPlan?.status || "prepared";
-  const primaryItems = items.slice(0, 3);
+  const previewItems = items.slice(0, 5);
+  const scheduledCount = protocol?.id
+    ? previewItems.filter((item) => nativeCalendarEvents[getReminderKey(protocol.id, item)]).length
+    : 0;
+  const notificationCount = protocol?.id
+    ? previewItems.filter((item) => localReminders[getReminderKey(protocol.id, item)]).length
+    : 0;
+  const pendingCount = Math.max(previewItems.length - scheduledCount - notificationCount, 0);
+  const isActive = status === "accepted" || status === "auto_scheduled";
+  const primaryLabel = acceptingDailyPlan
+    ? "Preparing"
+    : isActive
+      ? pendingCount
+        ? "Recreate Missing"
+        : "Already Scheduled"
+      : "Approve Today";
 
   return (
     <View style={styles.autopilotPanel}>
@@ -2119,6 +2144,20 @@ function AutopilotPlanCard({
         </View>
         <Text style={styles.modePill}>{formatAutopilotMode(mode)}</Text>
       </View>
+      <View style={styles.schedulePreviewHeader}>
+        <View style={styles.scheduleMetric}>
+          <Text style={styles.scheduleMetricValue}>{previewItems.length}</Text>
+          <Text style={styles.scheduleMetricLabel}>blocks</Text>
+        </View>
+        <View style={styles.scheduleMetric}>
+          <Text style={styles.scheduleMetricValue}>{scheduledCount + notificationCount}</Text>
+          <Text style={styles.scheduleMetricLabel}>placed</Text>
+        </View>
+        <View style={styles.scheduleMetric}>
+          <Text style={styles.scheduleMetricValue}>{pendingCount}</Text>
+          <Text style={styles.scheduleMetricLabel}>open</Text>
+        </View>
+      </View>
       <Text style={styles.cardCopy}>
         {dailyPlan?.summary ||
           dailyPlan?.plan?.summary ||
@@ -2126,14 +2165,47 @@ function AutopilotPlanCard({
           "Aeonvera will prepare your day after your first active protocol."}
       </Text>
       {autopilotMessage ? <Text style={styles.warning}>{autopilotMessage}</Text> : null}
-      {primaryItems.length ? (
-        <View style={styles.autopilotItems}>
-          {primaryItems.map((item) => (
-            <View key={getActionKey(item)} style={styles.autopilotItem}>
-              <Text style={styles.autopilotTime}>{item.recommended_time || "Smart"}</Text>
-              <Text style={styles.autopilotAction}>{item.action}</Text>
-            </View>
-          ))}
+      {previewItems.length ? (
+        <View style={styles.schedulePreviewList}>
+          {previewItems.map((item) => {
+            const actionKey = protocol?.id ? getReminderKey(protocol.id, item) : "";
+            const calendarEvent = actionKey ? nativeCalendarEvents[actionKey] : undefined;
+            const reminder = actionKey ? localReminders[actionKey] : undefined;
+            const state = calendarEvent ? "calendar" : reminder ? "notification" : "pending";
+
+            return (
+              <View key={getActionKey(item)} style={styles.schedulePreviewItem}>
+                <View style={styles.scheduleTimeColumn}>
+                  <Text style={styles.autopilotTime}>{item.recommended_time || "Smart"}</Text>
+                  <Text style={styles.scheduleStatusText}>
+                    {state === "calendar"
+                      ? "Calendar"
+                      : state === "notification"
+                        ? "Notify"
+                        : formatExecutionMode(item.execution_mode)}
+                  </Text>
+                </View>
+                <View style={styles.schedulePreviewCopy}>
+                  <Text style={styles.autopilotAction}>{item.action}</Text>
+                  <Text style={styles.scheduleReason}>
+                    {calendarEvent
+                      ? `Already on ${calendarEvent.calendarTitle} ${formatReminderDate(new Date(calendarEvent.scheduledFor))}.`
+                      : reminder
+                        ? `Phone nudge set ${formatReminderDate(new Date(reminder.scheduledFor))}.`
+                        : getSchedulePreviewReason(item)}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.scheduleStatusDot,
+                    state === "calendar" || state === "notification"
+                      ? styles.scheduleStatusDotActive
+                      : styles.scheduleStatusDotPending,
+                  ]}
+                />
+              </View>
+            );
+          })}
         </View>
       ) : null}
       <View style={styles.autopilotActions}>
@@ -2141,18 +2213,12 @@ function AutopilotPlanCard({
           style={[
             styles.button,
             styles.autopilotPrimaryButton,
-            acceptingDailyPlan && styles.buttonDisabled,
+            (acceptingDailyPlan || (isActive && pendingCount === 0)) && styles.buttonDisabled,
           ]}
-          disabled={acceptingDailyPlan}
+          disabled={acceptingDailyPlan || (isActive && pendingCount === 0)}
           onPress={() => void acceptDailyPlan()}
         >
-          <Text style={styles.buttonText}>
-            {acceptingDailyPlan
-              ? "Preparing"
-              : status === "accepted" || status === "auto_scheduled"
-                ? "Prepared"
-                : "Accept Today"}
-          </Text>
+          <Text style={styles.buttonText}>{primaryLabel}</Text>
         </Pressable>
         <View style={styles.secondaryActionRow}>
           <Pressable
@@ -2612,6 +2678,38 @@ function formatAutopilotMode(mode: AutopilotMode) {
   if (mode === "autopilot") return "Autopilot";
   if (mode === "sovereign") return "Sovereign";
   return "Approve";
+}
+
+function formatExecutionMode(mode?: DailyPlanItem["execution_mode"]) {
+  if (mode === "notify") return "Notify";
+  if (mode === "schedule") return "Calendar";
+  if (mode === "manual") return "Manual";
+  if (mode === "suggest") return "Suggested";
+  return "Ready";
+}
+
+function getSchedulePreviewReason(item: DailyPlanItem) {
+  if (item.adaptation_reason === "resurfaced_after_missed_execution") {
+    return "Resurfaced because recent feedback showed this needs a cleaner attempt.";
+  }
+
+  if (item.adaptation_reason === "simplified_after_domain_friction") {
+    return "Simplified because this domain has shown recent friction.";
+  }
+
+  if (item.adaptation_reason === "expanded_from_recent_strength") {
+    return "Included because this domain is responding well.";
+  }
+
+  if (item.execution_mode === "notify") {
+    return "A phone nudge is enough for this check-in.";
+  }
+
+  if (item.execution_mode === "schedule") {
+    return "Ready to place in the best available calendar window.";
+  }
+
+  return "Prepared for approval before Aeonvera places it.";
 }
 
 function groupActionsByScope(actions: ProtocolAction[]) {
@@ -3306,11 +3404,38 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     textTransform: "uppercase",
   },
-  autopilotItems: {
+  schedulePreviewHeader: {
+    flexDirection: "row",
     gap: 8,
     marginTop: 16,
   },
-  autopilotItem: {
+  scheduleMetric: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  scheduleMetricValue: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 18,
+    fontWeight: "400",
+  },
+  scheduleMetricLabel: {
+    color: "rgba(218,188,115,0.58)",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 1,
+    marginTop: 2,
+    textTransform: "uppercase",
+  },
+  schedulePreviewList: {
+    gap: 8,
+    marginTop: 16,
+  },
+  schedulePreviewItem: {
     alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
@@ -3320,18 +3445,47 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 11,
   },
+  scheduleTimeColumn: {
+    width: 60,
+  },
   autopilotTime: {
-    width: 48,
     color: "rgba(238,214,154,0.82)",
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.8,
   },
-  autopilotAction: {
+  scheduleStatusText: {
+    color: "rgba(255,255,255,0.36)",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    marginTop: 5,
+    textTransform: "uppercase",
+  },
+  schedulePreviewCopy: {
     flex: 1,
+  },
+  autopilotAction: {
     color: "rgba(255,255,255,0.78)",
     fontSize: 13,
     lineHeight: 18,
+  },
+  scheduleReason: {
+    color: "rgba(255,255,255,0.42)",
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 5,
+  },
+  scheduleStatusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+  },
+  scheduleStatusDotActive: {
+    backgroundColor: "rgba(218,188,115,0.88)",
+  },
+  scheduleStatusDotPending: {
+    backgroundColor: "rgba(255,255,255,0.24)",
   },
   autopilotActions: {
     marginTop: 2,
