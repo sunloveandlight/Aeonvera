@@ -26,11 +26,7 @@ import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import * as Speech from "expo-speech";
 import { StatusBar } from "expo-status-bar";
-import {
-  mediaDevices,
-  MediaStream,
-  RTCPeerConnection,
-} from "react-native-webrtc";
+import type { MediaStream, RTCPeerConnection } from "react-native-webrtc";
 
 type ActiveView = "today" | "agent" | "inbox" | "message" | "settings";
 type VoicePhase =
@@ -116,6 +112,8 @@ type RealtimeVoiceSession = {
   pc: RTCPeerConnection;
   stream: MediaStream;
 };
+
+type WebRTCModule = typeof import("react-native-webrtc");
 
 type CalendarScheduleResult = {
   eventId: string;
@@ -1345,11 +1343,18 @@ export default function App() {
         playsInSilentModeIOS: true,
       });
 
-      const stream = await mediaDevices.getUserMedia({
+      const webRTC = await loadWebRTC();
+      if (!webRTC) {
+        throw new Error(
+          "Live voice needs a custom Expo development build. Use Voice Note for now, then rebuild the app with native WebRTC included."
+        );
+      }
+
+      const stream = await webRTC.mediaDevices.getUserMedia({
         audio: true,
         video: false,
       });
-      const pc = new RTCPeerConnection();
+      const pc = new webRTC.RTCPeerConnection();
       const dc = pc.createDataChannel("oai-events");
       const pcEvents = pc as unknown as {
         addEventListener: (type: string, listener: () => void) => void;
@@ -1574,6 +1579,14 @@ export default function App() {
     if (type === "error") {
       const error = event.error as { message?: string } | undefined;
       setVoiceStatus(error?.message || "Realtime voice had a temporary issue.");
+    }
+  }
+
+  async function loadWebRTC(): Promise<WebRTCModule | null> {
+    try {
+      return await import("react-native-webrtc");
+    } catch {
+      return null;
     }
   }
 
