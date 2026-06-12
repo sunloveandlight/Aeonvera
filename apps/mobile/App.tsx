@@ -281,6 +281,15 @@ type ClinicalInsight = {
   created_at?: string | null;
 };
 
+type BiologicalAgePoint = {
+  biological_age?: number | string | null;
+  chronological_age?: number | string | null;
+  age_delta?: number | string | null;
+  score?: number | string | null;
+  category?: string | null;
+  created_at?: string | null;
+};
+
 type UsageMeterSnapshot = {
   allowed: boolean;
   limit: number;
@@ -437,6 +446,7 @@ export default function App() {
   const [acceptingDailyPlan, setAcceptingDailyPlan] = useState(false);
   const [pendingFeedback, setPendingFeedback] = useState<PendingFeedback | null>(null);
   const [executionSummary, setExecutionSummary] = useState<ExecutionSummary | null>(null);
+  const [biologicalAge, setBiologicalAge] = useState<BiologicalAgePoint | null>(null);
   const [diagnosticChecks, setDiagnosticChecks] = useState<DiagnosticCheck[]>([]);
   const [diagnosticsRunning, setDiagnosticsRunning] = useState(false);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
@@ -468,8 +478,6 @@ export default function App() {
   const [lastVoiceTranscript, setLastVoiceTranscript] = useState<string | null>(null);
   const [lastVoiceAnswer, setLastVoiceAnswer] = useState<string | null>(null);
   const [voiceSpeaking, setVoiceSpeaking] = useState(false);
-  const [realtimeVoiceActive, setRealtimeVoiceActive] = useState(false);
-  const [realtimeVoiceConnecting, setRealtimeVoiceConnecting] = useState(false);
   const [notificationFocusTick, setNotificationFocusTick] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
   const inboxOffsetY = useRef(0);
@@ -496,7 +504,8 @@ export default function App() {
       setDataMessage(null);
       setAutopilotMessage(null);
 
-      const [messageResult, protocolResult, preferenceResult] = await Promise.all([
+      const [messageResult, protocolResult, preferenceResult, biologicalAgeResult] =
+        await Promise.all([
         supabase
           .from("notification_deliveries")
           .select("id,alert_id,title,message,status,payload,created_at,sent_at")
@@ -514,6 +523,13 @@ export default function App() {
             "user_id,email_enabled,push_enabled,quiet_hours_start,quiet_hours_end,timezone"
           )
           .eq("user_id", currentSession.user.id)
+          .maybeSingle(),
+        supabase
+          .from("biological_age_history")
+          .select("biological_age,chronological_age,age_delta,score,category,created_at")
+          .eq("user_id", currentSession.user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
           .maybeSingle(),
       ]);
       const autopilotResult = await fetch(`${appUrl}/api/autopilot/daily-plan`, {
@@ -633,6 +649,7 @@ export default function App() {
       setCoachMessages((messageResult.data || []) as CoachMessage[]);
       setProtocol(latestProtocol);
       setAdherenceEvents(nextAdherenceEvents);
+      setBiologicalAge((biologicalAgeResult.data as BiologicalAgePoint | null) || null);
       if (!autopilotResult.ok) {
         setAutopilotMessage(
           autopilotResult.body?.error || "Autopilot could not prepare today."
@@ -733,6 +750,7 @@ export default function App() {
       } else {
         setProtocol(null);
         setAdherenceEvents([]);
+        setBiologicalAge(null);
         setCoachMessages([]);
         setPreferences(null);
         setAutopilotPreferences(null);
@@ -1287,26 +1305,8 @@ export default function App() {
     setClinicalInsights((result?.insights || []) as ClinicalInsight[]);
   }
 
-  async function startAgentVoice() {
-    if (!session?.access_token || agentThinking || voiceRecording || realtimeVoiceConnecting) return;
-
-    if (Platform.OS !== "ios" && Platform.OS !== "android") {
-      Alert.alert("Native only", "Voice conversation is available in the mobile app.");
-      return;
-    }
-
-    setRealtimeVoiceActive(false);
-    setRealtimeVoiceConnecting(false);
-    setVoicePhase("idle");
-    setVoiceStatus("Live voice needs a custom Expo development build. Voice Note is ready now.");
-    Alert.alert(
-      "Live voice needs a native build",
-      "The realtime voice server is ready, but Expo Go cannot run the native WebRTC layer. Use Voice Note for now. When we create a custom Expo development build, Start Live Voice will become true Alexa/Siri-style conversation."
-    );
-  }
-
   async function startVoiceNote(clinicalInsightId?: string) {
-    if (!session?.access_token || agentThinking || voiceRecording || realtimeVoiceActive) return;
+    if (!session?.access_token || agentThinking || voiceRecording) return;
 
     if (Platform.OS !== "ios" && Platform.OS !== "android") {
       Alert.alert("Native only", "Voice conversation is available in the mobile app.");
@@ -1337,7 +1337,7 @@ export default function App() {
       setVoiceStatus(
         clinicalInsightId
           ? "Listening for your clinical follow-up answer. Speak naturally."
-          : "Listening. Speak naturally, then tap finish."
+          : "Listening. Speak naturally, then tap the same button to finish."
       );
       playSoftHaptic();
     } catch (error) {
@@ -1348,18 +1348,6 @@ export default function App() {
         error instanceof Error ? error.message : "Aeonvera could not open the microphone."
       );
     }
-  }
-
-  async function stopRealtimeVoice() {
-    setRealtimeVoiceActive(false);
-    setRealtimeVoiceConnecting(false);
-    setVoicePhase(lastVoiceAnswer ? "ready_follow_up" : "idle");
-    setVoiceStatus(lastVoiceAnswer ? "Live voice ended. Ready for a follow-up." : "Live voice ended.");
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-    }).catch(() => null);
-    playSoftHaptic();
   }
 
   async function stopAgentVoice() {
@@ -1463,22 +1451,6 @@ export default function App() {
     } finally {
       setAgentThinking(false);
     }
-  }
-
-  async function cancelAgentVoice() {
-    if (!voiceRecording) return;
-
-    const recording = voiceRecording;
-    setVoiceRecording(null);
-    setActiveVoiceClinicalInsightId(null);
-    setVoicePhase("idle");
-    setVoiceStatus("Voice note cancelled.");
-
-    await recording.stopAndUnloadAsync().catch(() => null);
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-    }).catch(() => null);
   }
 
   function speakAgentAnswer(answer: string) {
@@ -2350,6 +2322,7 @@ export default function App() {
                 acceptingDailyPlan={acceptingDailyPlan}
                 autopilotMessage={autopilotMessage}
                 autopilotPreferences={autopilotPreferences}
+                biologicalAge={biologicalAge}
                 dailyPlan={dailyPlan}
                 executionSummary={executionSummary}
                 latestActions={latestActions}
@@ -2394,8 +2367,6 @@ export default function App() {
                 lastVoiceTranscript={lastVoiceTranscript}
                 lastVoiceAnswer={lastVoiceAnswer}
                 voiceRecording={Boolean(voiceRecording)}
-                realtimeVoiceActive={realtimeVoiceActive}
-                realtimeVoiceConnecting={realtimeVoiceConnecting}
                 voiceSpeaking={voiceSpeaking}
                 voiceStatus={voiceStatus}
                 onClinicalAnswerChange={setClinicalAnswerDraft}
@@ -2407,11 +2378,8 @@ export default function App() {
                 }
                 onPromptChange={setAgentPrompt}
                 onSend={(value) => void askPersonalAgent(value)}
-                onStartVoice={() => void startAgentVoice()}
                 onStartVoiceNote={(clinicalInsightId) => void startVoiceNote(clinicalInsightId)}
-                onStopRealtimeVoice={() => void stopRealtimeVoice()}
                 onStopVoice={() => void stopAgentVoice()}
-                onCancelVoice={() => void cancelAgentVoice()}
                 onStopSpeech={() => void stopAgentSpeech()}
               />
             ) : null}
@@ -2473,6 +2441,7 @@ export default function App() {
                 saveAutopilotPreferences={saveAutopilotPreferences}
                 savePreferences={savePreferences}
                 sendMorningAutopilotBrief={sendMorningAutopilotBrief}
+                usageLimits={usageLimits}
               />
             ) : null}
           </>
@@ -2490,6 +2459,7 @@ function TodayView({
   actionNotice,
   autopilotMessage,
   autopilotPreferences,
+  biologicalAge,
   dailyPlan,
   executionSummary,
   latestActions,
@@ -2512,6 +2482,7 @@ function TodayView({
   actionNotice: string | null;
   autopilotMessage: string | null;
   autopilotPreferences: AutopilotPreferences | null;
+  biologicalAge: BiologicalAgePoint | null;
   dailyPlan: DailyExecutionPlan | null;
   executionSummary: ExecutionSummary | null;
   latestActions: ProtocolAction[];
@@ -2550,9 +2521,64 @@ function TodayView({
   const focusActions = todayActions.length ? todayActions : fallbackFocusActions;
   const primaryAction = focusActions[0] || null;
   const activeActionKey = expandedActionKey;
+  const readiness = buildReadinessSnapshot({
+    dailyPlan,
+    executionSummary,
+    primaryAction,
+  });
+  const biologicalAgeValue = formatBiologicalAgeValue(biologicalAge?.biological_age);
+  const biologicalAgeDelta = formatBiologicalAgeDelta(biologicalAge?.age_delta);
+  const commandRecommendation = buildMobileRecommendation({
+    dailyPlan,
+    executionSummary,
+    primaryAction,
+  });
 
   return (
     <>
+      <View style={styles.commandCenterPanel}>
+        <View style={styles.commandCenterHeader}>
+          <View>
+            <Text style={styles.cardLabel}>Today</Text>
+            <Text style={styles.commandCenterTitle}>Health command center</Text>
+          </View>
+          <View style={styles.readinessRing}>
+            <Text style={styles.readinessValue}>{readiness.score}</Text>
+            <Text style={styles.readinessLabel}>ready</Text>
+          </View>
+        </View>
+
+        <View style={styles.commandMetricsGrid}>
+          <CommandMetric
+            label="Biological age"
+            value={biologicalAgeValue || "Building"}
+            detail={biologicalAgeDelta || "Add assessment and labs for precision."}
+            tone="gold"
+          />
+          <CommandMetric
+            label="Execution"
+            value={`${executionSummary?.completed || completedCount}/${executionSummary?.total || latestActions.length || 0}`}
+            detail={executionSummary?.headline || "Aeonvera is learning your pattern."}
+          />
+          <CommandMetric
+            label="Next"
+            value={primaryAction?.domain || "Protocol"}
+            detail={primaryAction?.action || "Generate a protocol to activate the day."}
+          />
+        </View>
+
+        <Pressable
+          style={styles.recommendationStrip}
+          onPress={() => {
+            playSoftHaptic();
+            onAskWhy(commandRecommendation.question);
+          }}
+        >
+          <Text style={styles.recommendationLabel}>Aeonvera recommends</Text>
+          <Text style={styles.recommendationText}>{commandRecommendation.text}</Text>
+        </Pressable>
+      </View>
+
       <View style={styles.dailyBriefPanel}>
         <Text style={styles.cardLabel}>Daily Brief</Text>
         <Text style={styles.briefTitle}>What matters now</Text>
@@ -2824,6 +2850,28 @@ function ExecutionFeedbackCard({
   );
 }
 
+function CommandMetric({
+  detail,
+  label,
+  tone,
+  value,
+}: {
+  detail: string;
+  label: string;
+  tone?: "gold";
+  value: string;
+}) {
+  return (
+    <View style={[styles.commandMetric, tone === "gold" && styles.commandMetricGold]}>
+      <Text style={styles.commandMetricLabel}>{label}</Text>
+      <Text style={styles.commandMetricValue}>{value}</Text>
+      <Text style={styles.commandMetricDetail} numberOfLines={2}>
+        {detail}
+      </Text>
+    </View>
+  );
+}
+
 function AgentView({
   appliedActions,
   clinicalAnswerDraft,
@@ -2832,19 +2880,14 @@ function AgentView({
   lastVoiceTranscript,
   messages,
   modalities,
-  onCancelVoice,
   onClinicalAnswerChange,
   onPromptChange,
   onSend,
   onSendClinicalAnswer,
-  onStartVoice,
   onStartVoiceNote,
-  onStopRealtimeVoice,
   onStopSpeech,
   onStopVoice,
   prompt,
-  realtimeVoiceActive,
-  realtimeVoiceConnecting,
   suggestions,
   thinking,
   usageLimits,
@@ -2860,19 +2903,14 @@ function AgentView({
   lastVoiceTranscript: string | null;
   messages: AgentChatMessage[];
   modalities: ModalitiesPayload | null;
-  onCancelVoice: () => void;
   onClinicalAnswerChange: (value: string) => void;
   onPromptChange: (value: string) => void;
   onSend: (value?: string) => void;
   onSendClinicalAnswer: (insightId: string, answer: string) => void;
-  onStartVoice: () => void;
   onStartVoiceNote: (clinicalInsightId?: string) => void;
-  onStopRealtimeVoice: () => void;
   onStopSpeech: () => void;
   onStopVoice: () => void;
   prompt: string;
-  realtimeVoiceActive: boolean;
-  realtimeVoiceConnecting: boolean;
   suggestions: string[];
   thinking: boolean;
   usageLimits: UsageLimitsPayload | null;
@@ -2890,13 +2928,13 @@ function AgentView({
   const safetyLevel = latestInsight?.metadata?.safety_level || lastClinicalResponse?.safety_level;
   const statusReason = latestInsight?.metadata?.status_reason || lastClinicalResponse?.status_reason;
   const voiceTitle = voicePhaseLabel(voicePhase, voiceSpeaking, voiceRecording);
-  const primaryVoiceLabel = realtimeVoiceActive
-    ? "End Live Voice"
-    : realtimeVoiceConnecting
-      ? "Opening"
-      : voiceRecording
-        ? "Finish"
-        : "Start Live Voice";
+  const primaryVoiceLabel = voiceRecording
+    ? "Finish"
+    : voiceSpeaking
+      ? "Stop"
+      : thinking
+        ? "Thinking"
+        : "Speak";
 
   return (
     <View style={styles.agentPanel}>
@@ -2914,11 +2952,9 @@ function AgentView({
               styles.voiceOrb,
               (voiceRecording ||
                 voiceSpeaking ||
-                realtimeVoiceActive ||
-                realtimeVoiceConnecting ||
                 voicePhase === "processing") &&
                 styles.voiceOrbActive,
-              (voicePhase === "processing" || realtimeVoiceConnecting) && styles.voiceOrbProcessing,
+              voicePhase === "processing" && styles.voiceOrbProcessing,
             ]}
           />
           <View style={styles.voiceCopyGroup}>
@@ -2948,51 +2984,27 @@ function AgentView({
           </View>
         ) : null}
         <View style={styles.voiceControls}>
-          {realtimeVoiceActive || realtimeVoiceConnecting ? (
-            <Pressable
-              style={styles.voiceButtonSecondary}
-              onPress={onStopRealtimeVoice}
-              disabled={realtimeVoiceConnecting && !realtimeVoiceActive}
-            >
-              <Text style={styles.voiceButtonText}>{primaryVoiceLabel}</Text>
-            </Pressable>
-          ) : voiceRecording ? (
-            <>
-              <Pressable style={styles.voiceButtonSecondary} onPress={onCancelVoice}>
-                <Text style={styles.voiceButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable style={styles.voiceButton} onPress={onStopVoice}>
-                <Text style={styles.voiceButtonPrimaryText}>{primaryVoiceLabel}</Text>
-              </Pressable>
-            </>
-          ) : voiceSpeaking ? (
-            <Pressable style={styles.voiceButtonSecondary} onPress={onStopSpeech}>
-              <Text style={styles.voiceButtonText}>Stop Voice</Text>
-            </Pressable>
-          ) : (
-            <>
-              <Pressable
-                style={[
-                  styles.voiceButton,
-                  (thinking && voicePhase !== "ready_follow_up") && styles.buttonDisabled,
-                ]}
-                disabled={thinking && voicePhase !== "ready_follow_up"}
-                onPress={onStartVoice}
-              >
-                <Text style={styles.voiceButtonPrimaryText}>{primaryVoiceLabel}</Text>
-              </Pressable>
-              <Pressable
-                style={[
-                  styles.voiceButtonSecondary,
-                  thinking && voicePhase !== "ready_follow_up" && styles.buttonDisabled,
-                ]}
-                disabled={thinking && voicePhase !== "ready_follow_up"}
-                onPress={() => onStartVoiceNote()}
-              >
-                <Text style={styles.voiceButtonText}>Voice Note</Text>
-              </Pressable>
-            </>
-          )}
+          <Pressable
+            style={[
+              styles.voiceButton,
+              styles.voiceButtonLarge,
+              thinking && !voiceRecording && !voiceSpeaking && styles.buttonDisabled,
+            ]}
+            disabled={thinking && !voiceRecording && !voiceSpeaking}
+            onPress={() => {
+              if (voiceRecording) {
+                onStopVoice();
+                return;
+              }
+              if (voiceSpeaking) {
+                onStopSpeech();
+                return;
+              }
+              onStartVoiceNote();
+            }}
+          >
+            <Text style={styles.voiceButtonPrimaryText}>{primaryVoiceLabel}</Text>
+          </Pressable>
         </View>
       </View>
 
@@ -3755,6 +3767,7 @@ function SettingsView({
   saveAutopilotPreferences,
   savePreferences,
   sendMorningAutopilotBrief,
+  usageLimits,
 }: {
   autopilotPreferences: AutopilotPreferences | null;
   diagnosticChecks: DiagnosticCheck[];
@@ -3766,11 +3779,30 @@ function SettingsView({
   saveAutopilotPreferences: (next: Partial<AutopilotPreferences>) => Promise<void>;
   savePreferences: (next: Partial<Preferences>) => Promise<void>;
   sendMorningAutopilotBrief: () => Promise<void>;
+  usageLimits: UsageLimitsPayload | null;
 }) {
   const autopilot = autopilotPreferences || defaultAutopilotPreferences("");
+  const aiUsage = usageLimits?.usage.find((item) => item.meter === "agent_question");
+  const voiceUsage = usageLimits?.usage.find((item) => item.meter === "voice_question");
 
   return (
     <>
+      <View style={styles.panel}>
+        <Text style={styles.cardLabel}>Membership</Text>
+        <Text style={styles.cardTitle}>
+          {usageLimits?.plan ? `${titleCase(usageLimits.plan)} intelligence` : "Activate intelligence"}
+        </Text>
+        <Text style={styles.cardCopy}>
+          {usageLimits?.subscriptionStatus
+            ? `Status: ${titleCase(usageLimits.subscriptionStatus)}.`
+            : "Your tier controls agent depth, automation, simulator access, and concierge layers."}
+        </Text>
+        <View style={styles.settingsUsageGrid}>
+          <SettingsUsagePill label="AI" meter={aiUsage} />
+          <SettingsUsagePill label="Voice" meter={voiceUsage} />
+        </View>
+      </View>
+
       <View style={styles.panel}>
         <Text style={styles.cardLabel}>Autopilot</Text>
         <Text style={styles.cardTitle}>Daily execution intelligence</Text>
@@ -3955,6 +3987,29 @@ function PreferenceRow({
   );
 }
 
+function SettingsUsagePill({
+  label,
+  meter,
+}: {
+  label: string;
+  meter?: UsageMeterSnapshot;
+}) {
+  const remaining = meter ? Math.max(meter.remaining, 0) : 0;
+  const limit = meter?.limit || 0;
+
+  return (
+    <View style={styles.settingsUsagePill}>
+      <Text style={styles.settingsUsageLabel}>{label}</Text>
+      <Text style={styles.settingsUsageValue}>
+        {limit ? `${remaining}/${limit}` : "Locked"}
+      </Text>
+      <Text style={styles.settingsUsageDetail}>
+        {limit ? "remaining this month" : "upgrade required"}
+      </Text>
+    </View>
+  );
+}
+
 function AdherencePill({ event }: { event?: AdherenceEvent }) {
   if (!event) return null;
 
@@ -4015,6 +4070,83 @@ function defaultAutopilotPreferences(userId: string): AutopilotPreferences {
     quiet_hours_end: "07:00",
     timezone: "UTC",
   };
+}
+
+function buildReadinessSnapshot({
+  dailyPlan,
+  executionSummary,
+  primaryAction,
+}: {
+  dailyPlan: DailyExecutionPlan | null;
+  executionSummary: ExecutionSummary | null;
+  primaryAction: ProtocolAction | null;
+}) {
+  if (executionSummary) {
+    return {
+      label: executionSummary.status,
+      score: Math.max(0, Math.min(100, Math.round(executionSummary.score))),
+    };
+  }
+
+  const load = dailyPlan?.plan?.memory?.plan_load;
+  if (load === "light") return { label: "light", score: 82 };
+  if (load === "ambitious") return { label: "ambitious", score: 68 };
+  if (primaryAction) return { label: "steady", score: 76 };
+  return { label: "building", score: 64 };
+}
+
+function buildMobileRecommendation({
+  dailyPlan,
+  executionSummary,
+  primaryAction,
+}: {
+  dailyPlan: DailyExecutionPlan | null;
+  executionSummary: ExecutionSummary | null;
+  primaryAction: ProtocolAction | null;
+}) {
+  if (executionSummary?.topSkippedPattern) {
+    return {
+      question: `Why am I missing ${executionSummary.topSkippedPattern.label}, and how should Aeonvera simplify it?`,
+      text: `Simplify ${executionSummary.topSkippedPattern.label.toLowerCase()} today. This is the clearest friction pattern Aeonvera sees.`,
+    };
+  }
+
+  if (primaryAction?.action) {
+    return {
+      question: `Why is "${primaryAction.action}" the highest leverage action today?`,
+      text: `Protect the next action: ${primaryAction.action}`,
+    };
+  }
+
+  if (dailyPlan?.summary) {
+    return {
+      question: "What is the simplest version of today's plan?",
+      text: dailyPlan.summary,
+    };
+  }
+
+  return {
+    question: "What should I do first today?",
+    text: "Generate or refresh your protocol so Aeonvera can turn intelligence into execution.",
+  };
+}
+
+function formatBiologicalAgeValue(value: BiologicalAgePoint["biological_age"]) {
+  const numeric = parseFiniteNumber(value);
+  return numeric == null ? null : `${numeric.toFixed(1)}y`;
+}
+
+function formatBiologicalAgeDelta(value: BiologicalAgePoint["age_delta"]) {
+  const numeric = parseFiniteNumber(value);
+  if (numeric == null) return null;
+  if (Math.abs(numeric) < 0.05) return "Aligned with chronological baseline.";
+  const direction = numeric < 0 ? "below" : "above";
+  return `${Math.abs(numeric).toFixed(1)} years ${direction} baseline.`;
+}
+
+function parseFiniteNumber(value: unknown) {
+  const numeric = typeof value === "number" ? value : typeof value === "string" ? Number(value) : NaN;
+  return Number.isFinite(numeric) ? numeric : null;
 }
 
 function formatAutopilotMode(mode: AutopilotMode) {
@@ -4704,6 +4836,106 @@ const styles = StyleSheet.create({
     gap: 18,
     marginTop: 18,
   },
+  commandCenterPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.3)",
+    backgroundColor: "rgba(218,188,115,0.075)",
+    borderRadius: 10,
+    gap: 16,
+    padding: 18,
+  },
+  commandCenterHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  commandCenterTitle: {
+    color: "rgba(255,255,255,0.94)",
+    fontSize: 25,
+    fontWeight: "300",
+    lineHeight: 30,
+  },
+  readinessRing: {
+    width: 74,
+    height: 74,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.42)",
+    borderRadius: 37,
+    backgroundColor: "rgba(0,0,0,0.24)",
+  },
+  readinessValue: {
+    color: "rgba(238,214,154,0.96)",
+    fontSize: 22,
+    fontWeight: "300",
+  },
+  readinessLabel: {
+    color: "rgba(255,255,255,0.42)",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  commandMetricsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  commandMetric: {
+    flexBasis: "31%",
+    flexGrow: 1,
+    minHeight: 104,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.075)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    padding: 11,
+  },
+  commandMetricGold: {
+    borderColor: "rgba(218,188,115,0.28)",
+    backgroundColor: "rgba(218,188,115,0.08)",
+  },
+  commandMetricLabel: {
+    color: "rgba(255,255,255,0.42)",
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+  },
+  commandMetricValue: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 18,
+    fontWeight: "300",
+    marginTop: 10,
+  },
+  commandMetricDetail: {
+    color: "rgba(255,255,255,0.46)",
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 8,
+  },
+  recommendationStrip: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.2)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.2)",
+    padding: 13,
+  },
+  recommendationLabel: {
+    color: "rgba(218,188,115,0.78)",
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    marginBottom: 6,
+    textTransform: "uppercase",
+  },
+  recommendationText: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 13,
+    lineHeight: 19,
+  },
   dailyBriefPanel: {
     borderWidth: 1,
     borderColor: "rgba(218,188,115,0.22)",
@@ -4898,6 +5130,10 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(218,188,115,0.92)",
     paddingHorizontal: 16,
   },
+  voiceButtonLarge: {
+    flex: 1,
+    minHeight: 50,
+  },
   voiceButtonSecondary: {
     minHeight: 42,
     minWidth: 92,
@@ -4922,6 +5158,37 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 1.2,
     textTransform: "uppercase",
+  },
+  settingsUsageGrid: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 16,
+  },
+  settingsUsagePill: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.026)",
+    padding: 12,
+  },
+  settingsUsageLabel: {
+    color: "rgba(218,188,115,0.76)",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  settingsUsageValue: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 18,
+    fontWeight: "300",
+    marginTop: 8,
+  },
+  settingsUsageDetail: {
+    color: "rgba(255,255,255,0.4)",
+    fontSize: 10,
+    marginTop: 4,
   },
   mobileUsagePanel: {
     borderWidth: 1,
