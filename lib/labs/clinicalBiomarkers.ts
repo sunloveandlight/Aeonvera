@@ -2,12 +2,37 @@ export type ClinicalBiomarkerKey =
   | "albumin"
   | "creatinine"
   | "fasting_glucose"
+  | "fasting_insulin"
+  | "hba1c"
+  | "triglycerides"
+  | "hdl_cholesterol"
+  | "ldl_cholesterol"
+  | "total_cholesterol"
+  | "apob"
+  | "blood_pressure_systolic"
+  | "blood_pressure_diastolic"
   | "hscrp"
+  | "homocysteine"
+  | "ferritin"
+  | "esr"
+  | "fibrinogen"
   | "lymphocyte_pct"
   | "mean_cell_volume"
   | "red_cell_distribution_width"
   | "alkaline_phosphatase"
-  | "white_blood_cell_count";
+  | "white_blood_cell_count"
+  | "tsh"
+  | "free_t3"
+  | "free_t4"
+  | "morning_cortisol"
+  | "total_testosterone"
+  | "free_testosterone"
+  | "shbg"
+  | "estradiol"
+  | "progesterone"
+  | "lh"
+  | "fsh"
+  | "vitamin_d";
 
 export type ParsedClinicalBiomarker = {
   canonicalKey: ClinicalBiomarkerKey;
@@ -40,9 +65,74 @@ export const CLINICAL_BIOMARKERS: BiomarkerDefinition[] = [
     units: ["mg/dL", "mmol/L"],
   },
   {
+    key: "fasting_insulin",
+    labels: ["fasting insulin", "insulin"],
+    units: ["uIU/mL", "µIU/mL", "pmol/L"],
+  },
+  {
+    key: "hba1c",
+    labels: ["hba1c", "hemoglobin a1c", "a1c"],
+    units: ["%"],
+  },
+  {
+    key: "triglycerides",
+    labels: ["triglycerides", "tg"],
+    units: ["mg/dL", "mmol/L"],
+  },
+  {
+    key: "hdl_cholesterol",
+    labels: ["hdl cholesterol", "hdl-c", "hdl"],
+    units: ["mg/dL", "mmol/L"],
+  },
+  {
+    key: "ldl_cholesterol",
+    labels: ["ldl cholesterol", "ldl-c", "ldl"],
+    units: ["mg/dL", "mmol/L"],
+  },
+  {
+    key: "total_cholesterol",
+    labels: ["total cholesterol", "cholesterol total", "cholesterol"],
+    units: ["mg/dL", "mmol/L"],
+  },
+  {
+    key: "apob",
+    labels: ["apob", "apo b", "apolipoprotein b"],
+    units: ["mg/dL", "g/L"],
+  },
+  {
+    key: "blood_pressure_systolic",
+    labels: ["systolic blood pressure", "systolic bp", "sbp"],
+    units: ["mmHg"],
+  },
+  {
+    key: "blood_pressure_diastolic",
+    labels: ["diastolic blood pressure", "diastolic bp", "dbp"],
+    units: ["mmHg"],
+  },
+  {
     key: "hscrp",
     labels: ["hscrp", "hs-crp", "c-reactive protein", "crp"],
     units: ["mg/L", "mg/dL"],
+  },
+  {
+    key: "homocysteine",
+    labels: ["homocysteine"],
+    units: ["umol/L", "µmol/L"],
+  },
+  {
+    key: "ferritin",
+    labels: ["ferritin"],
+    units: ["ng/mL", "ug/L", "µg/L"],
+  },
+  {
+    key: "esr",
+    labels: ["esr", "erythrocyte sedimentation rate", "sed rate"],
+    units: ["mm/hr", "mm/h"],
+  },
+  {
+    key: "fibrinogen",
+    labels: ["fibrinogen"],
+    units: ["mg/dL", "g/L"],
   },
   {
     key: "lymphocyte_pct",
@@ -68,6 +158,66 @@ export const CLINICAL_BIOMARKERS: BiomarkerDefinition[] = [
     key: "white_blood_cell_count",
     labels: ["white blood cell count", "wbc", "white blood cells"],
     units: ["10^3/uL", "K/uL", "x10E3/uL", "1000 cells/uL"],
+  },
+  {
+    key: "tsh",
+    labels: ["tsh", "thyroid stimulating hormone"],
+    units: ["mIU/L", "uIU/mL", "µIU/mL"],
+  },
+  {
+    key: "free_t3",
+    labels: ["free t3", "ft3"],
+    units: ["pg/mL", "pmol/L"],
+  },
+  {
+    key: "free_t4",
+    labels: ["free t4", "ft4"],
+    units: ["ng/dL", "pmol/L"],
+  },
+  {
+    key: "morning_cortisol",
+    labels: ["morning cortisol", "cortisol am", "am cortisol", "cortisol"],
+    units: ["ug/dL", "µg/dL", "nmol/L"],
+  },
+  {
+    key: "total_testosterone",
+    labels: ["total testosterone", "testosterone total", "testosterone"],
+    units: ["ng/dL", "nmol/L"],
+  },
+  {
+    key: "free_testosterone",
+    labels: ["free testosterone"],
+    units: ["pg/mL", "ng/dL"],
+  },
+  {
+    key: "shbg",
+    labels: ["shbg", "sex hormone binding globulin"],
+    units: ["nmol/L"],
+  },
+  {
+    key: "estradiol",
+    labels: ["estradiol", "e2"],
+    units: ["pg/mL", "pmol/L"],
+  },
+  {
+    key: "progesterone",
+    labels: ["progesterone"],
+    units: ["ng/mL", "nmol/L"],
+  },
+  {
+    key: "lh",
+    labels: ["lh", "luteinizing hormone"],
+    units: ["IU/L", "mIU/mL"],
+  },
+  {
+    key: "fsh",
+    labels: ["fsh", "follicle stimulating hormone"],
+    units: ["IU/L", "mIU/mL"],
+  },
+  {
+    key: "vitamin_d",
+    labels: ["vitamin d", "25-oh vitamin d", "25 hydroxy vitamin d"],
+    units: ["ng/mL", "nmol/L"],
   },
 ];
 

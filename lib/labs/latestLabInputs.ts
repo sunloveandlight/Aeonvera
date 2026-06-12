@@ -8,7 +8,7 @@ type LabRow = {
   measured_at: string;
 };
 
-const LAB_TO_INPUT_KEY: Record<ClinicalBiomarkerKey, keyof AssessmentInput> = {
+const LAB_TO_INPUT_KEY: Partial<Record<ClinicalBiomarkerKey, keyof AssessmentInput>> = {
   albumin: "albumin",
   creatinine: "creatinine",
   fasting_glucose: "fasting_glucose",

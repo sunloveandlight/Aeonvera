@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { createClinicalInsightFromLabs } from "@/lib/clinical/clinicalIntelligence";
 import {
+  CLINICAL_BIOMARKERS,
   normalizeClinicalBiomarkers,
   parseClinicalBiomarkerText,
   type ParsedClinicalBiomarker,
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "No supported lab biomarkers found. Upload a readable report or enter albumin, creatinine, glucose, hsCRP, lymphocytes, MCV, RDW, alkaline phosphatase, and WBC.",
+            "No supported lab biomarkers found. Upload a readable report or enter metabolic, lipid, inflammation, CBC, thyroid, hormone, vitamin D, or biological-age lab markers.",
         },
         { status: 400 }
       );
@@ -82,12 +84,18 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       source: "system",
     });
+    const clinicalIntelligence = await createClinicalInsightFromLabs({
+      sourceQuestion: "Clinical lab import",
+      supabase: admin,
+      userId: user.id,
+    });
 
     return NextResponse.json({
       success: true,
       source,
       inserted: inserted || [],
       biologicalAge,
+      clinicalIntelligence,
     });
   } catch (error) {
     const message =
@@ -176,8 +184,7 @@ async function extractBiomarkersFromImage(file: File) {
         content: [
           {
             type: "text",
-            text:
-              "Read this lab report image and return JSON exactly like {\"records\":[{\"canonicalKey\":\"albumin|creatinine|fasting_glucose|hscrp|lymphocyte_pct|mean_cell_volume|red_cell_distribution_width|alkaline_phosphatase|white_blood_cell_count\",\"value\":number,\"unit\":\"string\",\"rawLabel\":\"string\",\"referenceRange\":\"string\"}]}. Include only values clearly visible.",
+            text: `Read this lab report image and return JSON exactly like {"records":[{"canonicalKey":"${CLINICAL_BIOMARKERS.map((marker) => marker.key).join("|")}","value":number,"unit":"string","rawLabel":"string","referenceRange":"string"}]}. Include only values clearly visible.`,
           },
           {
             type: "image_url",

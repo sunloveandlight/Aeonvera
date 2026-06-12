@@ -185,6 +185,13 @@ type ClinicalInsight = {
       priorInsightCount?: number;
       lastSeenAt?: string | null;
     };
+    missing_inputs?: Array<{
+      domain?: string;
+      label?: string;
+      priority?: string;
+      reason?: string;
+    }>;
+    risk_tier?: string;
     safety_level?: string;
     status_reason?: string;
   } | null;
@@ -1246,6 +1253,8 @@ function ClinicalIntelligenceMemoryPanel({
   const nextAction = latest?.recommended_actions?.[0];
   const progression = latest?.metadata?.progression;
   const lastResponse = latest?.metadata?.follow_up_responses?.at(-1);
+  const missingInput = latest?.metadata?.missing_inputs?.[0];
+  const riskTier = latest?.metadata?.risk_tier;
   const safetyLevel = latest?.metadata?.safety_level || lastResponse?.safety_level;
   const statusReason = latest?.metadata?.status_reason || lastResponse?.status_reason;
 
@@ -1362,6 +1371,20 @@ function ClinicalIntelligenceMemoryPanel({
                 }`}
               />
             ) : null}
+            {riskTier ? (
+              <MemoryStat
+                label="Risk Tier"
+                value={clinicalRiskTierLabel(riskTier)}
+                detail="Clinical decision-support tier from the latest interpreted signal."
+              />
+            ) : null}
+            {missingInput ? (
+              <MemoryStat
+                label="Missing Data"
+                value={missingInput.label || "Next input"}
+                detail={missingInput.reason || "This would raise confidence."}
+              />
+            ) : null}
             {safetyLevel ? (
               <MemoryStat
                 label="Safety"
@@ -1429,6 +1452,13 @@ function clinicalSafetyLabel(status?: string) {
   if (status === "medical_review") return "Medical review";
   if (status === "monitor") return "Monitor";
   return "Routine";
+}
+
+function clinicalRiskTierLabel(status?: string) {
+  if (status === "urgent") return "Urgent";
+  if (status === "clinician_review") return "Clinician Review";
+  if (status === "monitor") return "Monitor";
+  return "Optimize";
 }
 
 function executionStatusLabel(status: ExecutionSummary["status"]) {

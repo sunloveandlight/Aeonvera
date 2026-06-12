@@ -261,6 +261,13 @@ type ClinicalInsight = {
       priorInsightCount?: number;
       lastSeenAt?: string | null;
     };
+    missing_inputs?: Array<{
+      domain?: string;
+      label?: string;
+      priority?: string;
+      reason?: string;
+    }>;
+    risk_tier?: string;
     safety_level?: string;
     status_reason?: string;
   } | null;
@@ -2708,6 +2715,8 @@ function AgentView({
   const latestInsight = clinicalInsights[0] || null;
   const progression = latestInsight?.metadata?.progression;
   const lastClinicalResponse = latestInsight?.metadata?.follow_up_responses?.slice(-1)[0];
+  const missingInput = latestInsight?.metadata?.missing_inputs?.[0];
+  const riskTier = latestInsight?.metadata?.risk_tier;
   const safetyLevel = latestInsight?.metadata?.safety_level || lastClinicalResponse?.safety_level;
   const statusReason = latestInsight?.metadata?.status_reason || lastClinicalResponse?.status_reason;
 
@@ -2781,6 +2790,14 @@ function AgentView({
         {progression?.summary ? (
           <Text style={styles.clinicalTrajectoryCopy}>
             {clinicalProgressionLabel(progression.status)}: {progression.summary}
+          </Text>
+        ) : null}
+        {riskTier || missingInput ? (
+          <Text style={styles.clinicalTrajectoryCopy}>
+            {riskTier ? `Risk tier: ${clinicalRiskTierLabel(riskTier)}.` : ""}
+            {missingInput
+              ? ` Next missing input: ${missingInput.label || "clinical marker"}.`
+              : ""}
           </Text>
         ) : null}
         {latestInsight?.follow_up_questions?.[0] ? (
@@ -2949,6 +2966,13 @@ function clinicalSafetyLabel(status?: string | null) {
   if (status === "medical_review") return "Medical review";
   if (status === "monitor") return "Monitor";
   return "Routine";
+}
+
+function clinicalRiskTierLabel(status?: string | null) {
+  if (status === "urgent") return "Urgent";
+  if (status === "clinician_review") return "Clinician Review";
+  if (status === "monitor") return "Monitor";
+  return "Optimize";
 }
 
 function WeeklyExecutionReviewCard({

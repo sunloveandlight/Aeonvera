@@ -32,7 +32,7 @@ type TrendDefinition = {
   optimalMax?: number;
 };
 
-const TREND_DEFINITIONS: Record<ClinicalBiomarkerKey, TrendDefinition> = {
+const TREND_DEFINITIONS: Partial<Record<ClinicalBiomarkerKey, TrendDefinition>> = {
   albumin: {
     label: "Albumin",
     target: "roughly 4.0-5.0 g/dL",
@@ -120,6 +120,7 @@ function buildLabTrend(
   if (!latest) return null;
 
   const definition = TREND_DEFINITIONS[canonicalKey];
+  if (!definition) return null;
   const previousValue = previous?.value ?? null;
   const delta =
     previousValue == null ? null : Number((latest.value - previousValue).toFixed(2));
