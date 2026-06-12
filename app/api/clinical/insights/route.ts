@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const { data, error } = await getSupabaseAdmin()
       .from("clinical_insights")
       .select(
-        "id,source_question,answer_summary,domains,concern_status,confidence,signal_map,range_flags,follow_up_questions,recommended_actions,created_at,updated_at"
+        "id,source_question,answer_summary,domains,concern_status,confidence,signal_map,range_flags,follow_up_questions,recommended_actions,metadata,created_at,updated_at"
       )
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })

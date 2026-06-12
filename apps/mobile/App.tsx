@@ -239,6 +239,16 @@ type ClinicalInsight = {
   }> | null;
   follow_up_questions?: string[] | null;
   recommended_actions?: ProtocolAction[] | null;
+  metadata?: {
+    progression?: {
+      status?: string;
+      summary?: string;
+      repeatedDomains?: string[];
+      newDomains?: string[];
+      priorInsightCount?: number;
+      lastSeenAt?: string | null;
+    };
+  } | null;
   created_at?: string | null;
 };
 
@@ -2623,6 +2633,7 @@ function AgentView({
 }) {
   const visibleMessages = messages.slice(-6);
   const latestInsight = clinicalInsights[0] || null;
+  const progression = latestInsight?.metadata?.progression;
 
   return (
     <View style={styles.agentPanel}>
@@ -2686,6 +2697,11 @@ function AgentView({
         {latestInsight?.follow_up_questions?.[0] ? (
           <Text style={styles.clinicalMemoryCopy}>
             {latestInsight.follow_up_questions[0]}
+          </Text>
+        ) : null}
+        {progression?.summary ? (
+          <Text style={styles.clinicalTrajectoryCopy}>
+            {clinicalProgressionLabel(progression.status)}: {progression.summary}
           </Text>
         ) : null}
         {latestInsight?.domains?.length ? (
@@ -2794,6 +2810,13 @@ function clinicalStatusLabel(status?: string | null) {
   if (status === "monitoring") return "Monitoring";
   if (status === "active") return "Active";
   return "Building";
+}
+
+function clinicalProgressionLabel(status?: string | null) {
+  if (status === "improving_signal") return "Improving";
+  if (status === "recurrent_signal") return "Recurring";
+  if (status === "new_signal") return "New";
+  return "Monitoring";
 }
 
 function WeeklyExecutionReviewCard({
@@ -4370,6 +4393,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 19,
     marginTop: 9,
+  },
+  clinicalTrajectoryCopy: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    color: "rgba(255,255,255,0.46)",
+    fontSize: 12,
+    lineHeight: 19,
+    marginTop: 10,
+    padding: 10,
   },
   clinicalDomainRow: {
     flexDirection: "row",

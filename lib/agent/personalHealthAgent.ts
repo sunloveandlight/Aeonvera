@@ -131,6 +131,7 @@ type ClinicalInsightRow = {
   range_flags?: unknown;
   follow_up_questions?: unknown;
   recommended_actions?: unknown;
+  metadata?: unknown;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -168,7 +169,17 @@ type AgentToolResults = {
   rangeFlags: RangeFlag[];
   followUpQuestions: string[];
   recommendedActions: ProtocolAction[];
+  progression: ClinicalProgression;
   answerMode: "clinical_deep_dive" | "execution_agent" | "general_agent";
+};
+
+type ClinicalProgression = {
+  status: "new_signal" | "recurrent_signal" | "improving_signal" | "monitoring";
+  summary: string;
+  repeatedDomains: string[];
+  newDomains: string[];
+  priorInsightCount: number;
+  lastSeenAt?: string | null;
 };
 
 type AgentContext = {
@@ -557,6 +568,7 @@ async function storeClinicalInsight({
     metadata: {
       prior_insight_count: context.clinicalInsights.length,
       answer_mode: toolResults.answerMode,
+      progression: toolResults.progression,
       stored_at: new Date().toISOString(),
     },
   });
@@ -696,7 +708,7 @@ async function loadAgentContext(
         supabase
           .from("clinical_insights")
           .select(
-            "id,source_question,answer_summary,domains,concern_status,confidence,signal_map,range_flags,follow_up_questions,recommended_actions,created_at,updated_at"
+            "id,source_question,answer_summary,domains,concern_status,confidence,signal_map,range_flags,follow_up_questions,recommended_actions,metadata,created_at,updated_at"
           )
           .eq("user_id", userId)
           .order("created_at", { ascending: false })
@@ -1090,6 +1102,10 @@ function summarizeClinicalMemory(insights: ClinicalInsightRow[]) {
     recommendedActions: Array.isArray(insight.recommended_actions)
       ? insight.recommended_actions
       : [],
+    progression:
+      insight.metadata && typeof insight.metadata === "object" && "progression" in insight.metadata
+        ? (insight.metadata as { progression?: unknown }).progression
+        : null,
     createdAt: insight.created_at,
   }));
 }
@@ -1131,6 +1147,7 @@ function buildAgentToolResults(context: AgentContext, question: string): AgentTo
     rangeFlags,
     followUpQuestions: buildFollowUpQuestions(clinicalSignalMap, rangeFlags),
     recommendedActions: buildRecommendedActions(context, clinicalSignalMap, rangeFlags),
+    progression: buildClinicalProgression(context, clinicalSignalMap, rangeFlags),
   };
 }
 
@@ -1304,6 +1321,50 @@ function buildFollowUpQuestions(
   return dedupeStrings(questions).slice(0, 6);
 }
 
+function buildClinicalProgression(
+  context: AgentContext,
+  clinicalSignalMap: ClinicalDomainInsight[],
+  rangeFlags: RangeFlag[]
+): ClinicalProgression {
+  const activeDomains = clinicalSignalMap
+    .filter((domain) => domain.priority === "high" || domain.present.length)
+    .map((domain) => domain.domain);
+  const priorDomains = new Set(
+    context.clinicalInsights.flatMap((insight) => insight.domains || [])
+  );
+  const repeatedDomains = activeDomains.filter((domain) => priorDomains.has(domain));
+  const newDomains = activeDomains.filter((domain) => !priorDomains.has(domain)).slice(0, 5);
+  const lastSeenAt = context.clinicalInsights.find((insight) =>
+    (insight.domains || []).some((domain) => repeatedDomains.includes(domain))
+  )?.created_at;
+  const allOptimal =
+    rangeFlags.length > 0 && rangeFlags.every((flag) => flag.status === "optimal");
+  const status: ClinicalProgression["status"] = allOptimal
+    ? "improving_signal"
+    : repeatedDomains.length
+      ? "recurrent_signal"
+      : activeDomains.length
+        ? "new_signal"
+        : "monitoring";
+  const summary =
+    status === "improving_signal"
+      ? "Current measured flags look favorable. Aeonvera should keep monitoring trend durability before declaring this resolved."
+      : status === "recurrent_signal"
+        ? `Recurring clinical theme: ${repeatedDomains.slice(0, 3).join(", ")}. Aeonvera should compare response to prior actions instead of restarting the analysis.`
+        : status === "new_signal"
+          ? `New clinical theme detected: ${newDomains.slice(0, 3).join(", ")}. Aeonvera should establish baseline and close missing-data gaps.`
+          : "No strong clinical trend yet. Aeonvera should keep building the baseline.";
+
+  return {
+    status,
+    summary,
+    repeatedDomains: repeatedDomains.slice(0, 6),
+    newDomains,
+    priorInsightCount: context.clinicalInsights.length,
+    lastSeenAt,
+  };
+}
+
 function buildRecommendedActions(
   context: AgentContext,
   clinicalSignalMap: ClinicalDomainInsight[],
@@ -1384,6 +1445,7 @@ function buildClinicalSystemPrompt() {
   return [
     "You are Aeonvera, a premium personal health intelligence agent for longevity and human optimization.",
     "You have access to an internal clinical tool layer in the message called Agent tool results. Treat it as computed context: signal coverage, range flags, follow-up questions, and recommended actions.",
+    "Use Agent tool results.progression to distinguish new clinical themes from repeated unresolved themes and improving signals. Never restart the interpretation if prior clinical memory is relevant.",
     "Use only supplied user context plus generally accepted biomedical reasoning. When data is missing, say so clearly and request the highest-yield missing inputs instead of guessing.",
     "Reason across these domains: circadian biology and sleep architecture; metabolic flexibility; cardiovascular performance; inflammation and recovery; hormonal optimization; body composition and sarcopenia risk; cognitive longevity; nutrition and micronutrient density; biological age and stress resilience; longevity risk stratification.",
     "For complex health questions, answer with: 1) Signal map, 2) What it may imply, 3) What is missing, 4) Highest-leverage next actions, 5) What to track next.",
@@ -1445,7 +1507,7 @@ function buildFallbackAnswer(
       .map((domain) => `${domain.domain} ${domain.completeness}% complete`)
       .join("; ") || "your core clinical signal set is still sparse"}. Range review: ${rangeSummary}. Key gaps: ${
       relevantGaps.join("; ") || "no major framework gaps detected in the currently loaded context"
-    }. Highest-leverage next actions: ${nextActions || "upload core labs and wearable trends first"}. Follow-up: ${
+    }. Trajectory: ${toolResults.progression.summary}. Highest-leverage next actions: ${nextActions || "upload core labs and wearable trends first"}. Follow-up: ${
       questions || "add sleep, metabolic, cardiovascular, inflammation, hormone, body composition, cognition, nutrition, stress, and family risk details."
     } This is educational decision-support, not a diagnosis.`;
   }

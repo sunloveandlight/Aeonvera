@@ -163,6 +163,16 @@ type ClinicalInsight = {
   }> | null;
   follow_up_questions?: string[] | null;
   recommended_actions?: ProtocolAction[] | null;
+  metadata?: {
+    progression?: {
+      status?: string;
+      summary?: string;
+      repeatedDomains?: string[];
+      newDomains?: string[];
+      priorInsightCount?: number;
+      lastSeenAt?: string | null;
+    };
+  } | null;
   created_at?: string | null;
 };
 
@@ -1163,6 +1173,7 @@ function ClinicalIntelligenceMemoryPanel({
   const rangeFlags = latest?.range_flags?.slice(0, 3) || [];
   const followUp = latest?.follow_up_questions?.[0];
   const nextAction = latest?.recommended_actions?.[0];
+  const progression = latest?.metadata?.progression;
 
   return (
     <div className="executive-panel rounded-lg p-6 md:p-7">
@@ -1188,6 +1199,11 @@ function ClinicalIntelligenceMemoryPanel({
             </h3>
             {followUp ? (
               <p className="mt-4 text-sm leading-7 text-white/42">{followUp}</p>
+            ) : null}
+            {progression?.summary ? (
+              <p className="mt-4 rounded-lg border border-white/[0.07] bg-black/15 p-4 text-sm leading-7 text-white/48">
+                {progression.summary}
+              </p>
             ) : null}
             {domains.length ? (
               <div className="mt-5 flex flex-wrap gap-2">
@@ -1225,6 +1241,15 @@ function ClinicalIntelligenceMemoryPanel({
                 label="Next Action"
                 value={nextAction.domain || "Protocol"}
                 detail={nextAction.action || "Review the prepared clinical plan."}
+              />
+            ) : null}
+            {progression ? (
+              <MemoryStat
+                label="Trajectory"
+                value={clinicalProgressionLabel(progression.status)}
+                detail={`${progression.priorInsightCount || 0} prior clinical memor${
+                  progression.priorInsightCount === 1 ? "y" : "ies"
+                }`}
               />
             ) : null}
           </div>
@@ -1269,6 +1294,13 @@ function clinicalStatusLabel(status: string) {
   if (status === "monitoring") return "Monitoring";
   if (status === "active") return "Active";
   return "Building";
+}
+
+function clinicalProgressionLabel(status?: string) {
+  if (status === "improving_signal") return "Improving";
+  if (status === "recurrent_signal") return "Recurring";
+  if (status === "new_signal") return "New signal";
+  return "Monitoring";
 }
 
 function executionStatusLabel(status: ExecutionSummary["status"]) {
