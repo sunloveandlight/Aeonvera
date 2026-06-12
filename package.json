@@ -6,9 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "mobile:start": "npm --prefix apps/mobile run start",
-    "mobile:ios": "npm --prefix apps/mobile run ios",
-    "mobile:android": "npm --prefix apps/mobile run android",
+    "mobile:start": "cd apps/mobile && npm run start --",
+    "mobile:ios": "cd apps/mobile && npm run ios --",
+    "mobile:android": "cd apps/mobile && npm run android --",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix"
   },
