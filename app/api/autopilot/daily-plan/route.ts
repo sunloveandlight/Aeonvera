@@ -39,6 +39,24 @@ type PreferencesRow = {
   timezone: string;
 };
 
+type OutcomeRow = {
+  domain?: string | null;
+  action?: string | null;
+  outcome?: string | null;
+  success?: boolean | null;
+  created_at?: string | null;
+  measured_at?: string | null;
+};
+
+type ExecutionMemory = {
+  completionRate: number;
+  frictionDomains: string[];
+  missedActions: string[];
+  planLoad: "light" | "steady" | "ambitious";
+  strongDomains: string[];
+  total: number;
+};
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser(request);
@@ -50,8 +68,11 @@ export async function GET(request: NextRequest) {
     const admin = getSupabaseAdmin();
     const today = toDateKey(new Date());
     const preferences = await getOrCreatePreferences(admin, user.id);
-    const protocol = await getLatestProtocol(admin, user.id);
-    const prepared = buildDailyPlan({ protocol, preferences, today });
+    const [protocol, executionMemory] = await Promise.all([
+      getLatestProtocol(admin, user.id),
+      getRecentExecutionMemory(admin, user.id),
+    ]);
+    const prepared = buildDailyPlan({ protocol, preferences, today, executionMemory });
     const { data: existingPlan, error: existingError } = await admin
       .from("daily_execution_plans")
       .select("status,accepted_at,skipped_at,scheduled_event_ids")
@@ -303,10 +324,12 @@ async function getLatestProtocol(
 }
 
 function buildDailyPlan({
+  executionMemory,
   preferences,
   protocol,
   today,
 }: {
+  executionMemory: ExecutionMemory;
   preferences: PreferencesRow;
   protocol: ProtocolRow | null;
   today: string;
@@ -318,27 +341,30 @@ function buildDailyPlan({
         ...action,
         actionIndex,
         scope,
-        recommended_time: getRecommendedTime(action, scope),
+        recommended_time: getRecommendedTime(action, scope, executionMemory),
         execution_mode: getExecutionMode(preferences, action, scope),
+        adaptation_reason: getAdaptationReason(action, executionMemory),
       };
     })
     .filter((action) => action.action)
     .filter((action) => isAllowedByPreferences(preferences, action))
-    .sort((a, b) => actionPriority(b) - actionPriority(a));
+    .sort((a, b) => actionPriority(b, executionMemory) - actionPriority(a, executionMemory));
+
+  const todayLimit =
+    executionMemory.planLoad === "light" ? 2 : executionMemory.planLoad === "ambitious" ? 4 : 3;
+  const setupLimit =
+    executionMemory.planLoad === "light" ? 0 : executionMemory.planLoad === "ambitious" ? 2 : 1;
 
   const todayItems = actions
     .filter((action) => action.scope === "today" || action.scope === "check_in")
-    .slice(0, 4);
+    .slice(0, todayLimit);
   const setupItems = actions
     .filter((action) => action.scope === "week" || action.scope === "later")
-    .slice(0, 2);
-  const selectedItems = todayItems.length ? todayItems : actions.slice(0, 3);
+    .slice(0, setupLimit);
+  const selectedItems = todayItems.length ? todayItems : actions.slice(0, todayLimit);
   const itemCount = selectedItems.length + setupItems.length;
   const summary = itemCount
-    ? `Aeonvera prepared ${itemCount} action${itemCount === 1 ? "" : "s"} for today: ${selectedItems
-        .slice(0, 2)
-        .map((action) => action.domain || "Optimization")
-        .join(" and ")}.`
+    ? buildAdaptiveSummary(itemCount, selectedItems, executionMemory)
     : "Aeonvera is ready to prepare your day once a protocol is active.";
 
   const plan = {
@@ -350,7 +376,17 @@ function buildDailyPlan({
       "Protect recovery before adding intensity.",
       "Schedule the highest leverage action before the day becomes noisy.",
       "Keep opt-out visible and preserve user control.",
+      executionMemory.total
+        ? "Use recent completion signals to adjust today before adding more."
+        : "Begin with a clean execution baseline, then adapt from real behavior.",
     ],
+    memory: {
+      completion_rate: executionMemory.completionRate,
+      friction_domains: executionMemory.frictionDomains,
+      plan_load: executionMemory.planLoad,
+      strong_domains: executionMemory.strongDomains,
+      total_signals: executionMemory.total,
+    },
   };
 
   return {
@@ -365,6 +401,129 @@ function buildDailyPlan({
       plan,
     },
   };
+}
+
+async function getRecentExecutionMemory(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string
+): Promise<ExecutionMemory> {
+  const since = new Date();
+  since.setDate(since.getDate() - 21);
+
+  const { data, error } = await supabase
+    .from("intervention_outcomes")
+    .select("domain,action,outcome,success,created_at,measured_at")
+    .eq("user_id", userId)
+    .gte("created_at", since.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(60);
+
+  if (error) {
+    if (isMissingFeedbackTable(error)) return defaultExecutionMemory();
+    throw error;
+  }
+
+  return buildExecutionMemory((data || []) as OutcomeRow[]);
+}
+
+function buildExecutionMemory(outcomes: OutcomeRow[]): ExecutionMemory {
+  if (!outcomes.length) return defaultExecutionMemory();
+
+  let successes = 0;
+  let failures = 0;
+  const domainStats = new Map<string, { failure: number; success: number }>();
+  const actionStats = new Map<string, { failure: number; success: number }>();
+
+  for (const item of outcomes) {
+    const isSuccess = item.success === true || item.outcome === "success";
+    const isFailure = item.success === false || item.outcome === "failure";
+    if (isSuccess) successes += 1;
+    if (isFailure) failures += 1;
+
+    const domain = normalizeMemoryKey(item.domain || "");
+    if (domain) {
+      const stat = domainStats.get(domain) || { failure: 0, success: 0 };
+      if (isSuccess) stat.success += 1;
+      if (isFailure) stat.failure += 1;
+      domainStats.set(domain, stat);
+    }
+
+    const action = normalizeMemoryKey(item.action || "");
+    if (action) {
+      const stat = actionStats.get(action) || { failure: 0, success: 0 };
+      if (isSuccess) stat.success += 1;
+      if (isFailure) stat.failure += 1;
+      actionStats.set(action, stat);
+    }
+  }
+
+  const scoredTotal = successes + failures;
+  const completionRate = scoredTotal ? roundTwo(successes / scoredTotal) : 0.5;
+  const frictionDomains = Array.from(domainStats.entries())
+    .filter(([, stat]) => stat.failure > 0 && stat.failure >= stat.success)
+    .map(([domain]) => domain)
+    .slice(0, 3);
+  const strongDomains = Array.from(domainStats.entries())
+    .filter(([, stat]) => stat.success >= 2 && stat.success > stat.failure)
+    .map(([domain]) => domain)
+    .slice(0, 3);
+  const missedActions = Array.from(actionStats.entries())
+    .filter(([, stat]) => stat.failure > 0 && stat.failure >= stat.success)
+    .map(([action]) => action)
+    .slice(0, 8);
+  const planLoad =
+    scoredTotal >= 3 && completionRate < 0.55
+      ? "light"
+      : scoredTotal >= 3 && completionRate > 0.78
+        ? "ambitious"
+        : "steady";
+
+  return {
+    completionRate,
+    frictionDomains,
+    missedActions,
+    planLoad,
+    strongDomains,
+    total: outcomes.length,
+  };
+}
+
+function defaultExecutionMemory(): ExecutionMemory {
+  return {
+    completionRate: 0.72,
+    frictionDomains: [],
+    missedActions: [],
+    planLoad: "steady",
+    strongDomains: [],
+    total: 0,
+  };
+}
+
+function buildAdaptiveSummary(
+  itemCount: number,
+  selectedItems: Array<ProtocolAction & { domain?: string }>,
+  memory: ExecutionMemory
+) {
+  const domains = selectedItems
+    .slice(0, 2)
+    .map((action) => action.domain || "Optimization")
+    .join(" and ");
+
+  if (memory.total && memory.planLoad === "light") {
+    return `Aeonvera narrowed today to ${itemCount} essential action${
+      itemCount === 1 ? "" : "s"
+    }, using recent feedback to protect momentum around ${domains}.`;
+  }
+
+  if (memory.total && memory.planLoad === "ambitious") {
+    return `Aeonvera prepared ${itemCount} action${
+      itemCount === 1 ? "" : "s"
+    } for today, building on your strongest recent execution rhythm in ${domains}.`;
+  }
+
+  return `Aeonvera prepared ${itemCount} action${
+    itemCount === 1 ? "" : "s"
+  } for today: ${domains}.`;
 }
 
 function defaultPreferences(userId: string): PreferencesRow {
@@ -447,30 +606,36 @@ function classifyActionScope(action: ProtocolAction): ActionScope {
   return "later";
 }
 
-function getRecommendedTime(action: ProtocolAction, scope: ActionScope) {
+function getRecommendedTime(
+  action: ProtocolAction,
+  scope: ActionScope,
+  memory = defaultExecutionMemory()
+) {
   const text = [action.domain, action.action, action.cadence, action.why]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+  const actionWasMissed = memory.missedActions.includes(normalizeMemoryKey(action.action || ""));
+  const domainHasFriction = memory.frictionDomains.includes(normalizeMemoryKey(action.domain || ""));
 
   if (/(sleep|bedtime|wind down|evening|night|recovery|relax|caffeine)/.test(text)) {
-    return "20:30";
+    return actionWasMissed || domainHasFriction ? "20:00" : "20:30";
   }
 
   if (/(wake|morning|sunlight|weigh|weight|hrv|blood pressure|glucose|fasting)/.test(text)) {
-    return "08:00";
+    return actionWasMissed || domainHasFriction ? "08:30" : "08:00";
   }
 
   if (/(zone 2|cardio|walk|steps|run|training|workout|strength|resistance|mobility)/.test(text)) {
-    return "17:30";
+    return actionWasMissed || domainHasFriction ? "16:30" : "17:30";
   }
 
   if (/(meal|nutrition|protein|supplement|creatine|hydration|hydrate|food)/.test(text)) {
-    return "12:30";
+    return actionWasMissed || domainHasFriction ? "11:45" : "12:30";
   }
 
   if (/(journal|meditation|breath|stress|mindfulness|reflection)/.test(text)) {
-    return "19:30";
+    return actionWasMissed || domainHasFriction ? "18:45" : "19:30";
   }
 
   if (scope === "check_in") return "08:30";
@@ -507,10 +672,38 @@ function isAllowedByPreferences(
   return true;
 }
 
-function actionPriority(action: ProtocolAction & { scope: ActionScope }) {
+function actionPriority(
+  action: ProtocolAction & { scope: ActionScope },
+  memory = defaultExecutionMemory()
+) {
   const impact = action.impact === "high" ? 4 : action.impact === "medium" ? 2 : 1;
   const scope = action.scope === "today" ? 4 : action.scope === "check_in" ? 3 : action.scope === "week" ? 2 : 1;
-  return impact + scope;
+  const domain = normalizeMemoryKey(action.domain || "");
+  const actionKey = normalizeMemoryKey(action.action || "");
+  const frictionBoost = memory.frictionDomains.includes(domain) ? 1.2 : 0;
+  const missedBoost = memory.missedActions.includes(actionKey) ? 0.8 : 0;
+  const strongBoost = memory.strongDomains.includes(domain) ? 0.5 : 0;
+  return impact + scope + frictionBoost + missedBoost + strongBoost;
+}
+
+function getAdaptationReason(action: ProtocolAction, memory: ExecutionMemory) {
+  if (!memory.total) return "baseline";
+
+  const actionKey = normalizeMemoryKey(action.action || "");
+  const domain = normalizeMemoryKey(action.domain || "");
+
+  if (memory.missedActions.includes(actionKey)) return "resurfaced_after_missed_execution";
+  if (memory.frictionDomains.includes(domain)) return "simplified_after_domain_friction";
+  if (memory.strongDomains.includes(domain)) return "expanded_from_recent_strength";
+  return "steady_from_recent_feedback";
+}
+
+function normalizeMemoryKey(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function roundTwo(value: number) {
+  return Math.round(value * 100) / 100;
 }
 
 function sanitizeTime(value: unknown) {
@@ -526,6 +719,14 @@ function isMissingAutopilotTable(error: { message?: string; code?: string }) {
     error.code === "PGRST205" ||
     error.message?.includes("autopilot_preferences") ||
     error.message?.includes("daily_execution_plans") ||
+    error.message?.includes("schema cache")
+  );
+}
+
+function isMissingFeedbackTable(error: { message?: string; code?: string }) {
+  return (
+    error.code === "PGRST205" ||
+    error.message?.includes("intervention_outcomes") ||
     error.message?.includes("schema cache")
   );
 }

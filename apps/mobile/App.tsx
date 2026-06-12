@@ -770,7 +770,10 @@ export default function App() {
     setActionNotice("Autopilot preferences updated.");
   }
 
-  async function updateDailyPlanStatus(status: DailyExecutionPlan["status"]) {
+  async function updateDailyPlanStatus(
+    status: DailyExecutionPlan["status"],
+    scheduledEventIds?: string[]
+  ) {
     if (!session) return;
 
     const response = await fetch(`${appUrl}/api/autopilot/daily-plan`, {
@@ -779,7 +782,10 @@ export default function App() {
         Authorization: `Bearer ${session.access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({
+        status,
+        ...(scheduledEventIds ? { scheduled_event_ids: scheduledEventIds } : {}),
+      }),
     });
     const result = await response.json().catch(() => null);
 
@@ -806,18 +812,13 @@ export default function App() {
       return;
     }
 
+    const activeArtifacts = await reconcileScheduledArtifacts(dailyPlan.plan.items);
+
     if (
       !forceRecreate &&
       (dailyPlan.status === "accepted" || dailyPlan.status === "auto_scheduled")
     ) {
-      const existingCount =
-        protocol?.id && dailyPlan.plan.items.length
-          ? dailyPlan.plan.items.filter(
-              (item) =>
-                nativeCalendarEvents[getReminderKey(protocol.id, item)] ||
-                localReminders[getReminderKey(protocol.id, item)]
-            ).length
-          : 0;
+      const existingCount = activeArtifacts.activeCalendar + activeArtifacts.activeNotifications;
 
       setActionNotice(
         existingCount
@@ -849,6 +850,7 @@ export default function App() {
     let notified = 0;
     let skippedExisting = 0;
     const scheduledEvents: CalendarScheduleResult[] = [];
+    const scheduledEventIds = new Set(dailyPlan.scheduled_event_ids || []);
 
     setAcceptingDailyPlan(true);
 
@@ -857,7 +859,11 @@ export default function App() {
         if (!item.action || !protocol?.id) continue;
 
         const actionKey = getReminderKey(protocol.id, item);
-        if (!forceRecreate && (nativeCalendarEvents[actionKey] || localReminders[actionKey])) {
+        if (
+          !forceRecreate &&
+          (activeArtifacts.nativeCalendarEvents[actionKey] ||
+            activeArtifacts.localReminders[actionKey])
+        ) {
           skippedExisting += 1;
           continue;
         }
@@ -867,6 +873,7 @@ export default function App() {
           if (event) {
             scheduled += 1;
             scheduledEvents.push(event);
+            if (event.calendarEventId) scheduledEventIds.add(event.calendarEventId);
           }
         }
 
@@ -888,7 +895,8 @@ export default function App() {
       await updateDailyPlanStatus(
         preferences.mode === "autopilot" || preferences.mode === "sovereign"
           ? "auto_scheduled"
-          : "accepted"
+          : "accepted",
+        Array.from(scheduledEventIds)
       );
 
       const confirmation =
@@ -919,6 +927,68 @@ export default function App() {
     await updateDailyPlanStatus("skipped");
     setActionNotice("Autopilot paused for today. Your protocol remains available below.");
     playSoftHaptic();
+  }
+
+  async function reconcileScheduledArtifacts(items: ScheduledProtocolAction[]) {
+    if (!protocol?.id) {
+      return {
+        activeCalendar: 0,
+        activeNotifications: 0,
+        nativeCalendarEvents,
+        localReminders,
+      };
+    }
+
+    const notificationIds = new Set(
+      await Notifications.getAllScheduledNotificationsAsync()
+        .then((notifications) => notifications.map((item) => item.identifier))
+        .catch(() => [])
+    );
+    const nextNativeEvents = { ...nativeCalendarEvents };
+    const nextLocalReminders = { ...localReminders };
+    let activeCalendar = 0;
+    let activeNotifications = 0;
+    let changed = false;
+
+    for (const item of items) {
+      const actionKey = getReminderKey(protocol.id, item);
+      const nativeEvent = nextNativeEvents[actionKey];
+      const localReminder = nextLocalReminders[actionKey];
+
+      if (nativeEvent?.eventId) {
+        const exists = await Calendar.getEventAsync(nativeEvent.eventId)
+          .then(Boolean)
+          .catch(() => false);
+
+        if (exists) {
+          activeCalendar += 1;
+        } else {
+          delete nextNativeEvents[actionKey];
+          changed = true;
+        }
+      }
+
+      if (localReminder?.notificationId) {
+        if (notificationIds.has(localReminder.notificationId)) {
+          activeNotifications += 1;
+        } else {
+          delete nextLocalReminders[actionKey];
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) {
+      setNativeCalendarEvents(nextNativeEvents);
+      setLocalReminders(nextLocalReminders);
+    }
+
+    return {
+      activeCalendar,
+      activeNotifications,
+      nativeCalendarEvents: nextNativeEvents,
+      localReminders: nextLocalReminders,
+    };
   }
 
   async function recordExecutionFeedback(
