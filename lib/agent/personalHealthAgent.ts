@@ -1,5 +1,7 @@
 import OpenAI from "openai";
+import { buildTieredModalityRecommendations, type TieredModalityRecommendation } from "@/lib/longevity/advancedModalities";
 import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
+import type { Plan, SubscriptionStatus } from "@/lib/auth/permissions";
 import type { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 type SupabaseAdmin = ReturnType<typeof getSupabaseAdmin>;
@@ -136,6 +138,11 @@ type ClinicalInsightRow = {
   updated_at?: string | null;
 };
 
+type ProfileRow = {
+  plan?: Plan | null;
+  subscription_status?: SubscriptionStatus | null;
+};
+
 type AgentAction = {
   type:
     | "plan_simplified"
@@ -168,6 +175,7 @@ type AgentToolResults = {
   clinicalSignalMap: ClinicalDomainInsight[];
   rangeFlags: RangeFlag[];
   followUpQuestions: string[];
+  modalityRecommendations: TieredModalityRecommendation[];
   recommendedActions: ProtocolAction[];
   progression: ClinicalProgression;
   answerMode: "clinical_deep_dive" | "execution_agent" | "general_agent";
@@ -183,6 +191,7 @@ type ClinicalProgression = {
 };
 
 type AgentContext = {
+  profile: ProfileRow | null;
   memory: Awaited<ReturnType<typeof loadOrBuildCoachMemoryProfile>>;
   protocol: ProtocolRow | null;
   dailyPlan: DailyPlanRow | null;
@@ -568,6 +577,15 @@ async function storeClinicalInsight({
     metadata: {
       prior_insight_count: context.clinicalInsights.length,
       answer_mode: toolResults.answerMode,
+      modality_recommendations: toolResults.modalityRecommendations.slice(0, 6).map((modality) => ({
+        id: modality.id,
+        name: modality.name,
+        access: modality.access,
+        minimum_tier: modality.minimumTier,
+        fit_score: modality.fitScore,
+        evidence_grade: modality.evidenceGrade,
+        risk: modality.risk,
+      })),
       progression: toolResults.progression,
       stored_at: new Date().toISOString(),
     },
@@ -587,6 +605,7 @@ async function loadAgentContext(
 
   const [
     memory,
+    profileRes,
     protocolRes,
     planRes,
     outcomesRes,
@@ -602,6 +621,13 @@ async function loadAgentContext(
     clinicalInsightRes,
   ] = await Promise.all([
       loadOrBuildCoachMemoryProfile(supabase, userId),
+      safeQuery(() =>
+        supabase
+          .from("profiles")
+          .select("plan,subscription_status")
+          .eq("user_id", userId)
+          .maybeSingle()
+      ),
       safeQuery(() =>
         supabase
           .from("optimization_protocols")
@@ -717,6 +743,7 @@ async function loadAgentContext(
     ]);
 
   return {
+    profile: (profileRes.data as ProfileRow | null) || null,
     memory,
     protocol: (protocolRes.data as ProtocolRow | null) || null,
     dailyPlan: (planRes.data as DailyPlanRow | null) || null,
@@ -860,7 +887,10 @@ async function prepareClinicalDailyPlan({
   toolResults: AgentToolResults;
   userId: string;
 }): Promise<AgentAction | null> {
-  const items = toolResults.recommendedActions.slice(0, 3).map((action, index) => ({
+  const eligibleActions = toolResults.recommendedActions.filter(
+    (action) => action.domain !== "Tier Gate"
+  );
+  const items = eligibleActions.slice(0, 3).map((action, index) => ({
     ...action,
     actionIndex: index,
     scope: index === 0 ? "today" : "week",
@@ -886,6 +916,7 @@ async function prepareClinicalDailyPlan({
     clinical_tooling: {
       prepared_at: new Date().toISOString(),
       answer_mode: toolResults.answerMode,
+      modality_recommendations: toolResults.modalityRecommendations.slice(0, 6),
       range_flags: toolResults.rangeFlags.slice(0, 6),
       highest_priority_domains: toolResults.clinicalSignalMap
         .filter((domain) => domain.priority === "high")
@@ -1043,6 +1074,11 @@ function summarizeContext(context: AgentContext) {
   const coverage = buildDomainCoverage(context, latestMetrics);
 
   return {
+    membership: {
+      plan: context.profile?.plan || null,
+      subscriptionStatus: context.profile?.subscription_status || null,
+    },
+    tierBoundaries: "Core can learn and use foundations. Elite can activate advanced low-to-moderate-risk recovery/metabolic modalities. Sovereign can activate clinician-reviewed advanced experiments like HBOT and epigenetic/telomere tracking.",
     clinicalFramework: CLINICAL_LONGEVITY_DOMAINS,
     clinicalCoverage: coverage,
     memory: context.memory
@@ -1080,6 +1116,7 @@ function summarizeContext(context: AgentContext) {
     latestAssessment: compactAssessment(context.assessment),
     healthState: context.healthState,
     clinicalMemory: summarizeClinicalMemory(context.clinicalInsights),
+    longevityModalities: buildModalitiesForContext(context).recommendations.slice(0, 8),
     recentOutcomes: context.outcomes.slice(0, 10),
     calendar: context.calendarEvents.slice(0, 8),
     notifications: context.notifications.slice(0, 4),
@@ -1129,6 +1166,7 @@ function buildAgentToolResults(context: AgentContext, question: string): AgentTo
   const latestMetrics = summarizeLatestMetrics(context);
   const coverage = buildDomainCoverage(context, latestMetrics);
   const rangeFlags = buildRangeFlags(context, latestMetrics);
+  const modalityRecommendations = buildModalitiesForContext(context).recommendations;
   const clinicalSignalMap = coverage.map((domain): ClinicalDomainInsight => {
     const rangePressure = rangeFlags.some((flag) =>
       [flag.marker, flag.interpretation].join(" ").toLowerCase().includes(domain.domain.split(" ")[0].toLowerCase())
@@ -1161,7 +1199,8 @@ function buildAgentToolResults(context: AgentContext, question: string): AgentTo
     clinicalSignalMap,
     rangeFlags,
     followUpQuestions: buildFollowUpQuestions(clinicalSignalMap, rangeFlags),
-    recommendedActions: buildRecommendedActions(context, clinicalSignalMap, rangeFlags),
+    modalityRecommendations,
+    recommendedActions: buildRecommendedActions(context, clinicalSignalMap, rangeFlags, question, modalityRecommendations),
     progression: buildClinicalProgression(context, clinicalSignalMap, rangeFlags),
   };
 }
@@ -1383,7 +1422,9 @@ function buildClinicalProgression(
 function buildRecommendedActions(
   context: AgentContext,
   clinicalSignalMap: ClinicalDomainInsight[],
-  rangeFlags: RangeFlag[]
+  rangeFlags: RangeFlag[],
+  question: string,
+  modalityRecommendations: TieredModalityRecommendation[]
 ) {
   const actions: ProtocolAction[] = [];
   const flaggedText = rangeFlags.map((flag) => `${flag.marker} ${flag.status}`).join(" ").toLowerCase();
@@ -1400,6 +1441,30 @@ function buildRecommendedActions(
       why: "This is a low-risk way to improve post-meal glucose handling while Aeonvera collects better metabolic signal.",
       cadence: "Daily for 7 days",
       impact: "high",
+    });
+  }
+
+  const requestedModality = modalityRecommendations.find((modality) =>
+    matchesModality(question, modality)
+  );
+
+  if (requestedModality?.access === "included" && requestedModality.risk !== "high") {
+    actions.push({
+      domain: "Advanced Modality",
+      action: `Evaluate ${requestedModality.name} as a measured ${requestedModality.protocolRange.toLowerCase()}`,
+      why: requestedModality.rationale,
+      cadence: "Trial only if contraindications are clear",
+      impact: requestedModality.fitScore >= 70 ? "high" : "medium",
+    });
+  }
+
+  if (requestedModality?.access === "locked") {
+    actions.push({
+      domain: "Tier Gate",
+      action: requestedModality.upgradeMessage || `Upgrade to ${requestedModality.minimumTier} to activate this protocol.`,
+      why: `${requestedModality.name} is not available as an active protocol on the current tier.`,
+      cadence: "Upgrade required",
+      impact: "medium",
     });
   }
 
@@ -1456,10 +1521,61 @@ function buildRecommendedActions(
   return dedupeProtocolActions(actions).slice(0, 5);
 }
 
+function buildModalitiesForContext(context: AgentContext) {
+  const latestClinical = context.clinicalInsights[0];
+  const riskTier =
+    latestClinical?.metadata &&
+    typeof latestClinical.metadata === "object" &&
+    "risk_tier" in latestClinical.metadata
+      ? String((latestClinical.metadata as { risk_tier?: unknown }).risk_tier || "")
+      : null;
+
+  return buildTieredModalityRecommendations({
+    context: {
+      age: numericValue(context.assessment?.age),
+      biologicalAgeDelta: numericValue(context.biologicalAge?.age_delta),
+      primaryGoal: context.assessment?.primary_goal || null,
+      riskTier,
+      activeClinicalDomains: Array.from(
+        new Set(context.clinicalInsights.flatMap((insight) => insight.domains || []))
+      ),
+      latestLabs: context.labs.map((lab) => ({
+        canonical_key: lab.canonical_key,
+        unit: lab.unit,
+        value: lab.value,
+      })),
+    },
+    plan: context.profile?.plan || null,
+    status: context.profile?.subscription_status || null,
+  });
+}
+
+function matchesModality(text: string, modality: TieredModalityRecommendation) {
+  const lower = text.toLowerCase();
+  const aliases: Record<string, string[]> = {
+    cold_exposure: ["cold exposure", "cold shower", "cold showers", "cold plunge", "brown fat"],
+    epigenetic_telomere_testing: ["epigenetic", "telomere", "telomeres", "telomere length"],
+    hyperbaric_oxygen: ["hyperbaric", "hbot", "hyperbaric oxygen"],
+    pemf_recovery: ["pemf", "pemf mat", "electromagnetic"],
+    red_light_photobiomodulation: ["red light", "photobiomodulation", "cellular rejuvenation"],
+    sleep_circadian_foundation: ["circadian", "sleep foundation", "sleep protocol"],
+    zone2_strength_foundation: ["zone 2", "strength", "resistance training"],
+  };
+  const candidates = [
+    modality.name.toLowerCase(),
+    modality.id.replace(/_/g, " "),
+    ...(aliases[modality.id] || []),
+  ];
+
+  return candidates.some((candidate) => lower.includes(candidate));
+}
+
 function buildClinicalSystemPrompt() {
   return [
     "You are Aeonvera, a premium personal health intelligence agent for longevity and human optimization.",
     "You have access to an internal clinical tool layer in the message called Agent tool results. Treat it as computed context: signal coverage, range flags, follow-up questions, and recommended actions.",
+    "Respect membership tier boundaries. Core can use foundational protocols only. Elite can activate lower-risk advanced modalities such as red light, cold exposure, and PEMF experiments when appropriate. Sovereign can activate clinician-reviewed advanced experiments such as HBOT and epigenetic/telomere tracking. If a modality is locked, educate briefly but do not turn it into an active protocol.",
+    "Use Agent tool results.modalityRecommendations when users ask about HBOT, red light, PEMF, cold exposure, telomeres, epigenetics, regeneration, or other advanced longevity modalities. Always state evidence grade, risk level, contraindication screening, and what should be tracked.",
     "Use Agent tool results.progression to distinguish new clinical themes from repeated unresolved themes and improving signals. Never restart the interpretation if prior clinical memory is relevant.",
     "Use only supplied user context plus generally accepted biomedical reasoning. When data is missing, say so clearly and request the highest-yield missing inputs instead of guessing.",
     "Reason across these domains: circadian biology and sleep architecture; metabolic flexibility; cardiovascular performance; inflammation and recovery; hormonal optimization; body composition and sarcopenia risk; cognitive longevity; nutrition and micronutrient density; biological age and stress resilience; longevity risk stratification.",
@@ -1505,6 +1621,9 @@ function buildFallbackAnswer(
   }
 
   if (isComplexHealthQuestion(ask)) {
+    const requestedModality = toolResults.modalityRecommendations.find((modality) =>
+      matchesModality(ask, modality)
+    );
     const rangeSummary = toolResults.rangeFlags.length
       ? toolResults.rangeFlags
           .slice(0, 4)
@@ -1516,6 +1635,12 @@ function buildFallbackAnswer(
       .slice(0, 3)
       .map((nextAction) => `${nextAction.domain}: ${nextAction.action}`)
       .join("; ");
+    const modalitySummary = requestedModality
+      ? `${requestedModality.name}: ${requestedModality.access === "included" ? "available" : "locked"} on your tier, evidence ${requestedModality.evidenceGrade}, risk ${requestedModality.risk}. ${requestedModality.rationale}${requestedModality.upgradeMessage ? ` ${requestedModality.upgradeMessage}` : ""}`
+      : toolResults.modalityRecommendations
+          .slice(0, 3)
+          .map((modality) => `${modality.name} (${modality.access}, ${modality.evidenceGrade})`)
+          .join("; ");
 
     return `${actionPrefix}Signal map: ${coverage
       .filter((domain) => domain.present.length || domain.completeness < 50)
@@ -1523,7 +1648,7 @@ function buildFallbackAnswer(
       .map((domain) => `${domain.domain} ${domain.completeness}% complete`)
       .join("; ") || "your core clinical signal set is still sparse"}. Range review: ${rangeSummary}. Key gaps: ${
       relevantGaps.join("; ") || "no major framework gaps detected in the currently loaded context"
-    }. Trajectory: ${toolResults.progression.summary}. Highest-leverage next actions: ${nextActions || "upload core labs and wearable trends first"}. Follow-up: ${
+    }. Advanced modalities: ${modalitySummary || "no advanced modality is strongly indicated before fundamentals."} Trajectory: ${toolResults.progression.summary}. Highest-leverage next actions: ${nextActions || "upload core labs and wearable trends first"}. Follow-up: ${
       questions || "add sleep, metabolic, cardiovascular, inflammation, hormone, body composition, cognition, nutrition, stress, and family risk details."
     } This is educational decision-support, not a diagnosis.`;
   }
@@ -1646,7 +1771,7 @@ function dedupeStrings(values: string[]) {
 }
 
 function isComplexHealthQuestion(value: string) {
-  return /(circadian|sleep architecture|fasting insulin|hba1c|triglycerides|hdl|vo2|hrv|blood pressure|hs-crp|homocysteine|ferritin|hormone|testosterone|estradiol|progesterone|tsh|cortisol|sarcopenia|body composition|cognitive|micronutrient|biological age|telomere|cancer|neurodegenerative|cardiovascular|autoimmune|longevity analysis|preventive medicine)/.test(
+  return /(circadian|sleep architecture|fasting insulin|hba1c|triglycerides|hdl|vo2|hrv|blood pressure|hs-crp|homocysteine|ferritin|hormone|testosterone|estradiol|progesterone|tsh|cortisol|sarcopenia|body composition|cognitive|micronutrient|biological age|telomere|epigenetic|hyperbaric|hbot|red light|photobiomodulation|pemf|cold exposure|cold shower|sauna|regeneration|cancer|neurodegenerative|cardiovascular|autoimmune|longevity analysis|preventive medicine)/.test(
     value
   );
 }
