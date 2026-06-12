@@ -26,9 +26,20 @@ import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import * as Speech from "expo-speech";
 import { StatusBar } from "expo-status-bar";
+import {
+  mediaDevices,
+  MediaStream,
+  RTCPeerConnection,
+} from "react-native-webrtc";
 
 type ActiveView = "today" | "agent" | "inbox" | "message" | "settings";
-type VoicePhase = "idle" | "listening" | "processing" | "speaking" | "ready_follow_up";
+type VoicePhase =
+  | "idle"
+  | "connecting"
+  | "listening"
+  | "processing"
+  | "speaking"
+  | "ready_follow_up";
 
 type CoachMessage = {
   id: string;
@@ -98,6 +109,12 @@ type NativeCalendarEvent = {
   scheduledFor: string;
   reason?: string;
   feedbackNotificationId?: string | null;
+};
+
+type RealtimeVoiceSession = {
+  dc: ReturnType<RTCPeerConnection["createDataChannel"]>;
+  pc: RTCPeerConnection;
+  stream: MediaStream;
 };
 
 type CalendarScheduleResult = {
@@ -462,8 +479,11 @@ export default function App() {
   const [lastVoiceTranscript, setLastVoiceTranscript] = useState<string | null>(null);
   const [lastVoiceAnswer, setLastVoiceAnswer] = useState<string | null>(null);
   const [voiceSpeaking, setVoiceSpeaking] = useState(false);
+  const [realtimeVoiceActive, setRealtimeVoiceActive] = useState(false);
+  const [realtimeVoiceConnecting, setRealtimeVoiceConnecting] = useState(false);
   const [notificationFocusTick, setNotificationFocusTick] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
+  const realtimeVoiceRef = useRef<RealtimeVoiceSession | null>(null);
   const inboxOffsetY = useRef(0);
   const messageListOffsetY = useRef(0);
   const selectedMessageOffsetY = useRef<number | null>(null);
@@ -472,6 +492,18 @@ export default function App() {
     () => coachMessages.find((message) => message.id === selectedMessageId) || null,
     [coachMessages, selectedMessageId]
   );
+
+  useEffect(() => {
+    return () => {
+      const current = realtimeVoiceRef.current;
+      if (!current) return;
+      current.dc.close();
+      current.pc.close();
+      current.stream.getTracks().forEach((track) => track.stop());
+      current.stream.release?.();
+      realtimeVoiceRef.current = null;
+    };
+  }, []);
 
   const openPath = useCallback(
     async (path: string) => {
@@ -1279,8 +1311,144 @@ export default function App() {
     setClinicalInsights((result?.insights || []) as ClinicalInsight[]);
   }
 
-  async function startAgentVoice(clinicalInsightId?: string) {
-    if (!session?.access_token || agentThinking || voiceRecording) return;
+  async function startAgentVoice() {
+    if (!session?.access_token || agentThinking || voiceRecording || realtimeVoiceConnecting) return;
+
+    if (Platform.OS !== "ios" && Platform.OS !== "android") {
+      Alert.alert("Native only", "Voice conversation is available in the mobile app.");
+      return;
+    }
+
+    if (realtimeVoiceRef.current) {
+      await stopRealtimeVoice();
+      return;
+    }
+
+    setRealtimeVoiceConnecting(true);
+    setVoicePhase("connecting");
+    setVoiceStatus("Opening a live voice session with Aeonvera.");
+
+    try {
+      const permission = await Audio.requestPermissionsAsync();
+      if (!permission.granted) {
+        setRealtimeVoiceConnecting(false);
+        setVoicePhase("idle");
+        setVoiceStatus(null);
+        Alert.alert("Microphone needed", "Allow microphone access to speak with Aeonvera.");
+        return;
+      }
+
+      await Speech.stop();
+      setVoiceSpeaking(false);
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const stream = await mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      const pc = new RTCPeerConnection();
+      const dc = pc.createDataChannel("oai-events");
+      const pcEvents = pc as unknown as {
+        addEventListener: (type: string, listener: () => void) => void;
+      };
+      const dcEvents = dc as unknown as {
+        addEventListener: (type: string, listener: (event: { data?: unknown }) => void) => void;
+      };
+
+      stream.getAudioTracks().forEach((track) => {
+        pc.addTrack(track, stream);
+      });
+
+      pcEvents.addEventListener("connectionstatechange", () => {
+        if (pc.connectionState === "connected") {
+          setRealtimeVoiceActive(true);
+          setRealtimeVoiceConnecting(false);
+          setVoicePhase("listening");
+          setVoiceStatus("Live. Speak naturally; Aeonvera will answer when you pause.");
+        }
+        if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+          setVoiceStatus("Realtime voice disconnected. You can start a new session.");
+          setRealtimeVoiceActive(false);
+          setRealtimeVoiceConnecting(false);
+          setVoicePhase("idle");
+        }
+      });
+
+      dcEvents.addEventListener("message", (event) => {
+        handleRealtimeVoiceEvent(event.data);
+      });
+
+      dcEvents.addEventListener("open", () => {
+        setVoiceStatus("Live. Ask Aeonvera anything about your health plan.");
+      });
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const response = await fetch(`${appUrl}/api/agent/realtime`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/sdp",
+        },
+        body: offer.sdp || "",
+      });
+
+      const answerSdp = await response.text();
+
+      if (!response.ok) {
+        let errorMessage = "Aeonvera could not open realtime voice.";
+        try {
+          const parsed = JSON.parse(answerSdp);
+          errorMessage = parsed?.error || errorMessage;
+          if (parsed?.usage?.meter) {
+            setUsageLimits((current) => updateUsageMeter(current, parsed.usage));
+          }
+        } catch {
+          errorMessage = answerSdp || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      const usageHeader = response.headers.get("X-Aeonvera-Usage");
+      if (usageHeader) {
+        try {
+          const usage = JSON.parse(usageHeader);
+          if (usage?.meter) {
+            setUsageLimits((current) => updateUsageMeter(current, usage));
+          }
+        } catch {
+          // Usage is informational; ignore malformed headers.
+        }
+      }
+
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+
+      realtimeVoiceRef.current = { dc, pc, stream };
+      setRealtimeVoiceActive(true);
+      setRealtimeVoiceConnecting(false);
+      setVoicePhase("listening");
+      setLastVoiceTranscript(null);
+      setVoiceStatus("Live. Speak naturally; Aeonvera will answer when you pause.");
+      playSoftHaptic();
+    } catch (error) {
+      stopRealtimeTracks();
+      setRealtimeVoiceActive(false);
+      setRealtimeVoiceConnecting(false);
+      setVoicePhase("idle");
+      setVoiceStatus(null);
+      Alert.alert(
+        "Realtime voice did not start",
+        error instanceof Error ? error.message : "Aeonvera could not open realtime voice."
+      );
+    }
+  }
+
+  async function startVoiceNote(clinicalInsightId?: string) {
+    if (!session?.access_token || agentThinking || voiceRecording || realtimeVoiceActive) return;
 
     if (Platform.OS !== "ios" && Platform.OS !== "android") {
       Alert.alert("Native only", "Voice conversation is available in the mobile app.");
@@ -1321,6 +1489,91 @@ export default function App() {
         "Voice did not start",
         error instanceof Error ? error.message : "Aeonvera could not open the microphone."
       );
+    }
+  }
+
+  async function stopRealtimeVoice() {
+    stopRealtimeTracks();
+    setRealtimeVoiceActive(false);
+    setRealtimeVoiceConnecting(false);
+    setVoicePhase(lastVoiceAnswer ? "ready_follow_up" : "idle");
+    setVoiceStatus(lastVoiceAnswer ? "Live voice ended. Ready for a follow-up." : "Live voice ended.");
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+    }).catch(() => null);
+    playSoftHaptic();
+  }
+
+  function stopRealtimeTracks() {
+    const current = realtimeVoiceRef.current;
+    realtimeVoiceRef.current = null;
+
+    if (!current) return;
+
+    current.dc.close();
+    current.pc.close();
+    current.stream.getTracks().forEach((track) => track.stop());
+    current.stream.release?.();
+  }
+
+  function handleRealtimeVoiceEvent(raw: unknown) {
+    if (typeof raw !== "string") return;
+
+    let event: Record<string, unknown>;
+    try {
+      event = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    const type = typeof event.type === "string" ? event.type : "";
+
+    if (type === "input_audio_buffer.speech_started") {
+      setVoicePhase("listening");
+      setVoiceStatus("Listening.");
+      return;
+    }
+
+    if (type === "input_audio_buffer.speech_stopped") {
+      setVoicePhase("processing");
+      setVoiceStatus("Thinking through your health context.");
+      return;
+    }
+
+    if (type === "response.audio.delta") {
+      setVoicePhase("speaking");
+      setVoiceStatus("Aeonvera is speaking.");
+      return;
+    }
+
+    if (type === "response.done") {
+      setVoicePhase("ready_follow_up");
+      setVoiceStatus("Live session is open. Ask a follow-up whenever you are ready.");
+      return;
+    }
+
+    if (type === "conversation.item.input_audio_transcription.completed") {
+      const transcript = typeof event.transcript === "string" ? event.transcript.trim() : "";
+      if (transcript) {
+        setLastVoiceTranscript(transcript);
+        setAgentMessages((current) => [...current, { role: "user", content: transcript }]);
+      }
+      return;
+    }
+
+    if (type === "response.audio_transcript.done") {
+      const transcript = typeof event.transcript === "string" ? event.transcript.trim() : "";
+      if (transcript) {
+        setLastVoiceAnswer(transcript);
+        setAgentMessages((current) => [...current, { role: "assistant", content: transcript }]);
+      }
+      return;
+    }
+
+    if (type === "error") {
+      const error = event.error as { message?: string } | undefined;
+      setVoiceStatus(error?.message || "Realtime voice had a temporary issue.");
     }
   }
 
@@ -2356,6 +2609,8 @@ export default function App() {
                 lastVoiceTranscript={lastVoiceTranscript}
                 lastVoiceAnswer={lastVoiceAnswer}
                 voiceRecording={Boolean(voiceRecording)}
+                realtimeVoiceActive={realtimeVoiceActive}
+                realtimeVoiceConnecting={realtimeVoiceConnecting}
                 voiceSpeaking={voiceSpeaking}
                 voiceStatus={voiceStatus}
                 onClinicalAnswerChange={setClinicalAnswerDraft}
@@ -2367,7 +2622,9 @@ export default function App() {
                 }
                 onPromptChange={setAgentPrompt}
                 onSend={(value) => void askPersonalAgent(value)}
-                onStartVoice={(clinicalInsightId) => void startAgentVoice(clinicalInsightId)}
+                onStartVoice={() => void startAgentVoice()}
+                onStartVoiceNote={(clinicalInsightId) => void startVoiceNote(clinicalInsightId)}
+                onStopRealtimeVoice={() => void stopRealtimeVoice()}
                 onStopVoice={() => void stopAgentVoice()}
                 onCancelVoice={() => void cancelAgentVoice()}
                 onStopSpeech={() => void stopAgentSpeech()}
@@ -2796,9 +3053,13 @@ function AgentView({
   onSend,
   onSendClinicalAnswer,
   onStartVoice,
+  onStartVoiceNote,
+  onStopRealtimeVoice,
   onStopSpeech,
   onStopVoice,
   prompt,
+  realtimeVoiceActive,
+  realtimeVoiceConnecting,
   suggestions,
   thinking,
   usageLimits,
@@ -2819,10 +3080,14 @@ function AgentView({
   onPromptChange: (value: string) => void;
   onSend: (value?: string) => void;
   onSendClinicalAnswer: (insightId: string, answer: string) => void;
-  onStartVoice: (clinicalInsightId?: string) => void;
+  onStartVoice: () => void;
+  onStartVoiceNote: (clinicalInsightId?: string) => void;
+  onStopRealtimeVoice: () => void;
   onStopSpeech: () => void;
   onStopVoice: () => void;
   prompt: string;
+  realtimeVoiceActive: boolean;
+  realtimeVoiceConnecting: boolean;
   suggestions: string[];
   thinking: boolean;
   usageLimits: UsageLimitsPayload | null;
@@ -2840,8 +3105,13 @@ function AgentView({
   const safetyLevel = latestInsight?.metadata?.safety_level || lastClinicalResponse?.safety_level;
   const statusReason = latestInsight?.metadata?.status_reason || lastClinicalResponse?.status_reason;
   const voiceTitle = voicePhaseLabel(voicePhase, voiceSpeaking, voiceRecording);
-  const primaryVoiceLabel =
-    voicePhase === "ready_follow_up" ? "Follow Up" : voiceRecording ? "Finish" : "Speak";
+  const primaryVoiceLabel = realtimeVoiceActive
+    ? "End Live Voice"
+    : realtimeVoiceConnecting
+      ? "Opening"
+      : voiceRecording
+        ? "Finish"
+        : "Start Live Voice";
 
   return (
     <View style={styles.agentPanel}>
@@ -2857,9 +3127,13 @@ function AgentView({
           <View
             style={[
               styles.voiceOrb,
-              (voiceRecording || voiceSpeaking || voicePhase === "processing") &&
+              (voiceRecording ||
+                voiceSpeaking ||
+                realtimeVoiceActive ||
+                realtimeVoiceConnecting ||
+                voicePhase === "processing") &&
                 styles.voiceOrbActive,
-              voicePhase === "processing" && styles.voiceOrbProcessing,
+              (voicePhase === "processing" || realtimeVoiceConnecting) && styles.voiceOrbProcessing,
             ]}
           />
           <View style={styles.voiceCopyGroup}>
@@ -2889,7 +3163,15 @@ function AgentView({
           </View>
         ) : null}
         <View style={styles.voiceControls}>
-          {voiceRecording ? (
+          {realtimeVoiceActive || realtimeVoiceConnecting ? (
+            <Pressable
+              style={styles.voiceButtonSecondary}
+              onPress={onStopRealtimeVoice}
+              disabled={realtimeVoiceConnecting && !realtimeVoiceActive}
+            >
+              <Text style={styles.voiceButtonText}>{primaryVoiceLabel}</Text>
+            </Pressable>
+          ) : voiceRecording ? (
             <>
               <Pressable style={styles.voiceButtonSecondary} onPress={onCancelVoice}>
                 <Text style={styles.voiceButtonText}>Cancel</Text>
@@ -2903,16 +3185,28 @@ function AgentView({
               <Text style={styles.voiceButtonText}>Stop Voice</Text>
             </Pressable>
           ) : (
-            <Pressable
-              style={[
-                styles.voiceButton,
-                (thinking && voicePhase !== "ready_follow_up") && styles.buttonDisabled,
-              ]}
-              disabled={thinking && voicePhase !== "ready_follow_up"}
-              onPress={() => onStartVoice()}
-            >
-              <Text style={styles.voiceButtonPrimaryText}>{primaryVoiceLabel}</Text>
-            </Pressable>
+            <>
+              <Pressable
+                style={[
+                  styles.voiceButton,
+                  (thinking && voicePhase !== "ready_follow_up") && styles.buttonDisabled,
+                ]}
+                disabled={thinking && voicePhase !== "ready_follow_up"}
+                onPress={onStartVoice}
+              >
+                <Text style={styles.voiceButtonPrimaryText}>{primaryVoiceLabel}</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.voiceButtonSecondary,
+                  thinking && voicePhase !== "ready_follow_up" && styles.buttonDisabled,
+                ]}
+                disabled={thinking && voicePhase !== "ready_follow_up"}
+                onPress={() => onStartVoiceNote()}
+              >
+                <Text style={styles.voiceButtonText}>Voice Note</Text>
+              </Pressable>
+            </>
           )}
         </View>
       </View>
@@ -2979,7 +3273,7 @@ function AgentView({
               <Pressable
                 style={[styles.voiceButtonSecondary, thinking && styles.buttonDisabled]}
                 disabled={thinking}
-                onPress={() => onStartVoice(latestInsight.id)}
+                onPress={() => onStartVoiceNote(latestInsight.id)}
               >
                 <Text style={styles.voiceButtonText}>Speak Answer</Text>
               </Pressable>
@@ -4435,6 +4729,7 @@ function voicePhaseLabel(
   speaking: boolean,
   recording: boolean
 ) {
+  if (phase === "connecting") return "Opening live voice";
   if (recording || phase === "listening") return "Listening";
   if (speaking || phase === "speaking") return "Speaking";
   if (phase === "processing") return "Thinking";
