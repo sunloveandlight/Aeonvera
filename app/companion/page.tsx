@@ -143,6 +143,12 @@ type AgentChatMessage = {
   content: string;
 };
 
+type AgentAppliedAction = {
+  type: string;
+  label: string;
+  detail: string;
+};
+
 export default function CompanionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -162,6 +168,7 @@ export default function CompanionPage() {
     },
   ]);
   const [agentPrompt, setAgentPrompt] = useState("");
+  const [agentActions, setAgentActions] = useState<AgentAppliedAction[]>([]);
   const [agentSuggestions, setAgentSuggestions] = useState([
     "Why this plan today?",
     "What should I do first?",
@@ -500,6 +507,20 @@ export default function CompanionPage() {
       if (Array.isArray(data.suggestedPrompts)) {
         setAgentSuggestions(data.suggestedPrompts.slice(0, 3));
       }
+
+      if (Array.isArray(data.actions)) {
+        setAgentActions(data.actions.slice(0, 4));
+
+        if (data.actions.some((action: AgentAppliedAction) => action.type === "plan_simplified")) {
+          const dailyBriefResponse = await fetch("/api/coach/daily-brief", {
+            credentials: "include",
+          });
+          const dailyBriefData = await dailyBriefResponse.json();
+          if (dailyBriefResponse.ok) {
+            setDailyBrief(dailyBriefData.brief || null);
+          }
+        }
+      }
     } catch (error) {
       setAgentMessages((current) => [
         ...current,
@@ -621,6 +642,7 @@ export default function CompanionPage() {
             <ExecutionScorePanel execution={executionSummary} />
 
             <PersonalHealthAgentPanel
+              appliedActions={agentActions}
               messages={agentMessages}
               prompt={agentPrompt}
               suggestions={agentSuggestions}
@@ -883,6 +905,7 @@ function ExecutionScorePanel({ execution }: { execution: ExecutionSummary | null
 }
 
 function PersonalHealthAgentPanel({
+  appliedActions,
   messages,
   onPromptChange,
   onSend,
@@ -890,6 +913,7 @@ function PersonalHealthAgentPanel({
   suggestions,
   thinking,
 }: {
+  appliedActions: AgentAppliedAction[];
   messages: AgentChatMessage[];
   onPromptChange: (value: string) => void;
   onSend: (value?: string) => void;
@@ -930,6 +954,21 @@ function PersonalHealthAgentPanel({
               </button>
             ))}
           </div>
+          {appliedActions.length ? (
+            <div className="mt-5 space-y-2">
+              {appliedActions.map((action) => (
+                <div
+                  key={`${action.type}-${action.label}`}
+                  className="rounded-lg border border-[#dabc73]/20 bg-[#dabc73]/[0.045] p-3"
+                >
+                  <p className="text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/80">
+                    {action.label}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-white/48">{action.detail}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div>

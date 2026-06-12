@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({
+      actions: result.actions,
       answer: result.answer,
       mode: result.mode,
       suggestedPrompts: buildSuggestedPrompts(result.context),

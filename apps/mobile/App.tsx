@@ -217,6 +217,12 @@ type AgentChatMessage = {
   content: string;
 };
 
+type AgentAppliedAction = {
+  type: string;
+  label: string;
+  detail: string;
+};
+
 const WEB_URL =
   process.env.EXPO_PUBLIC_AEONVERA_WEB_URL ||
   Constants.expoConfig?.extra?.webUrl ||
@@ -345,6 +351,7 @@ export default function App() {
   ]);
   const [agentPrompt, setAgentPrompt] = useState("");
   const [agentThinking, setAgentThinking] = useState(false);
+  const [agentActions, setAgentActions] = useState<AgentAppliedAction[]>([]);
   const [agentSuggestions, setAgentSuggestions] = useState([
     "Why this plan today?",
     "What should I do first?",
@@ -1044,6 +1051,15 @@ export default function App() {
 
       if (Array.isArray(result?.suggestedPrompts)) {
         setAgentSuggestions(result.suggestedPrompts.slice(0, 3));
+      }
+
+      if (Array.isArray(result?.actions)) {
+        const actions = result.actions.slice(0, 4) as AgentAppliedAction[];
+        setAgentActions(actions);
+
+        if (actions.some((action) => action.type === "plan_simplified")) {
+          void loadCompanionData(session);
+        }
       }
     } catch (error) {
       setAgentMessages((current) => [
@@ -1930,6 +1946,7 @@ export default function App() {
             {activeView === "agent" ? (
               <AgentView
                 messages={agentMessages}
+                appliedActions={agentActions}
                 prompt={agentPrompt}
                 suggestions={agentSuggestions}
                 thinking={agentThinking}
@@ -2347,6 +2364,7 @@ function ExecutionFeedbackCard({
 }
 
 function AgentView({
+  appliedActions,
   messages,
   onPromptChange,
   onSend,
@@ -2354,6 +2372,7 @@ function AgentView({
   suggestions,
   thinking,
 }: {
+  appliedActions: AgentAppliedAction[];
   messages: AgentChatMessage[];
   onPromptChange: (value: string) => void;
   onSend: (value?: string) => void;
@@ -2371,6 +2390,9 @@ function AgentView({
         Your agent reads today&apos;s plan, coach memory, recent execution, and calendar signals
         before answering.
       </Text>
+      <Text style={styles.voiceHint}>
+        You can speak through the keyboard microphone. Full hands-free voice is not built in yet.
+      </Text>
 
       <View style={styles.agentSuggestions}>
         {suggestions.map((suggestion) => (
@@ -2384,6 +2406,17 @@ function AgentView({
           </Pressable>
         ))}
       </View>
+
+      {appliedActions.length ? (
+        <View style={styles.agentActionList}>
+          {appliedActions.map((action) => (
+            <View key={`${action.type}-${action.label}`} style={styles.agentActionItem}>
+              <Text style={styles.actionNoticeLabel}>{action.label}</Text>
+              <Text style={styles.actionNoticeText}>{action.detail}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       <View style={styles.agentMessageList}>
         {visibleMessages.map((message, index) => (
@@ -3909,6 +3942,12 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 16,
   },
+  voiceHint: {
+    color: "rgba(255,255,255,0.36)",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 10,
+  },
   agentSuggestion: {
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
@@ -3927,6 +3966,17 @@ const styles = StyleSheet.create({
   agentMessageList: {
     gap: 10,
     marginTop: 18,
+  },
+  agentActionList: {
+    gap: 8,
+    marginTop: 16,
+  },
+  agentActionItem: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.22)",
+    borderRadius: 8,
+    backgroundColor: "rgba(218,188,115,0.07)",
+    padding: 12,
   },
   agentMessage: {
     borderWidth: 1,
