@@ -10,6 +10,7 @@ import {
   CalendarClock,
   Dna,
   MessageCircle,
+  Send,
   Sparkles,
   Target,
 } from "lucide-react";
@@ -137,6 +138,11 @@ type DailyBrief = {
   style: string;
 };
 
+type AgentChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 export default function CompanionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -148,6 +154,20 @@ export default function CompanionPage() {
   const [executionSummary, setExecutionSummary] = useState<ExecutionSummary | null>(null);
   const [coachMemory, setCoachMemory] = useState<CoachMemory | null>(null);
   const [dailyBrief, setDailyBrief] = useState<DailyBrief | null>(null);
+  const [agentMessages, setAgentMessages] = useState<AgentChatMessage[]>([
+    {
+      role: "assistant",
+      content:
+        "Ask me why Aeonvera chose today’s focus, what should change, or how to make the plan fit your real life.",
+    },
+  ]);
+  const [agentPrompt, setAgentPrompt] = useState("");
+  const [agentSuggestions, setAgentSuggestions] = useState([
+    "Why this plan today?",
+    "What should I do first?",
+    "Make today simpler.",
+  ]);
+  const [agentThinking, setAgentThinking] = useState(false);
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [schedulingCalendar, setSchedulingCalendar] = useState(false);
   const [schedulingActionKey, setSchedulingActionKey] = useState<string | null>(null);
@@ -445,6 +465,57 @@ export default function CompanionPage() {
     }
   }
 
+  async function askPersonalAgent(promptOverride?: string) {
+    const question = (promptOverride || agentPrompt).trim();
+    if (!question || agentThinking) return;
+
+    const history = agentMessages.slice(-8);
+    const nextMessages: AgentChatMessage[] = [...agentMessages, { role: "user", content: question }];
+
+    setAgentMessages(nextMessages);
+    setAgentPrompt("");
+    setAgentThinking(true);
+
+    try {
+      const response = await fetch("/api/agent/chat", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, history }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Aeonvera could not answer right now.");
+      }
+
+      setAgentMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: data.answer || "Aeonvera is still reading the signal.",
+        },
+      ]);
+
+      if (Array.isArray(data.suggestedPrompts)) {
+        setAgentSuggestions(data.suggestedPrompts.slice(0, 3));
+      }
+    } catch (error) {
+      setAgentMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content:
+            error instanceof Error
+              ? error.message
+              : "Aeonvera could not answer right now.",
+        },
+      ]);
+    } finally {
+      setAgentThinking(false);
+    }
+  }
+
   return (
     <PageContainer>
       <div className="py-14">
@@ -548,6 +619,15 @@ export default function CompanionPage() {
             </div>
 
             <ExecutionScorePanel execution={executionSummary} />
+
+            <PersonalHealthAgentPanel
+              messages={agentMessages}
+              prompt={agentPrompt}
+              suggestions={agentSuggestions}
+              thinking={agentThinking}
+              onPromptChange={setAgentPrompt}
+              onSend={(value) => void askPersonalAgent(value)}
+            />
 
             <PersonalAgentMemoryPanel memory={coachMemory} />
 
@@ -796,6 +876,110 @@ function ExecutionScorePanel({ execution }: { execution: ExecutionSummary | null
               </p>
             </div>
           ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PersonalHealthAgentPanel({
+  messages,
+  onPromptChange,
+  onSend,
+  prompt,
+  suggestions,
+  thinking,
+}: {
+  messages: AgentChatMessage[];
+  onPromptChange: (value: string) => void;
+  onSend: (value?: string) => void;
+  prompt: string;
+  suggestions: string[];
+  thinking: boolean;
+}) {
+  const latestMessages = messages.slice(-5);
+
+  return (
+    <div className="executive-panel rounded-lg p-6 md:p-7">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <div>
+          <p className="micro-label">Personal Health Agent</p>
+          <h2 className="mt-3 text-3xl font-light leading-tight text-white">
+            Ask Aeonvera why.
+          </h2>
+        </div>
+        <MessageCircle size={18} className="royal-text" />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <div>
+          <p className="text-sm leading-7 text-white/48">
+            Aeonvera now explains the reasoning behind your plan using your memory,
+            calendar, protocol, and recent execution signals.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {suggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => onSend(suggestion)}
+                disabled={thinking}
+                className="inline-flex min-h-9 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-left text-[10px] uppercase tracking-[0.12em] text-white/48 transition hover:border-[#dabc73]/35 hover:text-white/78 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="max-h-[330px] space-y-3 overflow-y-auto pr-1">
+            {latestMessages.map((message, index) => (
+              <div
+                key={`${message.role}-${index}-${message.content.slice(0, 16)}`}
+                className={`rounded-lg border p-4 ${
+                  message.role === "assistant"
+                    ? "border-white/[0.07] bg-white/[0.025]"
+                    : "border-[#dabc73]/20 bg-[#dabc73]/[0.045]"
+                }`}
+              >
+                <p className="mb-2 text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/75">
+                  {message.role === "assistant" ? "Aeonvera" : "You"}
+                </p>
+                <p className="text-sm leading-7 text-white/58">{message.content}</p>
+              </div>
+            ))}
+            {thinking ? (
+              <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                <p className="text-sm leading-7 text-white/42">
+                  Aeonvera is reading today&apos;s signal.
+                </p>
+              </div>
+            ) : null}
+          </div>
+
+          <form
+            className="mt-4 flex gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSend();
+            }}
+          >
+            <input
+              value={prompt}
+              onChange={(event) => onPromptChange(event.target.value)}
+              placeholder="Ask what to do, why it matters, or what should change..."
+              className="min-h-12 flex-1 rounded-md border border-white/[0.08] bg-black/25 px-4 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[#dabc73]/35"
+            />
+            <button
+              type="submit"
+              disabled={thinking || !prompt.trim()}
+              className="premium-action inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md disabled:cursor-not-allowed disabled:opacity-45"
+              aria-label="Ask Aeonvera"
+            >
+              <Send size={16} />
+            </button>
+          </form>
         </div>
       </div>
     </div>
