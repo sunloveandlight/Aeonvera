@@ -125,9 +125,35 @@ type AgentAction = {
     | "plan_simplified"
     | "preference_saved"
     | "reschedule_requested"
-    | "notification_preference_saved";
+    | "notification_preference_saved"
+    | "clinical_plan_prepared";
   label: string;
   detail: string;
+};
+
+type RangeFlag = {
+  marker: string;
+  value: string;
+  status: "optimal" | "watch" | "elevated" | "low" | "unknown";
+  interpretation: string;
+  nextStep: string;
+};
+
+type ClinicalDomainInsight = {
+  domain: string;
+  completeness: number;
+  present: string[];
+  missing: string[];
+  priority: "high" | "medium" | "low";
+  reason: string;
+};
+
+type AgentToolResults = {
+  clinicalSignalMap: ClinicalDomainInsight[];
+  rangeFlags: RangeFlag[];
+  followUpQuestions: string[];
+  recommendedActions: ProtocolAction[];
+  answerMode: "clinical_deep_dive" | "execution_agent" | "general_agent";
 };
 
 type AgentContext = {
@@ -316,24 +342,34 @@ export async function answerPersonalHealthAgent({
   const context = await loadAgentContext(supabase, userId);
   const actions = await applyAgentInstructions({ context, question, supabase, userId });
   const updatedContext = actions.length ? await loadAgentContext(supabase, userId) : context;
+  const toolResults = buildAgentToolResults(updatedContext, question);
+  const toolActions = await applyAgentToolActions({
+    context: updatedContext,
+    question,
+    supabase,
+    toolResults,
+    userId,
+  });
+  const finalContext = toolActions.length ? await loadAgentContext(supabase, userId) : updatedContext;
+  const allActions = dedupeActions([...actions, ...toolActions]);
   const openai = getOpenAI();
-  const xaiClinicalReview = await buildXaiClinicalReview(question, updatedContext, history);
+  const xaiClinicalReview = await buildXaiClinicalReview(question, finalContext, history);
 
   if (!openai && xaiClinicalReview) {
     return {
-      actions,
+      actions: allActions,
       answer: xaiClinicalReview,
       mode: "generated" as const,
-      context: updatedContext,
+      context: finalContext,
     };
   }
 
   if (!openai) {
     return {
-      actions,
-      answer: buildFallbackAnswer(question, updatedContext, actions),
+      actions: allActions,
+      answer: buildFallbackAnswer(question, finalContext, allActions, toolResults),
       mode: "fallback" as const,
-      context: updatedContext,
+      context: finalContext,
     };
   }
 
@@ -349,7 +385,7 @@ export async function answerPersonalHealthAgent({
         },
         {
           role: "user",
-          content: `User context:\n${JSON.stringify(summarizeContext(updatedContext), null, 2)}\n\nActions already applied from this message:\n${JSON.stringify(actions, null, 2)}\n\nIndependent xAI/Grok clinical reasoning review, when available:\n${xaiClinicalReview || "No xAI review available for this message."}`,
+          content: `User context:\n${JSON.stringify(summarizeContext(finalContext), null, 2)}\n\nAgent tool results:\n${JSON.stringify(toolResults, null, 2)}\n\nActions already applied from this message:\n${JSON.stringify(allActions, null, 2)}\n\nIndependent xAI/Grok clinical reasoning review, when available:\n${xaiClinicalReview || "No xAI review available for this message."}`,
         },
         ...history.slice(-6).map((message) => ({
           role: message.role,
@@ -363,10 +399,10 @@ export async function answerPersonalHealthAgent({
 
     if (answer) {
       return {
-        actions,
+        actions: allActions,
         answer,
         mode: "generated" as const,
-        context: updatedContext,
+        context: finalContext,
       };
     }
   } catch (error) {
@@ -377,10 +413,10 @@ export async function answerPersonalHealthAgent({
   }
 
   return {
-    actions,
-    answer: buildFallbackAnswer(question, updatedContext, actions),
+    actions: allActions,
+    answer: buildFallbackAnswer(question, finalContext, allActions, toolResults),
     mode: "fallback" as const,
-    context: updatedContext,
+    context: finalContext,
   };
 }
 
@@ -657,6 +693,107 @@ async function applyAgentInstructions({
   return dedupeActions(actions);
 }
 
+async function applyAgentToolActions({
+  context,
+  question,
+  supabase,
+  toolResults,
+  userId,
+}: {
+  context: AgentContext;
+  question: string;
+  supabase: SupabaseAdmin;
+  toolResults: AgentToolResults;
+  userId: string;
+}): Promise<AgentAction[]> {
+  if (!shouldPrepareClinicalPlan(question, toolResults)) return [];
+
+  const prepared = await prepareClinicalDailyPlan({
+    context,
+    supabase,
+    toolResults,
+    userId,
+  });
+
+  return prepared ? [prepared] : [];
+}
+
+async function prepareClinicalDailyPlan({
+  context,
+  supabase,
+  toolResults,
+  userId,
+}: {
+  context: AgentContext;
+  supabase: SupabaseAdmin;
+  toolResults: AgentToolResults;
+  userId: string;
+}): Promise<AgentAction | null> {
+  const items = toolResults.recommendedActions.slice(0, 3).map((action, index) => ({
+    ...action,
+    actionIndex: index,
+    scope: index === 0 ? "today" : "week",
+    execution_mode: index === 0 ? "approve" : "suggest",
+    adaptation_reason: action.why || "Prepared from the personal health agent clinical tool layer.",
+  }));
+
+  if (!items.length) return null;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const existingItems = context.dailyPlan?.plan?.items || [];
+  const mergedItems = dedupeProtocolActions([...items, ...existingItems]).slice(0, 5);
+  const plan = {
+    ...(context.dailyPlan?.plan || {}),
+    summary:
+      "Aeonvera prepared a clinical intelligence plan from your latest signal map.",
+    items: mergedItems,
+    principles: [
+      "Prioritize low-risk, measurable interventions before intensity.",
+      "Close missing-data gaps before making irreversible assumptions.",
+      "Use execution feedback to adapt the next plan.",
+    ],
+    clinical_tooling: {
+      prepared_at: new Date().toISOString(),
+      answer_mode: toolResults.answerMode,
+      range_flags: toolResults.rangeFlags.slice(0, 6),
+      highest_priority_domains: toolResults.clinicalSignalMap
+        .filter((domain) => domain.priority === "high")
+        .slice(0, 3)
+        .map((domain) => domain.domain),
+    },
+  };
+
+  const { error } = await supabase.from("daily_execution_plans").upsert(
+    {
+      id: context.dailyPlan?.id || undefined,
+      user_id: userId,
+      protocol_id: context.protocol?.id || null,
+      plan_date: context.dailyPlan?.plan_date || today,
+      status: "prepared",
+      autopilot_mode: context.dailyPlan?.autopilot_mode || "approve",
+      summary: plan.summary,
+      plan,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,plan_date" }
+  );
+
+  if (error) {
+    if (isMissingTableError(error) || error.message?.includes("daily_execution_plans")) {
+      return null;
+    }
+
+    throw new Error(error.message || "Could not prepare clinical daily plan.");
+  }
+
+  return {
+    type: "clinical_plan_prepared",
+    label: "Clinical plan prepared",
+    detail:
+      "Aeonvera translated the health analysis into today’s active plan. Review it in Today before scheduling.",
+  };
+}
+
 async function simplifyDailyPlan({
   context,
   supabase,
@@ -817,12 +954,301 @@ function summarizeContext(context: AgentContext) {
   };
 }
 
+function buildAgentToolResults(context: AgentContext, question: string): AgentToolResults {
+  const latestMetrics = summarizeLatestMetrics(context);
+  const coverage = buildDomainCoverage(context, latestMetrics);
+  const rangeFlags = buildRangeFlags(context, latestMetrics);
+  const clinicalSignalMap = coverage.map((domain): ClinicalDomainInsight => {
+    const rangePressure = rangeFlags.some((flag) =>
+      [flag.marker, flag.interpretation].join(" ").toLowerCase().includes(domain.domain.split(" ")[0].toLowerCase())
+    );
+    const missingHighYield = domain.missing.length >= Math.max(3, Math.ceil(domain.present.length * 1.4));
+    const priority =
+      rangePressure || missingHighYield || domain.completeness < 35
+        ? "high"
+        : domain.completeness < 65
+          ? "medium"
+          : "low";
+
+    return {
+      domain: domain.domain,
+      completeness: domain.completeness,
+      present: domain.present.slice(0, 6),
+      missing: domain.missing.slice(0, 8),
+      priority,
+      reason:
+        priority === "high"
+          ? "This domain either has sparse signal coverage or a marker that deserves closer review."
+          : priority === "medium"
+            ? "There is enough signal to reason, but not enough to personalize deeply."
+            : "This domain has usable context for the current level of analysis.",
+    };
+  });
+
+  return {
+    answerMode: inferAnswerMode(question),
+    clinicalSignalMap,
+    rangeFlags,
+    followUpQuestions: buildFollowUpQuestions(clinicalSignalMap, rangeFlags),
+    recommendedActions: buildRecommendedActions(context, clinicalSignalMap, rangeFlags),
+  };
+}
+
+function buildRangeFlags(context: AgentContext, latestMetrics: HealthMetricRow[]) {
+  const flags: RangeFlag[] = [];
+  const signals = new Map<string, { label: string; value: number; unit?: string | null }>();
+
+  for (const lab of context.labs) {
+    const key = String(lab.canonical_key || lab.raw_label || "").toLowerCase();
+    const value = numericValue(lab.value);
+    if (!key || value === null || signals.has(key)) continue;
+    signals.set(key, {
+      label: lab.raw_label || lab.canonical_key || key,
+      value,
+      unit: lab.unit,
+    });
+  }
+
+  for (const metric of latestMetrics) {
+    const key = String(metric.metric || metric.metric_name || "").toLowerCase();
+    const value = numericValue(metric.value ?? metric.metric_value);
+    if (!key || value === null || signals.has(key)) continue;
+    signals.set(key, {
+      label: metric.metric || metric.metric_name || key,
+      value,
+      unit: null,
+    });
+  }
+
+  addRangeFlag(flags, signals, {
+    keys: ["fasting_glucose", "fasting glucose", "glucose"],
+    marker: "Fasting glucose",
+    optimal: (value) => value >= 70 && value <= 90,
+    watch: (value) => value > 90 && value < 100,
+    elevated: (value) => value >= 100,
+    low: (value) => value < 70,
+    interpretation:
+      "Glucose should be interpreted with insulin, HbA1c, triglycerides, HDL, waist, sleep, and training context.",
+    nextStep: "Add fasting insulin and HbA1c if missing; track post-meal response if glucose looks high-normal.",
+  });
+  addRangeFlag(flags, signals, {
+    keys: ["hscrp", "hs-crp", "crp"],
+    marker: "hs-CRP",
+    optimal: (value) => value < 1,
+    watch: (value) => value >= 1 && value < 3,
+    elevated: (value) => value >= 3,
+    interpretation:
+      "Inflammation signal is most useful when compared with training soreness, illness, sleep debt, ferritin, and metabolic markers.",
+    nextStep: "Retest away from acute illness or hard training; pair with ferritin, ESR, and recovery data.",
+  });
+  addRangeFlag(flags, signals, {
+    keys: ["triglycerides", "triglyceride"],
+    marker: "Triglycerides",
+    optimal: (value) => value < 100,
+    watch: (value) => value >= 100 && value < 150,
+    elevated: (value) => value >= 150,
+    interpretation:
+      "Triglycerides help reveal metabolic flexibility, especially alongside HDL, glucose, insulin, alcohol, and waist.",
+    nextStep: "Compare with HDL and fasting insulin; review alcohol, refined carbohydrates, and evening eating.",
+  });
+  addRangeFlag(flags, signals, {
+    keys: ["hdl"],
+    marker: "HDL",
+    optimal: (value) => value >= 50,
+    watch: (value) => value >= 40 && value < 50,
+    low: (value) => value < 40,
+    interpretation:
+      "Low HDL can cluster with insulin resistance and poor cardiometabolic conditioning.",
+    nextStep: "Interpret with triglycerides, ApoB/LDL-C if available, waist, VO2 max, and training consistency.",
+  });
+  addRangeFlag(flags, signals, {
+    keys: ["resting heart rate", "resting_hr", "rhr", "resting heart"],
+    marker: "Resting heart rate",
+    optimal: (value) => value >= 45 && value <= 60,
+    watch: (value) => value > 60 && value <= 75,
+    elevated: (value) => value > 75,
+    low: (value) => value < 45,
+    interpretation:
+      "Resting heart rate is a recovery and cardiovascular fitness signal; trends matter more than a single reading.",
+    nextStep: "Pair with HRV, sleep duration, illness, caffeine, alcohol, and training load.",
+  });
+  addRangeFlag(flags, signals, {
+    keys: ["blood pressure", "systolic"],
+    marker: "Blood pressure",
+    optimal: (value) => value < 120,
+    watch: (value) => value >= 120 && value < 130,
+    elevated: (value) => value >= 130,
+    interpretation:
+      "Systolic pressure affects long-term vascular and brain risk; confirm with repeated seated readings.",
+    nextStep: "Track morning/evening readings for 7 days and review sodium, sleep apnea risk, stress, and Zone 2 volume.",
+  });
+
+  return flags.slice(0, 10);
+}
+
+function addRangeFlag(
+  flags: RangeFlag[],
+  signals: Map<string, { label: string; value: number; unit?: string | null }>,
+  config: {
+    keys: string[];
+    marker: string;
+    optimal?: (value: number) => boolean;
+    watch?: (value: number) => boolean;
+    elevated?: (value: number) => boolean;
+    low?: (value: number) => boolean;
+    interpretation: string;
+    nextStep: string;
+  }
+) {
+  const signal = findSignal(signals, config.keys);
+  if (!signal) return;
+
+  const status: RangeFlag["status"] = config.optimal?.(signal.value)
+    ? "optimal"
+    : config.elevated?.(signal.value)
+      ? "elevated"
+      : config.low?.(signal.value)
+        ? "low"
+        : config.watch?.(signal.value)
+          ? "watch"
+          : "unknown";
+
+  flags.push({
+    marker: config.marker,
+    value: `${signal.value}${signal.unit ? ` ${signal.unit}` : ""}`,
+    status,
+    interpretation: config.interpretation,
+    nextStep: config.nextStep,
+  });
+}
+
+function findSignal(
+  signals: Map<string, { label: string; value: number; unit?: string | null }>,
+  keys: string[]
+) {
+  for (const key of keys) {
+    const normalized = key.toLowerCase();
+    const direct = signals.get(normalized);
+    if (direct) return direct;
+
+    for (const [signalKey, signal] of signals.entries()) {
+      if (signalKey.includes(normalized) || normalized.includes(signalKey)) {
+        return signal;
+      }
+    }
+  }
+
+  return null;
+}
+
+function buildFollowUpQuestions(
+  clinicalSignalMap: ClinicalDomainInsight[],
+  rangeFlags: RangeFlag[]
+) {
+  const highPriorityDomains = clinicalSignalMap
+    .filter((domain) => domain.priority === "high")
+    .slice(0, 4);
+  const questions: string[] = [];
+
+  for (const flag of rangeFlags.filter((item) => item.status !== "optimal").slice(0, 3)) {
+    questions.push(`For ${flag.marker}, when was this measured, and was it during illness, hard training, poor sleep, or unusual stress?`);
+  }
+
+  for (const domain of highPriorityDomains) {
+    const missing = domain.missing.slice(0, 3).join(", ");
+    if (missing) {
+      questions.push(`For ${domain.domain}, can you add ${missing}?`);
+    }
+  }
+
+  return dedupeStrings(questions).slice(0, 6);
+}
+
+function buildRecommendedActions(
+  context: AgentContext,
+  clinicalSignalMap: ClinicalDomainInsight[],
+  rangeFlags: RangeFlag[]
+) {
+  const actions: ProtocolAction[] = [];
+  const flaggedText = rangeFlags.map((flag) => `${flag.marker} ${flag.status}`).join(" ").toLowerCase();
+  const highPriorityText = clinicalSignalMap
+    .filter((domain) => domain.priority === "high")
+    .map((domain) => domain.domain)
+    .join(" ")
+    .toLowerCase();
+
+  if (/glucose|triglyceride|hdl|metabolic/.test(`${flaggedText} ${highPriorityText}`)) {
+    actions.push({
+      domain: "Metabolic",
+      action: "Take a 10-15 minute walk after the largest carbohydrate meal for the next 7 days.",
+      why: "This is a low-risk way to improve post-meal glucose handling while Aeonvera collects better metabolic signal.",
+      cadence: "Daily for 7 days",
+      impact: "high",
+    });
+  }
+
+  if (/resting heart|blood pressure|cardiovascular|vo2/.test(`${flaggedText} ${highPriorityText}`)) {
+    actions.push({
+      domain: "Cardiovascular",
+      action: "Complete one Zone 2 session at conversational intensity.",
+      why: "Cardiovascular base work supports resting heart rate, blood pressure, glucose disposal, and long-term healthspan.",
+      cadence: "2-3x/week",
+      impact: "high",
+    });
+  }
+
+  if (/sleep|circadian|stress|cortisol|recovery/.test(highPriorityText)) {
+    actions.push({
+      domain: "Sleep",
+      action: "Set a fixed wake time and morning outdoor light exposure for three consecutive days.",
+      why: "Circadian anchoring improves sleep timing, energy, glucose regulation, and recovery signal quality.",
+      cadence: "Morning for 3 days",
+      impact: "high",
+    });
+  }
+
+  if (/hs-crp|inflammation|recovery|ferritin/.test(`${flaggedText} ${highPriorityText}`)) {
+    actions.push({
+      domain: "Recovery",
+      action: "Run a recovery audit: sleep debt, soreness, illness symptoms, alcohol, and training load.",
+      why: "Inflammatory markers need context before increasing training or changing supplements.",
+      cadence: "Today",
+      impact: "medium",
+    });
+  }
+
+  if (context.labs.length < 4) {
+    actions.push({
+      domain: "Data",
+      action: "Upload a recent CBC, CMP, lipids, HbA1c, fasting insulin, and hs-CRP if available.",
+      why: "Aeonvera needs core clinical markers to produce a high-confidence longevity interpretation.",
+      cadence: "Once",
+      impact: "high",
+    });
+  }
+
+  if (!actions.length) {
+    actions.push({
+      domain: "Optimization",
+      action: "Choose one measurable action today and log the result honestly.",
+      why: "The agent becomes more intelligent when it can compare recommendation, execution, and outcome.",
+      cadence: "Today",
+      impact: "medium",
+    });
+  }
+
+  return dedupeProtocolActions(actions).slice(0, 5);
+}
+
 function buildClinicalSystemPrompt() {
   return [
     "You are Aeonvera, a premium personal health intelligence agent for longevity and human optimization.",
+    "You have access to an internal clinical tool layer in the message called Agent tool results. Treat it as computed context: signal coverage, range flags, follow-up questions, and recommended actions.",
     "Use only supplied user context plus generally accepted biomedical reasoning. When data is missing, say so clearly and request the highest-yield missing inputs instead of guessing.",
     "Reason across these domains: circadian biology and sleep architecture; metabolic flexibility; cardiovascular performance; inflammation and recovery; hormonal optimization; body composition and sarcopenia risk; cognitive longevity; nutrition and micronutrient density; biological age and stress resilience; longevity risk stratification.",
     "For complex health questions, answer with: 1) Signal map, 2) What it may imply, 3) What is missing, 4) Highest-leverage next actions, 5) What to track next.",
+    "If a clinical plan was prepared, tell the user plainly that it is ready in Today and should be reviewed before scheduling.",
+    "If range flags are present, explain them as screening and optimization signals, not diagnoses. If all range flags are optimal, say what still needs trend confirmation.",
     "Connect systems: sleep affects glucose control and hormones; metabolic dysfunction affects inflammation and cardiovascular risk; training load affects HRV and recovery; stress affects sleep, cortisol, appetite, glucose, and adherence.",
     "Be sophisticated but not theatrical. Use precise language, explain uncertainty, and prioritize actions that are low-risk, measurable, and reversible.",
     "Safety: do not diagnose disease, prescribe medication, interpret urgent symptoms as benign, or replace a clinician. Recommend medical evaluation for chest pain, stroke symptoms, severe shortness of breath, fainting, severe hypertension, suicidal ideation, suspected sleep apnea, abnormal labs, or endocrine/cardiovascular red flags.",
@@ -835,7 +1261,8 @@ function buildClinicalSystemPrompt() {
 function buildFallbackAnswer(
   question: string,
   context: AgentContext,
-  actions: AgentAction[] = []
+  actions: AgentAction[] = [],
+  toolResults = buildAgentToolResults(context, question)
 ) {
   const action = context.dailyPlan?.plan?.items?.[0] || context.protocol?.protocol?.primary_protocol?.[0];
   const friction = context.memory?.failurePatterns?.[0];
@@ -860,13 +1287,27 @@ function buildFallbackAnswer(
   }
 
   if (isComplexHealthQuestion(ask)) {
-    return `${actionPrefix}I can reason across the longevity system, but the strongest analysis depends on the missing inputs. Current signal map: ${coverage
-      .filter((domain) => domain.present.length)
-      .slice(0, 4)
-      .map((domain) => `${domain.domain} has ${domain.present.slice(0, 3).join(", ")}`)
-      .join("; ") || "your core clinical signal set is still sparse"}. Key gaps: ${
+    const rangeSummary = toolResults.rangeFlags.length
+      ? toolResults.rangeFlags
+          .slice(0, 4)
+          .map((flag) => `${flag.marker}: ${flag.value} (${flag.status})`)
+          .join("; ")
+      : "no range flags available yet";
+    const questions = toolResults.followUpQuestions.slice(0, 3).join(" ");
+    const nextActions = toolResults.recommendedActions
+      .slice(0, 3)
+      .map((nextAction) => `${nextAction.domain}: ${nextAction.action}`)
+      .join("; ");
+
+    return `${actionPrefix}Signal map: ${coverage
+      .filter((domain) => domain.present.length || domain.completeness < 50)
+      .slice(0, 5)
+      .map((domain) => `${domain.domain} ${domain.completeness}% complete`)
+      .join("; ") || "your core clinical signal set is still sparse"}. Range review: ${rangeSummary}. Key gaps: ${
       relevantGaps.join("; ") || "no major framework gaps detected in the currently loaded context"
-    }. The next intelligent move is to fill the highest-yield missing markers first, then interpret patterns together rather than in isolation: sleep/circadian rhythm, glucose-insulin-lipids, blood pressure-HRV-VO2 max, inflammation, hormones when relevant, body composition, cognition, nutrition, stress, and family risk. This is decision-support, not diagnosis.`;
+    }. Highest-leverage next actions: ${nextActions || "upload core labs and wearable trends first"}. Follow-up: ${
+      questions || "add sleep, metabolic, cardiovascular, inflammation, hormone, body composition, cognition, nutrition, stress, and family risk details."
+    } This is educational decision-support, not a diagnosis.`;
   }
 
   if (/change|adjust|move|simpler|too much/.test(ask)) {
@@ -878,6 +1319,59 @@ function buildFallbackAnswer(
   }
 
   return `${actionPrefix}${planSummary} The next intelligent move is to execute one meaningful action, mark the result honestly, and let Aeonvera adapt the following schedule from what actually happened.`;
+}
+
+function shouldPrepareClinicalPlan(question: string, toolResults: AgentToolResults) {
+  const lower = question.toLowerCase();
+  const askedForPlan = /(build|create|make|prepare|turn|give me|protocol|plan|optimize|schedule|action)/.test(lower);
+  const clinicalEnough = toolResults.answerMode === "clinical_deep_dive" || toolResults.rangeFlags.length > 0;
+
+  return askedForPlan && clinicalEnough && toolResults.recommendedActions.length > 0;
+}
+
+function inferAnswerMode(question: string): AgentToolResults["answerMode"] {
+  const lower = question.toLowerCase();
+
+  if (isComplexHealthQuestion(lower)) return "clinical_deep_dive";
+  if (/(schedule|plan|protocol|action|calendar|remind|prepare|simpler|change|adjust)/.test(lower)) {
+    return "execution_agent";
+  }
+  return "general_agent";
+}
+
+function numericValue(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+
+  const match = value.replace(/,/g, "").match(/-?\d+(\.\d+)?/);
+  if (!match) return null;
+
+  const parsed = Number(match[0]);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function dedupeProtocolActions(actions: ProtocolAction[]) {
+  const seen = new Set<string>();
+  const output: ProtocolAction[] = [];
+
+  for (const action of actions) {
+    const key = String(action.action || "").toLowerCase().trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    output.push(action);
+  }
+
+  return output;
+}
+
+function dedupeStrings(values: string[]) {
+  const seen = new Set<string>();
+  return values.filter((value) => {
+    const key = value.toLowerCase().trim();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function isComplexHealthQuestion(value: string) {
