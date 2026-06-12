@@ -5,7 +5,6 @@
     "scheme": "aeonvera",
     "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
       "backgroundColor": "#050505"
@@ -15,10 +14,7 @@
       "bundleIdentifier": "com.aeonvera.app"
     },
     "android": {
-      "package": "com.aeonvera.app",
-      "adaptiveIcon": {
-        "backgroundColor": "#050505"
-      }
+      "package": "com.aeonvera.app"
     },
     "extra": {
       "webUrl": "https://www.aeonvera.com",
