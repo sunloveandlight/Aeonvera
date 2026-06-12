@@ -686,7 +686,7 @@ export default function App() {
       : await Notifications.requestPermissionsAsync();
 
     if (!isNotificationPermissionGranted(finalPermission)) {
-      Alert.alert("Reminder not scheduled", "Notification permission was not granted.");
+      Alert.alert("Notification not scheduled", "Notification permission was not granted.");
       return;
     }
 
@@ -738,15 +738,15 @@ export default function App() {
     });
 
     setActionNotice(
-      `Reminder scheduled ${formatReminderDate(scheduledFor)}${
+      `Phone notification scheduled ${formatReminderDate(scheduledFor)}${
         repeat === "once" ? "" : `, ${repeat}`
       }.`
     );
     Alert.alert(
-      "Reminder scheduled",
-      `Aeonvera will remind you ${formatReminderDate(scheduledFor)}${
+      "Phone notification scheduled",
+      `Aeonvera will send a phone notification ${formatReminderDate(scheduledFor)}${
         repeat === "once" ? "" : `, ${repeat}`
-      }.`
+      }. This does not create a calendar event.`
     );
   }
 
@@ -855,15 +855,16 @@ export default function App() {
       });
     }
 
+    const calendarAppName = Platform.OS === "ios" ? "Apple Calendar" : "Android Calendar";
     setActionNotice(
-      `Calendar block added ${formatReminderDate(scheduledFor)} in ${
+      `${calendarAppName} event added ${formatReminderDate(scheduledFor)} in ${
         calendar.title || "your calendar"
       }.`
     );
     playSoftHaptic();
     Alert.alert(
       "Added to calendar",
-      `Scheduled ${formatReminderDate(scheduledFor)} in ${calendar.title || "your calendar"}.`
+      `Scheduled ${formatReminderDate(scheduledFor)} in ${calendar.title || "your calendar"}. Open ${calendarAppName} to see it.`
     );
   }
 
@@ -1251,12 +1252,12 @@ function TodayView({
                       playSoftHaptic();
                       if (activeActionKey === primaryActionKey) {
                         setActionNotice(
-                          "Action controls are already open. Choose Done, Later, Remind, or Calendar below."
+                          "Action controls are already open. Choose Done, Later, Notify me, or Add to Calendar below."
                         );
                       } else {
                         setExpandedActionKey(primaryActionKey);
                         setActionNotice(
-                          "Action controls opened. You can complete it, save it for later, set a reminder, or add it to your calendar."
+                          "Action controls opened. You can complete it, save it for later, create a phone notification, or add it to your calendar."
                         );
                       }
                     }}
@@ -1391,7 +1392,7 @@ function TodayView({
           <MobileCommandStat
             label="Reminders"
             value={String(Object.keys(localReminders).length)}
-            detail="Native nudges created on this phone."
+            detail="Phone notifications created on this device."
           />
           <MobileCommandStat
             label="Calendar"
@@ -1406,7 +1407,7 @@ function TodayView({
         </View>
         <Text style={styles.mobileCommandCopy}>
           The full website remains the deep cockpit. The mobile app is becoming the execution layer:
-          fast actions, native reminders, calendar blocks, and coach signals.
+          fast actions, phone notifications, calendar blocks, and coach signals.
         </Text>
       </View>
     </>
@@ -1667,7 +1668,7 @@ function ProtocolActionRow({
                 chooseReminderPreset(action, scheduleActionReminder);
               }}
             >
-              <Text style={styles.adherenceButtonText}>Remind</Text>
+              <Text style={styles.adherenceButtonText}>Notify me</Text>
             </Pressable>
             <Pressable
               style={[styles.adherenceButton, styles.calendarButton]}
@@ -1676,19 +1677,19 @@ function ProtocolActionRow({
                 chooseCalendarPreset(action, scheduleActionToNativeCalendar);
               }}
             >
-              <Text style={styles.adherenceButtonText}>Calendar</Text>
+              <Text style={styles.adherenceButtonText}>Add to Calendar</Text>
             </Pressable>
           </View>
         ) : null}
         {localReminder ? (
           <Text style={styles.reminderText}>
-            Reminder {formatReminderDate(new Date(localReminder.scheduledFor))}
+            Phone notification {formatReminderDate(new Date(localReminder.scheduledFor))}
             {localReminder.repeat === "once" ? "" : ` / ${localReminder.repeat}`}
           </Text>
         ) : null}
         {nativeCalendarEvent ? (
           <Text style={styles.reminderText}>
-            Calendar {formatReminderDate(new Date(nativeCalendarEvent.scheduledFor))} /{" "}
+            Calendar event {formatReminderDate(new Date(nativeCalendarEvent.scheduledFor))} /{" "}
             {nativeCalendarEvent.calendarTitle}
           </Text>
         ) : null}
@@ -1706,9 +1707,9 @@ function chooseReminderPreset(
     repeat?: ReminderRepeat
   ) => Promise<void>
 ) {
-  Alert.alert("Reminder time", "When should Aeonvera remind you?", [
+  Alert.alert("Phone notification", "When should Aeonvera notify you on this phone?", [
     {
-      text: "Default",
+      text: "Recommended",
       onPress: () => chooseReminderRepeat(action, scheduleActionReminder, "default"),
     },
     {
@@ -1729,9 +1730,9 @@ function chooseCalendarPreset(
     preset?: ReminderPreset
   ) => Promise<void>
 ) {
-  Alert.alert("Calendar time", "When should Aeonvera put this on your calendar?", [
+  Alert.alert("Add to Calendar", "When should Aeonvera create this calendar event?", [
     {
-      text: "Default",
+      text: "Recommended",
       onPress: () => void scheduleActionToNativeCalendar(action, "default"),
     },
     {
@@ -1755,7 +1756,7 @@ function chooseReminderRepeat(
   ) => Promise<void>,
   preset: ReminderPreset
 ) {
-  Alert.alert("Repeat", "Should this reminder repeat?", [
+  Alert.alert("Notification repeat", "Should this phone notification repeat?", [
     {
       text: "Once",
       onPress: () => void scheduleActionReminder(action, action.scope, preset, "once"),
