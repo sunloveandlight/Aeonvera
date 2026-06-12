@@ -477,6 +477,14 @@ export default function App() {
     (data?: NotificationTapData) => {
       const alertId = data?.alertId || data?.alert_id || null;
 
+      if (data?.target === "autopilot") {
+        setActiveView("today");
+        setActionNotice("Opened from Morning Autopilot. Review today's prepared plan.");
+        playSoftHaptic();
+        void loadCompanionData(session);
+        return;
+      }
+
       if (data?.target === "coach_inbox" || alertId) {
         selectedMessageOffsetY.current = null;
         setSelectedAlertId(alertId);
@@ -501,6 +509,9 @@ export default function App() {
         if (path.includes("focus=coach")) {
           selectedMessageOffsetY.current = null;
           setNotificationFocusTick((current) => current + 1);
+          playSoftHaptic();
+        } else if (path.includes("focus=autopilot")) {
+          setActionNotice("Opened from Morning Autopilot. Review today's prepared plan.");
           playSoftHaptic();
         }
         void loadCompanionData(session);
@@ -1162,6 +1173,37 @@ export default function App() {
     );
   }
 
+  async function sendMorningAutopilotBrief() {
+    if (!session?.access_token) {
+      Alert.alert("Sign in required", "Sign in before sending Morning Autopilot.");
+      return;
+    }
+
+    const response = await fetch(`${appUrl}/api/autopilot/morning-brief`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok || !result?.success) {
+      Alert.alert(
+        "Morning Autopilot",
+        result?.result?.reason || result?.error || "Morning Autopilot could not run."
+      );
+      return;
+    }
+
+    setActionNotice("Morning Autopilot sent. Check your phone notification and inbox.");
+    playSoftHaptic();
+    Alert.alert(
+      "Morning Autopilot sent",
+      "Aeonvera prepared today and sent the morning notification."
+    );
+    void loadCompanionData(session);
+  }
+
   const latestActions = protocol?.protocol?.primary_protocol || [];
   const latestSummary =
     protocol?.summary || protocol?.protocol?.summary || "Generate your first protocol from Optimize.";
@@ -1354,6 +1396,7 @@ export default function App() {
                 prepareNotifications={prepareNotifications}
                 saveAutopilotPreferences={saveAutopilotPreferences}
                 savePreferences={savePreferences}
+                sendMorningAutopilotBrief={sendMorningAutopilotBrief}
               />
             ) : null}
           </>
@@ -1944,6 +1987,7 @@ function SettingsView({
   pushStatus,
   saveAutopilotPreferences,
   savePreferences,
+  sendMorningAutopilotBrief,
 }: {
   autopilotPreferences: AutopilotPreferences | null;
   preferences: Preferences | null;
@@ -1951,6 +1995,7 @@ function SettingsView({
   pushStatus: string;
   saveAutopilotPreferences: (next: Partial<AutopilotPreferences>) => Promise<void>;
   savePreferences: (next: Partial<Preferences>) => Promise<void>;
+  sendMorningAutopilotBrief: () => Promise<void>;
 }) {
   const autopilot = autopilotPreferences || defaultAutopilotPreferences("");
 
@@ -2005,6 +2050,9 @@ function SettingsView({
         <Text style={styles.quietHours}>
           Quiet hours {autopilot.quiet_hours_start}-{autopilot.quiet_hours_end}
         </Text>
+        <Pressable style={styles.button} onPress={() => void sendMorningAutopilotBrief()}>
+          <Text style={styles.buttonText}>Send morning brief</Text>
+        </Pressable>
       </View>
 
       <View style={styles.panel}>

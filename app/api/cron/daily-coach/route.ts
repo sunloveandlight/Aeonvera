@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { runMorningAutopilotBrief } from "@/lib/autopilot/morningAutopilot";
 import { runCoachPipeline } from "@/lib/coach/runCoachPipeline";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
@@ -39,17 +40,35 @@ export async function GET(req: Request) {
     const supabase = getSupabaseAdmin();
 
     /**
-     * STEP 1: GET USERS FROM HEALTH STATES
+     * STEP 1: GET USERS WITH HEALTH, PROTOCOL, OR AUTOPILOT CONTEXT
      */
-    const { data: users, error } = await supabase
-      .from("health_states")
-      .select("user_id");
+    const [{ data: healthUsers, error }, { data: protocolUsers }, { data: autopilotUsers }] =
+      await Promise.all([
+        supabase
+          .from("health_states")
+          .select("user_id"),
+        supabase
+          .from("optimization_protocols")
+          .select("user_id")
+          .order("created_at", { ascending: false })
+          .limit(5000),
+        supabase
+          .from("autopilot_preferences")
+          .select("user_id")
+          .limit(5000),
+      ]);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    if (!users?.length) {
+    const users = [
+      ...(healthUsers || []),
+      ...(protocolUsers || []),
+      ...(autopilotUsers || []),
+    ];
+
+    if (!users.length) {
       return NextResponse.json({ success: true, processed: 0 });
     }
 
@@ -65,6 +84,8 @@ export async function GET(req: Request) {
     ];
 
     let processed = 0;
+    let autopilotPrepared = 0;
+    let autopilotSkipped = 0;
 
     /**
      * STEP 3: RUN COACH PIPELINE PER USER
@@ -72,16 +93,31 @@ export async function GET(req: Request) {
     for (const userId of uniqueUsers) {
       try {
         await runCoachPipeline(userId);
-        processed++;
       } catch (err) {
         console.error(`Coach failed for user ${userId}`, err);
       }
+
+      try {
+        const autopilot = await runMorningAutopilotBrief({ supabase, userId });
+        if (autopilot.status === "prepared") {
+          autopilotPrepared++;
+        } else {
+          autopilotSkipped++;
+        }
+      } catch (err) {
+        autopilotSkipped++;
+        console.error(`Morning Autopilot failed for user ${userId}`, err);
+      }
+
+      processed++;
     }
 
     return NextResponse.json({
       success: true,
       processed,
       users: uniqueUsers.length,
+      autopilot_prepared: autopilotPrepared,
+      autopilot_skipped: autopilotSkipped,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

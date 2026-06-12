@@ -35,7 +35,7 @@ type PushPayload = {
   url?: string;
   actions?: string[];
   alertId?: string;
-  target?: "coach_inbox" | "dashboard" | "companion";
+  target?: "coach_inbox" | "dashboard" | "companion" | "autopilot";
 };
 
 export async function sendCoachPushNotifications({
