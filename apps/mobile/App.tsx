@@ -176,9 +176,34 @@ type DailyExecutionPlan = {
   plan?: {
     summary?: string;
     items?: DailyPlanItem[];
+    memory?: {
+      completion_rate?: number;
+      friction_domains?: string[];
+      plan_load?: "light" | "steady" | "ambitious";
+      strong_domains?: string[];
+      total_signals?: number;
+    };
     principles?: string[];
   } | null;
   scheduled_event_ids?: string[] | null;
+};
+
+type ExecutionPattern = {
+  label: string;
+  count: number;
+  actions: string[];
+};
+
+type ExecutionSummary = {
+  score: number;
+  total: number;
+  completed: number;
+  skipped: number;
+  deferred: number;
+  scheduled: number;
+  status: "building" | "needs_attention" | "steady" | "strong";
+  headline: string;
+  topSkippedPattern: ExecutionPattern | null;
 };
 
 const WEB_URL =
@@ -296,6 +321,7 @@ export default function App() {
   const [autopilotMessage, setAutopilotMessage] = useState<string | null>(null);
   const [acceptingDailyPlan, setAcceptingDailyPlan] = useState(false);
   const [pendingFeedback, setPendingFeedback] = useState<PendingFeedback | null>(null);
+  const [executionSummary, setExecutionSummary] = useState<ExecutionSummary | null>(null);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
   const [notificationFocusTick, setNotificationFocusTick] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -363,6 +389,26 @@ export default function App() {
           },
           ok: false,
         }));
+      const executionResult = await fetch(`${appUrl}/api/execution/summary`, {
+        headers: {
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+      })
+        .then((response) =>
+          response.json().then((body) => ({
+            body,
+            ok: response.ok,
+          }))
+        )
+        .catch((error) => ({
+          body: {
+            error:
+              error instanceof Error
+                ? error.message
+                : "Execution summary could not load.",
+          },
+          ok: false,
+        }));
 
       if (messageResult.error || protocolResult.error || preferenceResult.error) {
         setDataMessage(
@@ -409,6 +455,11 @@ export default function App() {
           defaultAutopilotPreferences(currentSession.user.id)
       );
       setDailyPlan((autopilotResult.body?.plan as DailyExecutionPlan | null) || null);
+      if (executionResult.ok && !executionResult.body?.migrationRequired) {
+        setExecutionSummary((executionResult.body?.execution as ExecutionSummary | null) || null);
+      } else if (!executionResult.ok) {
+        setExecutionSummary(null);
+      }
       setPreferences(
         ((preferenceResult.data as Preferences | null) || {
           user_id: currentSession.user.id,
@@ -1652,6 +1703,7 @@ export default function App() {
                 autopilotMessage={autopilotMessage}
                 autopilotPreferences={autopilotPreferences}
                 dailyPlan={dailyPlan}
+                executionSummary={executionSummary}
                 latestActions={latestActions}
                 latestMessage={latestMessage}
                 latestSummary={latestSummary}
@@ -1744,6 +1796,7 @@ function TodayView({
   autopilotMessage,
   autopilotPreferences,
   dailyPlan,
+  executionSummary,
   latestActions,
   latestMessage,
   latestSummary,
@@ -1764,6 +1817,7 @@ function TodayView({
   autopilotMessage: string | null;
   autopilotPreferences: AutopilotPreferences | null;
   dailyPlan: DailyExecutionPlan | null;
+  executionSummary: ExecutionSummary | null;
   latestActions: ProtocolAction[];
   latestMessage: string;
   latestSummary: string;
@@ -1822,10 +1876,13 @@ function TodayView({
         dailyPlan={dailyPlan}
         localReminders={localReminders}
         nativeCalendarEvents={nativeCalendarEvents}
+        openPath={openPath}
         preferences={autopilotPreferences}
         protocol={protocol}
         skipDailyPlan={skipDailyPlan}
       />
+
+      <WeeklyExecutionReviewCard executionSummary={executionSummary} />
 
       {pendingFeedback ? (
         <ExecutionFeedbackCard
@@ -2088,6 +2145,66 @@ function MobileCommandStat({
   );
 }
 
+function WeeklyExecutionReviewCard({
+  executionSummary,
+}: {
+  executionSummary: ExecutionSummary | null;
+}) {
+  const status = executionSummary?.status || "building";
+  const score = executionSummary?.score ?? 0;
+
+  return (
+    <View style={styles.weeklyReviewPanel}>
+      <View style={styles.detailHeader}>
+        <View>
+          <Text style={styles.cardLabel}>Weekly Review</Text>
+          <Text style={styles.cardTitle}>
+            {status === "strong"
+              ? "Execution is compounding"
+              : status === "steady"
+                ? "Execution is stabilizing"
+                : status === "needs_attention"
+                  ? "Execution needs simplification"
+                  : "Execution baseline building"}
+          </Text>
+        </View>
+        <View style={styles.reviewScorePill}>
+          <Text style={styles.reviewScore}>{score}</Text>
+          <Text style={styles.reviewScoreLabel}>score</Text>
+        </View>
+      </View>
+      <Text style={styles.cardCopy}>
+        {executionSummary?.headline ||
+          "Complete or miss a few actions and Aeonvera will start extracting patterns."}
+      </Text>
+      <View style={styles.reviewStatsRow}>
+        <ReviewStat label="Done" value={String(executionSummary?.completed || 0)} />
+        <ReviewStat label="Missed" value={String(executionSummary?.skipped || 0)} />
+        <ReviewStat label="Deferred" value={String(executionSummary?.deferred || 0)} />
+        <ReviewStat label="Scheduled" value={String(executionSummary?.scheduled || 0)} />
+      </View>
+      {executionSummary?.topSkippedPattern ? (
+        <View style={styles.learningNote}>
+          <Text style={styles.actionNoticeLabel}>Pattern</Text>
+          <Text style={styles.actionNoticeText}>
+            {executionSummary.topSkippedPattern.label} created the most friction this week.
+            Aeonvera will reduce load or move timing before adding intensity.
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function ReviewStat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.reviewStat}>
+      <Text style={styles.scheduleMetricValue}>{value}</Text>
+      <Text style={styles.scheduleMetricLabel}>{label}</Text>
+    </View>
+  );
+}
+
 function AutopilotPlanCard({
   acceptDailyPlan,
   acceptingDailyPlan,
@@ -2096,6 +2213,7 @@ function AutopilotPlanCard({
   dailyPlan,
   localReminders,
   nativeCalendarEvents,
+  openPath,
   preferences,
   protocol,
   skipDailyPlan,
@@ -2107,6 +2225,7 @@ function AutopilotPlanCard({
   dailyPlan: DailyExecutionPlan | null;
   localReminders: Record<string, LocalReminder>;
   nativeCalendarEvents: Record<string, NativeCalendarEvent>;
+  openPath: (path: string) => Promise<void>;
   preferences: AutopilotPreferences | null;
   protocol: Protocol | null;
   skipDailyPlan: () => Promise<void>;
@@ -2130,6 +2249,7 @@ function AutopilotPlanCard({
         ? "Recreate Missing"
         : "Already Scheduled"
       : "Approve Today";
+  const confidence = getAutopilotConfidence(dailyPlan, scheduledCount + notificationCount);
 
   return (
     <View style={styles.autopilotPanel}>
@@ -2164,6 +2284,13 @@ function AutopilotPlanCard({
           autopilotMessage ||
           "Aeonvera will prepare your day after your first active protocol."}
       </Text>
+      <View style={styles.confidenceStrip}>
+        <View>
+          <Text style={styles.actionNoticeLabel}>Autopilot confidence</Text>
+          <Text style={styles.confidenceText}>{confidence.label}</Text>
+        </View>
+        <Text style={styles.confidenceValue}>{confidence.score}%</Text>
+      </View>
       {autopilotMessage ? <Text style={styles.warning}>{autopilotMessage}</Text> : null}
       {previewItems.length ? (
         <View style={styles.schedulePreviewList}>
@@ -2226,6 +2353,12 @@ function AutopilotPlanCard({
             onPress={adjustAutopilot}
           >
             <Text style={styles.secondaryActionText}>Adjust</Text>
+          </Pressable>
+          <Pressable
+            style={styles.secondaryAction}
+            onPress={() => void openPath("/companion?focus=autopilot")}
+          >
+            <Text style={styles.secondaryActionText}>Ask Why</Text>
           </Pressable>
           <Pressable
             style={styles.secondaryAction}
@@ -2710,6 +2843,29 @@ function getSchedulePreviewReason(item: DailyPlanItem) {
   }
 
   return "Prepared for approval before Aeonvera places it.";
+}
+
+function getAutopilotConfidence(dailyPlan: DailyExecutionPlan | null, placedCount: number) {
+  const memory = dailyPlan?.plan?.memory;
+  const signalCount = memory?.total_signals || 0;
+  const completionRate =
+    typeof memory?.completion_rate === "number" ? memory.completion_rate : 0.64;
+  const planLoad = memory?.plan_load || "steady";
+  const placedBonus = placedCount ? 8 : 0;
+  const signalBonus = Math.min(signalCount * 3, 18);
+  const loadAdjustment = planLoad === "light" ? 6 : planLoad === "ambitious" ? -2 : 3;
+  const raw = Math.round(completionRate * 58 + signalBonus + placedBonus + loadAdjustment + 18);
+  const score = Math.max(42, Math.min(raw, 96));
+
+  return {
+    score,
+    label:
+      score >= 82
+        ? "High confidence. Aeonvera has enough execution memory to act cleanly."
+        : score >= 66
+          ? "Moderate confidence. Aeonvera is using recent signals but will keep control visible."
+          : "Building confidence. Aeonvera will stay conservative until more feedback arrives.",
+  };
 }
 
 function groupActionsByScope(actions: ProtocolAction[]) {
@@ -3391,6 +3547,58 @@ const styles = StyleSheet.create({
   feedbackButtonPrimaryText: {
     color: "#080808",
   },
+  weeklyReviewPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    padding: 18,
+  },
+  reviewScorePill: {
+    minWidth: 58,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.28)",
+    borderRadius: 8,
+    backgroundColor: "rgba(218,188,115,0.08)",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  reviewScore: {
+    color: "rgba(238,214,154,0.94)",
+    fontSize: 20,
+    fontWeight: "400",
+  },
+  reviewScoreLabel: {
+    color: "rgba(255,255,255,0.42)",
+    fontSize: 8,
+    fontWeight: "700",
+    letterSpacing: 1,
+    marginTop: 2,
+    textTransform: "uppercase",
+  },
+  reviewStatsRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 16,
+  },
+  reviewStat: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    paddingHorizontal: 9,
+    paddingVertical: 10,
+  },
+  learningNote: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.2)",
+    borderRadius: 8,
+    backgroundColor: "rgba(218,188,115,0.06)",
+    marginTop: 14,
+    padding: 12,
+  },
   modePill: {
     borderWidth: 1,
     borderColor: "rgba(218,188,115,0.28)",
@@ -3434,6 +3642,29 @@ const styles = StyleSheet.create({
   schedulePreviewList: {
     gap: 8,
     marginTop: 16,
+  },
+  confidenceStrip: {
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.18)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.16)",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    marginTop: 14,
+    padding: 12,
+  },
+  confidenceText: {
+    color: "rgba(255,255,255,0.58)",
+    fontSize: 12,
+    lineHeight: 17,
+    maxWidth: 230,
+  },
+  confidenceValue: {
+    color: "rgba(238,214,154,0.94)",
+    fontSize: 24,
+    fontWeight: "300",
   },
   schedulePreviewItem: {
     alignItems: "center",
