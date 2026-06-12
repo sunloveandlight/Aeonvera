@@ -111,6 +111,42 @@ type Preferences = {
   timezone: string;
 };
 
+type AutopilotMode = "manual" | "suggest" | "approve" | "autopilot" | "sovereign";
+
+type AutopilotPreferences = {
+  user_id: string;
+  mode: AutopilotMode;
+  calendar_enabled: boolean;
+  notifications_enabled: boolean;
+  auto_schedule_enabled: boolean;
+  allow_training_blocks: boolean;
+  allow_nutrition_blocks: boolean;
+  allow_recovery_blocks: boolean;
+  allow_check_ins: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
+  timezone: string;
+};
+
+type DailyPlanItem = ScheduledProtocolAction & {
+  recommended_time?: string;
+  execution_mode?: "manual" | "suggest" | "approve" | "notify" | "schedule";
+};
+
+type DailyExecutionPlan = {
+  id: string;
+  plan_date: string;
+  status: "draft" | "prepared" | "accepted" | "adjusted" | "skipped" | "auto_scheduled";
+  autopilot_mode: AutopilotMode;
+  summary?: string | null;
+  plan?: {
+    summary?: string;
+    items?: DailyPlanItem[];
+    principles?: string[];
+  } | null;
+  scheduled_event_ids?: string[] | null;
+};
+
 const WEB_URL =
   process.env.EXPO_PUBLIC_AEONVERA_WEB_URL ||
   Constants.expoConfig?.extra?.webUrl ||
@@ -220,6 +256,10 @@ export default function App() {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [inboxNotice, setInboxNotice] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<Preferences | null>(null);
+  const [autopilotPreferences, setAutopilotPreferences] =
+    useState<AutopilotPreferences | null>(null);
+  const [dailyPlan, setDailyPlan] = useState<DailyExecutionPlan | null>(null);
+  const [autopilotMessage, setAutopilotMessage] = useState<string | null>(null);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
   const [notificationFocusTick, setNotificationFocusTick] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -245,6 +285,7 @@ export default function App() {
 
       if (showSpinner) setRefreshing(true);
       setDataMessage(null);
+      setAutopilotMessage(null);
 
       const [messageResult, protocolResult, preferenceResult] = await Promise.all([
         supabase
@@ -266,6 +307,26 @@ export default function App() {
           .eq("user_id", currentSession.user.id)
           .maybeSingle(),
       ]);
+      const autopilotResult = await fetch(`${appUrl}/api/autopilot/daily-plan`, {
+        headers: {
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+      })
+        .then((response) =>
+          response.json().then((body) => ({
+            body,
+            ok: response.ok,
+          }))
+        )
+        .catch((error) => ({
+          body: {
+            error:
+              error instanceof Error
+                ? error.message
+                : "Autopilot could not prepare today.",
+          },
+          ok: false,
+        }));
 
       if (messageResult.error || protocolResult.error || preferenceResult.error) {
         setDataMessage(
@@ -298,6 +359,20 @@ export default function App() {
       setCoachMessages((messageResult.data || []) as CoachMessage[]);
       setProtocol(latestProtocol);
       setAdherenceEvents(nextAdherenceEvents);
+      if (!autopilotResult.ok) {
+        setAutopilotMessage(
+          autopilotResult.body?.error || "Autopilot could not prepare today."
+        );
+      } else if (autopilotResult.body?.migrationRequired) {
+        setAutopilotMessage(
+          autopilotResult.body.message || "Autopilot needs its Supabase migration."
+        );
+      }
+      setAutopilotPreferences(
+        (autopilotResult.body?.preferences as AutopilotPreferences | null) ||
+          defaultAutopilotPreferences(currentSession.user.id)
+      );
+      setDailyPlan((autopilotResult.body?.plan as DailyExecutionPlan | null) || null);
       setPreferences(
         ((preferenceResult.data as Preferences | null) || {
           user_id: currentSession.user.id,
@@ -310,7 +385,7 @@ export default function App() {
       );
       if (showSpinner) setRefreshing(false);
     },
-    []
+    [appUrl]
   );
 
   useEffect(() => {
@@ -374,6 +449,9 @@ export default function App() {
         setAdherenceEvents([]);
         setCoachMessages([]);
         setPreferences(null);
+        setAutopilotPreferences(null);
+        setDailyPlan(null);
+        setAutopilotMessage(null);
       }
     });
 
@@ -586,6 +664,126 @@ export default function App() {
     }
   }
 
+  async function saveAutopilotPreferences(next: Partial<AutopilotPreferences>) {
+    if (!session) return;
+
+    const merged: AutopilotPreferences = {
+      ...defaultAutopilotPreferences(session.user.id),
+      ...(autopilotPreferences || {}),
+      ...next,
+    };
+
+    if (merged.mode !== "autopilot" && merged.mode !== "sovereign") {
+      merged.auto_schedule_enabled = false;
+    }
+
+    setAutopilotPreferences(merged);
+
+    const response = await fetch(`${appUrl}/api/autopilot/daily-plan`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(merged),
+    });
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok || result?.migrationRequired) {
+      Alert.alert(
+        "Autopilot preferences",
+        result?.message || result?.error || "Autopilot preferences could not be saved."
+      );
+      return;
+    }
+
+    setAutopilotPreferences(result.preferences as AutopilotPreferences);
+    setActionNotice("Autopilot preferences updated.");
+  }
+
+  async function updateDailyPlanStatus(status: DailyExecutionPlan["status"]) {
+    if (!session) return;
+
+    const response = await fetch(`${appUrl}/api/autopilot/daily-plan`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    });
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      Alert.alert(
+        "Daily plan",
+        result?.error || "Daily plan status could not be updated."
+      );
+      return;
+    }
+
+    if (result?.plan) {
+      setDailyPlan(result.plan as DailyExecutionPlan);
+    } else if (dailyPlan) {
+      setDailyPlan({ ...dailyPlan, status });
+    }
+  }
+
+  async function acceptDailyPlan() {
+    if (!dailyPlan?.plan?.items?.length) {
+      Alert.alert("Autopilot", "There is no prepared plan to accept yet.");
+      return;
+    }
+
+    const preferences = autopilotPreferences || defaultAutopilotPreferences(session?.user.id || "");
+    const items = dailyPlan.plan.items.slice(0, 5);
+    let scheduled = 0;
+    let notified = 0;
+
+    for (const item of items) {
+      if (!item.action) continue;
+
+      if (preferences.calendar_enabled && item.execution_mode !== "notify") {
+        const eventId = await scheduleActionToNativeCalendar(item, "default", true);
+        if (eventId) scheduled += 1;
+      }
+
+      if (
+        preferences.notifications_enabled &&
+        (item.execution_mode === "notify" || !preferences.calendar_enabled)
+      ) {
+        const notificationId = await scheduleActionReminder(
+          item,
+          item.scope,
+          "default",
+          "once",
+          true
+        );
+        if (notificationId) notified += 1;
+      }
+    }
+
+    await updateDailyPlanStatus(
+      preferences.mode === "autopilot" || preferences.mode === "sovereign"
+        ? "auto_scheduled"
+        : "accepted"
+    );
+    setActionNotice(
+      scheduled || notified
+        ? `Today is prepared: ${scheduled} calendar block${
+            scheduled === 1 ? "" : "s"
+          }${notified ? ` and ${notified} phone notification${notified === 1 ? "" : "s"}` : ""}.`
+        : "Today is accepted. Aeonvera will hold the plan in your active queue."
+    );
+    playSoftHaptic();
+  }
+
+  async function skipDailyPlan() {
+    await updateDailyPlanStatus("skipped");
+    setActionNotice("Autopilot paused for today. Your protocol remains available below.");
+    playSoftHaptic();
+  }
+
   async function recordAdherence(
     action: ProtocolAction,
     actionIndex: number,
@@ -671,13 +869,14 @@ export default function App() {
     action: ScheduledProtocolAction,
     scope: ActionScope,
     preset: ReminderPreset = "default",
-    repeat: ReminderRepeat = "once"
+    repeat: ReminderRepeat = "once",
+    silent = false
   ) {
-    if (!supabase || !session || !protocol?.id || !action.action) return;
+    if (!supabase || !session || !protocol?.id || !action.action) return null;
 
     if (Platform.OS !== "ios" && Platform.OS !== "android") {
       Alert.alert("Native only", "Protocol reminders are available in the mobile app.");
-      return;
+      return null;
     }
 
     const current = await Notifications.getPermissionsAsync();
@@ -687,7 +886,7 @@ export default function App() {
 
     if (!isNotificationPermissionGranted(finalPermission)) {
       Alert.alert("Notification not scheduled", "Notification permission was not granted.");
-      return;
+      return null;
     }
 
     const scheduledFor = getReminderDate(scope, preset, action);
@@ -742,23 +941,28 @@ export default function App() {
         repeat === "once" ? "" : `, ${repeat}`
       }.`
     );
-    Alert.alert(
-      "Phone notification scheduled",
-      `Aeonvera will send a phone notification ${formatReminderDate(scheduledFor)}${
-        repeat === "once" ? "" : `, ${repeat}`
-      }. This does not create a calendar event.`
-    );
+    if (!silent) {
+      Alert.alert(
+        "Phone notification scheduled",
+        `Aeonvera will send a phone notification ${formatReminderDate(scheduledFor)}${
+          repeat === "once" ? "" : `, ${repeat}`
+        }. This does not create a calendar event.`
+      );
+    }
+
+    return notificationId;
   }
 
   async function scheduleActionToNativeCalendar(
     action: ScheduledProtocolAction,
-    preset: ReminderPreset = "default"
+    preset: ReminderPreset = "default",
+    silent = false
   ) {
-    if (!supabase || !session || !protocol?.id || !action.action) return;
+    if (!supabase || !session || !protocol?.id || !action.action) return null;
 
     if (Platform.OS !== "ios" && Platform.OS !== "android") {
       Alert.alert("Native only", "Device calendar scheduling is available in the mobile app.");
-      return;
+      return null;
     }
 
     const currentPermission = await Calendar.getCalendarPermissionsAsync().catch(() => null);
@@ -769,13 +973,13 @@ export default function App() {
 
     if (!isPermissionGranted(finalPermission)) {
       Alert.alert("Calendar not connected", "Calendar permission was not granted.");
-      return;
+      return null;
     }
 
     const calendar = await getWritableDeviceCalendar();
     if (!calendar) {
       Alert.alert("Calendar unavailable", "No writable calendar was found on this device.");
-      return;
+      return null;
     }
 
     const scheduledFor = getReminderDate(action.scope, preset, action);
@@ -862,10 +1066,14 @@ export default function App() {
       }.`
     );
     playSoftHaptic();
-    Alert.alert(
-      "Added to calendar",
-      `Scheduled ${formatReminderDate(scheduledFor)} in ${calendar.title || "your calendar"}. Open ${calendarAppName} to see it.`
-    );
+    if (!silent) {
+      Alert.alert(
+        "Added to calendar",
+        `Scheduled ${formatReminderDate(scheduledFor)} in ${calendar.title || "your calendar"}. Open ${calendarAppName} to see it.`
+      );
+    }
+
+    return eventId;
   }
 
   async function prepareNotifications() {
@@ -1058,14 +1266,19 @@ export default function App() {
               <TodayView
                 adherenceEvents={adherenceEvents}
                 actionNotice={actionNotice}
+                autopilotMessage={autopilotMessage}
+                autopilotPreferences={autopilotPreferences}
+                dailyPlan={dailyPlan}
                 latestActions={latestActions}
                 latestMessage={latestMessage}
                 latestSummary={latestSummary}
+                acceptDailyPlan={acceptDailyPlan}
                 openPath={openPath}
                 protocol={protocol}
                 recordAdherence={recordAdherence}
                 scheduleActionReminder={scheduleActionReminder}
                 scheduleActionToNativeCalendar={scheduleActionToNativeCalendar}
+                skipDailyPlan={skipDailyPlan}
                 nativeCalendarEvents={nativeCalendarEvents}
                 localReminders={localReminders}
                 setActionNotice={setActionNotice}
@@ -1119,9 +1332,11 @@ export default function App() {
 
             {activeView === "settings" ? (
               <SettingsView
+                autopilotPreferences={autopilotPreferences}
                 preferences={preferences}
                 pushStatus={pushStatus}
                 prepareNotifications={prepareNotifications}
+                saveAutopilotPreferences={saveAutopilotPreferences}
                 savePreferences={savePreferences}
               />
             ) : null}
@@ -1133,8 +1348,12 @@ export default function App() {
 }
 
 function TodayView({
+  acceptDailyPlan,
   adherenceEvents,
   actionNotice,
+  autopilotMessage,
+  autopilotPreferences,
+  dailyPlan,
   latestActions,
   latestMessage,
   latestSummary,
@@ -1145,10 +1364,15 @@ function TodayView({
   recordAdherence,
   scheduleActionReminder,
   scheduleActionToNativeCalendar,
+  skipDailyPlan,
   setActionNotice,
 }: {
+  acceptDailyPlan: () => Promise<void>;
   adherenceEvents: AdherenceEvent[];
   actionNotice: string | null;
+  autopilotMessage: string | null;
+  autopilotPreferences: AutopilotPreferences | null;
+  dailyPlan: DailyExecutionPlan | null;
   latestActions: ProtocolAction[];
   latestMessage: string;
   latestSummary: string;
@@ -1166,12 +1390,15 @@ function TodayView({
     action: ScheduledProtocolAction,
     scope: ActionScope,
     preset?: ReminderPreset,
-    repeat?: ReminderRepeat
-  ) => Promise<void>;
+    repeat?: ReminderRepeat,
+    silent?: boolean
+  ) => Promise<string | null>;
   scheduleActionToNativeCalendar: (
     action: ScheduledProtocolAction,
-    preset?: ReminderPreset
-  ) => Promise<void>;
+    preset?: ReminderPreset,
+    silent?: boolean
+  ) => Promise<string | null>;
+  skipDailyPlan: () => Promise<void>;
   setActionNotice: (message: string | null) => void;
 }) {
   const [expandedActionKey, setExpandedActionKey] = useState<string | null>(null);
@@ -1209,6 +1436,15 @@ function TodayView({
           </View>
         ) : null}
       </View>
+
+      <AutopilotPlanCard
+        acceptDailyPlan={acceptDailyPlan}
+        autopilotMessage={autopilotMessage}
+        dailyPlan={dailyPlan}
+        openPath={openPath}
+        preferences={autopilotPreferences}
+        skipDailyPlan={skipDailyPlan}
+      />
 
       <View style={styles.panel}>
         <Text style={styles.cardLabel}>Today&apos;s Protocol</Text>
@@ -1432,6 +1668,94 @@ function MobileCommandStat({
   );
 }
 
+function AutopilotPlanCard({
+  acceptDailyPlan,
+  autopilotMessage,
+  dailyPlan,
+  openPath,
+  preferences,
+  skipDailyPlan,
+}: {
+  acceptDailyPlan: () => Promise<void>;
+  autopilotMessage: string | null;
+  dailyPlan: DailyExecutionPlan | null;
+  openPath: (path: string) => Promise<void>;
+  preferences: AutopilotPreferences | null;
+  skipDailyPlan: () => Promise<void>;
+}) {
+  const items = dailyPlan?.plan?.items || [];
+  const mode = preferences?.mode || dailyPlan?.autopilot_mode || "approve";
+  const status = dailyPlan?.status || "prepared";
+  const primaryItems = items.slice(0, 3);
+
+  return (
+    <View style={styles.autopilotPanel}>
+      <View style={styles.detailHeader}>
+        <View>
+          <Text style={styles.cardLabel}>Autopilot</Text>
+          <Text style={styles.cardTitle}>
+            {status === "accepted" || status === "auto_scheduled"
+              ? "Today is active"
+              : "Today is prepared"}
+          </Text>
+        </View>
+        <Text style={styles.modePill}>{formatAutopilotMode(mode)}</Text>
+      </View>
+      <Text style={styles.cardCopy}>
+        {dailyPlan?.summary ||
+          dailyPlan?.plan?.summary ||
+          autopilotMessage ||
+          "Aeonvera will prepare your day after your first active protocol."}
+      </Text>
+      {autopilotMessage ? <Text style={styles.warning}>{autopilotMessage}</Text> : null}
+      {primaryItems.length ? (
+        <View style={styles.autopilotItems}>
+          {primaryItems.map((item) => (
+            <View key={getActionKey(item)} style={styles.autopilotItem}>
+              <Text style={styles.autopilotTime}>{item.recommended_time || "Smart"}</Text>
+              <Text style={styles.autopilotAction}>{item.action}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+      <View style={styles.autopilotActions}>
+        <Pressable
+          style={[
+            styles.button,
+            styles.autopilotPrimaryButton,
+            (status === "accepted" || status === "auto_scheduled") && styles.buttonDisabled,
+          ]}
+          disabled={status === "accepted" || status === "auto_scheduled"}
+          onPress={() => void acceptDailyPlan()}
+        >
+          <Text style={styles.buttonText}>
+            {status === "accepted" || status === "auto_scheduled" ? "Prepared" : "Accept Today"}
+          </Text>
+        </Pressable>
+        <View style={styles.secondaryActionRow}>
+          <Pressable
+            style={styles.secondaryAction}
+            onPress={() => {
+              playSoftHaptic();
+              void openPath("/optimization");
+            }}
+          >
+            <Text style={styles.secondaryActionText}>Adjust</Text>
+          </Pressable>
+          <Pressable
+            style={styles.secondaryAction}
+            onPress={() => {
+              void skipDailyPlan();
+            }}
+          >
+            <Text style={styles.secondaryActionText}>Pause Today</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function MessageDetailView({
   message,
   onBack,
@@ -1606,12 +1930,14 @@ function ProtocolActionRow({
     action: ScheduledProtocolAction,
     scope: ActionScope,
     preset?: ReminderPreset,
-    repeat?: ReminderRepeat
-  ) => Promise<void>;
+    repeat?: ReminderRepeat,
+    silent?: boolean
+  ) => Promise<string | null>;
   scheduleActionToNativeCalendar: (
     action: ScheduledProtocolAction,
-    preset?: ReminderPreset
-  ) => Promise<void>;
+    preset?: ReminderPreset,
+    silent?: boolean
+  ) => Promise<string | null>;
 }) {
   return (
     <Pressable
@@ -1695,8 +2021,9 @@ function chooseReminderPreset(
     action: ScheduledProtocolAction,
     scope: ActionScope,
     preset?: ReminderPreset,
-    repeat?: ReminderRepeat
-  ) => Promise<void>
+    repeat?: ReminderRepeat,
+    silent?: boolean
+  ) => Promise<string | null>
 ) {
   Alert.alert("Phone notification", "When should Aeonvera notify you on this phone?", [
     {
@@ -1720,8 +2047,9 @@ function chooseReminderRepeat(
     action: ScheduledProtocolAction,
     scope: ActionScope,
     preset?: ReminderPreset,
-    repeat?: ReminderRepeat
-  ) => Promise<void>,
+    repeat?: ReminderRepeat,
+    silent?: boolean
+  ) => Promise<string | null>,
   preset: ReminderPreset
 ) {
   Alert.alert("Notification repeat", "Should this phone notification repeat?", [
@@ -1741,18 +2069,106 @@ function chooseReminderRepeat(
 }
 
 function SettingsView({
+  autopilotPreferences,
   preferences,
   prepareNotifications,
   pushStatus,
+  saveAutopilotPreferences,
   savePreferences,
 }: {
+  autopilotPreferences: AutopilotPreferences | null;
   preferences: Preferences | null;
   prepareNotifications: () => Promise<void>;
   pushStatus: string;
+  saveAutopilotPreferences: (next: Partial<AutopilotPreferences>) => Promise<void>;
   savePreferences: (next: Partial<Preferences>) => Promise<void>;
 }) {
+  const autopilot = autopilotPreferences || defaultAutopilotPreferences("");
+
   return (
     <>
+      <View style={styles.panel}>
+        <Text style={styles.cardLabel}>Autopilot</Text>
+        <Text style={styles.cardTitle}>Daily execution intelligence</Text>
+        <Text style={styles.cardCopy}>
+          Aeonvera can prepare your day automatically, then schedule only what you allow.
+        </Text>
+        <View style={styles.modeGrid}>
+          {(["suggest", "approve", "autopilot", "manual"] as AutopilotMode[]).map((mode) => (
+            <Pressable
+              key={mode}
+              style={[
+                styles.modeButton,
+                autopilot.mode === mode && styles.activeModeButton,
+              ]}
+              onPress={() => void saveAutopilotPreferences({ mode })}
+            >
+              <Text
+                style={[
+                  styles.modeButtonText,
+                  autopilot.mode === mode && styles.activeModeButtonText,
+                ]}
+              >
+                {formatAutopilotMode(mode)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        <PreferenceRow
+          label="Calendar blocks"
+          value={autopilot.calendar_enabled}
+          onValueChange={(value) => void saveAutopilotPreferences({ calendar_enabled: value })}
+        />
+        <PreferenceRow
+          label="Phone nudges"
+          value={autopilot.notifications_enabled}
+          onValueChange={(value) =>
+            void saveAutopilotPreferences({ notifications_enabled: value })
+          }
+        />
+        <PreferenceRow
+          label="Auto schedule"
+          value={autopilot.auto_schedule_enabled}
+          onValueChange={(value) =>
+            void saveAutopilotPreferences({ auto_schedule_enabled: value })
+          }
+        />
+        <Text style={styles.quietHours}>
+          Quiet hours {autopilot.quiet_hours_start}-{autopilot.quiet_hours_end}
+        </Text>
+      </View>
+
+      <View style={styles.panel}>
+        <Text style={styles.cardLabel}>Autonomy Boundaries</Text>
+        <Text style={styles.cardTitle}>What Aeonvera may organize</Text>
+        <PreferenceRow
+          label="Training"
+          value={autopilot.allow_training_blocks}
+          onValueChange={(value) =>
+            void saveAutopilotPreferences({ allow_training_blocks: value })
+          }
+        />
+        <PreferenceRow
+          label="Nutrition"
+          value={autopilot.allow_nutrition_blocks}
+          onValueChange={(value) =>
+            void saveAutopilotPreferences({ allow_nutrition_blocks: value })
+          }
+        />
+        <PreferenceRow
+          label="Recovery"
+          value={autopilot.allow_recovery_blocks}
+          onValueChange={(value) =>
+            void saveAutopilotPreferences({ allow_recovery_blocks: value })
+          }
+        />
+        <PreferenceRow
+          label="Check-ins"
+          value={autopilot.allow_check_ins}
+          onValueChange={(value) => void saveAutopilotPreferences({ allow_check_ins: value })}
+        />
+      </View>
+
       <View style={styles.panel}>
         <Text style={styles.cardLabel}>Native Push</Text>
         <Text style={styles.cardTitle}>{pushStatus}</Text>
@@ -1856,6 +2272,31 @@ function buildLatestAdherenceByAction(events: AdherenceEvent[]) {
 
     return current;
   }, {});
+}
+
+function defaultAutopilotPreferences(userId: string): AutopilotPreferences {
+  return {
+    user_id: userId,
+    mode: "approve",
+    calendar_enabled: true,
+    notifications_enabled: true,
+    auto_schedule_enabled: false,
+    allow_training_blocks: true,
+    allow_nutrition_blocks: true,
+    allow_recovery_blocks: true,
+    allow_check_ins: true,
+    quiet_hours_start: "22:00",
+    quiet_hours_end: "07:00",
+    timezone: "UTC",
+  };
+}
+
+function formatAutopilotMode(mode: AutopilotMode) {
+  if (mode === "manual") return "Manual";
+  if (mode === "suggest") return "Suggest";
+  if (mode === "autopilot") return "Autopilot";
+  if (mode === "sovereign") return "Sovereign";
+  return "Approve";
 }
 
 function groupActionsByScope(actions: ProtocolAction[]) {
@@ -2134,6 +2575,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 18,
   },
+  autopilotPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.26)",
+    backgroundColor: "rgba(218,188,115,0.07)",
+    borderRadius: 10,
+    padding: 18,
+  },
   statusRow: {
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
@@ -2219,6 +2667,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "rgba(218,188,115,0.92)",
     marginTop: 16,
+  },
+  buttonDisabled: {
+    opacity: 0.62,
   },
   buttonText: {
     color: "#080808",
@@ -2310,6 +2761,52 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.68)",
     fontSize: 13,
     lineHeight: 19,
+  },
+  modePill: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.28)",
+    borderRadius: 999,
+    color: "rgba(238,214,154,0.88)",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    overflow: "hidden",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    textTransform: "uppercase",
+  },
+  autopilotItems: {
+    gap: 8,
+    marginTop: 16,
+  },
+  autopilotItem: {
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    flexDirection: "row",
+    gap: 10,
+    padding: 11,
+  },
+  autopilotTime: {
+    width: 48,
+    color: "rgba(238,214,154,0.82)",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+  },
+  autopilotAction: {
+    flex: 1,
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  autopilotActions: {
+    marginTop: 2,
+  },
+  autopilotPrimaryButton: {
+    marginTop: 14,
   },
   statPill: {
     flex: 1,
@@ -2708,6 +3205,36 @@ const styles = StyleSheet.create({
   preferenceLabel: {
     color: "rgba(255,255,255,0.82)",
     fontSize: 15,
+  },
+  modeGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 16,
+    marginBottom: 6,
+  },
+  modeButton: {
+    minHeight: 36,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  activeModeButton: {
+    borderColor: "rgba(218,188,115,0.34)",
+    backgroundColor: "rgba(218,188,115,0.12)",
+  },
+  modeButtonText: {
+    color: "rgba(255,255,255,0.56)",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  activeModeButtonText: {
+    color: "rgba(238,214,154,0.9)",
   },
   quietHours: {
     color: "rgba(255,255,255,0.42)",
