@@ -206,6 +206,12 @@ type ExecutionSummary = {
   topSkippedPattern: ExecutionPattern | null;
 };
 
+type DiagnosticCheck = {
+  detail: string;
+  label: string;
+  status: "pass" | "warn" | "fail";
+};
+
 const WEB_URL =
   process.env.EXPO_PUBLIC_AEONVERA_WEB_URL ||
   Constants.expoConfig?.extra?.webUrl ||
@@ -322,6 +328,8 @@ export default function App() {
   const [acceptingDailyPlan, setAcceptingDailyPlan] = useState(false);
   const [pendingFeedback, setPendingFeedback] = useState<PendingFeedback | null>(null);
   const [executionSummary, setExecutionSummary] = useState<ExecutionSummary | null>(null);
+  const [diagnosticChecks, setDiagnosticChecks] = useState<DiagnosticCheck[]>([]);
+  const [diagnosticsRunning, setDiagnosticsRunning] = useState(false);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
   const [notificationFocusTick, setNotificationFocusTick] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -1582,6 +1590,122 @@ export default function App() {
     void loadCompanionData(session);
   }
 
+  async function runLaunchDiagnostics() {
+    setDiagnosticsRunning(true);
+    const checks: DiagnosticCheck[] = [];
+
+    const addCheck = (check: DiagnosticCheck) => {
+      checks.push(check);
+      setDiagnosticChecks([...checks]);
+    };
+
+    try {
+      addCheck({
+        label: "Mobile environment",
+        status: supabase && SUPABASE_URL && SUPABASE_ANON_KEY ? "pass" : "fail",
+        detail:
+          supabase && SUPABASE_URL && SUPABASE_ANON_KEY
+            ? "Supabase URL and public key are available."
+            : "Supabase mobile env vars are missing.",
+      });
+
+      addCheck({
+        label: "Signed-in account",
+        status: session?.user?.id ? "pass" : "fail",
+        detail: session?.user?.id
+          ? "Secure session is active on this device."
+          : "Sign in before testing production readiness.",
+      });
+
+      addCheck({
+        label: "Expo project",
+        status: EAS_PROJECT_ID ? "pass" : "fail",
+        detail: EAS_PROJECT_ID
+          ? "EAS project ID is available for native push tokens."
+          : "Add EXPO_PUBLIC_EAS_PROJECT_ID before production builds.",
+      });
+
+      const notificationPermission = await Notifications.getPermissionsAsync().catch(() => null);
+      const notificationsGranted =
+        notificationPermission && isNotificationPermissionGranted(notificationPermission);
+      addCheck({
+        label: "Notification permission",
+        status: notificationsGranted ? "pass" : "warn",
+        detail: notificationsGranted
+          ? "This device has notification permission."
+          : "Notifications are not granted on this device yet.",
+      });
+
+      let tokenSynced = false;
+      if (session?.access_token && EAS_PROJECT_ID && notificationsGranted) {
+        const token = await Notifications.getExpoPushTokenAsync({
+          projectId: EAS_PROJECT_ID,
+        }).catch(() => null);
+
+        if (token?.data) {
+          const response = await fetch(`${appUrl}/api/notifications/push-subscriptions`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              platform: Platform.OS,
+              token: token.data,
+              device_name: Device.deviceName || `${Platform.OS} device`,
+            }),
+          });
+          tokenSynced = response.ok;
+        }
+      }
+      addCheck({
+        label: "Native push token",
+        status: tokenSynced ? "pass" : "warn",
+        detail: tokenSynced
+          ? "Expo push token registered with Aeonvera."
+          : "Token was not registered. Connect notifications, then rerun diagnostics.",
+      });
+
+      const calendarPermission = await Calendar.getCalendarPermissionsAsync().catch(() => null);
+      const calendarGranted = calendarPermission && isPermissionGranted(calendarPermission);
+      const writableCalendars = calendarGranted
+        ? await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT)
+            .then((calendars) => calendars.filter((calendar) => calendar.allowsModifications))
+            .catch(() => [])
+        : [];
+      addCheck({
+        label: "Device calendar",
+        status: calendarGranted && writableCalendars.length ? "pass" : "warn",
+        detail:
+          calendarGranted && writableCalendars.length
+            ? `${writableCalendars.length} writable calendar${writableCalendars.length === 1 ? "" : "s"} available.`
+            : "Calendar permission or writable calendar is missing.",
+      });
+
+      const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync()
+        .then((items) => items.length)
+        .catch(() => 0);
+      addCheck({
+        label: "Scheduled nudges",
+        status: scheduledNotifications ? "pass" : "warn",
+        detail: scheduledNotifications
+          ? `${scheduledNotifications} notification${scheduledNotifications === 1 ? "" : "s"} scheduled on this device.`
+          : "No local notifications are scheduled yet.",
+      });
+
+      const allPass = checks.every((check) => check.status === "pass");
+      setPushStatus(allPass ? "Launch diagnostics passed" : "Diagnostics need attention");
+      setActionNotice(
+        allPass
+          ? "Launch diagnostics passed on this device."
+          : "Diagnostics finished. Review the items that need attention."
+      );
+      playSoftHaptic();
+    } finally {
+      setDiagnosticsRunning(false);
+    }
+  }
+
   const latestActions = protocol?.protocol?.primary_protocol || [];
   const latestSummary =
     protocol?.summary || protocol?.protocol?.summary || "Generate your first protocol from Optimize.";
@@ -1772,9 +1896,12 @@ export default function App() {
             {activeView === "settings" ? (
               <SettingsView
                 autopilotPreferences={autopilotPreferences}
+                diagnosticChecks={diagnosticChecks}
+                diagnosticsRunning={diagnosticsRunning}
                 preferences={preferences}
                 pushStatus={pushStatus}
                 prepareNotifications={prepareNotifications}
+                runLaunchDiagnostics={runLaunchDiagnostics}
                 saveAutopilotPreferences={saveAutopilotPreferences}
                 savePreferences={savePreferences}
                 sendMorningAutopilotBrief={sendMorningAutopilotBrief}
@@ -2579,17 +2706,23 @@ function ProtocolActionRow({
 
 function SettingsView({
   autopilotPreferences,
+  diagnosticChecks,
+  diagnosticsRunning,
   preferences,
   prepareNotifications,
   pushStatus,
+  runLaunchDiagnostics,
   saveAutopilotPreferences,
   savePreferences,
   sendMorningAutopilotBrief,
 }: {
   autopilotPreferences: AutopilotPreferences | null;
+  diagnosticChecks: DiagnosticCheck[];
+  diagnosticsRunning: boolean;
   preferences: Preferences | null;
   prepareNotifications: () => Promise<void>;
   pushStatus: string;
+  runLaunchDiagnostics: () => Promise<void>;
   saveAutopilotPreferences: (next: Partial<AutopilotPreferences>) => Promise<void>;
   savePreferences: (next: Partial<Preferences>) => Promise<void>;
   sendMorningAutopilotBrief: () => Promise<void>;
@@ -2693,6 +2826,45 @@ function SettingsView({
         <Pressable style={styles.button} onPress={() => void prepareNotifications()}>
           <Text style={styles.buttonText}>Connect notifications</Text>
         </Pressable>
+      </View>
+
+      <View style={styles.panel}>
+        <Text style={styles.cardLabel}>Launch Diagnostics</Text>
+        <Text style={styles.cardTitle}>Production readiness</Text>
+        <Text style={styles.cardCopy}>
+          Run this on each release build before submitting to TestFlight or Play Store testing.
+        </Text>
+        <Pressable
+          style={[styles.button, diagnosticsRunning && styles.buttonDisabled]}
+          disabled={diagnosticsRunning}
+          onPress={() => void runLaunchDiagnostics()}
+        >
+          <Text style={styles.buttonText}>
+            {diagnosticsRunning ? "Checking" : "Run diagnostics"}
+          </Text>
+        </Pressable>
+        {diagnosticChecks.length ? (
+          <View style={styles.diagnosticList}>
+            {diagnosticChecks.map((check) => (
+              <View key={check.label} style={styles.diagnosticItem}>
+                <View
+                  style={[
+                    styles.diagnosticDot,
+                    check.status === "pass"
+                      ? styles.diagnosticPass
+                      : check.status === "warn"
+                        ? styles.diagnosticWarn
+                        : styles.diagnosticFail,
+                  ]}
+                />
+                <View style={styles.diagnosticCopy}>
+                  <Text style={styles.preferenceLabel}>{check.label}</Text>
+                  <Text style={styles.quietHours}>{check.detail}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </View>
 
       <View style={styles.panel}>
@@ -4156,6 +4328,38 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.42)",
     fontSize: 13,
     marginTop: 14,
+  },
+  diagnosticList: {
+    gap: 10,
+    marginTop: 16,
+  },
+  diagnosticItem: {
+    alignItems: "flex-start",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.16)",
+    flexDirection: "row",
+    gap: 10,
+    padding: 12,
+  },
+  diagnosticDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 999,
+    marginTop: 6,
+  },
+  diagnosticPass: {
+    backgroundColor: "rgba(132,220,170,0.88)",
+  },
+  diagnosticWarn: {
+    backgroundColor: "rgba(238,214,154,0.9)",
+  },
+  diagnosticFail: {
+    backgroundColor: "rgba(255,118,118,0.88)",
+  },
+  diagnosticCopy: {
+    flex: 1,
   },
   emptyText: {
     color: "rgba(255,255,255,0.42)",
