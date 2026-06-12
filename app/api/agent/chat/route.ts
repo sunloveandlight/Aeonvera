@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { answerPersonalHealthAgent } from "@/lib/agent/personalHealthAgent";
+import { recordClinicalFollowUpAnswer } from "@/lib/clinical/clinicalFollowUpResponses";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,16 +29,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Ask Aeonvera a question first." }, { status: 400 });
     }
 
+    const admin = getSupabaseAdmin();
+    const clinicalFollowUp = await maybeRecordClinicalFollowUpAnswer({
+      body,
+      question,
+      supabase: admin,
+      userId: user.id,
+    });
+
     const result = await answerPersonalHealthAgent({
       history: sanitizeHistory(body.history),
       question,
-      supabase: getSupabaseAdmin(),
+      supabase: admin,
       userId: user.id,
     });
 
     return NextResponse.json({
-      actions: result.actions,
+      actions: clinicalFollowUp?.action
+        ? [clinicalFollowUp.action, ...result.actions]
+        : result.actions,
       answer: result.answer,
+      clinicalFollowUp,
       mode: result.mode,
       suggestedPrompts: buildSuggestedPrompts(result.context),
     });
@@ -46,6 +58,32 @@ export async function POST(request: NextRequest) {
       error instanceof Error ? error.message : "Aeonvera could not answer right now.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+async function maybeRecordClinicalFollowUpAnswer({
+  body,
+  question,
+  supabase,
+  userId,
+}: {
+  body: Record<string, unknown>;
+  question: string;
+  supabase: ReturnType<typeof getSupabaseAdmin>;
+  userId: string;
+}) {
+  const clinicalInsightId =
+    typeof body.clinicalInsightId === "string" ? body.clinicalInsightId.trim() : "";
+  const isClinicalFollowUpAnswer = body.clinicalFollowUpAnswer === true;
+
+  if (!clinicalInsightId || !isClinicalFollowUpAnswer) return null;
+
+  return recordClinicalFollowUpAnswer({
+    answer: question,
+    clinicalInsightId,
+    source: "agent_chat",
+    supabase,
+    userId,
+  });
 }
 
 async function getAuthenticatedUser(request: NextRequest) {

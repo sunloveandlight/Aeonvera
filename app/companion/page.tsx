@@ -149,6 +149,11 @@ type AgentAppliedAction = {
   detail: string;
 };
 
+type AgentSendOptions = {
+  clinicalFollowUpAnswer?: boolean;
+  clinicalInsightId?: string;
+};
+
 type ClinicalInsight = {
   id: string;
   source_question?: string | null;
@@ -164,6 +169,12 @@ type ClinicalInsight = {
   follow_up_questions?: string[] | null;
   recommended_actions?: ProtocolAction[] | null;
   metadata?: {
+    follow_up_responses?: Array<{
+      answer?: string;
+      answered_at?: string;
+      interpreted_status?: string;
+      question?: string;
+    }>;
     progression?: {
       status?: string;
       summary?: string;
@@ -198,6 +209,8 @@ export default function CompanionPage() {
   ]);
   const [agentPrompt, setAgentPrompt] = useState("");
   const [agentActions, setAgentActions] = useState<AgentAppliedAction[]>([]);
+  const [clinicalAnswer, setClinicalAnswer] = useState("");
+  const [answeringClinicalInsightId, setAnsweringClinicalInsightId] = useState<string | null>(null);
   const [agentSuggestions, setAgentSuggestions] = useState([
     "Why this plan today?",
     "What should I do first?",
@@ -522,7 +535,7 @@ export default function CompanionPage() {
     }
   }
 
-  async function askPersonalAgent(promptOverride?: string) {
+  async function askPersonalAgent(promptOverride?: string, options: AgentSendOptions = {}) {
     const question = (promptOverride || agentPrompt).trim();
     if (!question || agentThinking) return;
 
@@ -538,7 +551,7 @@ export default function CompanionPage() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, history }),
+        body: JSON.stringify({ question, history, ...options }),
       });
       const data = await response.json();
 
@@ -563,7 +576,11 @@ export default function CompanionPage() {
 
         if (
           data.actions.some((action: AgentAppliedAction) =>
-            ["plan_simplified", "clinical_plan_prepared"].includes(action.type)
+            [
+              "plan_simplified",
+              "clinical_plan_prepared",
+              "clinical_follow_up_plan_updated",
+            ].includes(action.type)
           )
         ) {
           const dailyBriefResponse = await fetch("/api/coach/daily-brief", {
@@ -583,6 +600,11 @@ export default function CompanionPage() {
       if (clinicalMemoryResponse.ok) {
         setClinicalInsights(clinicalMemoryData.insights || []);
       }
+
+      if (options.clinicalFollowUpAnswer) {
+        setClinicalAnswer("");
+        setAnsweringClinicalInsightId(null);
+      }
     } catch (error) {
       setAgentMessages((current) => [
         ...current,
@@ -597,6 +619,17 @@ export default function CompanionPage() {
     } finally {
       setAgentThinking(false);
     }
+  }
+
+  function answerClinicalFollowUp(insightId: string) {
+    const answer = clinicalAnswer.trim();
+    if (!answer || agentThinking) return;
+
+    setAnsweringClinicalInsightId(insightId);
+    void askPersonalAgent(answer, {
+      clinicalFollowUpAnswer: true,
+      clinicalInsightId: insightId,
+    });
   }
 
   return (
@@ -716,7 +749,14 @@ export default function CompanionPage() {
             <PersonalAgentMemoryPanel memory={coachMemory} />
 
             <div ref={clinicalPanelRef}>
-              <ClinicalIntelligenceMemoryPanel insights={clinicalInsights} />
+              <ClinicalIntelligenceMemoryPanel
+                answer={clinicalAnswer}
+                answeringInsightId={answeringClinicalInsightId}
+                insights={clinicalInsights}
+                thinking={agentThinking}
+                onAnswerChange={setClinicalAnswer}
+                onSubmitAnswer={answerClinicalFollowUp}
+              />
             </div>
 
             <CompanionCard
@@ -1179,9 +1219,19 @@ function PersonalAgentMemoryPanel({ memory }: { memory: CoachMemory | null }) {
 }
 
 function ClinicalIntelligenceMemoryPanel({
+  answer,
+  answeringInsightId,
   insights,
+  onAnswerChange,
+  onSubmitAnswer,
+  thinking,
 }: {
+  answer: string;
+  answeringInsightId: string | null;
   insights: ClinicalInsight[];
+  onAnswerChange: (value: string) => void;
+  onSubmitAnswer: (insightId: string) => void;
+  thinking: boolean;
 }) {
   const latest = insights[0];
   const confidence = Math.round(Number(latest?.confidence || 0) * 100);
@@ -1191,6 +1241,7 @@ function ClinicalIntelligenceMemoryPanel({
   const followUp = latest?.follow_up_questions?.[0];
   const nextAction = latest?.recommended_actions?.[0];
   const progression = latest?.metadata?.progression;
+  const lastResponse = latest?.metadata?.follow_up_responses?.at(-1);
 
   return (
     <div className="executive-panel rounded-lg p-6 md:p-7">
@@ -1216,6 +1267,32 @@ function ClinicalIntelligenceMemoryPanel({
             </h3>
             {followUp ? (
               <p className="mt-4 text-sm leading-7 text-white/42">{followUp}</p>
+            ) : null}
+            {followUp ? (
+              <div className="mt-5 rounded-lg border border-[#dabc73]/15 bg-[#dabc73]/[0.035] p-4">
+                <p className="micro-label">Answer follow-up</p>
+                <textarea
+                  value={answer}
+                  onChange={(event) => onAnswerChange(event.target.value)}
+                  placeholder="Tell Aeonvera what changed, what stayed the same, or what you want adjusted..."
+                  className="mt-3 min-h-24 w-full resize-none rounded-md border border-white/[0.08] bg-black/25 p-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/24 focus:border-[#dabc73]/35"
+                />
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-xs leading-5 text-white/36">
+                    {lastResponse?.answer
+                      ? `Last answered: ${lastResponse.answer.slice(0, 96)}`
+                      : "Your answer updates this exact clinical thread."}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={thinking || !answer.trim() || answeringInsightId === latest.id}
+                    onClick={() => onSubmitAnswer(latest.id)}
+                    className="premium-action inline-flex min-h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    {answeringInsightId === latest.id ? "Updating" : "Answer"}
+                  </button>
+                </div>
+              </div>
             ) : null}
             {progression?.summary ? (
               <p className="mt-4 rounded-lg border border-white/[0.07] bg-black/15 p-4 text-sm leading-7 text-white/48">

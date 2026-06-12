@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { recordClinicalFollowUpAnswer } from "@/lib/clinical/clinicalFollowUpResponses";
 import { runProactiveClinicalFollowUps } from "@/lib/clinical/proactiveClinicalFollowUps";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -12,6 +13,25 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
+    const answer = typeof body?.answer === "string" ? body.answer.trim() : "";
+    const clinicalInsightId =
+      typeof body?.clinicalInsightId === "string" ? body.clinicalInsightId.trim() : "";
+
+    if (answer && clinicalInsightId) {
+      const result = await recordClinicalFollowUpAnswer({
+        answer,
+        clinicalInsightId,
+        source: body?.source === "voice_agent" ? "voice_agent" : "agent_chat",
+        supabase: getSupabaseAdmin(),
+        userId: user.id,
+      });
+
+      return NextResponse.json({
+        ok: Boolean(result),
+        result,
+      });
+    }
+
     const force = body?.force === true;
     const result = await runProactiveClinicalFollowUps({
       supabase: getSupabaseAdmin(),

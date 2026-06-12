@@ -225,6 +225,11 @@ type AgentAppliedAction = {
   detail: string;
 };
 
+type AgentSendOptions = {
+  clinicalFollowUpAnswer?: boolean;
+  clinicalInsightId?: string;
+};
+
 type ClinicalInsight = {
   id: string;
   source_question?: string | null;
@@ -240,6 +245,12 @@ type ClinicalInsight = {
   follow_up_questions?: string[] | null;
   recommended_actions?: ProtocolAction[] | null;
   metadata?: {
+    follow_up_responses?: Array<{
+      answer?: string;
+      answered_at?: string;
+      interpreted_status?: string;
+      question?: string;
+    }>;
     progression?: {
       status?: string;
       summary?: string;
@@ -382,6 +393,10 @@ export default function App() {
   const [agentThinking, setAgentThinking] = useState(false);
   const [agentActions, setAgentActions] = useState<AgentAppliedAction[]>([]);
   const [clinicalInsights, setClinicalInsights] = useState<ClinicalInsight[]>([]);
+  const [clinicalAnswerDraft, setClinicalAnswerDraft] = useState("");
+  const [activeVoiceClinicalInsightId, setActiveVoiceClinicalInsightId] = useState<string | null>(
+    null
+  );
   const [agentSuggestions, setAgentSuggestions] = useState([
     "Why this plan today?",
     "What should I do first?",
@@ -1085,7 +1100,7 @@ export default function App() {
     playSoftHaptic();
   }
 
-  async function askPersonalAgent(promptOverride?: string) {
+  async function askPersonalAgent(promptOverride?: string, options: AgentSendOptions = {}) {
     if (!session?.access_token || agentThinking) return;
 
     const question = (promptOverride || agentPrompt).trim();
@@ -1103,7 +1118,7 @@ export default function App() {
           Authorization: `Bearer ${session.access_token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ question, history }),
+        body: JSON.stringify({ question, history, ...options }),
       });
       const result = await response.json().catch(() => null);
 
@@ -1127,12 +1142,19 @@ export default function App() {
         const actions = result.actions.slice(0, 4) as AgentAppliedAction[];
         setAgentActions(actions);
 
-        if (actions.some((action) => action.type === "plan_simplified")) {
+        if (
+          actions.some((action) =>
+            ["plan_simplified", "clinical_follow_up_plan_updated"].includes(action.type)
+          )
+        ) {
           void loadCompanionData(session);
         }
       }
 
       await refreshClinicalInsights();
+      if (options.clinicalFollowUpAnswer) {
+        setClinicalAnswerDraft("");
+      }
     } catch (error) {
       setAgentMessages((current) => [
         ...current,
@@ -1164,7 +1186,7 @@ export default function App() {
     setClinicalInsights((result?.insights || []) as ClinicalInsight[]);
   }
 
-  async function startAgentVoice() {
+  async function startAgentVoice(clinicalInsightId?: string) {
     if (!session?.access_token || agentThinking || voiceRecording) return;
 
     if (Platform.OS !== "ios" && Platform.OS !== "android") {
@@ -1189,8 +1211,13 @@ export default function App() {
       const recording = new Audio.Recording();
       await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       await recording.startAsync();
+      setActiveVoiceClinicalInsightId(clinicalInsightId || null);
       setVoiceRecording(recording);
-      setVoiceStatus("Listening. Tap done when you finish.");
+      setVoiceStatus(
+        clinicalInsightId
+          ? "Listening for your clinical follow-up answer."
+          : "Listening. Tap done when you finish."
+      );
       playSoftHaptic();
     } catch (error) {
       setVoiceRecording(null);
@@ -1225,6 +1252,10 @@ export default function App() {
       const history = agentMessages.slice(-8);
       const formData = new FormData();
       formData.append("history", JSON.stringify(history));
+      if (activeVoiceClinicalInsightId) {
+        formData.append("clinicalInsightId", activeVoiceClinicalInsightId);
+        formData.append("clinicalFollowUpAnswer", "true");
+      }
       formData.append("audio", {
         uri,
         name: "aeonvera-voice.m4a",
@@ -1260,12 +1291,17 @@ export default function App() {
         const actions = result.actions.slice(0, 4) as AgentAppliedAction[];
         setAgentActions(actions);
 
-        if (actions.some((action) => action.type === "plan_simplified")) {
+        if (
+          actions.some((action) =>
+            ["plan_simplified", "clinical_follow_up_plan_updated"].includes(action.type)
+          )
+        ) {
           void loadCompanionData(session);
         }
       }
 
       setVoiceStatus("Aeonvera answered by voice.");
+      setActiveVoiceClinicalInsightId(null);
       await refreshClinicalInsights();
       speakAgentAnswer(answer);
       playSoftHaptic();
@@ -1275,6 +1311,7 @@ export default function App() {
           ? error.message
           : "Aeonvera could not process voice right now.";
       setVoiceStatus(message);
+      setActiveVoiceClinicalInsightId(null);
       setAgentMessages((current) => [
         ...current,
         {
@@ -1292,6 +1329,7 @@ export default function App() {
 
     const recording = voiceRecording;
     setVoiceRecording(null);
+    setActiveVoiceClinicalInsightId(null);
     setVoiceStatus("Voice note cancelled.");
 
     await recording.stopAndUnloadAsync().catch(() => null);
@@ -2191,6 +2229,7 @@ export default function App() {
               <AgentView
                 messages={agentMessages}
                 appliedActions={agentActions}
+                clinicalAnswerDraft={clinicalAnswerDraft}
                 clinicalInsights={clinicalInsights}
                 prompt={agentPrompt}
                 suggestions={agentSuggestions}
@@ -2198,9 +2237,16 @@ export default function App() {
                 voiceRecording={Boolean(voiceRecording)}
                 voiceSpeaking={voiceSpeaking}
                 voiceStatus={voiceStatus}
+                onClinicalAnswerChange={setClinicalAnswerDraft}
+                onSendClinicalAnswer={(insightId, answer) =>
+                  void askPersonalAgent(answer, {
+                    clinicalFollowUpAnswer: true,
+                    clinicalInsightId: insightId,
+                  })
+                }
                 onPromptChange={setAgentPrompt}
                 onSend={(value) => void askPersonalAgent(value)}
-                onStartVoice={() => void startAgentVoice()}
+                onStartVoice={(clinicalInsightId) => void startAgentVoice(clinicalInsightId)}
                 onStopVoice={() => void stopAgentVoice()}
                 onCancelVoice={() => void cancelAgentVoice()}
                 onStopSpeech={() => void stopAgentSpeech()}
@@ -2617,11 +2663,14 @@ function ExecutionFeedbackCard({
 
 function AgentView({
   appliedActions,
+  clinicalAnswerDraft,
   clinicalInsights,
   messages,
   onCancelVoice,
+  onClinicalAnswerChange,
   onPromptChange,
   onSend,
+  onSendClinicalAnswer,
   onStartVoice,
   onStopSpeech,
   onStopVoice,
@@ -2633,12 +2682,15 @@ function AgentView({
   voiceStatus,
 }: {
   appliedActions: AgentAppliedAction[];
+  clinicalAnswerDraft: string;
   clinicalInsights: ClinicalInsight[];
   messages: AgentChatMessage[];
   onCancelVoice: () => void;
+  onClinicalAnswerChange: (value: string) => void;
   onPromptChange: (value: string) => void;
   onSend: (value?: string) => void;
-  onStartVoice: () => void;
+  onSendClinicalAnswer: (insightId: string, answer: string) => void;
+  onStartVoice: (clinicalInsightId?: string) => void;
   onStopSpeech: () => void;
   onStopVoice: () => void;
   prompt: string;
@@ -2651,6 +2703,7 @@ function AgentView({
   const visibleMessages = messages.slice(-6);
   const latestInsight = clinicalInsights[0] || null;
   const progression = latestInsight?.metadata?.progression;
+  const lastClinicalResponse = latestInsight?.metadata?.follow_up_responses?.slice(-1)[0];
 
   return (
     <View style={styles.agentPanel}>
@@ -2692,7 +2745,7 @@ function AgentView({
             <Pressable
               style={[styles.voiceButton, thinking && styles.buttonDisabled]}
               disabled={thinking}
-              onPress={onStartVoice}
+              onPress={() => onStartVoice()}
             >
               <Text style={styles.voiceButtonPrimaryText}>Speak</Text>
             </Pressable>
@@ -2720,6 +2773,47 @@ function AgentView({
           <Text style={styles.clinicalTrajectoryCopy}>
             {clinicalProgressionLabel(progression.status)}: {progression.summary}
           </Text>
+        ) : null}
+        {latestInsight?.follow_up_questions?.[0] ? (
+          <View style={styles.clinicalAnswerPanel}>
+            <Text style={styles.clinicalAnswerLabel}>Answer follow-up</Text>
+            <TextInput
+              multiline
+              value={clinicalAnswerDraft}
+              onChangeText={onClinicalAnswerChange}
+              placeholder="What changed, what stayed the same, or what should Aeonvera adjust?"
+              placeholderTextColor="rgba(255,255,255,0.28)"
+              style={styles.clinicalAnswerInput}
+            />
+            {lastClinicalResponse?.answer ? (
+              <Text style={styles.clinicalAnswerHint}>
+                Last answer: {lastClinicalResponse.answer.slice(0, 90)}
+              </Text>
+            ) : (
+              <Text style={styles.clinicalAnswerHint}>
+                This updates the same clinical thread.
+              </Text>
+            )}
+            <View style={styles.clinicalAnswerActions}>
+              <Pressable
+                style={[styles.voiceButtonSecondary, thinking && styles.buttonDisabled]}
+                disabled={thinking}
+                onPress={() => onStartVoice(latestInsight.id)}
+              >
+                <Text style={styles.voiceButtonText}>Speak Answer</Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.voiceButton,
+                  (!clinicalAnswerDraft.trim() || thinking) && styles.buttonDisabled,
+                ]}
+                disabled={!clinicalAnswerDraft.trim() || thinking}
+                onPress={() => onSendClinicalAnswer(latestInsight.id, clinicalAnswerDraft)}
+              >
+                <Text style={styles.voiceButtonPrimaryText}>Send Answer</Text>
+              </Pressable>
+            </View>
+          </View>
         ) : null}
         {latestInsight?.domains?.length ? (
           <View style={styles.clinicalDomainRow}>
@@ -4421,6 +4515,45 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     marginTop: 10,
     padding: 10,
+  },
+  clinicalAnswerPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.16)",
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    gap: 10,
+    marginTop: 12,
+    padding: 12,
+  },
+  clinicalAnswerLabel: {
+    color: "rgba(218,188,115,0.78)",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  clinicalAnswerInput: {
+    minHeight: 86,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.24)",
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 13,
+    lineHeight: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    textAlignVertical: "top",
+  },
+  clinicalAnswerHint: {
+    color: "rgba(255,255,255,0.36)",
+    fontSize: 11,
+    lineHeight: 17,
+  },
+  clinicalAnswerActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
   },
   clinicalDomainRow: {
     flexDirection: "row",

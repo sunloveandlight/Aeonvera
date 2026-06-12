@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { NextRequest, NextResponse } from "next/server";
 import { answerPersonalHealthAgent } from "@/lib/agent/personalHealthAgent";
+import { recordClinicalFollowUpAnswer } from "@/lib/clinical/clinicalFollowUpResponses";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -70,16 +71,26 @@ export async function POST(request: NextRequest) {
     }
 
     const history = sanitizeHistory(parseJsonField(formData.get("history")));
+    const admin = getSupabaseAdmin();
+    const clinicalFollowUp = await maybeRecordClinicalFollowUpAnswer({
+      formData,
+      question: transcript,
+      supabase: admin,
+      userId: user.id,
+    });
     const result = await answerPersonalHealthAgent({
       history,
       question: transcript,
-      supabase: getSupabaseAdmin(),
+      supabase: admin,
       userId: user.id,
     });
 
     return NextResponse.json({
-      actions: result.actions,
+      actions: clinicalFollowUp?.action
+        ? [clinicalFollowUp.action, ...result.actions]
+        : result.actions,
       answer: result.answer,
+      clinicalFollowUp,
       mode: result.mode,
       transcript,
       suggestedPrompts: buildSuggestedPrompts(result.context),
@@ -89,6 +100,35 @@ export async function POST(request: NextRequest) {
       error instanceof Error ? error.message : "Aeonvera could not process voice right now.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+async function maybeRecordClinicalFollowUpAnswer({
+  formData,
+  question,
+  supabase,
+  userId,
+}: {
+  formData: FormData;
+  question: string;
+  supabase: ReturnType<typeof getSupabaseAdmin>;
+  userId: string;
+}) {
+  const clinicalInsightId = stringFormValue(formData.get("clinicalInsightId"));
+  const isClinicalFollowUpAnswer = stringFormValue(formData.get("clinicalFollowUpAnswer")) === "true";
+
+  if (!clinicalInsightId || !isClinicalFollowUpAnswer) return null;
+
+  return recordClinicalFollowUpAnswer({
+    answer: question,
+    clinicalInsightId,
+    source: "voice_agent",
+    supabase,
+    userId,
+  });
+}
+
+function stringFormValue(value: FormDataEntryValue | null) {
+  return typeof value === "string" ? value.trim() : "";
 }
 
 async function transcribeAudio(openai: OpenAI, audio: File) {
