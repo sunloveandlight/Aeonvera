@@ -784,87 +784,6 @@ export default function App() {
     playSoftHaptic();
   }
 
-  async function recordAdherence(
-    action: ProtocolAction,
-    actionIndex: number,
-    outcome: AdherenceOutcome,
-    scope: ActionScope
-  ) {
-    if (!supabase || !session || !protocol?.id || !action.action) return;
-
-    const notes =
-      outcome === "success"
-        ? "Completed from mobile."
-        : outcome === "failure"
-          ? "Skipped from mobile."
-          : "Rescheduled from mobile.";
-    const domain = action.domain || "Optimization";
-    const measuredAt = new Date().toISOString();
-
-    const { data, error } = await supabase
-      .from("intervention_outcomes")
-      .insert({
-        user_id: session.user.id,
-        protocol_id: protocol.id,
-        domain,
-        action: action.action,
-        outcome,
-        success: outcome === "success",
-        confidence: outcome === "unknown" ? 0.45 : 0.8,
-        notes,
-        measured_at: measuredAt,
-        followup_snapshot: {
-          source: "mobile",
-          action_index: actionIndex,
-          action_scope: scope,
-          scheduled_for: getScopeDate(scope),
-          cadence: action.cadence || null,
-          impact: action.impact || null,
-        },
-      })
-      .select("id,protocol_id,domain,action,outcome,success,notes,measured_at,created_at")
-      .single();
-
-    if (error) {
-      Alert.alert("Action not saved", error.message);
-      return;
-    }
-
-    await supabase.from("behavior_events").insert({
-      user_id: session.user.id,
-      type: "protocol_action",
-      event_type: `protocol_action_${outcome}`,
-      domain,
-      action: action.action,
-      outcome,
-      payload: {
-        protocol_id: protocol.id,
-        action_index: actionIndex,
-        action_scope: scope,
-        scheduled_for: getScopeDate(scope),
-        cadence: action.cadence || null,
-        impact: action.impact || null,
-        source: "mobile",
-      },
-    });
-
-    setAdherenceEvents((current) => [
-      data as AdherenceEvent,
-      ...current.filter(
-        (event) =>
-          event.protocol_id !== protocol.id || event.action !== action.action
-      ),
-    ]);
-    setActionNotice(
-      outcome === "success"
-        ? "Marked complete. Aeonvera will use this as a positive execution signal."
-        : outcome === "failure"
-          ? "Marked skipped. Aeonvera will look for friction patterns."
-          : "Saved for later. Aeonvera will keep this action in your active queue."
-    );
-    playSoftHaptic();
-  }
-
   async function scheduleActionReminder(
     action: ScheduledProtocolAction,
     scope: ActionScope,
@@ -1227,9 +1146,6 @@ export default function App() {
                 <Text style={styles.smallTitle}>{authStatus}</Text>
               </View>
               <View style={styles.statusActions}>
-                <Pressable style={styles.compactButton} onPress={() => setActiveView("settings")}>
-                  <Text style={styles.compactButtonText}>Controls</Text>
-                </Pressable>
                 <Pressable style={styles.compactButton} onPress={() => void signOut()}>
                   <Text style={styles.compactButtonText}>Sign out</Text>
                 </Pressable>
@@ -1237,7 +1153,7 @@ export default function App() {
             </View>
 
             <View style={styles.tabs}>
-              {(["today", "inbox"] as ActiveView[]).map((view) => (
+              {(["today", "inbox", "settings"] as ActiveView[]).map((view) => (
                 <Pressable
                   key={view}
                   style={[
@@ -1275,9 +1191,6 @@ export default function App() {
                 acceptDailyPlan={acceptDailyPlan}
                 openPath={openPath}
                 protocol={protocol}
-                recordAdherence={recordAdherence}
-                scheduleActionReminder={scheduleActionReminder}
-                scheduleActionToNativeCalendar={scheduleActionToNativeCalendar}
                 skipDailyPlan={skipDailyPlan}
                 nativeCalendarEvents={nativeCalendarEvents}
                 localReminders={localReminders}
@@ -1361,9 +1274,6 @@ function TodayView({
   nativeCalendarEvents,
   openPath,
   protocol,
-  recordAdherence,
-  scheduleActionReminder,
-  scheduleActionToNativeCalendar,
   skipDailyPlan,
   setActionNotice,
 }: {
@@ -1380,24 +1290,6 @@ function TodayView({
   nativeCalendarEvents: Record<string, NativeCalendarEvent>;
   openPath: (path: string) => Promise<void>;
   protocol: Protocol | null;
-  recordAdherence: (
-    action: ProtocolAction,
-    actionIndex: number,
-    outcome: AdherenceOutcome,
-    scope: ActionScope
-  ) => Promise<void>;
-  scheduleActionReminder: (
-    action: ScheduledProtocolAction,
-    scope: ActionScope,
-    preset?: ReminderPreset,
-    repeat?: ReminderRepeat,
-    silent?: boolean
-  ) => Promise<string | null>;
-  scheduleActionToNativeCalendar: (
-    action: ScheduledProtocolAction,
-    preset?: ReminderPreset,
-    silent?: boolean
-  ) => Promise<string | null>;
   skipDailyPlan: () => Promise<void>;
   setActionNotice: (message: string | null) => void;
 }) {
@@ -1420,8 +1312,7 @@ function TodayView({
   );
   const focusActions = todayActions.length ? todayActions : fallbackFocusActions;
   const primaryAction = focusActions[0] || null;
-  const primaryActionKey = primaryAction ? getActionKey(primaryAction) : null;
-  const activeActionKey = expandedActionKey || primaryActionKey;
+  const activeActionKey = expandedActionKey;
 
   return (
     <>
@@ -1482,26 +1373,6 @@ function TodayView({
                   {primaryAction.why ? (
                     <Text style={styles.cardCopy}>{primaryAction.why}</Text>
                   ) : null}
-                  <Pressable
-                    style={styles.button}
-                    onPress={() => {
-                      playSoftHaptic();
-                      if (activeActionKey === primaryActionKey) {
-                        setActionNotice(
-                          "Action controls are already open. Choose Done, Later, Schedule, or Notify only below."
-                        );
-                      } else {
-                        setExpandedActionKey(primaryActionKey);
-                        setActionNotice(
-                          "Action controls opened. You can complete it, save it for later, let Aeonvera schedule it, or create a phone notification."
-                        );
-                      }
-                    }}
-                  >
-                    <Text style={styles.buttonText}>
-                      {activeActionKey === primaryActionKey ? "Controls open" : "Open action controls"}
-                    </Text>
-                  </Pressable>
                 </View>
               ) : null}
 
@@ -1533,9 +1404,6 @@ function TodayView({
                         playSoftHaptic();
                         setExpandedActionKey(activeActionKey === actionKey ? null : actionKey);
                       }}
-                      recordAdherence={recordAdherence}
-                      scheduleActionReminder={scheduleActionReminder}
-                      scheduleActionToNativeCalendar={scheduleActionToNativeCalendar}
                     />
                   );
                 })}
@@ -1573,11 +1441,10 @@ function TodayView({
                             }
                             onToggle={() => {
                               playSoftHaptic();
-                              setExpandedActionKey(getActionKey(action));
+                              setExpandedActionKey(
+                                activeActionKey === getActionKey(action) ? null : getActionKey(action)
+                              );
                             }}
-                            recordAdherence={recordAdherence}
-                            scheduleActionReminder={scheduleActionReminder}
-                            scheduleActionToNativeCalendar={scheduleActionToNativeCalendar}
                           />
                         ))}
                         {hiddenCount ? (
@@ -1909,9 +1776,6 @@ function ProtocolActionRow({
   localReminder,
   nativeCalendarEvent,
   onToggle,
-  recordAdherence,
-  scheduleActionReminder,
-  scheduleActionToNativeCalendar,
 }: {
   action: ScheduledProtocolAction;
   compact?: boolean;
@@ -1920,24 +1784,6 @@ function ProtocolActionRow({
   localReminder?: LocalReminder;
   nativeCalendarEvent?: NativeCalendarEvent;
   onToggle?: () => void;
-  recordAdherence: (
-    action: ProtocolAction,
-    actionIndex: number,
-    outcome: AdherenceOutcome,
-    scope: ActionScope
-  ) => Promise<void>;
-  scheduleActionReminder: (
-    action: ScheduledProtocolAction,
-    scope: ActionScope,
-    preset?: ReminderPreset,
-    repeat?: ReminderRepeat,
-    silent?: boolean
-  ) => Promise<string | null>;
-  scheduleActionToNativeCalendar: (
-    action: ScheduledProtocolAction,
-    preset?: ReminderPreset,
-    silent?: boolean
-  ) => Promise<string | null>;
 }) {
   return (
     <Pressable
@@ -1959,44 +1805,9 @@ function ProtocolActionRow({
         </Text>
         {expanded && action.why ? <Text style={styles.actionWhy}>{action.why}</Text> : null}
         {expanded ? (
-          <View style={styles.adherenceControls}>
-            <Pressable
-              style={styles.adherenceButton}
-              onPress={() => {
-                playSoftHaptic();
-                void recordAdherence(action, action.actionIndex, "success", action.scope);
-              }}
-            >
-              <Text style={styles.adherenceButtonText}>Done</Text>
-            </Pressable>
-            <Pressable
-              style={styles.adherenceButton}
-              onPress={() => {
-                playSoftHaptic();
-                void recordAdherence(action, action.actionIndex, "unknown", action.scope);
-              }}
-            >
-              <Text style={styles.adherenceButtonText}>Later</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.adherenceButton, styles.calendarButton]}
-              onPress={() => {
-                playSoftHaptic();
-                void scheduleActionToNativeCalendar(action, "default");
-              }}
-            >
-              <Text style={styles.adherenceButtonText}>Schedule</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.adherenceButton, styles.reminderButton]}
-              onPress={() => {
-                playSoftHaptic();
-                chooseReminderPreset(action, scheduleActionReminder);
-              }}
-            >
-              <Text style={styles.adherenceButtonText}>Notify only</Text>
-            </Pressable>
-          </View>
+          <Text style={styles.actionWhy}>
+            Aeonvera will handle this through Autopilot when you accept today&apos;s plan.
+          </Text>
         ) : null}
         {localReminder ? (
           <Text style={styles.reminderText}>
@@ -2013,59 +1824,6 @@ function ProtocolActionRow({
       </View>
     </Pressable>
   );
-}
-
-function chooseReminderPreset(
-  action: ScheduledProtocolAction,
-  scheduleActionReminder: (
-    action: ScheduledProtocolAction,
-    scope: ActionScope,
-    preset?: ReminderPreset,
-    repeat?: ReminderRepeat,
-    silent?: boolean
-  ) => Promise<string | null>
-) {
-  Alert.alert("Phone notification", "When should Aeonvera notify you on this phone?", [
-    {
-      text: "Recommended",
-      onPress: () => chooseReminderRepeat(action, scheduleActionReminder, "default"),
-    },
-    {
-      text: "Soon",
-      onPress: () => chooseReminderRepeat(action, scheduleActionReminder, "soon"),
-    },
-    {
-      text: "Tomorrow",
-      onPress: () => chooseReminderRepeat(action, scheduleActionReminder, "tomorrow"),
-    },
-  ]);
-}
-
-function chooseReminderRepeat(
-  action: ScheduledProtocolAction,
-  scheduleActionReminder: (
-    action: ScheduledProtocolAction,
-    scope: ActionScope,
-    preset?: ReminderPreset,
-    repeat?: ReminderRepeat,
-    silent?: boolean
-  ) => Promise<string | null>,
-  preset: ReminderPreset
-) {
-  Alert.alert("Notification repeat", "Should this phone notification repeat?", [
-    {
-      text: "Once",
-      onPress: () => void scheduleActionReminder(action, action.scope, preset, "once"),
-    },
-    {
-      text: "Daily",
-      onPress: () => void scheduleActionReminder(action, action.scope, preset, "daily"),
-    },
-    {
-      text: "Weekly",
-      onPress: () => void scheduleActionReminder(action, action.scope, preset, "weekly"),
-    },
-  ]);
 }
 
 function SettingsView({
@@ -2342,20 +2100,6 @@ function classifyActionScope(action: ProtocolAction): ActionScope {
   }
 
   return "later";
-}
-
-function getScopeDate(scope: ActionScope) {
-  const date = new Date();
-
-  if (scope === "week") {
-    date.setDate(date.getDate() + 6);
-  }
-
-  if (scope === "later") {
-    date.setDate(date.getDate() + 2);
-  }
-
-  return date.toISOString().slice(0, 10);
 }
 
 function getReminderDate(
