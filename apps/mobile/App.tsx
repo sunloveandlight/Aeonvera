@@ -25,7 +25,7 @@ import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
 import { StatusBar } from "expo-status-bar";
 
-type ActiveView = "today" | "inbox" | "message" | "settings";
+type ActiveView = "today" | "agent" | "inbox" | "message" | "settings";
 
 type CoachMessage = {
   id: string;
@@ -212,6 +212,11 @@ type DiagnosticCheck = {
   status: "pass" | "warn" | "fail";
 };
 
+type AgentChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 const WEB_URL =
   process.env.EXPO_PUBLIC_AEONVERA_WEB_URL ||
   Constants.expoConfig?.extra?.webUrl ||
@@ -331,6 +336,20 @@ export default function App() {
   const [diagnosticChecks, setDiagnosticChecks] = useState<DiagnosticCheck[]>([]);
   const [diagnosticsRunning, setDiagnosticsRunning] = useState(false);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
+  const [agentMessages, setAgentMessages] = useState<AgentChatMessage[]>([
+    {
+      role: "assistant",
+      content:
+        "Ask why Aeonvera chose today’s plan, what should change, or how to make the day feel lighter.",
+    },
+  ]);
+  const [agentPrompt, setAgentPrompt] = useState("");
+  const [agentThinking, setAgentThinking] = useState(false);
+  const [agentSuggestions, setAgentSuggestions] = useState([
+    "Why this plan today?",
+    "What should I do first?",
+    "Make today simpler.",
+  ]);
   const [notificationFocusTick, setNotificationFocusTick] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
   const inboxOffsetY = useRef(0);
@@ -987,6 +1006,59 @@ export default function App() {
     await updateDailyPlanStatus("skipped");
     setActionNotice("Autopilot paused for today. Your protocol remains available below.");
     playSoftHaptic();
+  }
+
+  async function askPersonalAgent(promptOverride?: string) {
+    if (!session?.access_token || agentThinking) return;
+
+    const question = (promptOverride || agentPrompt).trim();
+    if (!question) return;
+
+    const history = agentMessages.slice(-8);
+    setAgentMessages((current) => [...current, { role: "user", content: question }]);
+    setAgentPrompt("");
+    setAgentThinking(true);
+
+    try {
+      const response = await fetch(`${appUrl}/api/agent/chat`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question, history }),
+      });
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Aeonvera could not answer right now.");
+      }
+
+      setAgentMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: result?.answer || "Aeonvera is still reading today's signal.",
+        },
+      ]);
+
+      if (Array.isArray(result?.suggestedPrompts)) {
+        setAgentSuggestions(result.suggestedPrompts.slice(0, 3));
+      }
+    } catch (error) {
+      setAgentMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content:
+            error instanceof Error
+              ? error.message
+              : "Aeonvera could not answer right now.",
+        },
+      ]);
+    } finally {
+      setAgentThinking(false);
+    }
   }
 
   async function reconcileScheduledArtifacts(items: ScheduledProtocolAction[]) {
@@ -1794,7 +1866,7 @@ export default function App() {
             </View>
 
             <View style={styles.tabs}>
-              {(["today", "inbox", "settings"] as ActiveView[]).map((view) => (
+              {(["today", "agent", "inbox", "settings"] as ActiveView[]).map((view) => (
                 <Pressable
                   key={view}
                   style={[
@@ -1845,6 +1917,24 @@ export default function App() {
                 pendingFeedback={pendingFeedback}
                 recordExecutionFeedback={recordExecutionFeedback}
                 setActionNotice={setActionNotice}
+                onAskWhy={(question) => {
+                  playSoftHaptic();
+                  setActiveView("agent");
+                  if (question) {
+                    void askPersonalAgent(question);
+                  }
+                }}
+              />
+            ) : null}
+
+            {activeView === "agent" ? (
+              <AgentView
+                messages={agentMessages}
+                prompt={agentPrompt}
+                suggestions={agentSuggestions}
+                thinking={agentThinking}
+                onPromptChange={setAgentPrompt}
+                onSend={(value) => void askPersonalAgent(value)}
               />
             ) : null}
 
@@ -1929,6 +2019,7 @@ function TodayView({
   latestSummary,
   localReminders,
   nativeCalendarEvents,
+  onAskWhy,
   openPath,
   pendingFeedback,
   protocol,
@@ -1950,6 +2041,7 @@ function TodayView({
   latestSummary: string;
   localReminders: Record<string, LocalReminder>;
   nativeCalendarEvents: Record<string, NativeCalendarEvent>;
+  onAskWhy: (question?: string) => void;
   openPath: (path: string) => Promise<void>;
   pendingFeedback: PendingFeedback | null;
   protocol: Protocol | null;
@@ -2003,7 +2095,7 @@ function TodayView({
         dailyPlan={dailyPlan}
         localReminders={localReminders}
         nativeCalendarEvents={nativeCalendarEvents}
-        openPath={openPath}
+        onAskWhy={onAskWhy}
         preferences={autopilotPreferences}
         protocol={protocol}
         skipDailyPlan={skipDailyPlan}
@@ -2254,6 +2346,91 @@ function ExecutionFeedbackCard({
   );
 }
 
+function AgentView({
+  messages,
+  onPromptChange,
+  onSend,
+  prompt,
+  suggestions,
+  thinking,
+}: {
+  messages: AgentChatMessage[];
+  onPromptChange: (value: string) => void;
+  onSend: (value?: string) => void;
+  prompt: string;
+  suggestions: string[];
+  thinking: boolean;
+}) {
+  const visibleMessages = messages.slice(-6);
+
+  return (
+    <View style={styles.agentPanel}>
+      <Text style={styles.cardLabel}>Personal Health Agent</Text>
+      <Text style={styles.cardTitle}>Ask Aeonvera why</Text>
+      <Text style={styles.cardCopy}>
+        Your agent reads today&apos;s plan, coach memory, recent execution, and calendar signals
+        before answering.
+      </Text>
+
+      <View style={styles.agentSuggestions}>
+        {suggestions.map((suggestion) => (
+          <Pressable
+            key={suggestion}
+            style={styles.agentSuggestion}
+            disabled={thinking}
+            onPress={() => onSend(suggestion)}
+          >
+            <Text style={styles.agentSuggestionText}>{suggestion}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <View style={styles.agentMessageList}>
+        {visibleMessages.map((message, index) => (
+          <View
+            key={`${message.role}-${index}-${message.content.slice(0, 14)}`}
+            style={[
+              styles.agentMessage,
+              message.role === "user" && styles.agentUserMessage,
+            ]}
+          >
+            <Text style={styles.selectedMessageLabel}>
+              {message.role === "assistant" ? "Aeonvera" : "You"}
+            </Text>
+            <Text style={styles.agentMessageText}>{message.content}</Text>
+          </View>
+        ))}
+        {thinking ? (
+          <View style={styles.agentMessage}>
+            <Text style={styles.agentMessageText}>Aeonvera is reading today&apos;s signal.</Text>
+          </View>
+        ) : null}
+      </View>
+
+      <View style={styles.agentInputRow}>
+        <TextInput
+          multiline
+          placeholder="Ask what to do, why it matters, or what should change..."
+          placeholderTextColor="rgba(255,255,255,0.28)"
+          style={styles.agentInput}
+          value={prompt}
+          onChangeText={onPromptChange}
+        />
+        <Pressable
+          style={[
+            styles.agentSendButton,
+            (thinking || !prompt.trim()) && styles.buttonDisabled,
+          ]}
+          disabled={thinking || !prompt.trim()}
+          onPress={() => onSend()}
+        >
+          <Text style={styles.agentSendText}>Ask</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 function MobileCommandStat({
   detail,
   label,
@@ -2340,7 +2517,7 @@ function AutopilotPlanCard({
   dailyPlan,
   localReminders,
   nativeCalendarEvents,
-  openPath,
+  onAskWhy,
   preferences,
   protocol,
   skipDailyPlan,
@@ -2352,7 +2529,7 @@ function AutopilotPlanCard({
   dailyPlan: DailyExecutionPlan | null;
   localReminders: Record<string, LocalReminder>;
   nativeCalendarEvents: Record<string, NativeCalendarEvent>;
-  openPath: (path: string) => Promise<void>;
+  onAskWhy: (question?: string) => void;
   preferences: AutopilotPreferences | null;
   protocol: Protocol | null;
   skipDailyPlan: () => Promise<void>;
@@ -2483,7 +2660,7 @@ function AutopilotPlanCard({
           </Pressable>
           <Pressable
             style={styles.secondaryAction}
-            onPress={() => void openPath("/companion?focus=autopilot")}
+            onPress={() => onAskWhy("Why did Aeonvera choose this plan today?")}
           >
             <Text style={styles.secondaryActionText}>Ask Why</Text>
           </Pressable>
@@ -3718,6 +3895,89 @@ const styles = StyleSheet.create({
   },
   feedbackButtonPrimaryText: {
     color: "#080808",
+  },
+  agentPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.26)",
+    borderRadius: 10,
+    backgroundColor: "rgba(218,188,115,0.065)",
+    padding: 18,
+  },
+  agentSuggestions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 16,
+  },
+  agentSuggestion: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 999,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  agentSuggestionText: {
+    color: "rgba(238,214,154,0.82)",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  agentMessageList: {
+    gap: 10,
+    marginTop: 18,
+  },
+  agentMessage: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    padding: 13,
+  },
+  agentUserMessage: {
+    borderColor: "rgba(218,188,115,0.22)",
+    backgroundColor: "rgba(218,188,115,0.075)",
+  },
+  agentMessageText: {
+    color: "rgba(255,255,255,0.66)",
+    fontSize: 13,
+    lineHeight: 21,
+  },
+  agentInputRow: {
+    alignItems: "flex-end",
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 16,
+  },
+  agentInput: {
+    minHeight: 50,
+    maxHeight: 112,
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.24)",
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 13,
+    lineHeight: 19,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+  },
+  agentSendButton: {
+    width: 58,
+    minHeight: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    backgroundColor: "rgba(218,188,115,0.92)",
+  },
+  agentSendText: {
+    color: "#080808",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.3,
+    textTransform: "uppercase",
   },
   weeklyReviewPanel: {
     borderWidth: 1,
