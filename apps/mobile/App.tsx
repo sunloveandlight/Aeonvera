@@ -291,6 +291,29 @@ type UsageLimitsPayload = {
   usage: UsageMeterSnapshot[];
 };
 
+type ModalityRecommendation = {
+  id: string;
+  name: string;
+  minimumTier: string;
+  category: string;
+  evidenceGrade: string;
+  risk: string;
+  cost: string;
+  access: "included" | "locked";
+  fitScore: number;
+  rationale: string;
+  upgradeMessage?: string;
+  protocolRange: string;
+  track: string[];
+  stopIf: string[];
+  clinicianReview: boolean;
+};
+
+type ModalitiesPayload = {
+  currentPlan: string | null;
+  recommendations: ModalityRecommendation[];
+};
+
 const WEB_URL =
   process.env.EXPO_PUBLIC_AEONVERA_WEB_URL ||
   Constants.expoConfig?.extra?.webUrl ||
@@ -422,6 +445,7 @@ export default function App() {
   const [agentActions, setAgentActions] = useState<AgentAppliedAction[]>([]);
   const [clinicalInsights, setClinicalInsights] = useState<ClinicalInsight[]>([]);
   const [usageLimits, setUsageLimits] = useState<UsageLimitsPayload | null>(null);
+  const [modalities, setModalities] = useState<ModalitiesPayload | null>(null);
   const [clinicalAnswerDraft, setClinicalAnswerDraft] = useState("");
   const [activeVoiceClinicalInsightId, setActiveVoiceClinicalInsightId] = useState<string | null>(
     null
@@ -550,6 +574,21 @@ export default function App() {
           body: null,
           ok: false,
         }));
+      const modalityResult = await fetch(`${appUrl}/api/longevity/modalities`, {
+        headers: {
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+      })
+        .then((response) =>
+          response.json().then((body) => ({
+            body,
+            ok: response.ok,
+          }))
+        )
+        .catch(() => ({
+          body: null,
+          ok: false,
+        }));
 
       if (messageResult.error || protocolResult.error || preferenceResult.error) {
         setDataMessage(
@@ -607,6 +646,7 @@ export default function App() {
           : []
       );
       setUsageLimits(usageResult.ok ? (usageResult.body as UsageLimitsPayload) : null);
+      setModalities(modalityResult.ok ? (modalityResult.body as ModalitiesPayload) : null);
       setPreferences(
         ((preferenceResult.data as Preferences | null) || {
           user_id: currentSession.user.id,
@@ -2285,6 +2325,7 @@ export default function App() {
                 clinicalAnswerDraft={clinicalAnswerDraft}
                 clinicalInsights={clinicalInsights}
                 prompt={agentPrompt}
+                modalities={modalities}
                 suggestions={agentSuggestions}
                 thinking={agentThinking}
                 usageLimits={usageLimits}
@@ -2720,6 +2761,7 @@ function AgentView({
   clinicalAnswerDraft,
   clinicalInsights,
   messages,
+  modalities,
   onCancelVoice,
   onClinicalAnswerChange,
   onPromptChange,
@@ -2740,6 +2782,7 @@ function AgentView({
   clinicalAnswerDraft: string;
   clinicalInsights: ClinicalInsight[];
   messages: AgentChatMessage[];
+  modalities: ModalitiesPayload | null;
   onCancelVoice: () => void;
   onClinicalAnswerChange: (value: string) => void;
   onPromptChange: (value: string) => void;
@@ -2814,6 +2857,8 @@ function AgentView({
       </View>
 
       <MobileUsagePanel usageLimits={usageLimits} />
+
+      <MobileModalitiesPanel modalities={modalities} onAsk={onSend} />
 
       <View style={styles.clinicalMemoryPanel}>
         <View style={styles.clinicalMemoryHeader}>
@@ -3006,6 +3051,73 @@ function MobileUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | n
                 : `${item.used.toLocaleString()} / ${item.limit.toLocaleString()}`}
             </Text>
           </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function MobileModalitiesPanel({
+  modalities,
+  onAsk,
+}: {
+  modalities: ModalitiesPayload | null;
+  onAsk: (value?: string) => void;
+}) {
+  const recommendations = modalities?.recommendations || [];
+  const visible = [
+    ...recommendations.filter((item) => item.access === "included").slice(0, 2),
+    ...recommendations.filter((item) => item.access === "locked").slice(0, 2),
+  ].slice(0, 4);
+
+  if (!visible.length) return null;
+
+  return (
+    <View style={styles.mobileModalitiesPanel}>
+      <View style={styles.mobileUsageHeader}>
+        <Text style={styles.cardLabel}>Advanced Modalities</Text>
+        <Text style={styles.mobileUsagePlan}>
+          {modalities?.currentPlan ? titleCase(modalities.currentPlan) : "Tiered"}
+        </Text>
+      </View>
+      <Text style={styles.mobileModalitiesCopy}>
+        Aeonvera ranks optional protocols by fit, evidence, risk, and access.
+      </Text>
+      <View style={styles.mobileModalityList}>
+        {visible.map((modality) => (
+          <Pressable
+            key={modality.id}
+            style={[
+              styles.mobileModalityCard,
+              modality.access === "included" && styles.mobileModalityIncluded,
+            ]}
+            onPress={() =>
+              onAsk(
+                `Explain whether ${modality.name} makes sense for me, including risks, contraindications, tracking markers, and the safest protocol range.`
+              )
+            }
+          >
+            <View style={styles.mobileModalityTopRow}>
+              <Text style={styles.mobileModalityName}>{modality.name}</Text>
+              <Text
+                style={[
+                  styles.mobileModalityAccess,
+                  modality.access === "included" && styles.mobileModalityAccessIncluded,
+                ]}
+              >
+                {modality.access === "included" ? "Included" : titleCase(modality.minimumTier)}
+              </Text>
+            </View>
+            <Text style={styles.mobileModalityMeta}>
+              {modality.fitScore} fit / {titleCase(modality.evidenceGrade)} /{" "}
+              {titleCase(modality.risk)} risk
+            </Text>
+            <Text style={styles.mobileModalitiesCopy}>
+              {modality.access === "included"
+                ? modality.rationale
+                : modality.upgradeMessage || modality.rationale}
+            </Text>
+          </Pressable>
         ))}
       </View>
     </View>
@@ -4683,6 +4795,72 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 14,
     marginTop: 3,
+  },
+  mobileModalitiesPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.18)",
+    borderRadius: 10,
+    backgroundColor: "rgba(218,188,115,0.045)",
+    marginTop: 12,
+    padding: 12,
+  },
+  mobileModalitiesCopy: {
+    color: "rgba(255,255,255,0.42)",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 7,
+  },
+  mobileModalityList: {
+    gap: 9,
+    marginTop: 12,
+  },
+  mobileModalityCard: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 9,
+    backgroundColor: "rgba(0,0,0,0.18)",
+    padding: 12,
+  },
+  mobileModalityIncluded: {
+    borderColor: "rgba(218,188,115,0.28)",
+    backgroundColor: "rgba(218,188,115,0.055)",
+  },
+  mobileModalityTopRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: 10,
+    justifyContent: "space-between",
+  },
+  mobileModalityName: {
+    flex: 1,
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  mobileModalityAccess: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 999,
+    color: "rgba(255,255,255,0.42)",
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1,
+    overflow: "hidden",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    textTransform: "uppercase",
+  },
+  mobileModalityAccessIncluded: {
+    borderColor: "rgba(218,188,115,0.26)",
+    color: "rgba(238,214,154,0.88)",
+  },
+  mobileModalityMeta: {
+    color: "rgba(218,188,115,0.72)",
+    fontSize: 9,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    marginTop: 10,
+    textTransform: "uppercase",
   },
   clinicalMemoryPanel: {
     borderWidth: 1,

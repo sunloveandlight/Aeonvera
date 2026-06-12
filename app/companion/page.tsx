@@ -220,6 +220,30 @@ type UsageLimitsPayload = {
   usage: UsageMeterSnapshot[];
 };
 
+type ModalityRecommendation = {
+  id: string;
+  name: string;
+  minimumTier: string;
+  category: string;
+  evidenceGrade: string;
+  risk: string;
+  cost: string;
+  access: "included" | "locked";
+  fitScore: number;
+  rationale: string;
+  upgradeMessage?: string;
+  protocolRange: string;
+  track: string[];
+  stopIf: string[];
+  clinicianReview: boolean;
+};
+
+type ModalitiesPayload = {
+  currentPlan: string | null;
+  recommendations: ModalityRecommendation[];
+  tiers?: Record<string, unknown>;
+};
+
 export default function CompanionPage() {
   const router = useRouter();
   const clinicalPanelRef = useRef<HTMLDivElement | null>(null);
@@ -234,6 +258,7 @@ export default function CompanionPage() {
   const [clinicalInsights, setClinicalInsights] = useState<ClinicalInsight[]>([]);
   const [dailyBrief, setDailyBrief] = useState<DailyBrief | null>(null);
   const [usageLimits, setUsageLimits] = useState<UsageLimitsPayload | null>(null);
+  const [modalities, setModalities] = useState<ModalitiesPayload | null>(null);
   const [agentMessages, setAgentMessages] = useState<AgentChatMessage[]>([
     {
       role: "assistant",
@@ -283,6 +308,7 @@ export default function CompanionPage() {
           dailyBriefResponse,
           clinicalMemoryResponse,
           usageResponse,
+          modalitiesResponse,
         ] = await Promise.all([
           fetch("/api/digital-twin/timeline", { credentials: "include" }),
           fetch("/api/optimization/protocols", { credentials: "include" }),
@@ -293,6 +319,7 @@ export default function CompanionPage() {
           fetch("/api/coach/daily-brief", { credentials: "include" }),
           fetch("/api/clinical/insights", { credentials: "include" }),
           fetch("/api/usage/limits", { credentials: "include" }),
+          fetch("/api/longevity/modalities", { credentials: "include" }),
         ]);
         const [
           twinData,
@@ -304,6 +331,7 @@ export default function CompanionPage() {
           dailyBriefData,
           clinicalMemoryData,
           usageData,
+          modalitiesData,
         ] = await Promise.all([
           twinResponse.json(),
           protocolResponse.json(),
@@ -314,6 +342,7 @@ export default function CompanionPage() {
           dailyBriefResponse.json(),
           clinicalMemoryResponse.json(),
           usageResponse.json(),
+          modalitiesResponse.json(),
         ]);
 
         if (!twinResponse.ok && twinResponse.status !== 403) {
@@ -332,6 +361,7 @@ export default function CompanionPage() {
           );
           setDailyBrief(dailyBriefResponse.ok ? dailyBriefData.brief : null);
           setUsageLimits(usageResponse.ok ? usageData : null);
+          setModalities(modalitiesResponse.ok ? modalitiesData : null);
         }
       } catch (error) {
         if (!cancelled) {
@@ -793,6 +823,11 @@ export default function CompanionPage() {
 
             <TierUsagePanel usageLimits={usageLimits} />
 
+            <AdvancedModalitiesPanel
+              modalities={modalities}
+              onAsk={(question) => void askPersonalAgent(question)}
+            />
+
             <PersonalAgentMemoryPanel memory={coachMemory} />
 
             <div ref={clinicalPanelRef}>
@@ -1228,6 +1263,108 @@ function TierUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | nul
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function AdvancedModalitiesPanel({
+  modalities,
+  onAsk,
+}: {
+  modalities: ModalitiesPayload | null;
+  onAsk: (question: string) => void;
+}) {
+  const recommendations = modalities?.recommendations || [];
+  const included = recommendations.filter((item) => item.access === "included").slice(0, 3);
+  const locked = recommendations.filter((item) => item.access === "locked").slice(0, 3);
+  const visible = [...included, ...locked].slice(0, 6);
+
+  if (!visible.length) return null;
+
+  return (
+    <div className="executive-panel rounded-lg p-6 md:p-7">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="micro-label">Advanced Longevity Modalities</p>
+          <h2 className="mt-3 max-w-2xl text-3xl font-light leading-tight text-white">
+            Protocols ranked by fit, evidence, and tier.
+          </h2>
+        </div>
+        <Link
+          href="/pricing"
+          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[#dabc73]/80 transition hover:text-[#f4df9b]"
+        >
+          Compare tiers
+          <ArrowRight size={13} />
+        </Link>
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        {visible.map((modality) => (
+          <button
+            key={modality.id}
+            type="button"
+            onClick={() => onAsk(`Explain whether ${modality.name} makes sense for me, including risks, contraindications, tracking markers, and the safest protocol range.`)}
+            className={`group rounded-lg border p-5 text-left transition ${
+              modality.access === "included"
+                ? "border-[#dabc73]/24 bg-[#dabc73]/[0.05] hover:border-[#dabc73]/42"
+                : "border-white/[0.075] bg-white/[0.022] hover:border-white/[0.14]"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/70">
+                  {titleCase(modality.category)} / {titleCase(modality.evidenceGrade)}
+                </p>
+                <h3 className="mt-3 text-xl font-light leading-tight text-white/88">
+                  {modality.name}
+                </h3>
+              </div>
+              <span
+                className={`rounded-full border px-2.5 py-1 text-[8px] uppercase tracking-[0.12em] ${
+                  modality.access === "included"
+                    ? "border-[#dabc73]/24 text-[#f0d68d]/85"
+                    : "border-white/[0.08] text-white/36"
+                }`}
+              >
+                {modality.access === "included" ? "Included" : titleCase(modality.minimumTier)}
+              </span>
+            </div>
+
+            <div className="mt-5 flex items-end gap-2">
+              <p className="text-4xl font-light leading-none text-white/90">
+                {modality.fitScore}
+              </p>
+              <p className="mb-1 text-[9px] uppercase tracking-[0.14em] text-white/30">
+                fit score
+              </p>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-white/48">{modality.rationale}</p>
+            <div className="mt-4 grid gap-2">
+              <ModalitySignal label="Risk" value={titleCase(modality.risk)} />
+              <ModalitySignal label="Cost" value={titleCase(modality.cost)} />
+              <ModalitySignal
+                label="Review"
+                value={modality.clinicianReview ? "Clinician" : "Self-guided"}
+              />
+            </div>
+            <p className="mt-4 text-xs leading-5 text-white/34">
+              {modality.access === "included"
+                ? modality.protocolRange
+                : modality.upgradeMessage || "Upgrade to activate this modality."}
+            </p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ModalitySignal({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-black/15 px-3 py-2">
+      <span className="text-[8px] uppercase tracking-[0.13em] text-white/28">{label}</span>
+      <span className="text-xs text-white/62">{value}</span>
     </div>
   );
 }
