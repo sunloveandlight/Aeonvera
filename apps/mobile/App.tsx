@@ -28,6 +28,7 @@ import * as Speech from "expo-speech";
 import { StatusBar } from "expo-status-bar";
 
 type ActiveView = "today" | "agent" | "inbox" | "message" | "settings";
+type VoicePhase = "idle" | "listening" | "processing" | "speaking" | "ready_follow_up";
 
 type CoachMessage = {
   id: string;
@@ -457,6 +458,9 @@ export default function App() {
   ]);
   const [voiceRecording, setVoiceRecording] = useState<Audio.Recording | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+  const [voicePhase, setVoicePhase] = useState<VoicePhase>("idle");
+  const [lastVoiceTranscript, setLastVoiceTranscript] = useState<string | null>(null);
+  const [lastVoiceAnswer, setLastVoiceAnswer] = useState<string | null>(null);
   const [voiceSpeaking, setVoiceSpeaking] = useState(false);
   const [notificationFocusTick, setNotificationFocusTick] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -1302,10 +1306,12 @@ export default function App() {
       await recording.startAsync();
       setActiveVoiceClinicalInsightId(clinicalInsightId || null);
       setVoiceRecording(recording);
+      setVoicePhase("listening");
+      setLastVoiceTranscript(null);
       setVoiceStatus(
         clinicalInsightId
-          ? "Listening for your clinical follow-up answer."
-          : "Listening. Tap done when you finish."
+          ? "Listening for your clinical follow-up answer. Speak naturally."
+          : "Listening. Speak naturally, then tap finish."
       );
       playSoftHaptic();
     } catch (error) {
@@ -1324,7 +1330,8 @@ export default function App() {
     const recording = voiceRecording;
     setVoiceRecording(null);
     setAgentThinking(true);
-    setVoiceStatus("Understanding your voice note.");
+    setVoicePhase("processing");
+    setVoiceStatus("Understanding your question and reading your health context.");
 
     try {
       await recording.stopAndUnloadAsync();
@@ -1366,6 +1373,8 @@ export default function App() {
 
       const transcript = result?.transcript || "Voice question";
       const answer = result?.answer || "Aeonvera is still reading today's signal.";
+      setLastVoiceTranscript(transcript);
+      setLastVoiceAnswer(answer);
       setAgentMessages((current) => [
         ...current,
         { role: "user", content: transcript },
@@ -1393,7 +1402,7 @@ export default function App() {
         }
       }
 
-      setVoiceStatus("Aeonvera answered by voice.");
+      setVoiceStatus("Aeonvera is answering. You can stop the voice or ask a follow-up.");
       setActiveVoiceClinicalInsightId(null);
       await refreshClinicalInsights();
       speakAgentAnswer(answer);
@@ -1404,6 +1413,7 @@ export default function App() {
           ? error.message
           : "Aeonvera could not process voice right now.";
       setVoiceStatus(message);
+      setVoicePhase("idle");
       setActiveVoiceClinicalInsightId(null);
       setAgentMessages((current) => [
         ...current,
@@ -1423,6 +1433,7 @@ export default function App() {
     const recording = voiceRecording;
     setVoiceRecording(null);
     setActiveVoiceClinicalInsightId(null);
+    setVoicePhase("idle");
     setVoiceStatus("Voice note cancelled.");
 
     await recording.stopAndUnloadAsync().catch(() => null);
@@ -1436,20 +1447,32 @@ export default function App() {
     if (!answer.trim()) return;
 
     setVoiceSpeaking(true);
+    setVoicePhase("speaking");
     Speech.speak(answer.replace(/\s+/g, " ").slice(0, 3600), {
       language: "en-US",
       pitch: 0.92,
       rate: Platform.OS === "ios" ? 0.48 : 0.86,
-      onDone: () => setVoiceSpeaking(false),
-      onError: () => setVoiceSpeaking(false),
-      onStopped: () => setVoiceSpeaking(false),
+      onDone: () => {
+        setVoiceSpeaking(false);
+        setVoicePhase("ready_follow_up");
+        setVoiceStatus("Ready for a follow-up.");
+      },
+      onError: () => {
+        setVoiceSpeaking(false);
+        setVoicePhase("ready_follow_up");
+      },
+      onStopped: () => {
+        setVoiceSpeaking(false);
+        setVoicePhase("ready_follow_up");
+      },
     });
   }
 
   async function stopAgentSpeech() {
     await Speech.stop();
     setVoiceSpeaking(false);
-    setVoiceStatus("Voice reply stopped.");
+    setVoicePhase("ready_follow_up");
+    setVoiceStatus("Voice reply stopped. Ask a follow-up when ready.");
   }
 
   async function reconcileScheduledArtifacts(items: ScheduledProtocolAction[]) {
@@ -2329,6 +2352,9 @@ export default function App() {
                 suggestions={agentSuggestions}
                 thinking={agentThinking}
                 usageLimits={usageLimits}
+                voicePhase={voicePhase}
+                lastVoiceTranscript={lastVoiceTranscript}
+                lastVoiceAnswer={lastVoiceAnswer}
                 voiceRecording={Boolean(voiceRecording)}
                 voiceSpeaking={voiceSpeaking}
                 voiceStatus={voiceStatus}
@@ -2760,6 +2786,8 @@ function AgentView({
   appliedActions,
   clinicalAnswerDraft,
   clinicalInsights,
+  lastVoiceAnswer,
+  lastVoiceTranscript,
   messages,
   modalities,
   onCancelVoice,
@@ -2774,6 +2802,7 @@ function AgentView({
   suggestions,
   thinking,
   usageLimits,
+  voicePhase,
   voiceRecording,
   voiceSpeaking,
   voiceStatus,
@@ -2781,6 +2810,8 @@ function AgentView({
   appliedActions: AgentAppliedAction[];
   clinicalAnswerDraft: string;
   clinicalInsights: ClinicalInsight[];
+  lastVoiceAnswer: string | null;
+  lastVoiceTranscript: string | null;
   messages: AgentChatMessage[];
   modalities: ModalitiesPayload | null;
   onCancelVoice: () => void;
@@ -2795,6 +2826,7 @@ function AgentView({
   suggestions: string[];
   thinking: boolean;
   usageLimits: UsageLimitsPayload | null;
+  voicePhase: VoicePhase;
   voiceRecording: boolean;
   voiceSpeaking: boolean;
   voiceStatus: string | null;
@@ -2807,6 +2839,9 @@ function AgentView({
   const riskTier = latestInsight?.metadata?.risk_tier;
   const safetyLevel = latestInsight?.metadata?.safety_level || lastClinicalResponse?.safety_level;
   const statusReason = latestInsight?.metadata?.status_reason || lastClinicalResponse?.status_reason;
+  const voiceTitle = voicePhaseLabel(voicePhase, voiceSpeaking, voiceRecording);
+  const primaryVoiceLabel =
+    voicePhase === "ready_follow_up" ? "Follow Up" : voiceRecording ? "Finish" : "Speak";
 
   return (
     <View style={styles.agentPanel}>
@@ -2819,17 +2854,40 @@ function AgentView({
 
       <View style={styles.voicePanel}>
         <View style={styles.voiceSignal}>
-          <View style={[styles.voiceOrb, voiceRecording && styles.voiceOrbActive]} />
+          <View
+            style={[
+              styles.voiceOrb,
+              (voiceRecording || voiceSpeaking || voicePhase === "processing") &&
+                styles.voiceOrbActive,
+              voicePhase === "processing" && styles.voiceOrbProcessing,
+            ]}
+          />
           <View style={styles.voiceCopyGroup}>
-            <Text style={styles.voiceTitle}>
-              {voiceRecording ? "Listening" : voiceSpeaking ? "Speaking" : "Voice conversation"}
-            </Text>
+            <Text style={styles.voiceTitle}>{voiceTitle}</Text>
             <Text style={styles.voiceHint}>
               {voiceStatus ||
-                "Speak a complex health question and Aeonvera will answer through the agent."}
+                "Speak naturally. Aeonvera will answer out loud and remember the clinical context."}
             </Text>
           </View>
         </View>
+        {lastVoiceTranscript || lastVoiceAnswer ? (
+          <View style={styles.voiceTranscriptPanel}>
+            {lastVoiceTranscript ? (
+              <>
+                <Text style={styles.voiceTranscriptLabel}>You said</Text>
+                <Text style={styles.voiceTranscriptText}>{lastVoiceTranscript}</Text>
+              </>
+            ) : null}
+            {lastVoiceAnswer ? (
+              <>
+                <Text style={styles.voiceTranscriptLabel}>Aeonvera answered</Text>
+                <Text style={styles.voiceTranscriptText} numberOfLines={4}>
+                  {lastVoiceAnswer}
+                </Text>
+              </>
+            ) : null}
+          </View>
+        ) : null}
         <View style={styles.voiceControls}>
           {voiceRecording ? (
             <>
@@ -2837,7 +2895,7 @@ function AgentView({
                 <Text style={styles.voiceButtonText}>Cancel</Text>
               </Pressable>
               <Pressable style={styles.voiceButton} onPress={onStopVoice}>
-                <Text style={styles.voiceButtonPrimaryText}>Done</Text>
+                <Text style={styles.voiceButtonPrimaryText}>{primaryVoiceLabel}</Text>
               </Pressable>
             </>
           ) : voiceSpeaking ? (
@@ -2846,11 +2904,14 @@ function AgentView({
             </Pressable>
           ) : (
             <Pressable
-              style={[styles.voiceButton, thinking && styles.buttonDisabled]}
-              disabled={thinking}
+              style={[
+                styles.voiceButton,
+                (thinking && voicePhase !== "ready_follow_up") && styles.buttonDisabled,
+              ]}
+              disabled={thinking && voicePhase !== "ready_follow_up"}
               onPress={() => onStartVoice()}
             >
-              <Text style={styles.voiceButtonPrimaryText}>Speak</Text>
+              <Text style={styles.voiceButtonPrimaryText}>{primaryVoiceLabel}</Text>
             </Pressable>
           )}
         </View>
@@ -4369,6 +4430,18 @@ function updateUsageMeter(
   };
 }
 
+function voicePhaseLabel(
+  phase: VoicePhase,
+  speaking: boolean,
+  recording: boolean
+) {
+  if (recording || phase === "listening") return "Listening";
+  if (speaking || phase === "speaking") return "Speaking";
+  if (phase === "processing") return "Thinking";
+  if (phase === "ready_follow_up") return "Ready for follow-up";
+  return "Voice conversation";
+}
+
 function isNotificationPermissionGranted(permission: unknown) {
   const result = permission as { granted?: boolean; status?: string };
   return result.granted === true || result.status === "granted";
@@ -4691,6 +4764,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.7,
     shadowRadius: 14,
   },
+  voiceOrbProcessing: {
+    backgroundColor: "rgba(255,255,255,0.72)",
+    shadowColor: "#ffffff",
+    shadowOpacity: 0.44,
+  },
   voiceCopyGroup: {
     flex: 1,
   },
@@ -4709,6 +4787,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     gap: 10,
+  },
+  voiceTranscriptPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+    borderRadius: 9,
+    backgroundColor: "rgba(255,255,255,0.026)",
+    gap: 6,
+    padding: 12,
+  },
+  voiceTranscriptLabel: {
+    color: "rgba(218,188,115,0.72)",
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    marginTop: 2,
+    textTransform: "uppercase",
+  },
+  voiceTranscriptText: {
+    color: "rgba(255,255,255,0.58)",
+    fontSize: 12,
+    lineHeight: 18,
   },
   voiceButton: {
     minHeight: 42,
