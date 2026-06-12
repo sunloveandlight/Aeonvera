@@ -71,6 +71,47 @@ type NotificationRow = {
   created_at?: string | null;
 };
 
+type LabRow = {
+  canonical_key?: string | null;
+  raw_label?: string | null;
+  value?: number | string | null;
+  unit?: string | null;
+  measured_at?: string | null;
+};
+
+type HealthMetricRow = {
+  metric?: string | null;
+  metric_name?: string | null;
+  value?: number | string | null;
+  metric_value?: number | string | null;
+  source?: string | null;
+  measured_at?: string | null;
+  recorded_at?: string | null;
+};
+
+type BiologicalAgeRow = {
+  biological_age?: number | string | null;
+  chronological_age?: number | string | null;
+  age_delta?: number | string | null;
+  score?: number | string | null;
+  category?: string | null;
+  source?: string | null;
+  created_at?: string | null;
+};
+
+type AssessmentRow = Record<string, unknown> & {
+  age?: number | string | null;
+  primary_goal?: string | null;
+  created_at?: string | null;
+};
+
+type HealthStateRow = {
+  baseline?: unknown;
+  risk_scores?: unknown;
+  insights?: unknown;
+  updated_at?: string | null;
+};
+
 type PreferenceRow = {
   category?: string | null;
   preference_key?: string | null;
@@ -97,7 +138,139 @@ type AgentContext = {
   calendarEvents: CalendarRow[];
   notifications: NotificationRow[];
   preferences: PreferenceRow[];
+  labs: LabRow[];
+  healthMetrics: HealthMetricRow[];
+  wearableMetrics: HealthMetricRow[];
+  biologicalAge: BiologicalAgeRow | null;
+  assessment: AssessmentRow | null;
+  healthState: HealthStateRow | null;
 };
+
+const CLINICAL_LONGEVITY_DOMAINS = [
+  {
+    domain: "Circadian Biology & Sleep Architecture",
+    signals: [
+      "bedtime",
+      "wake time",
+      "sleep latency",
+      "night awakenings",
+      "deep sleep",
+      "REM sleep",
+      "sleep quality",
+      "snoring",
+      "sleep apnea risk",
+    ],
+  },
+  {
+    domain: "Metabolic Flexibility",
+    signals: [
+      "fasting glucose",
+      "fasting insulin",
+      "HbA1c",
+      "triglycerides",
+      "HDL",
+      "waist circumference",
+      "carbohydrate response",
+      "fasting response",
+    ],
+  },
+  {
+    domain: "Cardiovascular Performance",
+    signals: [
+      "resting heart rate",
+      "sleeping heart rate",
+      "HRV",
+      "blood pressure",
+      "VO2 max",
+      "recovery heart rate",
+      "family cardiovascular history",
+    ],
+  },
+  {
+    domain: "Inflammation & Recovery",
+    signals: ["hs-CRP", "homocysteine", "ferritin", "ESR", "fibrinogen", "training soreness", "recovered days"],
+  },
+  {
+    domain: "Hormonal Optimization",
+    signals: [
+      "testosterone",
+      "free testosterone",
+      "SHBG",
+      "LH",
+      "FSH",
+      "estradiol",
+      "progesterone",
+      "TSH",
+      "Free T3",
+      "Free T4",
+      "morning cortisol",
+    ],
+  },
+  {
+    domain: "Body Composition & Sarcopenia Risk",
+    signals: [
+      "height",
+      "weight",
+      "body fat",
+      "lean mass",
+      "grip strength",
+      "visceral fat",
+      "resistance training",
+      "aerobic training",
+      "mobility",
+    ],
+  },
+  {
+    domain: "Cognitive Longevity",
+    signals: [
+      "memory",
+      "processing speed",
+      "focus",
+      "emotional regulation",
+      "learning capacity",
+      "brain fog",
+      "executive function",
+    ],
+  },
+  {
+    domain: "Nutrition & Micronutrient Density",
+    signals: [
+      "diet pattern",
+      "fatty fish",
+      "fermented foods",
+      "vegetables",
+      "ultra-processed foods",
+      "alcohol",
+      "vitamin D",
+      "magnesium",
+      "omega-3",
+      "creatine",
+    ],
+  },
+  {
+    domain: "Biological Age & Stress Resilience",
+    signals: [
+      "psychological stress",
+      "anxiety",
+      "burnout",
+      "emotional exhaustion",
+      "biological age",
+      "epigenetic age",
+      "telomere length",
+    ],
+  },
+  {
+    domain: "Longevity Risk Stratification",
+    signals: [
+      "cancer history",
+      "neurodegenerative disease history",
+      "diabetes history",
+      "cardiovascular history",
+      "autoimmune history",
+      "priority goal",
+    ],
+  },
+];
 
 let openaiClient: OpenAI | null = null;
 
@@ -140,14 +313,13 @@ export async function answerPersonalHealthAgent({
 
   try {
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || "gpt-4.1",
-      temperature: 0.35,
-      max_tokens: 780,
+      model: process.env.OPENAI_MODEL || "gpt-5.5",
+      temperature: 0.22,
+      max_tokens: 1500,
       messages: [
         {
           role: "system",
-          content:
-            "You are Aeonvera, a premium personal health agent. Use only the supplied user context. Think like a proactive operating system for health: explain the signal, the decision, the tradeoff, and the next clean action. Be calm, precise, sophisticated, natural, and practical. If the user asks why something was scheduled, explain the evidence and the intended adaptation. If the plan feels too heavy, simplify it. Do not diagnose, prescribe medication, or claim certainty. Keep answers under 220 words unless the user asks for detail.",
+          content: buildClinicalSystemPrompt(),
         },
         {
           role: "user",
@@ -193,8 +365,21 @@ async function loadAgentContext(
   const today = new Date().toISOString().slice(0, 10);
   const since = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
 
-  const [memory, protocolRes, planRes, outcomesRes, calendarRes, notificationRes, preferenceRes] =
-    await Promise.all([
+  const [
+    memory,
+    protocolRes,
+    planRes,
+    outcomesRes,
+    calendarRes,
+    notificationRes,
+    preferenceRes,
+    labRes,
+    healthMetricRes,
+    wearableRes,
+    biologicalAgeRes,
+    assessmentRes,
+    healthStateRes,
+  ] = await Promise.all([
       loadOrBuildCoachMemoryProfile(supabase, userId),
       safeQuery(() =>
         supabase
@@ -247,6 +432,57 @@ async function loadAgentContext(
           .order("updated_at", { ascending: false })
           .limit(20)
       ),
+      safeQuery(() =>
+        supabase
+          .from("lab_biomarkers")
+          .select("canonical_key,raw_label,value,unit,measured_at")
+          .eq("user_id", userId)
+          .order("measured_at", { ascending: false })
+          .limit(40)
+      ),
+      safeQuery(() =>
+        supabase
+          .from("health_metrics")
+          .select("metric,value,source,measured_at")
+          .eq("user_id", userId)
+          .order("measured_at", { ascending: false })
+          .limit(80)
+      ),
+      safeQuery(() =>
+        supabase
+          .from("wearable_metrics")
+          .select("provider,metric_name,metric_value,recorded_at")
+          .eq("user_id", userId)
+          .order("recorded_at", { ascending: false })
+          .limit(80)
+      ),
+      safeQuery(() =>
+        supabase
+          .from("biological_age_history")
+          .select("biological_age,chronological_age,age_delta,score,category,source,created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      ),
+      safeQuery(() =>
+        supabase
+          .from("longevity_assessments")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      ),
+      safeQuery(() =>
+        supabase
+          .from("health_states")
+          .select("baseline,risk_scores,insights,updated_at")
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      ),
     ]);
 
   return {
@@ -257,6 +493,12 @@ async function loadAgentContext(
     calendarEvents: ((calendarRes.data || []) as CalendarRow[]).slice(0, 18),
     notifications: ((notificationRes.data || []) as NotificationRow[]).slice(0, 8),
     preferences: ((preferenceRes.data || []) as PreferenceRow[]).slice(0, 20),
+    labs: ((labRes.data || []) as LabRow[]).slice(0, 40),
+    healthMetrics: ((healthMetricRes.data || []) as HealthMetricRow[]).slice(0, 80),
+    wearableMetrics: ((wearableRes.data || []) as HealthMetricRow[]).slice(0, 80),
+    biologicalAge: (biologicalAgeRes.data as BiologicalAgeRow | null) || null,
+    assessment: (assessmentRes.data as AssessmentRow | null) || null,
+    healthState: (healthStateRes.data as HealthStateRow | null) || null,
   };
 }
 
@@ -464,7 +706,12 @@ async function safeQuery<T>(
 }
 
 function summarizeContext(context: AgentContext) {
+  const latestMetrics = summarizeLatestMetrics(context);
+  const coverage = buildDomainCoverage(context, latestMetrics);
+
   return {
+    clinicalFramework: CLINICAL_LONGEVITY_DOMAINS,
+    clinicalCoverage: coverage,
     memory: context.memory
       ? {
           communicationStyle: context.memory.communicationStyle,
@@ -494,10 +741,30 @@ function summarizeContext(context: AgentContext) {
         }
       : null,
     agentPreferences: context.preferences.slice(0, 10),
+    latestLabs: latestByKey(context.labs, (item) => item.canonical_key || item.raw_label || "lab"),
+    latestMetrics,
+    biologicalAge: context.biologicalAge,
+    latestAssessment: compactAssessment(context.assessment),
+    healthState: context.healthState,
     recentOutcomes: context.outcomes.slice(0, 10),
     calendar: context.calendarEvents.slice(0, 8),
     notifications: context.notifications.slice(0, 4),
   };
+}
+
+function buildClinicalSystemPrompt() {
+  return [
+    "You are Aeonvera, a premium personal health intelligence agent for longevity and human optimization.",
+    "Use only supplied user context plus generally accepted biomedical reasoning. When data is missing, say so clearly and request the highest-yield missing inputs instead of guessing.",
+    "Reason across these domains: circadian biology and sleep architecture; metabolic flexibility; cardiovascular performance; inflammation and recovery; hormonal optimization; body composition and sarcopenia risk; cognitive longevity; nutrition and micronutrient density; biological age and stress resilience; longevity risk stratification.",
+    "For complex health questions, answer with: 1) Signal map, 2) What it may imply, 3) What is missing, 4) Highest-leverage next actions, 5) What to track next.",
+    "Connect systems: sleep affects glucose control and hormones; metabolic dysfunction affects inflammation and cardiovascular risk; training load affects HRV and recovery; stress affects sleep, cortisol, appetite, glucose, and adherence.",
+    "Be sophisticated but not theatrical. Use precise language, explain uncertainty, and prioritize actions that are low-risk, measurable, and reversible.",
+    "Safety: do not diagnose disease, prescribe medication, interpret urgent symptoms as benign, or replace a clinician. Recommend medical evaluation for chest pain, stroke symptoms, severe shortness of breath, fainting, severe hypertension, suicidal ideation, suspected sleep apnea, abnormal labs, or endocrine/cardiovascular red flags.",
+    "If the user asks for a preventive medicine style analysis, give a deep structured interpretation, but label it educational and decision-support, not a diagnosis.",
+    "If the user asks why something was scheduled, explain evidence, tradeoff, and adaptation. If the plan feels too heavy, simplify it.",
+    "Keep ordinary answers concise. For deep analysis requests, use enough detail to be useful.",
+  ].join(" ");
 }
 
 function buildFallbackAnswer(
@@ -513,12 +780,28 @@ function buildFallbackAnswer(
     context.protocol?.summary ||
     "Aeonvera is still building your active protocol from your assessment, outcomes, and calendar behavior.";
   const ask = question.toLowerCase();
+  const latestMetrics = summarizeLatestMetrics(context);
+  const coverage = buildDomainCoverage(context, latestMetrics);
+  const relevantGaps = coverage
+    .filter((domain) => domain.missing.length)
+    .slice(0, 4)
+    .map((domain) => `${domain.domain}: ${domain.missing.slice(0, 4).join(", ")}`);
   const actionPrefix = actions.length
     ? `${actions.map((action) => action.detail).join(" ")} `
     : "";
 
   if (/why|reason|because|scheduled/.test(ask) && action) {
     return `${actionPrefix}Aeonvera prioritized this because it sits closest to today’s active protocol: ${action.action}. ${action.why || planSummary} Treat it as a clean signal rather than a demand: complete it if it fits, move it if the day is compressed, and let the system learn from that choice.`;
+  }
+
+  if (isComplexHealthQuestion(ask)) {
+    return `${actionPrefix}I can reason across the longevity system, but the strongest analysis depends on the missing inputs. Current signal map: ${coverage
+      .filter((domain) => domain.present.length)
+      .slice(0, 4)
+      .map((domain) => `${domain.domain} has ${domain.present.slice(0, 3).join(", ")}`)
+      .join("; ") || "your core clinical signal set is still sparse"}. Key gaps: ${
+      relevantGaps.join("; ") || "no major framework gaps detected in the currently loaded context"
+    }. The next intelligent move is to fill the highest-yield missing markers first, then interpret patterns together rather than in isolation: sleep/circadian rhythm, glucose-insulin-lipids, blood pressure-HRV-VO2 max, inflammation, hormones when relevant, body composition, cognition, nutrition, stress, and family risk. This is decision-support, not diagnosis.`;
   }
 
   if (/change|adjust|move|simpler|too much/.test(ask)) {
@@ -530,6 +813,94 @@ function buildFallbackAnswer(
   }
 
   return `${actionPrefix}${planSummary} The next intelligent move is to execute one meaningful action, mark the result honestly, and let Aeonvera adapt the following schedule from what actually happened.`;
+}
+
+function isComplexHealthQuestion(value: string) {
+  return /(circadian|sleep architecture|fasting insulin|hba1c|triglycerides|hdl|vo2|hrv|blood pressure|hs-crp|homocysteine|ferritin|hormone|testosterone|estradiol|progesterone|tsh|cortisol|sarcopenia|body composition|cognitive|micronutrient|biological age|telomere|cancer|neurodegenerative|cardiovascular|autoimmune|longevity analysis|preventive medicine)/.test(
+    value
+  );
+}
+
+function summarizeLatestMetrics(context: AgentContext) {
+  const rows = [...context.healthMetrics, ...context.wearableMetrics];
+  return latestByKey(rows, (item) => item.metric || item.metric_name || "metric").slice(0, 40);
+}
+
+function latestByKey<T>(rows: T[], keyFor: (item: T) => string | null | undefined) {
+  const seen = new Set<string>();
+  const output: T[] = [];
+
+  for (const row of rows) {
+    const key = String(keyFor(row) || "").toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    output.push(row);
+  }
+
+  return output;
+}
+
+function buildDomainCoverage(
+  context: AgentContext,
+  latestMetrics: HealthMetricRow[]
+) {
+  const haystack = JSON.stringify({
+    labs: context.labs,
+    metrics: latestMetrics,
+    biologicalAge: context.biologicalAge,
+    assessment: context.assessment,
+    healthState: context.healthState,
+  }).toLowerCase();
+
+  return CLINICAL_LONGEVITY_DOMAINS.map((domain) => {
+    const present = domain.signals.filter((signal) => signalPresent(haystack, signal));
+    const missing = domain.signals.filter((signal) => !signalPresent(haystack, signal));
+
+    return {
+      domain: domain.domain,
+      present,
+      missing,
+      completeness: Math.round((present.length / domain.signals.length) * 100),
+    };
+  });
+}
+
+function signalPresent(haystack: string, signal: string) {
+  const normalized = signal.toLowerCase();
+  const synonyms: Record<string, string[]> = {
+    "bedtime": ["bedtime", "sleep_start", "sleep start"],
+    "wake time": ["wake", "wake_time", "sleep_end", "sleep end"],
+    "sleep latency": ["sleep latency", "latency"],
+    "night awakenings": ["awakening", "awakenings", "wake after sleep"],
+    "deep sleep": ["deep sleep", "deep_sleep"],
+    "REM sleep": ["rem sleep", "rem_sleep"],
+    "fasting glucose": ["fasting_glucose", "fasting glucose", "glucose"],
+    "fasting insulin": ["fasting_insulin", "fasting insulin", "insulin"],
+    "HbA1c": ["hba1c", "hemoglobin a1c"],
+    "triglycerides": ["triglyceride"],
+    "HDL": ["hdl"],
+    "resting heart rate": ["resting heart", "resting_heart", "resting_hr", "rhr"],
+    "sleeping heart rate": ["sleeping heart", "sleep_hr"],
+    "HRV": ["hrv", "heart rate variability"],
+    "blood pressure": ["blood pressure", "systolic", "diastolic"],
+    "VO2 max": ["vo2", "vo₂"],
+    "hs-CRP": ["hscrp", "hs-crp", "crp"],
+    "Free T3": ["free t3", "free_t3"],
+    "Free T4": ["free t4", "free_t4"],
+    "biological age": ["biological_age", "biological age"],
+  };
+  const candidates = synonyms[signal] || [normalized];
+  return candidates.some((candidate) => haystack.includes(candidate.toLowerCase()));
+}
+
+function compactAssessment(assessment: AssessmentRow | null) {
+  if (!assessment) return null;
+
+  const entries = Object.entries(assessment)
+    .filter(([, value]) => value !== null && value !== undefined && value !== "")
+    .slice(0, 36);
+
+  return Object.fromEntries(entries);
 }
 
 function actionImportance(action: ProtocolAction) {

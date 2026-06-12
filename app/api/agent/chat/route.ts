@@ -67,7 +67,7 @@ async function getAuthenticatedUser(request: NextRequest) {
 }
 
 function sanitizeQuestion(value: unknown) {
-  return typeof value === "string" ? value.trim().slice(0, 800) : "";
+  return typeof value === "string" ? value.trim().slice(0, 8000) : "";
 }
 
 function sanitizeHistory(value: unknown): SanitizedChatMessage[] {
@@ -80,7 +80,7 @@ function sanitizeHistory(value: unknown): SanitizedChatMessage[] {
 
       return {
         role,
-        content: typeof message.content === "string" ? message.content.trim().slice(0, 900) : "",
+        content: typeof message.content === "string" ? message.content.trim().slice(0, 1600) : "",
       };
     })
     .filter((message) => message.content)
