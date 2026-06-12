@@ -92,6 +92,19 @@ type NativeCalendarEvent = {
   eventId: string;
   calendarTitle: string;
   scheduledFor: string;
+  reason?: string;
+};
+
+type CalendarScheduleResult = {
+  eventId: string;
+  calendarTitle: string;
+  scheduledFor: string;
+  reason: string;
+};
+
+type BusySlot = {
+  start: Date;
+  end: Date;
 };
 
 type NotificationTapData = {
@@ -781,6 +794,7 @@ export default function App() {
     let scheduled = 0;
     let notified = 0;
     let skippedExisting = 0;
+    const scheduledEvents: CalendarScheduleResult[] = [];
 
     setAcceptingDailyPlan(true);
 
@@ -795,8 +809,11 @@ export default function App() {
         }
 
         if (preferences.calendar_enabled && item.execution_mode !== "notify") {
-          const eventId = await scheduleActionToNativeCalendar(item, "default", true);
-          if (eventId) scheduled += 1;
+          const event = await scheduleActionToNativeCalendar(item, "default", true);
+          if (event) {
+            scheduled += 1;
+            scheduledEvents.push(event);
+          }
         }
 
         if (
@@ -824,6 +841,13 @@ export default function App() {
         scheduled || notified
           ? `Created ${scheduled} calendar block${scheduled === 1 ? "" : "s"}${
               notified ? ` and ${notified} phone notification${notified === 1 ? "" : "s"}` : ""
+            }${
+              scheduledEvents.length
+                ? `: ${scheduledEvents
+                    .slice(0, 3)
+                    .map((event) => formatReminderDate(new Date(event.scheduledFor)))
+                    .join(", ")}`
+                : ""
             }.${skippedExisting ? ` ${skippedExisting} already existed.` : ""}`
           : skippedExisting
             ? "Today was already prepared. No duplicate calendar events were created."
@@ -935,7 +959,7 @@ export default function App() {
     action: ScheduledProtocolAction,
     preset: ReminderPreset = "default",
     silent = false
-  ) {
+  ): Promise<CalendarScheduleResult | null> {
     if (!supabase || !session || !protocol?.id || !action.action) return null;
 
     if (Platform.OS !== "ios" && Platform.OS !== "android") {
@@ -960,8 +984,10 @@ export default function App() {
       return null;
     }
 
-    const scheduledFor = getReminderDate(action.scope, preset, action);
-    const endDate = new Date(scheduledFor.getTime() + 30 * 60 * 1000);
+    const schedule = await findIntelligentCalendarSlot(calendar.id, action, preset);
+    const scheduledFor = schedule.scheduledFor;
+    const durationMinutes = getActionDurationMinutes(action);
+    const endDate = new Date(scheduledFor.getTime() + durationMinutes * 60 * 1000);
     const title = `Aeonvera protocol: ${action.domain || "Optimization"}`;
     const notes = [
       action.action,
@@ -987,6 +1013,7 @@ export default function App() {
         eventId,
         calendarTitle: calendar.title || "Calendar",
         scheduledFor: scheduledFor.toISOString(),
+        reason: schedule.reason,
       },
     }));
 
@@ -1004,7 +1031,7 @@ export default function App() {
         action: action.action,
         action_scope: action.scope,
         scheduled_for: scheduledFor.toISOString(),
-        duration_minutes: 30,
+        duration_minutes: durationMinutes,
         recurrence: "none",
         status: "scheduled",
         payload: {
@@ -1012,6 +1039,9 @@ export default function App() {
           calendar_title: calendar.title || null,
           platform: Platform.OS,
           action_index: action.actionIndex,
+          schedule_reason: schedule.reason,
+          preferred_time: schedule.preferredFor.toISOString(),
+          conflict_checked: true,
         },
       })
       .select("id")
@@ -1032,6 +1062,7 @@ export default function App() {
           provider_event_id: eventId,
           action_scope: action.scope,
           scheduled_for: scheduledFor.toISOString(),
+          schedule_reason: schedule.reason,
           source: "mobile_device_calendar",
         },
       });
@@ -1042,18 +1073,23 @@ export default function App() {
       setActionNotice(
         `${calendarAppName} event added ${formatReminderDate(scheduledFor)} in ${
           calendar.title || "your calendar"
-        }.`
+        }. ${schedule.reason}`
       );
       playSoftHaptic();
     }
     if (!silent) {
       Alert.alert(
         "Added to calendar",
-        `Scheduled ${formatReminderDate(scheduledFor)} in ${calendar.title || "your calendar"}. Open ${calendarAppName} to see it.`
+        `Scheduled ${formatReminderDate(scheduledFor)} in ${calendar.title || "your calendar"}. ${schedule.reason}`
       );
     }
 
-    return eventId;
+    return {
+      eventId,
+      calendarTitle: calendar.title || "Calendar",
+      scheduledFor: scheduledFor.toISOString(),
+      reason: schedule.reason,
+    };
   }
 
   async function prepareNotifications() {
@@ -2215,6 +2251,191 @@ function getReminderDate(
   const slot = getRecommendedHour(text, scope);
   date.setHours(slot.hour, slot.minute, 0, 0);
   return date;
+}
+
+async function findIntelligentCalendarSlot(
+  calendarId: string,
+  action: ScheduledProtocolAction,
+  preset: ReminderPreset
+) {
+  const preferredFor = getReminderDate(action.scope, preset, action);
+  const durationMinutes = getActionDurationMinutes(action);
+  const candidates = buildScheduleCandidates(preferredFor, action);
+  const busySlots = await getBusyCalendarSlots(calendarId, candidates);
+  const selected =
+    candidates.find((candidate) =>
+      isSlotAvailable(candidate, durationMinutes, busySlots)
+    ) || candidates[candidates.length - 1] || preferredFor;
+  const reason = getScheduleReason(preferredFor, selected, action);
+
+  return {
+    preferredFor,
+    scheduledFor: selected,
+    reason,
+  };
+}
+
+async function getBusyCalendarSlots(calendarId: string, candidates: Date[]) {
+  if (!candidates.length) return [];
+
+  const windowStart = new Date(Math.min(...candidates.map((date) => date.getTime())));
+  const windowEnd = new Date(Math.max(...candidates.map((date) => date.getTime())));
+  windowStart.setHours(0, 0, 0, 0);
+  windowEnd.setDate(windowEnd.getDate() + 1);
+  windowEnd.setHours(23, 59, 59, 999);
+
+  const calendarIds = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT)
+    .then((calendars) =>
+      calendars
+        .filter((calendar) => calendar.isVisible !== false)
+        .map((calendar) => calendar.id)
+    )
+    .catch(() => [calendarId]);
+  const uniqueCalendarIds = Array.from(new Set([calendarId, ...calendarIds]));
+  const events = await Calendar.getEventsAsync(uniqueCalendarIds, windowStart, windowEnd).catch(
+    () => []
+  );
+
+  return events
+    .map((event) => {
+      const start = new Date(event.startDate);
+      const end = new Date(event.endDate);
+      return Number.isFinite(start.getTime()) && Number.isFinite(end.getTime())
+        ? { start, end }
+        : null;
+    })
+    .filter((slot): slot is BusySlot => Boolean(slot));
+}
+
+function buildScheduleCandidates(preferredFor: Date, action: ProtocolAction) {
+  const candidates: Date[] = [];
+  addCandidate(candidates, preferredFor);
+
+  const windows = getActionWindows(action);
+  for (const offset of [0, 1]) {
+    const day = new Date(preferredFor);
+    day.setDate(day.getDate() + offset);
+
+    for (const window of windows) {
+      for (let minutes = window.start; minutes <= window.end; minutes += 30) {
+        const candidate = new Date(day);
+        candidate.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+
+        if (candidate.getTime() > Date.now() + 20 * 60 * 1000) {
+          addCandidate(candidates, candidate);
+        }
+      }
+    }
+  }
+
+  return candidates.sort((a, b) => {
+    const dayDistance = Math.abs(startOfDay(a).getTime() - startOfDay(preferredFor).getTime());
+    const otherDayDistance = Math.abs(
+      startOfDay(b).getTime() - startOfDay(preferredFor).getTime()
+    );
+    if (dayDistance !== otherDayDistance) return dayDistance - otherDayDistance;
+    return (
+      Math.abs(a.getTime() - preferredFor.getTime()) -
+      Math.abs(b.getTime() - preferredFor.getTime())
+    );
+  });
+}
+
+function addCandidate(candidates: Date[], candidate: Date) {
+  if (
+    candidate.getTime() > Date.now() + 20 * 60 * 1000 &&
+    !candidates.some((existing) => existing.getTime() === candidate.getTime())
+  ) {
+    candidates.push(new Date(candidate));
+  }
+}
+
+function isSlotAvailable(candidate: Date, durationMinutes: number, busySlots: BusySlot[]) {
+  const bufferMs = 10 * 60 * 1000;
+  const start = candidate.getTime() - bufferMs;
+  const end = candidate.getTime() + durationMinutes * 60 * 1000 + bufferMs;
+
+  return !busySlots.some((slot) => start < slot.end.getTime() && end > slot.start.getTime());
+}
+
+function getActionWindows(action: ProtocolAction) {
+  const text = [action.domain, action.action, action.cadence, action.why]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (/(sleep|bedtime|wind down|evening|night|recovery|relax|caffeine)/.test(text)) {
+    return [{ start: 19 * 60, end: 21 * 60 + 30 }];
+  }
+
+  if (/(wake|morning|sunlight|weigh|weight|hrv|blood pressure|glucose|fasting)/.test(text)) {
+    return [{ start: 7 * 60, end: 10 * 60 }];
+  }
+
+  if (/(zone 2|cardio|walk|steps|run|training|workout|strength|resistance|mobility)/.test(text)) {
+    return [
+      { start: 6 * 60 + 30, end: 8 * 60 + 30 },
+      { start: 16 * 60 + 30, end: 19 * 60 + 30 },
+    ];
+  }
+
+  if (/(meal|nutrition|protein|supplement|creatine|hydration|hydrate|food)/.test(text)) {
+    return [
+      { start: 11 * 60 + 30, end: 14 * 60 },
+      { start: 17 * 60 + 30, end: 19 * 60 },
+    ];
+  }
+
+  if (/(journal|meditation|breath|stress|mindfulness|reflection)/.test(text)) {
+    return [{ start: 18 * 60 + 30, end: 21 * 60 }];
+  }
+
+  return [{ start: 9 * 60, end: 18 * 60 }];
+}
+
+function getActionDurationMinutes(action: ProtocolAction) {
+  const text = [action.domain, action.action, action.cadence, action.why]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (/(zone 2|cardio|run|training|workout|strength|resistance)/.test(text)) return 45;
+  if (/(meal|nutrition|protein|supplement|hydration|check|measure|log|record)/.test(text)) {
+    return 20;
+  }
+  if (/(sleep|bedtime|wind down|recovery|breath|meditation|journal)/.test(text)) return 30;
+  return 30;
+}
+
+function getScheduleReason(preferredFor: Date, selected: Date, action: ProtocolAction) {
+  if (selected.getTime() === preferredFor.getTime()) {
+    return "Placed in the recommended window for this action.";
+  }
+
+  const preferredDay = startOfDay(preferredFor).getTime();
+  const selectedDay = startOfDay(selected).getTime();
+  const actionType = getActionTypeLabel(action);
+
+  if (selectedDay > preferredDay) {
+    return `Today looked full, so Aeonvera moved this ${actionType} block to the next open window.`;
+  }
+
+  return `The preferred time was busy, so Aeonvera chose the nearest open ${actionType} window.`;
+}
+
+function getActionTypeLabel(action: ProtocolAction) {
+  const text = [action.domain, action.action, action.why].filter(Boolean).join(" ").toLowerCase();
+  if (/(training|workout|strength|cardio|zone 2|walk|run)/.test(text)) return "training";
+  if (/(sleep|recovery|breath|meditation|stress|journal)/.test(text)) return "recovery";
+  if (/(meal|nutrition|protein|food|hydration|supplement)/.test(text)) return "nutrition";
+  if (/(check|measure|log|record|weight|hrv|blood)/.test(text)) return "check-in";
+  return "execution";
+}
+
+function startOfDay(date: Date) {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
 }
 
 function getRecommendedSameDaySlot(date: Date, text: string) {
