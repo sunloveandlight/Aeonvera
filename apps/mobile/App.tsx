@@ -274,6 +274,23 @@ type ClinicalInsight = {
   created_at?: string | null;
 };
 
+type UsageMeterSnapshot = {
+  allowed: boolean;
+  limit: number;
+  meter: string;
+  migrationRequired?: boolean;
+  periodStart: string;
+  plan: string | null;
+  remaining: number;
+  used: number;
+};
+
+type UsageLimitsPayload = {
+  plan: string | null;
+  subscriptionStatus: string | null;
+  usage: UsageMeterSnapshot[];
+};
+
 const WEB_URL =
   process.env.EXPO_PUBLIC_AEONVERA_WEB_URL ||
   Constants.expoConfig?.extra?.webUrl ||
@@ -404,6 +421,7 @@ export default function App() {
   const [agentThinking, setAgentThinking] = useState(false);
   const [agentActions, setAgentActions] = useState<AgentAppliedAction[]>([]);
   const [clinicalInsights, setClinicalInsights] = useState<ClinicalInsight[]>([]);
+  const [usageLimits, setUsageLimits] = useState<UsageLimitsPayload | null>(null);
   const [clinicalAnswerDraft, setClinicalAnswerDraft] = useState("");
   const [activeVoiceClinicalInsightId, setActiveVoiceClinicalInsightId] = useState<string | null>(
     null
@@ -517,6 +535,21 @@ export default function App() {
           body: { insights: [] },
           ok: false,
         }));
+      const usageResult = await fetch(`${appUrl}/api/usage/limits`, {
+        headers: {
+          Authorization: `Bearer ${currentSession.access_token}`,
+        },
+      })
+        .then((response) =>
+          response.json().then((body) => ({
+            body,
+            ok: response.ok,
+          }))
+        )
+        .catch(() => ({
+          body: null,
+          ok: false,
+        }));
 
       if (messageResult.error || protocolResult.error || preferenceResult.error) {
         setDataMessage(
@@ -573,6 +606,7 @@ export default function App() {
           ? ((clinicalMemoryResult.body?.insights || []) as ClinicalInsight[])
           : []
       );
+      setUsageLimits(usageResult.ok ? (usageResult.body as UsageLimitsPayload) : null);
       setPreferences(
         ((preferenceResult.data as Preferences | null) || {
           user_id: currentSession.user.id,
@@ -1149,6 +1183,10 @@ export default function App() {
         setAgentSuggestions(result.suggestedPrompts.slice(0, 3));
       }
 
+      if (result?.usage?.meter) {
+        setUsageLimits((current) => updateUsageMeter(current, result.usage));
+      }
+
       if (Array.isArray(result?.actions)) {
         const actions = result.actions.slice(0, 4) as AgentAppliedAction[];
         setAgentActions(actions);
@@ -1296,6 +1334,10 @@ export default function App() {
 
       if (Array.isArray(result?.suggestedPrompts)) {
         setAgentSuggestions(result.suggestedPrompts.slice(0, 3));
+      }
+
+      if (result?.usage?.meter) {
+        setUsageLimits((current) => updateUsageMeter(current, result.usage));
       }
 
       if (Array.isArray(result?.actions)) {
@@ -2245,6 +2287,7 @@ export default function App() {
                 prompt={agentPrompt}
                 suggestions={agentSuggestions}
                 thinking={agentThinking}
+                usageLimits={usageLimits}
                 voiceRecording={Boolean(voiceRecording)}
                 voiceSpeaking={voiceSpeaking}
                 voiceStatus={voiceStatus}
@@ -2688,6 +2731,7 @@ function AgentView({
   prompt,
   suggestions,
   thinking,
+  usageLimits,
   voiceRecording,
   voiceSpeaking,
   voiceStatus,
@@ -2707,6 +2751,7 @@ function AgentView({
   prompt: string;
   suggestions: string[];
   thinking: boolean;
+  usageLimits: UsageLimitsPayload | null;
   voiceRecording: boolean;
   voiceSpeaking: boolean;
   voiceStatus: string | null;
@@ -2767,6 +2812,8 @@ function AgentView({
           )}
         </View>
       </View>
+
+      <MobileUsagePanel usageLimits={usageLimits} />
 
       <View style={styles.clinicalMemoryPanel}>
         <View style={styles.clinicalMemoryHeader}>
@@ -2922,6 +2969,44 @@ function AgentView({
         >
           <Text style={styles.agentSendText}>Ask</Text>
         </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function MobileUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | null }) {
+  if (!usageLimits) return null;
+
+  const highlighted = [
+    usageLimits.usage.find((item) => item.meter === "agent_question"),
+    usageLimits.usage.find((item) => item.meter === "voice_question"),
+    usageLimits.usage.find((item) => item.meter === "report_generation"),
+  ].filter(Boolean) as UsageMeterSnapshot[];
+
+  if (!highlighted.length) return null;
+
+  return (
+    <View style={styles.mobileUsagePanel}>
+      <View style={styles.mobileUsageHeader}>
+        <Text style={styles.cardLabel}>Tier Intelligence</Text>
+        <Text style={styles.mobileUsagePlan}>
+          {usageLimits.plan ? titleCase(usageLimits.plan) : "Plan"}
+        </Text>
+      </View>
+      <View style={styles.mobileUsageGrid}>
+        {highlighted.map((item) => (
+          <View key={item.meter} style={styles.mobileUsageItem}>
+            <Text style={styles.mobileUsageLabel}>{usageMeterLabel(item.meter)}</Text>
+            <Text style={styles.mobileUsageValue}>
+              {item.limit <= 0 ? "Locked" : item.remaining.toLocaleString()}
+            </Text>
+            <Text style={styles.mobileUsageDetail}>
+              {item.limit <= 0
+                ? "Upgrade"
+                : `${item.used.toLocaleString()} / ${item.limit.toLocaleString()}`}
+            </Text>
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -4142,6 +4227,36 @@ function formatDate(value?: string | null) {
   }).format(new Date(value));
 }
 
+function usageMeterLabel(meter: string) {
+  if (meter === "agent_question") return "AI";
+  if (meter === "voice_question") return "Voice";
+  if (meter === "report_generation") return "Reports";
+  if (meter === "future_self_simulation") return "Simulator";
+  if (meter === "optimization_protocol") return "Protocols";
+  if (meter === "lab_import") return "Labs";
+  return meter.replaceAll("_", " ");
+}
+
+function titleCase(value: string) {
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+function updateUsageMeter(
+  current: UsageLimitsPayload | null,
+  next: UsageMeterSnapshot
+): UsageLimitsPayload | null {
+  if (!current) return current;
+
+  return {
+    ...current,
+    usage: current.usage.map((item) => (item.meter === next.meter ? next : item)),
+  };
+}
+
 function isNotificationPermissionGranted(permission: unknown) {
   const result = permission as { granted?: boolean; status?: string };
   return result.granted === true || result.status === "granted";
@@ -4516,6 +4631,58 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 1.2,
     textTransform: "uppercase",
+  },
+  mobileUsagePanel: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.026)",
+    marginTop: 12,
+    padding: 12,
+  },
+  mobileUsageHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  mobileUsagePlan: {
+    color: "rgba(238,214,154,0.86)",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.3,
+    textTransform: "uppercase",
+  },
+  mobileUsageGrid: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  mobileUsageItem: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.16)",
+    padding: 10,
+  },
+  mobileUsageLabel: {
+    color: "rgba(218,188,115,0.72)",
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+  },
+  mobileUsageValue: {
+    color: "rgba(255,255,255,0.9)",
+    fontSize: 16,
+    fontWeight: "500",
+    marginTop: 7,
+  },
+  mobileUsageDetail: {
+    color: "rgba(255,255,255,0.34)",
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 3,
   },
   clinicalMemoryPanel: {
     borderWidth: 1,

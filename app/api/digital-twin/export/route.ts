@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
 
 export async function GET() {
   try {
@@ -15,6 +16,35 @@ export async function GET() {
     }
 
     const admin = getSupabaseAdmin();
+    const { data: entitlementProfile } = await admin
+      .from("profiles")
+      .select("plan,subscription_status")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const entitlement = entitlementProfile as {
+      plan?: Plan | null;
+      subscription_status?: SubscriptionStatus | null;
+    } | null;
+
+    if (
+      !canAccess(
+        entitlement?.plan || null,
+        entitlement?.subscription_status || null,
+        "physician_exports"
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error: "Physician-ready exports are included in Sovereign.",
+          upgrade: {
+            minimumPlan: "sovereign",
+            message: "Upgrade to Sovereign to unlock clinical export workflows.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+
     const [
       profile,
       assessment,

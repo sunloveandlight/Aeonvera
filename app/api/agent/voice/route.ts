@@ -4,6 +4,12 @@ import { answerPersonalHealthAgent } from "@/lib/agent/personalHealthAgent";
 import { recordClinicalFollowUpAnswer } from "@/lib/clinical/clinicalFollowUpResponses";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import {
+  checkAndRecordUsage,
+  getUserPlanForUsage,
+  serializeUsage,
+  usageErrorResponse,
+} from "@/lib/usage/tierUsage";
 
 type ChatMessage = {
   role?: unknown;
@@ -40,14 +46,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const openai = getOpenAI();
-    if (!openai) {
-      return NextResponse.json(
-        { error: "Voice needs OPENAI_API_KEY configured on the server." },
-        { status: 500 }
-      );
-    }
-
     const formData = await request.formData();
     const audio = formData.get("audio");
 
@@ -62,6 +60,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+    const usage = await checkAndRecordUsage({
+      metadata: { source: "voice_agent" },
+      meter: "voice_question",
+      plan: subscription.plan,
+      status: subscription.status,
+      supabase: admin,
+      userId: user.id,
+    });
+
+    if (!usage.allowed) {
+      return NextResponse.json(
+        usageErrorResponse(usage),
+        { status: usage.statusCode || 429 }
+      );
+    }
+
+    const openai = getOpenAI();
+    if (!openai) {
+      return NextResponse.json(
+        { error: "Voice needs OPENAI_API_KEY configured on the server." },
+        { status: 500 }
+      );
+    }
+
     const transcript = await transcribeAudio(openai, audio);
     if (!transcript) {
       return NextResponse.json(
@@ -71,7 +95,6 @@ export async function POST(request: NextRequest) {
     }
 
     const history = sanitizeHistory(parseJsonField(formData.get("history")));
-    const admin = getSupabaseAdmin();
     const clinicalFollowUp = await maybeRecordClinicalFollowUpAnswer({
       formData,
       question: transcript,
@@ -94,6 +117,7 @@ export async function POST(request: NextRequest) {
       mode: result.mode,
       transcript,
       suggestedPrompts: buildSuggestedPrompts(result.context),
+      usage: serializeUsage(usage),
     });
   } catch (error) {
     const message =

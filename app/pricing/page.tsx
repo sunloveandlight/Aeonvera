@@ -10,7 +10,11 @@ import Text from "@/components/ui/Text";
 import Motion from "@/components/motion/Motion";
 import PricingPlanCard, { type PricingPlan } from "@/components/pricing/PricingPlanCard";
 import { supabase } from "@/lib/supabase/client";
-import { isSubscriptionValid, type SubscriptionStatus } from "@/lib/auth/permissions";
+import {
+  PLAN_USAGE_LIMITS,
+  isSubscriptionValid,
+  type SubscriptionStatus,
+} from "@/lib/auth/permissions";
 import { getUserSubscription } from "@/lib/auth/getUserSubscription";
 
 type Plan = "core" | "elite" | "sovereign";
@@ -36,6 +40,7 @@ const PLANS: PricingPlan[] = [
       "Biological age computation",
       "Full healthspan assessment",
       "AI longevity report",
+      `${PLAN_USAGE_LIMITS.core.agent_question.monthly} AI health questions/month`,
       "Risk profile analysis",
       "Core lab upload and clinical flagging",
     ],
@@ -47,6 +52,8 @@ const PLANS: PricingPlan[] = [
           "One active biological age baseline",
           "Assessment-driven recommendations",
           "Manual Apple Health import",
+          `${PLAN_USAGE_LIMITS.core.lab_import.monthly} lab imports/month`,
+          `${PLAN_USAGE_LIMITS.core.report_generation.monthly} report generations/month`,
           "Foundational protocols: sleep, protein, walking, Zone 2, strength, alcohol reduction",
         ],
       },
@@ -68,6 +75,8 @@ const PLANS: PricingPlan[] = [
       "Everything in Core",
       "Advanced biomarker analysis",
       "Proactive AI coaching",
+      `${PLAN_USAGE_LIMITS.elite.agent_question.monthly.toLocaleString()} AI health questions/month`,
+      `${PLAN_USAGE_LIMITS.elite.voice_question.monthly} voice conversations/month`,
       "Daily intelligence alerts",
       "Personalized intervention sequencing",
       "Red light, cold exposure, and PEMF decision support",
@@ -80,7 +89,8 @@ const PLANS: PricingPlan[] = [
           "Daily proactive coach contact",
           "Wearable-sync health state updates",
           "Trend-aware sleep, recovery, and activity alerts",
-          "Higher-depth report regeneration",
+          `${PLAN_USAGE_LIMITS.elite.report_generation.monthly} higher-depth report regenerations/month`,
+          `${PLAN_USAGE_LIMITS.elite.future_self_simulation.monthly} future-self simulations/month`,
           "Elite modality protocols with contraindication screening",
         ],
       },
@@ -103,7 +113,8 @@ const PLANS: PricingPlan[] = [
     summary: "For private executive-level health intelligence.",
     features: [
       "Everything in Elite",
-      "Unlimited AI analysis",
+      `${PLAN_USAGE_LIMITS.sovereign.agent_question.monthly.toLocaleString()} AI health questions/month`,
+      `${PLAN_USAGE_LIMITS.sovereign.voice_question.monthly.toLocaleString()} voice conversations/month`,
       "Digital twin modeling",
       "Physician-ready exports",
       "Concierge data integration",
@@ -117,6 +128,8 @@ const PLANS: PricingPlan[] = [
         label: "Function Set",
         items: [
           "Full digital twin timeline",
+          `${PLAN_USAGE_LIMITS.sovereign.report_generation.monthly} report generations/month`,
+          `${PLAN_USAGE_LIMITS.sovereign.lab_import.monthly} concierge lab imports/month`,
           "Physician-ready reporting and exports",
           "Multi-source data ingestion strategy",
           "Advanced scenario simulation readiness",
@@ -175,7 +188,7 @@ const OWNED_TIER_COPY: Record<Plan, {
     body: "You are already on the highest Aeonvera tier with the complete private intelligence path unlocked.",
     owned: [
       "Everything in Elite",
-      "Unlimited AI analysis",
+      "10,000 AI health questions/month",
       "Digital twin modeling",
       "Physician-ready exports",
       "Concierge data integration",

@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import {
+  checkAndRecordUsage,
+  getUserPlanForUsage,
+  serializeUsage,
+  usageErrorResponse,
+} from "@/lib/usage/tierUsage";
 import { createClinicalInsightFromLabs } from "@/lib/clinical/clinicalIntelligence";
 import {
   CLINICAL_BIOMARKERS,
@@ -38,6 +44,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+    const usage = await checkAndRecordUsage({
+      metadata: { source: "lab_import" },
+      meter: "lab_import",
+      plan: subscription.plan,
+      status: subscription.status,
+      supabase: admin,
+      userId: user.id,
+    });
+
+    if (!usage.allowed) {
+      return NextResponse.json(
+        usageErrorResponse(usage),
+        { status: usage.statusCode || 429 }
+      );
+    }
+
     const { biomarkers, source } = await parseImportRequest(request);
 
     if (biomarkers.length === 0) {
@@ -50,7 +74,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const admin = getSupabaseAdmin();
     const measuredAt = new Date().toISOString();
     const rows = biomarkers.map((biomarker) => ({
       user_id: user.id,
@@ -96,6 +119,7 @@ export async function POST(request: NextRequest) {
       inserted: inserted || [],
       biologicalAge,
       clinicalIntelligence,
+      usage: serializeUsage(usage),
     });
   } catch (error) {
     const message =

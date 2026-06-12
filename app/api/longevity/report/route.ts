@@ -6,6 +6,12 @@ import { cookies } from "next/headers";
 import { computeAdaptiveWeights } from "@/lib/personalization/adaptiveWeightEngine";
 import { buildConversationMemory } from "@/lib/memory/conversationMemoryEngine";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import type { Plan, SubscriptionStatus } from "@/lib/auth/permissions";
+import {
+  checkAndRecordUsage,
+  serializeUsage,
+  usageErrorResponse,
+} from "@/lib/usage/tierUsage";
 
 let openaiClient: OpenAI | null = null;
 
@@ -67,6 +73,22 @@ export async function POST() {
       .select("*")
       .eq("user_id", userId)
       .single();
+
+    const usage = await checkAndRecordUsage({
+      metadata: { source: "longevity_report" },
+      meter: "report_generation",
+      plan: (profile?.plan as Plan | null) || null,
+      status: (profile?.subscription_status as SubscriptionStatus | null) || null,
+      supabase: getSupabaseAdmin(),
+      userId,
+    });
+
+    if (!usage.allowed) {
+      return NextResponse.json(
+        usageErrorResponse(usage),
+        { status: usage.statusCode || 429 }
+      );
+    }
 
     const { data: assessment } = await supabase
       .from("longevity_assessments")
@@ -308,6 +330,7 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
       notification,
       memory: conversationMemory,
       adaptive_weights: adaptiveWeights,
+      usage: serializeUsage(usage),
     });
   } catch (err: any) {
     return NextResponse.json(

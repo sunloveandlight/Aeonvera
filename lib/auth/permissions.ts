@@ -12,6 +12,9 @@ export type Feature =
   | "core_features"
   | "elite_features"
   | "proactive_coach"
+  | "voice_agent"
+  | "autopilot_calendar"
+  | "future_self_simulator"
   | "advanced_modalities"
   | "digital_twin"
   | "physician_exports"
@@ -29,6 +32,9 @@ const PLAN_PERMISSIONS: Record<Plan, Feature[]> = {
     "core_features",
     "elite_features",
     "proactive_coach",
+    "voice_agent",
+    "autopilot_calendar",
+    "future_self_simulator",
     "advanced_modalities",
   ],
 
@@ -55,6 +61,48 @@ export const PLAN_LABEL: Record<Plan, string> = {
   core: "Core",
   elite: "Elite",
   sovereign: "Sovereign",
+};
+
+export type UsageMeter =
+  | "agent_question"
+  | "voice_question"
+  | "report_generation"
+  | "optimization_protocol"
+  | "future_self_simulation"
+  | "lab_import";
+
+export type UsageLimit = {
+  monthly: number;
+  label: string;
+};
+
+export const PLAN_USAGE_LIMITS: Record<Plan, Record<UsageMeter, UsageLimit>> = {
+  core: {
+    agent_question: { monthly: 100, label: "AI health questions" },
+    voice_question: { monthly: 0, label: "voice conversations" },
+    report_generation: { monthly: 4, label: "AI longevity reports" },
+    optimization_protocol: { monthly: 4, label: "optimization protocols" },
+    future_self_simulation: { monthly: 0, label: "future-self simulations" },
+    lab_import: { monthly: 5, label: "lab imports" },
+  },
+
+  elite: {
+    agent_question: { monthly: 1000, label: "AI health questions" },
+    voice_question: { monthly: 250, label: "voice conversations" },
+    report_generation: { monthly: 30, label: "AI longevity reports" },
+    optimization_protocol: { monthly: 30, label: "optimization protocols" },
+    future_self_simulation: { monthly: 300, label: "future-self simulations" },
+    lab_import: { monthly: 25, label: "lab imports" },
+  },
+
+  sovereign: {
+    agent_question: { monthly: 10000, label: "AI health questions" },
+    voice_question: { monthly: 2000, label: "voice conversations" },
+    report_generation: { monthly: 300, label: "AI longevity reports" },
+    optimization_protocol: { monthly: 300, label: "optimization protocols" },
+    future_self_simulation: { monthly: 3000, label: "future-self simulations" },
+    lab_import: { monthly: 250, label: "lab imports" },
+  },
 };
 
 export function isSubscriptionValid(
@@ -99,6 +147,15 @@ export function requiredUpgrade(
     minimumPlan,
     message: `Upgrade to ${PLAN_LABEL[minimumPlan]} to unlock this layer.`,
   };
+}
+
+export function getUsageLimit(
+  plan: Plan | null,
+  status: SubscriptionStatus | null,
+  meter: UsageMeter
+) {
+  if (!plan || !isSubscriptionValid(status)) return null;
+  return PLAN_USAGE_LIMITS[plan][meter];
 }
 
 /**

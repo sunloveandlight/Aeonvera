@@ -198,6 +198,23 @@ type ClinicalInsight = {
   created_at?: string | null;
 };
 
+type UsageMeterSnapshot = {
+  allowed: boolean;
+  limit: number;
+  meter: string;
+  migrationRequired?: boolean;
+  periodStart: string;
+  plan: string | null;
+  remaining: number;
+  used: number;
+};
+
+type UsageLimitsPayload = {
+  plan: string | null;
+  subscriptionStatus: string | null;
+  usage: UsageMeterSnapshot[];
+};
+
 export default function CompanionPage() {
   const router = useRouter();
   const clinicalPanelRef = useRef<HTMLDivElement | null>(null);
@@ -211,6 +228,7 @@ export default function CompanionPage() {
   const [coachMemory, setCoachMemory] = useState<CoachMemory | null>(null);
   const [clinicalInsights, setClinicalInsights] = useState<ClinicalInsight[]>([]);
   const [dailyBrief, setDailyBrief] = useState<DailyBrief | null>(null);
+  const [usageLimits, setUsageLimits] = useState<UsageLimitsPayload | null>(null);
   const [agentMessages, setAgentMessages] = useState<AgentChatMessage[]>([
     {
       role: "assistant",
@@ -259,6 +277,7 @@ export default function CompanionPage() {
           memoryResponse,
           dailyBriefResponse,
           clinicalMemoryResponse,
+          usageResponse,
         ] = await Promise.all([
           fetch("/api/digital-twin/timeline", { credentials: "include" }),
           fetch("/api/optimization/protocols", { credentials: "include" }),
@@ -268,6 +287,7 @@ export default function CompanionPage() {
           fetch("/api/coach/memory", { credentials: "include" }),
           fetch("/api/coach/daily-brief", { credentials: "include" }),
           fetch("/api/clinical/insights", { credentials: "include" }),
+          fetch("/api/usage/limits", { credentials: "include" }),
         ]);
         const [
           twinData,
@@ -278,6 +298,7 @@ export default function CompanionPage() {
           memoryData,
           dailyBriefData,
           clinicalMemoryData,
+          usageData,
         ] = await Promise.all([
           twinResponse.json(),
           protocolResponse.json(),
@@ -287,6 +308,7 @@ export default function CompanionPage() {
           memoryResponse.json(),
           dailyBriefResponse.json(),
           clinicalMemoryResponse.json(),
+          usageResponse.json(),
         ]);
 
         if (!twinResponse.ok) throw new Error(twinData.error || "Companion could not load.");
@@ -302,6 +324,7 @@ export default function CompanionPage() {
             clinicalMemoryResponse.ok ? clinicalMemoryData.insights || [] : []
           );
           setDailyBrief(dailyBriefResponse.ok ? dailyBriefData.brief : null);
+          setUsageLimits(usageResponse.ok ? usageData : null);
         }
       } catch (error) {
         if (!cancelled) {
@@ -582,6 +605,10 @@ export default function CompanionPage() {
         setAgentSuggestions(data.suggestedPrompts.slice(0, 3));
       }
 
+      if (data.usage?.meter) {
+        setUsageLimits((current) => updateUsageMeter(current, data.usage));
+      }
+
       if (Array.isArray(data.actions)) {
         setAgentActions(data.actions.slice(0, 4));
 
@@ -756,6 +783,8 @@ export default function CompanionPage() {
               onPromptChange={setAgentPrompt}
               onSend={(value) => void askPersonalAgent(value)}
             />
+
+            <TierUsagePanel usageLimits={usageLimits} />
 
             <PersonalAgentMemoryPanel memory={coachMemory} />
 
@@ -1142,6 +1171,60 @@ function PersonalHealthAgentPanel({
   );
 }
 
+function TierUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | null }) {
+  const highlighted = [
+    usageLimits?.usage.find((item) => item.meter === "agent_question"),
+    usageLimits?.usage.find((item) => item.meter === "voice_question"),
+    usageLimits?.usage.find((item) => item.meter === "report_generation"),
+    usageLimits?.usage.find((item) => item.meter === "future_self_simulation"),
+  ].filter(Boolean) as UsageMeterSnapshot[];
+
+  if (!usageLimits || !highlighted.length) {
+    return null;
+  }
+
+  return (
+    <div className="executive-panel rounded-lg p-5 md:p-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="micro-label">Tier Intelligence</p>
+          <h2 className="mt-3 text-2xl font-light leading-tight text-white">
+            {usageLimits.plan ? `${titleCase(usageLimits.plan)} limits` : "Membership limits"}
+          </h2>
+        </div>
+        <Link
+          href="/pricing"
+          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[#dabc73]/80 transition hover:text-[#f4df9b]"
+        >
+          Manage access
+          <ArrowRight size={13} />
+        </Link>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {highlighted.map((item) => (
+          <div
+            key={item.meter}
+            className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4"
+          >
+            <p className="text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/70">
+              {usageMeterLabel(item.meter)}
+            </p>
+            <p className="mt-3 text-xl font-light leading-none text-white/90">
+              {item.limit <= 0 ? "Locked" : item.remaining.toLocaleString()}
+            </p>
+            <p className="mt-2 text-xs leading-5 text-white/38">
+              {item.limit <= 0
+                ? "Upgrade to unlock this layer."
+                : `${item.used.toLocaleString()} used of ${item.limit.toLocaleString()} this month.`}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DailyBriefSignal({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-3">
@@ -1445,6 +1528,36 @@ function clinicalProgressionLabel(status?: string) {
   if (status === "recurrent_signal") return "Recurring";
   if (status === "new_signal") return "New signal";
   return "Monitoring";
+}
+
+function usageMeterLabel(meter: string) {
+  if (meter === "agent_question") return "AI questions";
+  if (meter === "voice_question") return "Voice";
+  if (meter === "report_generation") return "Reports";
+  if (meter === "future_self_simulation") return "Simulator";
+  if (meter === "optimization_protocol") return "Protocols";
+  if (meter === "lab_import") return "Lab imports";
+  return meter.replaceAll("_", " ");
+}
+
+function updateUsageMeter(
+  current: UsageLimitsPayload | null,
+  next: UsageMeterSnapshot
+): UsageLimitsPayload | null {
+  if (!current) return current;
+
+  return {
+    ...current,
+    usage: current.usage.map((item) => (item.meter === next.meter ? next : item)),
+  };
+}
+
+function titleCase(value: string) {
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(" ");
 }
 
 function clinicalSafetyLabel(status?: string) {

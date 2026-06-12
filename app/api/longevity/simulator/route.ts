@@ -17,6 +17,12 @@ import {
   normalizeFutureSelfControls,
   type FutureSelfControls,
 } from "@/lib/longevity/futureSelfSimulator";
+import {
+  checkAndRecordUsage,
+  serializeUsage,
+  usageErrorResponse,
+} from "@/lib/usage/tierUsage";
+import type { Plan, SubscriptionStatus } from "@/lib/auth/permissions";
 
 type CookieToSet = {
   name: string;
@@ -55,7 +61,24 @@ async function getSupabaseUser() {
 
 export async function GET() {
   try {
-    const input = await getLatestAssessmentInput();
+    const context = await getLatestAssessmentContext();
+    const usage = await checkAndRecordUsage({
+      metadata: { source: "future_self_presets" },
+      meter: "future_self_simulation",
+      plan: context.plan,
+      status: context.status,
+      supabase: context.supabase,
+      userId: context.userId,
+    });
+
+    if (!usage.allowed) {
+      return NextResponse.json(
+        usageErrorResponse(usage),
+        { status: usage.statusCode || 429 }
+      );
+    }
+
+    const input = context.input;
     const baseline = computeBiologicalAge(input);
     const controls = buildControls(input);
     const futureSelf = buildFutureSelfProjection({ input, controls });
@@ -71,6 +94,7 @@ export async function GET() {
       futureSelf,
       scenarioPresets: summarizeScenarioPresets(),
       simulations,
+      usage: serializeUsage(usage),
     });
   } catch (error) {
     if (error instanceof SimulatorError) {
@@ -85,7 +109,24 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const input = await getLatestAssessmentInput();
+    const context = await getLatestAssessmentContext();
+    const usage = await checkAndRecordUsage({
+      metadata: { source: "future_self_custom" },
+      meter: "future_self_simulation",
+      plan: context.plan,
+      status: context.status,
+      supabase: context.supabase,
+      userId: context.userId,
+    });
+
+    if (!usage.allowed) {
+      return NextResponse.json(
+        usageErrorResponse(usage),
+        { status: usage.statusCode || 429 }
+      );
+    }
+
+    const input = context.input;
     const baseline = computeBiologicalAge(input);
     const body = await readJsonBody(request);
     const scenarioIds = sanitizeScenarioIds(body?.scenarioIds);
@@ -112,6 +153,7 @@ export async function POST(request: NextRequest) {
         projectedBiologicalAgeImprovement:
           futureSelf.optimized.projectedBiologicalAgeImprovement,
       },
+      usage: serializeUsage(usage),
     });
   } catch (error) {
     if (error instanceof SimulatorError) {
@@ -124,7 +166,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function getLatestAssessmentInput() {
+async function getLatestAssessmentContext() {
   const supabaseUser = await getSupabaseUser();
   const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
 
@@ -133,21 +175,36 @@ async function getLatestAssessmentInput() {
   }
 
   const supabase = getSupabaseAdmin();
-  const { data: assessment, error: assessmentError } = await supabase
-    .from("longevity_assessments")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+  const [{ data: assessment, error: assessmentError }, { data: profile }] = await Promise.all([
+    supabase
+      .from("longevity_assessments")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single(),
+    supabase
+      .from("profiles")
+      .select("plan,subscription_status")
+      .eq("user_id", user.id)
+      .maybeSingle(),
+  ]);
 
   if (assessmentError || !assessment) {
     throw new SimulatorError("No assessment found.", 404);
   }
 
   return {
-    ...buildAssessmentInput(assessment),
-    ...(await loadLatestLabInputValues({ supabase, userId: user.id })),
+    input: {
+      ...buildAssessmentInput(assessment),
+      ...(await loadLatestLabInputValues({ supabase, userId: user.id })),
+    },
+    plan: ((profile as { plan?: Plan | null } | null)?.plan as Plan | null) || null,
+    status:
+      ((profile as { subscription_status?: SubscriptionStatus | null } | null)
+        ?.subscription_status as SubscriptionStatus | null) || null,
+    supabase,
+    userId: user.id,
   };
 }
 

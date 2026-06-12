@@ -3,6 +3,12 @@ import { answerPersonalHealthAgent } from "@/lib/agent/personalHealthAgent";
 import { recordClinicalFollowUpAnswer } from "@/lib/clinical/clinicalFollowUpResponses";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import {
+  checkAndRecordUsage,
+  getUserPlanForUsage,
+  serializeUsage,
+  usageErrorResponse,
+} from "@/lib/usage/tierUsage";
 
 type ChatMessage = {
   role?: unknown;
@@ -30,6 +36,23 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+    const usage = await checkAndRecordUsage({
+      metadata: { source: "agent_chat" },
+      meter: "agent_question",
+      plan: subscription.plan,
+      status: subscription.status,
+      supabase: admin,
+      userId: user.id,
+    });
+
+    if (!usage.allowed) {
+      return NextResponse.json(
+        usageErrorResponse(usage),
+        { status: usage.statusCode || 429 }
+      );
+    }
+
     const clinicalFollowUp = await maybeRecordClinicalFollowUpAnswer({
       body,
       question,
@@ -52,6 +75,7 @@ export async function POST(request: NextRequest) {
       clinicalFollowUp,
       mode: result.mode,
       suggestedPrompts: buildSuggestedPrompts(result.context),
+      usage: serializeUsage(usage),
     });
   } catch (error) {
     const message =

@@ -2,8 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import type { Plan, SubscriptionStatus } from "@/lib/auth/permissions";
 import type { LabTrend } from "@/lib/labs/labTrends";
 import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
+import {
+  checkAndRecordUsage,
+  serializeUsage,
+  usageErrorResponse,
+} from "@/lib/usage/tierUsage";
 
 type Question = {
   id: string;
@@ -130,6 +136,24 @@ export async function POST(request: NextRequest) {
         loadLabTrendsForUser(admin, user.id),
       ]);
 
+    const usage = await checkAndRecordUsage({
+      metadata: { source: "optimization_protocol" },
+      meter: "optimization_protocol",
+      plan: ((profile as { plan?: Plan | null } | null)?.plan as Plan | null) || null,
+      status:
+        ((profile as { subscription_status?: SubscriptionStatus | null } | null)
+          ?.subscription_status as SubscriptionStatus | null) || null,
+      supabase: admin,
+      userId: user.id,
+    });
+
+    if (!usage.allowed) {
+      return NextResponse.json(
+        usageErrorResponse(usage),
+        { status: usage.statusCode || 429 }
+      );
+    }
+
     const intakeResult = await admin
       .from("optimization_intakes")
       .insert({
@@ -203,6 +227,7 @@ export async function POST(request: NextRequest) {
       success: true,
       intake: intakeResult.data,
       protocol: protocolResult.data,
+      usage: serializeUsage(usage),
     });
   } catch (error) {
     const message =

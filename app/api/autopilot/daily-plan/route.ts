@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { canAccess } from "@/lib/auth/permissions";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 
 type AutopilotMode = "manual" | "suggest" | "approve" | "autopilot" | "sovereign";
 type ActionScope = "today" | "week" | "check_in" | "later";
@@ -66,6 +68,9 @@ export async function GET(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const entitlement = await ensureAutopilotAccess(admin, user.id);
+    if (entitlement) return entitlement;
+
     const today = toDateKey(new Date());
     const preferences = await getOrCreatePreferences(admin, user.id);
     const [protocol, executionMemory] = await Promise.all([
@@ -146,6 +151,9 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     const admin = getSupabaseAdmin();
+    const entitlement = await ensureAutopilotAccess(admin, user.id);
+    if (entitlement) return entitlement;
+
     const current = await getOrCreatePreferences(admin, user.id);
     const next = sanitizePreferences(user.id, { ...current, ...body });
 
@@ -198,6 +206,9 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const entitlement = await ensureAutopilotAccess(admin, user.id);
+    if (entitlement) return entitlement;
+
     const today = toDateKey(new Date());
     const now = new Date().toISOString();
     const patch: Record<string, unknown> = {
@@ -270,6 +281,29 @@ async function getAuthenticatedUser(request: NextRequest) {
   } = await admin.auth.getUser(token);
 
   return bearerUser;
+}
+
+async function ensureAutopilotAccess(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string
+) {
+  const subscription = await getUserPlanForUsage({ supabase: admin, userId });
+
+  if (canAccess(subscription.plan, subscription.status, "autopilot_calendar")) {
+    return null;
+  }
+
+  return NextResponse.json(
+    {
+      error: "Autopilot daily planning is included in Elite and Sovereign.",
+      upgrade: {
+        minimumPlan: "elite",
+        message:
+          "Upgrade to Elite to unlock proactive daily planning, calendar execution, and approval-based automation.",
+      },
+    },
+    { status: 403 }
+  );
 }
 
 async function getOrCreatePreferences(
