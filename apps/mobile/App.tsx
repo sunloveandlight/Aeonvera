@@ -260,6 +260,7 @@ export default function App() {
     useState<AutopilotPreferences | null>(null);
   const [dailyPlan, setDailyPlan] = useState<DailyExecutionPlan | null>(null);
   const [autopilotMessage, setAutopilotMessage] = useState<string | null>(null);
+  const [acceptingDailyPlan, setAcceptingDailyPlan] = useState(false);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
   const [notificationFocusTick, setNotificationFocusTick] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -452,6 +453,7 @@ export default function App() {
         setAutopilotPreferences(null);
         setDailyPlan(null);
         setAutopilotMessage(null);
+        setAcceptingDailyPlan(false);
       }
     });
 
@@ -730,8 +732,19 @@ export default function App() {
   }
 
   async function acceptDailyPlan() {
+    if (acceptingDailyPlan) return;
+
     if (!dailyPlan?.plan?.items?.length) {
       Alert.alert("Autopilot", "There is no prepared plan to accept yet.");
+      return;
+    }
+
+    if (dailyPlan.status === "accepted" || dailyPlan.status === "auto_scheduled") {
+      setActionNotice("Today is already prepared. Aeonvera will not duplicate calendar events.");
+      Alert.alert(
+        "Already prepared",
+        "Today’s Autopilot plan has already been created. Aeonvera will not add duplicate calendar events."
+      );
       return;
     }
 
@@ -739,43 +752,61 @@ export default function App() {
     const items = dailyPlan.plan.items.slice(0, 5);
     let scheduled = 0;
     let notified = 0;
+    let skippedExisting = 0;
 
-    for (const item of items) {
-      if (!item.action) continue;
+    setAcceptingDailyPlan(true);
 
-      if (preferences.calendar_enabled && item.execution_mode !== "notify") {
-        const eventId = await scheduleActionToNativeCalendar(item, "default", true);
-        if (eventId) scheduled += 1;
+    try {
+      for (const item of items) {
+        if (!item.action || !protocol?.id) continue;
+
+        const actionKey = getReminderKey(protocol.id, item);
+        if (nativeCalendarEvents[actionKey] || localReminders[actionKey]) {
+          skippedExisting += 1;
+          continue;
+        }
+
+        if (preferences.calendar_enabled && item.execution_mode !== "notify") {
+          const eventId = await scheduleActionToNativeCalendar(item, "default", true);
+          if (eventId) scheduled += 1;
+        }
+
+        if (
+          preferences.notifications_enabled &&
+          (item.execution_mode === "notify" || !preferences.calendar_enabled)
+        ) {
+          const notificationId = await scheduleActionReminder(
+            item,
+            item.scope,
+            "default",
+            "once",
+            true
+          );
+          if (notificationId) notified += 1;
+        }
       }
 
-      if (
-        preferences.notifications_enabled &&
-        (item.execution_mode === "notify" || !preferences.calendar_enabled)
-      ) {
-        const notificationId = await scheduleActionReminder(
-          item,
-          item.scope,
-          "default",
-          "once",
-          true
-        );
-        if (notificationId) notified += 1;
-      }
+      await updateDailyPlanStatus(
+        preferences.mode === "autopilot" || preferences.mode === "sovereign"
+          ? "auto_scheduled"
+          : "accepted"
+      );
+
+      const confirmation =
+        scheduled || notified
+          ? `Created ${scheduled} calendar block${scheduled === 1 ? "" : "s"}${
+              notified ? ` and ${notified} phone notification${notified === 1 ? "" : "s"}` : ""
+            }.${skippedExisting ? ` ${skippedExisting} already existed.` : ""}`
+          : skippedExisting
+            ? "Today was already prepared. No duplicate calendar events were created."
+            : "Today is accepted. Aeonvera will hold the plan in your active queue.";
+
+      setActionNotice(confirmation);
+      playSoftHaptic();
+      Alert.alert("Today is prepared", confirmation);
+    } finally {
+      setAcceptingDailyPlan(false);
     }
-
-    await updateDailyPlanStatus(
-      preferences.mode === "autopilot" || preferences.mode === "sovereign"
-        ? "auto_scheduled"
-        : "accepted"
-    );
-    setActionNotice(
-      scheduled || notified
-        ? `Today is prepared: ${scheduled} calendar block${
-            scheduled === 1 ? "" : "s"
-          }${notified ? ` and ${notified} phone notification${notified === 1 ? "" : "s"}` : ""}.`
-        : "Today is accepted. Aeonvera will hold the plan in your active queue."
-    );
-    playSoftHaptic();
   }
 
   async function skipDailyPlan() {
@@ -979,12 +1010,14 @@ export default function App() {
     }
 
     const calendarAppName = Platform.OS === "ios" ? "Apple Calendar" : "Android Calendar";
-    setActionNotice(
-      `${calendarAppName} event added ${formatReminderDate(scheduledFor)} in ${
-        calendar.title || "your calendar"
-      }.`
-    );
-    playSoftHaptic();
+    if (!silent) {
+      setActionNotice(
+        `${calendarAppName} event added ${formatReminderDate(scheduledFor)} in ${
+          calendar.title || "your calendar"
+        }.`
+      );
+      playSoftHaptic();
+    }
     if (!silent) {
       Alert.alert(
         "Added to calendar",
@@ -1182,6 +1215,7 @@ export default function App() {
               <TodayView
                 adherenceEvents={adherenceEvents}
                 actionNotice={actionNotice}
+                acceptingDailyPlan={acceptingDailyPlan}
                 autopilotMessage={autopilotMessage}
                 autopilotPreferences={autopilotPreferences}
                 dailyPlan={dailyPlan}
@@ -1189,6 +1223,11 @@ export default function App() {
                 latestMessage={latestMessage}
                 latestSummary={latestSummary}
                 acceptDailyPlan={acceptDailyPlan}
+                adjustAutopilot={() => {
+                  playSoftHaptic();
+                  setActiveView("settings");
+                  setActionNotice("Autopilot settings opened.");
+                }}
                 openPath={openPath}
                 protocol={protocol}
                 skipDailyPlan={skipDailyPlan}
@@ -1262,6 +1301,8 @@ export default function App() {
 
 function TodayView({
   acceptDailyPlan,
+  acceptingDailyPlan,
+  adjustAutopilot,
   adherenceEvents,
   actionNotice,
   autopilotMessage,
@@ -1278,6 +1319,8 @@ function TodayView({
   setActionNotice,
 }: {
   acceptDailyPlan: () => Promise<void>;
+  acceptingDailyPlan: boolean;
+  adjustAutopilot: () => void;
   adherenceEvents: AdherenceEvent[];
   actionNotice: string | null;
   autopilotMessage: string | null;
@@ -1330,9 +1373,10 @@ function TodayView({
 
       <AutopilotPlanCard
         acceptDailyPlan={acceptDailyPlan}
+        acceptingDailyPlan={acceptingDailyPlan}
+        adjustAutopilot={adjustAutopilot}
         autopilotMessage={autopilotMessage}
         dailyPlan={dailyPlan}
-        openPath={openPath}
         preferences={autopilotPreferences}
         skipDailyPlan={skipDailyPlan}
       />
@@ -1537,16 +1581,18 @@ function MobileCommandStat({
 
 function AutopilotPlanCard({
   acceptDailyPlan,
+  acceptingDailyPlan,
+  adjustAutopilot,
   autopilotMessage,
   dailyPlan,
-  openPath,
   preferences,
   skipDailyPlan,
 }: {
   acceptDailyPlan: () => Promise<void>;
+  acceptingDailyPlan: boolean;
+  adjustAutopilot: () => void;
   autopilotMessage: string | null;
   dailyPlan: DailyExecutionPlan | null;
-  openPath: (path: string) => Promise<void>;
   preferences: AutopilotPreferences | null;
   skipDailyPlan: () => Promise<void>;
 }) {
@@ -1590,22 +1636,28 @@ function AutopilotPlanCard({
           style={[
             styles.button,
             styles.autopilotPrimaryButton,
-            (status === "accepted" || status === "auto_scheduled") && styles.buttonDisabled,
+            (acceptingDailyPlan ||
+              status === "accepted" ||
+              status === "auto_scheduled") &&
+              styles.buttonDisabled,
           ]}
-          disabled={status === "accepted" || status === "auto_scheduled"}
+          disabled={
+            acceptingDailyPlan || status === "accepted" || status === "auto_scheduled"
+          }
           onPress={() => void acceptDailyPlan()}
         >
           <Text style={styles.buttonText}>
-            {status === "accepted" || status === "auto_scheduled" ? "Prepared" : "Accept Today"}
+            {acceptingDailyPlan
+              ? "Preparing"
+              : status === "accepted" || status === "auto_scheduled"
+                ? "Prepared"
+                : "Accept Today"}
           </Text>
         </Pressable>
         <View style={styles.secondaryActionRow}>
           <Pressable
             style={styles.secondaryAction}
-            onPress={() => {
-              playSoftHaptic();
-              void openPath("/optimization");
-            }}
+            onPress={adjustAutopilot}
           >
             <Text style={styles.secondaryActionText}>Adjust</Text>
           </Pressable>
