@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -178,6 +178,7 @@ type ClinicalInsight = {
 
 export default function CompanionPage() {
   const router = useRouter();
+  const clinicalPanelRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [twin, setTwin] = useState<TwinPayload | null>(null);
@@ -293,6 +294,20 @@ export default function CompanionPage() {
       cancelled = true;
     };
   }, [router]);
+
+  useEffect(() => {
+    if (loading || typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("focus") !== "clinical") return;
+
+    window.setTimeout(() => {
+      clinicalPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 120);
+  }, [loading]);
 
   useEffect(() => {
     function handleInstallPrompt(event: Event) {
@@ -700,7 +715,9 @@ export default function CompanionPage() {
 
             <PersonalAgentMemoryPanel memory={coachMemory} />
 
-            <ClinicalIntelligenceMemoryPanel insights={clinicalInsights} />
+            <div ref={clinicalPanelRef}>
+              <ClinicalIntelligenceMemoryPanel insights={clinicalInsights} />
+            </div>
 
             <CompanionCard
               icon={MessageCircle}

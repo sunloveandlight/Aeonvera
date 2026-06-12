@@ -663,6 +663,14 @@ export default function App() {
         return;
       }
 
+      if (data?.target === "clinical_follow_up") {
+        setActiveView("agent");
+        setActionNotice("Opened from your clinical follow-up.");
+        playSoftHaptic();
+        void loadCompanionData(session);
+        return;
+      }
+
       if (data?.target === "coach_inbox" || alertId) {
         selectedMessageOffsetY.current = null;
         setSelectedAlertId(alertId);
@@ -683,13 +691,22 @@ export default function App() {
       const path = data?.path || data?.url;
 
       if (path?.startsWith("/companion")) {
-        setActiveView(path.includes("focus=coach") ? "message" : "today");
+        setActiveView(
+          path.includes("focus=coach")
+            ? "message"
+            : path.includes("focus=clinical")
+            ? "agent"
+            : "today"
+        );
         if (path.includes("focus=coach")) {
           selectedMessageOffsetY.current = null;
           setNotificationFocusTick((current) => current + 1);
           playSoftHaptic();
         } else if (path.includes("focus=autopilot")) {
           setActionNotice("Opened from Morning Autopilot. Review today's prepared plan.");
+          playSoftHaptic();
+        } else if (path.includes("focus=clinical")) {
+          setActionNotice("Opened from your clinical follow-up.");
           playSoftHaptic();
         }
         void loadCompanionData(session);

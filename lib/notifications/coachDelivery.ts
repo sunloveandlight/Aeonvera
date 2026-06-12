@@ -16,6 +16,25 @@ type NotificationPreferences = {
   timezone?: string | null;
 };
 
+type NotificationTarget =
+  | "coach_inbox"
+  | "dashboard"
+  | "companion"
+  | "autopilot"
+  | "clinical_follow_up";
+
+type DeliveryResult = {
+  in_app: "sent";
+  email: "processed" | "skipped";
+  push: "sent" | "skipped" | "failed";
+  push_detail: {
+    enabled: boolean;
+    sent: number;
+    failed: number;
+    error: string | null;
+  };
+};
+
 export async function deliverCoachNotifications({
   supabase,
   userId,
@@ -33,6 +52,44 @@ export async function deliverCoachNotifications({
     return { email: "skipped", push: "skipped" };
   }
 
+  const primaryAlert = alerts[0];
+  const title = buildTitle(primaryAlert);
+  const message = buildMessage(jarvis, primaryAlert);
+
+  return deliverUserNotification({
+    supabase,
+    userId,
+    alertId: primaryAlert.id,
+    title,
+    message,
+    actions: jarvis.actions,
+    url: "/companion?focus=coach",
+    target: "coach_inbox",
+    payload: { tone: jarvis.tone, coach_memory_tags: memoryTags },
+  });
+}
+
+export async function deliverUserNotification({
+  supabase,
+  userId,
+  alertId,
+  title,
+  message,
+  actions = [],
+  url = "/companion?focus=coach",
+  target = "coach_inbox",
+  payload = {},
+}: {
+  supabase: SupabaseClient;
+  userId: string;
+  alertId?: string;
+  title: string;
+  message: string;
+  actions?: string[];
+  url?: string;
+  target?: NotificationTarget;
+  payload?: Record<string, unknown>;
+}): Promise<DeliveryResult> {
   const [{ data: profile }, userResult] = await Promise.all([
     supabase
       .from("profiles")
@@ -47,19 +104,17 @@ export async function deliverCoachNotifications({
   const pushEnabled = prefs.push_enabled === true;
   const quietHoursActive = isQuietHoursActive(prefs);
   const email = userResult.data.user?.email;
-  const primaryAlert = alerts[0];
-  const title = buildTitle(primaryAlert);
-  const message = buildMessage(jarvis, primaryAlert);
+  const basePayload = { ...payload, actions, target, url };
 
   await recordDelivery({
     supabase,
     userId,
-    alertId: primaryAlert.id,
+    alertId,
     channel: "in_app",
     status: "sent",
     title,
     message,
-    payload: { actions: jarvis.actions, tone: jarvis.tone, coach_memory_tags: memoryTags },
+    payload: basePayload,
   });
 
   if (emailEnabled && email && !quietHoursActive) {
@@ -71,14 +126,14 @@ export async function deliverCoachNotifications({
         displayName: profile?.display_name,
         title,
         message,
-        actions: jarvis.actions,
+        actions,
       }),
     });
 
     await recordDelivery({
       supabase,
       userId,
-      alertId: primaryAlert.id,
+      alertId,
       channel: "email",
       status: emailResult.status,
       provider: emailResult.provider,
@@ -89,7 +144,7 @@ export async function deliverCoachNotifications({
       title,
       message,
       error: "error" in emailResult ? emailResult.error : undefined,
-      payload: { actions: jarvis.actions, tone: jarvis.tone, coach_memory_tags: memoryTags },
+      payload: basePayload,
     });
   } else {
     const skippedReason = !email
@@ -101,16 +156,14 @@ export async function deliverCoachNotifications({
     await recordDelivery({
       supabase,
       userId,
-      alertId: primaryAlert.id,
+      alertId,
       channel: "email",
       status: "skipped",
       title,
       message,
       error: skippedReason,
       payload: {
-        actions: jarvis.actions,
-        tone: jarvis.tone,
-        coach_memory_tags: memoryTags,
+        ...basePayload,
         quiet_hours: {
           active: quietHoursActive,
           start: prefs.quiet_hours_start,
@@ -128,10 +181,10 @@ export async function deliverCoachNotifications({
         payload: {
           title,
           message,
-          url: "/companion?focus=coach",
-          actions: jarvis.actions,
-          alertId: primaryAlert.id,
-          target: "coach_inbox",
+          url,
+          actions,
+          alertId,
+          target,
         },
       })
     : {
@@ -144,7 +197,7 @@ export async function deliverCoachNotifications({
   await recordDelivery({
     supabase,
     userId,
-    alertId: primaryAlert.id,
+    alertId,
     channel: "push",
     status: pushResult.status,
     provider: "web-push",
@@ -152,9 +205,7 @@ export async function deliverCoachNotifications({
     message,
     error: "error" in pushResult ? pushResult.error : undefined,
     payload: {
-      actions: jarvis.actions,
-      tone: jarvis.tone,
-      coach_memory_tags: memoryTags,
+      ...basePayload,
       sent: pushResult.sent,
       failed: pushResult.failed,
     },
@@ -168,7 +219,7 @@ export async function deliverCoachNotifications({
       enabled: pushEnabled,
       sent: pushResult.sent,
       failed: pushResult.failed,
-      error: "error" in pushResult ? pushResult.error : null,
+      error: pushResult.status === "sent" ? null : pushResult.error || null,
     },
   };
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runMorningAutopilotBrief } from "@/lib/autopilot/morningAutopilot";
 import { runCoachPipeline } from "@/lib/coach/runCoachPipeline";
+import { runProactiveClinicalFollowUps } from "@/lib/clinical/proactiveClinicalFollowUps";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 /**
@@ -42,7 +43,12 @@ export async function GET(req: Request) {
     /**
      * STEP 1: GET USERS WITH HEALTH, PROTOCOL, OR AUTOPILOT CONTEXT
      */
-    const [{ data: healthUsers, error }, { data: protocolUsers }, { data: autopilotUsers }] =
+    const [
+      { data: healthUsers, error },
+      { data: protocolUsers },
+      { data: autopilotUsers },
+      { data: clinicalUsers, error: clinicalUsersError },
+    ] =
       await Promise.all([
         supabase
           .from("health_states")
@@ -56,6 +62,11 @@ export async function GET(req: Request) {
           .from("autopilot_preferences")
           .select("user_id")
           .limit(5000),
+        supabase
+          .from("clinical_insights")
+          .select("user_id")
+          .in("concern_status", ["active", "unresolved", "monitoring"])
+          .limit(5000),
       ]);
 
     if (error) {
@@ -66,6 +77,7 @@ export async function GET(req: Request) {
       ...(healthUsers || []),
       ...(protocolUsers || []),
       ...(autopilotUsers || []),
+      ...(!clinicalUsersError ? clinicalUsers || [] : []),
     ];
 
     if (!users.length) {
@@ -86,6 +98,8 @@ export async function GET(req: Request) {
     let processed = 0;
     let autopilotPrepared = 0;
     let autopilotSkipped = 0;
+    let clinicalFollowUpsSent = 0;
+    let clinicalFollowUpsSkipped = 0;
 
     /**
      * STEP 3: RUN COACH PIPELINE PER USER
@@ -109,6 +123,18 @@ export async function GET(req: Request) {
         console.error(`Morning Autopilot failed for user ${userId}`, err);
       }
 
+      try {
+        const clinicalFollowUp = await runProactiveClinicalFollowUps({ supabase, userId });
+        if (clinicalFollowUp.status === "sent") {
+          clinicalFollowUpsSent++;
+        } else {
+          clinicalFollowUpsSkipped++;
+        }
+      } catch (err) {
+        clinicalFollowUpsSkipped++;
+        console.error(`Clinical follow-up failed for user ${userId}`, err);
+      }
+
       processed++;
     }
 
@@ -118,6 +144,8 @@ export async function GET(req: Request) {
       users: uniqueUsers.length,
       autopilot_prepared: autopilotPrepared,
       autopilot_skipped: autopilotSkipped,
+      clinical_followups_sent: clinicalFollowUpsSent,
+      clinical_followups_skipped: clinicalFollowUpsSkipped,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
