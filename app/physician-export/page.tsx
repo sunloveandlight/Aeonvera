@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ArrowLeft, Printer } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
+import AccessState from "@/components/ui/AccessState";
 import { supabase } from "@/lib/supabase/client";
 
 type ExportBundle = {
@@ -46,10 +46,11 @@ type ExportBundle = {
 };
 
 export default function PhysicianExportPage() {
-  const router = useRouter();
   const [bundle, setBundle] = useState<ExportBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const [signedOut, setSignedOut] = useState(false);
+  const [locked, setLocked] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,7 +61,10 @@ export default function PhysicianExportPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.replace("/login?mode=signin");
+        if (!cancelled) {
+          setSignedOut(true);
+          setLoading(false);
+        }
         return;
       }
 
@@ -69,6 +73,14 @@ export default function PhysicianExportPage() {
           credentials: "include",
         });
         const data = await response.json();
+
+        if (response.status === 403) {
+          if (!cancelled) {
+            setLocked(true);
+            setMessage(data.upgrade?.message || data.error || null);
+          }
+          return;
+        }
 
         if (!response.ok) {
           throw new Error(data.error || "Could not load export.");
@@ -89,7 +101,7 @@ export default function PhysicianExportPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
   return (
     <PageContainer>
@@ -111,9 +123,40 @@ export default function PhysicianExportPage() {
         </div>
 
         {loading ? (
-          <div className="executive-panel rounded-lg p-8">
-            <p className="micro-label">Loading physician export</p>
-          </div>
+          <AccessState
+            eyebrow="Physician Export"
+            title="Preparing your longitudinal summary."
+            body="Aeonvera is assembling the records your clinician can review: biomarkers, reports, protocols, outcomes, and model history."
+            actions={[{ href: "/digital-twin", label: "Digital Twin", variant: "secondary" }]}
+          />
+        ) : signedOut ? (
+          <AccessState
+            eyebrow="Physician Export"
+            title="Sign in to generate your private export."
+            body="Medical-grade summaries contain sensitive health data and are only available inside your secure account."
+            actions={[
+              { href: "/login?mode=signin", label: "Sign in" },
+              { href: "/pricing", label: "Compare tiers", variant: "secondary" },
+            ]}
+          />
+        ) : locked ? (
+          <AccessState
+            eyebrow="Sovereign Intelligence"
+            title="Unlock physician-ready exports."
+            body={
+              message ||
+              "Sovereign includes a clinician-facing summary across biological age, biomarkers, protocols, outcomes, and longitudinal health signals."
+            }
+            points={[
+              "Printable clinical summary",
+              "Biomarker and intervention history",
+              "Digital Twin context for care teams",
+            ]}
+            actions={[
+              { href: "/pricing", label: "Unlock Sovereign" },
+              { href: "/plan", label: "Your Plan", variant: "secondary" },
+            ]}
+          />
         ) : message ? (
           <div className="executive-panel rounded-lg p-8">
             <p className="micro-label">Unavailable</p>

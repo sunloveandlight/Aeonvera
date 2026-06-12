@@ -35,6 +35,7 @@ export default function Header() {
     { href: "/pricing", label: "Pricing", public: true },
     { href: "/optimization", label: "Optimize", public: true },
     { href: "/companion", label: "Companion" },
+    { href: "/plan", label: "Your Plan" },
     { href: "/dashboard", label: "Dashboard" },
     { href: "/digital-twin", label: "Digital Twin" },
     { href: "/assessment", label: "Assessment" },

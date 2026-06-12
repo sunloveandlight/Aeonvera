@@ -2241,8 +2241,7 @@ export default function App() {
           <Text style={styles.eyebrow}>AEONVERA MOBILE</Text>
           <Text style={styles.title}>Your healthspan companion.</Text>
           <Text style={styles.copy}>
-            Today&apos;s protocol, coach inbox, and notification controls are
-            connected to your live Aeonvera account.
+            Aeonvera turns today&apos;s private health intelligence into one clear plan.
           </Text>
         </View>
 
@@ -2320,7 +2319,7 @@ export default function App() {
                         styles.activeTabText,
                     ]}
                   >
-                    {view}
+                    {tabLabelForView(view)}
                   </Text>
                 </Pressable>
               ))}
@@ -3793,8 +3792,8 @@ function InboxView({
 
   return (
     <View style={styles.panel} onLayout={onInboxLayout}>
-      <Text style={styles.cardLabel}>Coach Inbox</Text>
-      <Text style={styles.cardTitle}>{messages.length ? "Latest coach signal" : "No messages yet"}</Text>
+      <Text style={styles.cardLabel}>Plan Signals</Text>
+      <Text style={styles.cardTitle}>{messages.length ? "Latest intelligence" : "No plan signals yet"}</Text>
       {notice ? <Text style={styles.inboxNotice}>{notice}</Text> : null}
       <View style={styles.messageList} onLayout={onMessageListLayout}>
         {selectedMessage ? (
@@ -4758,6 +4757,13 @@ function formatReminderDate(date: Date) {
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
+}
+
+function tabLabelForView(view: ActiveView) {
+  if (view === "agent") return "Ask";
+  if (view === "inbox" || view === "message") return "Plan";
+  if (view === "settings") return "Settings";
+  return "Today";
 }
 
 function formatDate(value?: string | null) {

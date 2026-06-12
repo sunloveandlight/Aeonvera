@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Activity, ArrowRight, Brain, Clock3, Dna, FileText, FlaskConical, HeartPulse, Printer, Sparkles, type LucideIcon } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
+import AccessState, { EmptyState } from "@/components/ui/AccessState";
 import { supabase } from "@/lib/supabase/client";
 
 type TimelineEvent = {
@@ -81,9 +81,9 @@ const MODEL_INPUTS: Array<[string, keyof DigitalTwinPayload["counts"], LucideIco
 ];
 
 export default function DigitalTwinPage() {
-  const router = useRouter();
   const [payload, setPayload] = useState<DigitalTwinPayload | null>(null);
   const [loading, setLoading] = useState(true);
+  const [signedOut, setSignedOut] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [outcomeMessage, setOutcomeMessage] = useState<string | null>(null);
   const [savingOutcome, setSavingOutcome] = useState(false);
@@ -104,7 +104,10 @@ export default function DigitalTwinPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.replace("/login?mode=signin");
+        if (!cancelled) {
+          setSignedOut(true);
+          setLoading(false);
+        }
         return;
       }
 
@@ -137,7 +140,7 @@ export default function DigitalTwinPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
   const timeline = useMemo(() => {
     const events = payload?.timeline || [];
@@ -222,39 +225,50 @@ export default function DigitalTwinPage() {
         </div>
 
         {loading ? (
-          <div className="executive-panel rounded-lg p-8">
-            <p className="micro-label">Loading digital twin</p>
-          </div>
+          <AccessState
+            eyebrow="Digital Twin"
+            title="Assembling your private health model."
+            body="Aeonvera is reading your timeline, outcomes, biomarkers, protocols, and wearable signals."
+            actions={[{ href: "/plan", label: "View access", variant: "secondary" }]}
+          />
+        ) : signedOut ? (
+          <AccessState
+            eyebrow="Digital Twin"
+            title="Sign in to open your living health model."
+            body="Your Digital Twin is built from private health signals, so Aeonvera only opens it inside your secure account."
+            points={[
+              "Longitudinal health timeline",
+              "Outcome-aware model updates",
+              "Physician-ready export layer",
+            ]}
+            actions={[
+              { href: "/login?mode=signin", label: "Sign in" },
+              { href: "/pricing", label: "Compare tiers", variant: "secondary" },
+            ]}
+          />
         ) : message ? (
           <div className="executive-panel rounded-lg p-8">
             <p className="micro-label">Unavailable</p>
             <p className="mt-4 text-sm leading-7 text-white/50">{message}</p>
           </div>
         ) : payload?.locked ? (
-          <div className="executive-panel rounded-lg p-8 md:p-10">
-            <p className="micro-label">Sovereign Intelligence</p>
-            <h2 className="mt-4 max-w-2xl text-3xl font-light leading-tight text-white">
-              Digital Twin is the executive model layer.
-            </h2>
-            <p className="mt-5 max-w-2xl text-sm leading-7 text-white/50">
-              {payload.upgrade?.message ||
-                "Sovereign unlocks the full living timeline across biomarkers, protocols, scenarios, wearables, outcomes, and clinical memory."}
-            </p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/pricing"
-                className="premium-action inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
-              >
-                View Sovereign <ArrowRight size={16} />
-              </Link>
-              <Link
-                href="/companion"
-                className="premium-action-secondary inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
-              >
-                Open Companion
-              </Link>
-            </div>
-          </div>
+          <AccessState
+            eyebrow="Sovereign Intelligence"
+            title="Unlock the executive model layer."
+            body={
+              payload.upgrade?.message ||
+              "Sovereign unlocks the full living timeline across biomarkers, protocols, scenarios, wearables, outcomes, and clinical memory."
+            }
+            points={[
+              "Unified health timeline",
+              "Digital Twin intelligence panel",
+              "Physician-ready export",
+            ]}
+            actions={[
+              { href: "/pricing", label: "Unlock Sovereign" },
+              { href: "/plan", label: "Your Plan", variant: "secondary" },
+            ]}
+          />
         ) : payload ? (
           <>
             <div className="grid gap-4 md:grid-cols-4">
@@ -386,9 +400,12 @@ export default function DigitalTwinPage() {
                     <TimelineEventCard key={event.id} event={event} />
                   ))}
                   {!timeline.length && (
-                    <p className="text-sm leading-7 text-white/42">
-                      No events found for this filter yet.
-                    </p>
+                    <EmptyState
+                      eyebrow="No signals yet"
+                      title="This part of the timeline is still quiet."
+                      body="Add labs, connect wearable data, generate a protocol, or save an outcome and Aeonvera will begin filling this chronology."
+                      action={{ href: "/optimization", label: "Create a signal" }}
+                    />
                   )}
                 </div>
               </div>

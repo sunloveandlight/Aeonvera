@@ -2,9 +2,9 @@
 
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
+import AccessState, { EmptyState } from "@/components/ui/AccessState";
 import { supabase } from "@/lib/supabase/client";
 
 type Question = {
@@ -214,12 +214,12 @@ const SIMULATOR_FIELDS: Array<{
 ];
 
 export default function OptimizationPage() {
-  const router = useRouter();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [context, setContext] = useState("");
   const [showMap, setShowMap] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
+  const [signedOut, setSignedOut] = useState(false);
   const [generatingProtocol, setGeneratingProtocol] = useState(false);
   const [protocol, setProtocol] = useState<OptimizationProtocol | null>(null);
   const [protocolMessage, setProtocolMessage] = useState<string | null>(null);
@@ -253,7 +253,8 @@ export default function OptimizationPage() {
       if (cancelled) return;
 
       if (!user) {
-        router.replace("/login?mode=signin");
+        setSignedOut(true);
+        setAuthChecked(true);
         return;
       }
 
@@ -293,7 +294,7 @@ export default function OptimizationPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
   const focusStack = useMemo(() => {
     const selected = Object.values(answers);
@@ -489,15 +490,39 @@ export default function OptimizationPage() {
 
   if (!authChecked) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6">
-        <div className="relative size-12">
-          <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
-          <div className="absolute inset-0 animate-spin rounded-full border-t royal-border" />
-        </div>
-        <p className="text-[10px] uppercase tracking-[0.14em] text-white/25">
-          Loading optimization
-        </p>
-      </div>
+      <PageContainer>
+        <main className="py-14">
+          <AccessState
+            eyebrow="Optimization"
+            title="Preparing your private intake."
+            body="Aeonvera is checking your account before opening advanced optimization."
+            actions={[{ href: "/pricing", label: "View tiers", variant: "secondary" }]}
+          />
+        </main>
+      </PageContainer>
+    );
+  }
+
+  if (signedOut) {
+    return (
+      <PageContainer>
+        <main className="py-14">
+          <AccessState
+            eyebrow="Optimization"
+            title="Sign in to build a personal protocol."
+            body="Optimization uses your answers, health state, protocols, and model history, so it only runs inside your secure account."
+            points={[
+              "Advanced AI intake",
+              "Personal optimization protocol",
+              "Future-self projection",
+            ]}
+            actions={[
+              { href: "/login?mode=signin", label: "Sign in" },
+              { href: "/pricing", label: "Compare tiers", variant: "secondary" },
+            ]}
+          />
+        </main>
+      </PageContainer>
     );
   }
 
@@ -681,6 +706,9 @@ export default function OptimizationPage() {
                         </span>
                       </div>
                       <p className="mb-3 text-xs leading-5 text-white/42">{item.action}</p>
+                      <p className="mb-3 text-[11px] leading-5 text-[#dabc73]/70">
+                        Why Aeonvera recommends this: {item.why}
+                      </p>
                       <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
                         <div
                           className="living-bar h-full rounded-full"
@@ -910,9 +938,11 @@ export default function OptimizationPage() {
                     </button>
                   </>
                 ) : (
-                  <p className="text-sm leading-7 text-white/42">
-                    Move the controls, then run a projection to see the estimated biological-age trajectory.
-                  </p>
+                  <EmptyState
+                    eyebrow="Projection ready"
+                    title="Adjust the levers to simulate your future self."
+                    body="Aeonvera will estimate the biological-age shift from your current assessment and health-state baseline."
+                  />
                 )}
                 {projectionMessage && (
                   <p className="mt-4 rounded-lg border border-white/[0.08] bg-white/[0.025] p-4 text-sm leading-6 text-white/55">

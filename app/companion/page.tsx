@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Bell,
@@ -15,6 +14,7 @@ import {
   Target,
 } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
+import AccessState, { EmptyState } from "@/components/ui/AccessState";
 import NotificationPreferencesPanel from "@/components/dashboard/NotificationPreferencesPanel";
 import { supabase } from "@/lib/supabase/client";
 
@@ -256,10 +256,10 @@ type ModalitiesPayload = {
 };
 
 export default function CompanionPage() {
-  const router = useRouter();
   const clinicalPanelRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const [signedOut, setSignedOut] = useState(false);
   const [twin, setTwin] = useState<TwinPayload | null>(null);
   const [protocols, setProtocols] = useState<Protocol[]>([]);
   const [coachMessages, setCoachMessages] = useState<CoachMessage[]>([]);
@@ -304,7 +304,10 @@ export default function CompanionPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.replace("/login?mode=signin");
+        if (!cancelled) {
+          setSignedOut(true);
+          setLoading(false);
+        }
         return;
       }
 
@@ -388,7 +391,7 @@ export default function CompanionPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     if (loading || typeof window === "undefined") return;
@@ -737,9 +740,27 @@ export default function CompanionPage() {
         </div>
 
         {loading ? (
-          <div className="executive-panel rounded-lg p-8">
-            <p className="micro-label">Loading companion</p>
-          </div>
+          <AccessState
+            eyebrow="Companion"
+            title="Opening your daily operating view."
+            body="Aeonvera is loading your coach feed, protocol layer, calendar state, and plan intelligence."
+            actions={[{ href: "/plan", label: "View access", variant: "secondary" }]}
+          />
+        ) : signedOut ? (
+          <AccessState
+            eyebrow="Companion"
+            title="Sign in to open your private coach."
+            body="Your companion uses live health signals, coach memory, notifications, and execution history from your Aeonvera account."
+            points={[
+              "Daily focus and coach inbox",
+              "Protocol execution and reminders",
+              "Personal health agent",
+            ]}
+            actions={[
+              { href: "/login?mode=signin", label: "Sign in" },
+              { href: "/pricing", label: "Compare tiers", variant: "secondary" },
+            ]}
+          />
         ) : message ? (
           <div className="executive-panel rounded-lg p-8">
             <p className="micro-label">Unavailable</p>
@@ -923,7 +944,14 @@ function ProtocolActionsCalendarPanel({
   schedulingActionKey: string | null;
 }) {
   if (!actions.length) {
-    return null;
+    return (
+      <EmptyState
+        eyebrow="Action scheduling"
+        title="No protocol actions are ready yet."
+        body="Generate an optimization protocol and Aeonvera will turn the next actions into calendar-ready execution blocks."
+        action={{ href: "/optimization", label: "Build protocol" }}
+      />
+    );
   }
 
   return (
@@ -986,7 +1014,8 @@ function ProtocolActionsCalendarPanel({
                     {action.action || "Protocol action"}
                   </h3>
                   <p className="mt-3 text-sm leading-6 text-white/42">
-                    {action.why || "Schedule this action into your calendar."}
+                    Why Aeonvera recommends this:{" "}
+                    {action.why || "it is the next calendar-ready action for this protocol."}
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
@@ -1326,6 +1355,15 @@ function TierEntitlementGroup({
               {tone === "locked" ? `${item.minimumPlanLabel}: ` : ""}
               {item.description}
             </p>
+            {tone === "locked" ? (
+              <Link
+                href="/plan"
+                className="mt-2 inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-[#dabc73]/75 transition hover:text-[#f4df9b]"
+              >
+                Unlock {item.minimumPlanLabel}
+                <ArrowRight size={12} />
+              </Link>
+            ) : null}
           </div>
         ))}
       </div>
@@ -1370,7 +1408,13 @@ function AdvancedModalitiesPanel({
           <button
             key={modality.id}
             type="button"
-            onClick={() => onAsk(`Explain whether ${modality.name} makes sense for me, including risks, contraindications, tracking markers, and the safest protocol range.`)}
+            onClick={() => {
+              if (modality.access === "locked") {
+                window.location.href = "/plan";
+                return;
+              }
+              onAsk(`Explain whether ${modality.name} makes sense for me, including risks, contraindications, tracking markers, and the safest protocol range.`);
+            }}
             className={`group rounded-lg border p-5 text-left transition ${
               modality.access === "included"
                 ? "border-[#dabc73]/24 bg-[#dabc73]/[0.05] hover:border-[#dabc73]/42"
@@ -1405,7 +1449,9 @@ function AdvancedModalitiesPanel({
                 fit score
               </p>
             </div>
-            <p className="mt-4 text-sm leading-6 text-white/48">{modality.rationale}</p>
+            <p className="mt-4 text-sm leading-6 text-white/48">
+              Why Aeonvera recommends this: {modality.rationale}
+            </p>
             <div className="mt-4 grid gap-2">
               <ModalitySignal label="Risk" value={titleCase(modality.risk)} />
               <ModalitySignal label="Cost" value={titleCase(modality.cost)} />
@@ -1417,7 +1463,7 @@ function AdvancedModalitiesPanel({
             <p className="mt-4 text-xs leading-5 text-white/34">
               {modality.access === "included"
                 ? modality.protocolRange
-                : modality.upgradeMessage || "Upgrade to activate this modality."}
+                : modality.upgradeMessage || `Unlock ${titleCase(modality.minimumTier)} to activate this modality.`}
             </p>
           </button>
         ))}

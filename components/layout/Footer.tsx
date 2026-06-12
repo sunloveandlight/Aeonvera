@@ -29,6 +29,9 @@ export default function Footer() {
             <Link href="/companion" className="transition hover:text-white">
               Companion
             </Link>
+            <Link href="/plan" className="transition hover:text-white">
+              Your Plan
+            </Link>
             <Link href="/digital-twin" className="transition hover:text-white">
               Digital Twin
             </Link>
