@@ -18,11 +18,13 @@ import {
   View,
 } from "react-native";
 import { createClient, type Session } from "@supabase/supabase-js";
+import { Audio } from "expo-av";
 import Constants from "expo-constants";
 import * as Calendar from "expo-calendar";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import * as SecureStore from "expo-secure-store";
+import * as Speech from "expo-speech";
 import { StatusBar } from "expo-status-bar";
 
 type ActiveView = "today" | "agent" | "inbox" | "message" | "settings";
@@ -357,6 +359,9 @@ export default function App() {
     "What should I do first?",
     "Make today simpler.",
   ]);
+  const [voiceRecording, setVoiceRecording] = useState<Audio.Recording | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+  const [voiceSpeaking, setVoiceSpeaking] = useState(false);
   const [notificationFocusTick, setNotificationFocusTick] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
   const inboxOffsetY = useRef(0);
@@ -1075,6 +1080,162 @@ export default function App() {
     } finally {
       setAgentThinking(false);
     }
+  }
+
+  async function startAgentVoice() {
+    if (!session?.access_token || agentThinking || voiceRecording) return;
+
+    if (Platform.OS !== "ios" && Platform.OS !== "android") {
+      Alert.alert("Native only", "Voice conversation is available in the mobile app.");
+      return;
+    }
+
+    try {
+      const permission = await Audio.requestPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert("Microphone needed", "Allow microphone access to speak with Aeonvera.");
+        return;
+      }
+
+      await Speech.stop();
+      setVoiceSpeaking(false);
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+
+      const recording = new Audio.Recording();
+      await recording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      await recording.startAsync();
+      setVoiceRecording(recording);
+      setVoiceStatus("Listening. Tap done when you finish.");
+      playSoftHaptic();
+    } catch (error) {
+      setVoiceRecording(null);
+      setVoiceStatus(null);
+      Alert.alert(
+        "Voice did not start",
+        error instanceof Error ? error.message : "Aeonvera could not open the microphone."
+      );
+    }
+  }
+
+  async function stopAgentVoice() {
+    if (!session?.access_token || !voiceRecording) return;
+
+    const recording = voiceRecording;
+    setVoiceRecording(null);
+    setAgentThinking(true);
+    setVoiceStatus("Understanding your voice note.");
+
+    try {
+      await recording.stopAndUnloadAsync();
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+      });
+
+      const uri = recording.getURI();
+      if (!uri) {
+        throw new Error("No voice recording was captured.");
+      }
+
+      const history = agentMessages.slice(-8);
+      const formData = new FormData();
+      formData.append("history", JSON.stringify(history));
+      formData.append("audio", {
+        uri,
+        name: "aeonvera-voice.m4a",
+        type: Platform.OS === "ios" ? "audio/m4a" : "audio/mp4",
+      } as unknown as Blob);
+
+      const response = await fetch(`${appUrl}/api/agent/voice`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Aeonvera could not understand that voice note.");
+      }
+
+      const transcript = result?.transcript || "Voice question";
+      const answer = result?.answer || "Aeonvera is still reading today's signal.";
+      setAgentMessages((current) => [
+        ...current,
+        { role: "user", content: transcript },
+        { role: "assistant", content: answer },
+      ]);
+
+      if (Array.isArray(result?.suggestedPrompts)) {
+        setAgentSuggestions(result.suggestedPrompts.slice(0, 3));
+      }
+
+      if (Array.isArray(result?.actions)) {
+        const actions = result.actions.slice(0, 4) as AgentAppliedAction[];
+        setAgentActions(actions);
+
+        if (actions.some((action) => action.type === "plan_simplified")) {
+          void loadCompanionData(session);
+        }
+      }
+
+      setVoiceStatus("Aeonvera answered by voice.");
+      speakAgentAnswer(answer);
+      playSoftHaptic();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Aeonvera could not process voice right now.";
+      setVoiceStatus(message);
+      setAgentMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: message,
+        },
+      ]);
+    } finally {
+      setAgentThinking(false);
+    }
+  }
+
+  async function cancelAgentVoice() {
+    if (!voiceRecording) return;
+
+    const recording = voiceRecording;
+    setVoiceRecording(null);
+    setVoiceStatus("Voice note cancelled.");
+
+    await recording.stopAndUnloadAsync().catch(() => null);
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+    }).catch(() => null);
+  }
+
+  function speakAgentAnswer(answer: string) {
+    if (!answer.trim()) return;
+
+    setVoiceSpeaking(true);
+    Speech.speak(answer.replace(/\s+/g, " ").slice(0, 3600), {
+      language: "en-US",
+      pitch: 0.92,
+      rate: Platform.OS === "ios" ? 0.48 : 0.86,
+      onDone: () => setVoiceSpeaking(false),
+      onError: () => setVoiceSpeaking(false),
+      onStopped: () => setVoiceSpeaking(false),
+    });
+  }
+
+  async function stopAgentSpeech() {
+    await Speech.stop();
+    setVoiceSpeaking(false);
+    setVoiceStatus("Voice reply stopped.");
   }
 
   async function reconcileScheduledArtifacts(items: ScheduledProtocolAction[]) {
@@ -1950,8 +2111,15 @@ export default function App() {
                 prompt={agentPrompt}
                 suggestions={agentSuggestions}
                 thinking={agentThinking}
+                voiceRecording={Boolean(voiceRecording)}
+                voiceSpeaking={voiceSpeaking}
+                voiceStatus={voiceStatus}
                 onPromptChange={setAgentPrompt}
                 onSend={(value) => void askPersonalAgent(value)}
+                onStartVoice={() => void startAgentVoice()}
+                onStopVoice={() => void stopAgentVoice()}
+                onCancelVoice={() => void cancelAgentVoice()}
+                onStopSpeech={() => void stopAgentSpeech()}
               />
             ) : null}
 
@@ -2366,19 +2534,33 @@ function ExecutionFeedbackCard({
 function AgentView({
   appliedActions,
   messages,
+  onCancelVoice,
   onPromptChange,
   onSend,
+  onStartVoice,
+  onStopSpeech,
+  onStopVoice,
   prompt,
   suggestions,
   thinking,
+  voiceRecording,
+  voiceSpeaking,
+  voiceStatus,
 }: {
   appliedActions: AgentAppliedAction[];
   messages: AgentChatMessage[];
+  onCancelVoice: () => void;
   onPromptChange: (value: string) => void;
   onSend: (value?: string) => void;
+  onStartVoice: () => void;
+  onStopSpeech: () => void;
+  onStopVoice: () => void;
   prompt: string;
   suggestions: string[];
   thinking: boolean;
+  voiceRecording: boolean;
+  voiceSpeaking: boolean;
+  voiceStatus: string | null;
 }) {
   const visibleMessages = messages.slice(-6);
 
@@ -2390,9 +2572,45 @@ function AgentView({
         Your agent reads today&apos;s plan, coach memory, recent execution, and calendar signals
         before answering.
       </Text>
-      <Text style={styles.voiceHint}>
-        You can speak through the keyboard microphone. Full hands-free voice is not built in yet.
-      </Text>
+
+      <View style={styles.voicePanel}>
+        <View style={styles.voiceSignal}>
+          <View style={[styles.voiceOrb, voiceRecording && styles.voiceOrbActive]} />
+          <View style={styles.voiceCopyGroup}>
+            <Text style={styles.voiceTitle}>
+              {voiceRecording ? "Listening" : voiceSpeaking ? "Speaking" : "Voice conversation"}
+            </Text>
+            <Text style={styles.voiceHint}>
+              {voiceStatus ||
+                "Speak a complex health question and Aeonvera will answer through the agent."}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.voiceControls}>
+          {voiceRecording ? (
+            <>
+              <Pressable style={styles.voiceButtonSecondary} onPress={onCancelVoice}>
+                <Text style={styles.voiceButtonText}>Cancel</Text>
+              </Pressable>
+              <Pressable style={styles.voiceButton} onPress={onStopVoice}>
+                <Text style={styles.voiceButtonPrimaryText}>Done</Text>
+              </Pressable>
+            </>
+          ) : voiceSpeaking ? (
+            <Pressable style={styles.voiceButtonSecondary} onPress={onStopSpeech}>
+              <Text style={styles.voiceButtonText}>Stop Voice</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={[styles.voiceButton, thinking && styles.buttonDisabled]}
+              disabled={thinking}
+              onPress={onStartVoice}
+            >
+              <Text style={styles.voiceButtonPrimaryText}>Speak</Text>
+            </Pressable>
+          )}
+        </View>
+      </View>
 
       <View style={styles.agentSuggestions}>
         {suggestions.map((suggestion) => (
@@ -2452,9 +2670,9 @@ function AgentView({
         <Pressable
           style={[
             styles.agentSendButton,
-            (thinking || !prompt.trim()) && styles.buttonDisabled,
+            (thinking || voiceRecording || !prompt.trim()) && styles.buttonDisabled,
           ]}
-          disabled={thinking || !prompt.trim()}
+          disabled={thinking || voiceRecording || !prompt.trim()}
           onPress={() => onSend()}
         >
           <Text style={styles.agentSendText}>Ask</Text>
@@ -3942,11 +4160,87 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 16,
   },
+  voicePanel: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.2)",
+    gap: 14,
+    marginTop: 16,
+    padding: 14,
+  },
+  voiceSignal: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+  },
+  voiceOrb: {
+    width: 14,
+    height: 14,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.24)",
+    shadowColor: "#ffffff",
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+  },
+  voiceOrbActive: {
+    backgroundColor: "rgba(218,188,115,0.92)",
+    shadowColor: "#dabc73",
+    shadowOpacity: 0.7,
+    shadowRadius: 14,
+  },
+  voiceCopyGroup: {
+    flex: 1,
+  },
+  voiceTitle: {
+    color: "rgba(255,255,255,0.86)",
+    fontSize: 13,
+    fontWeight: "700",
+  },
   voiceHint: {
     color: "rgba(255,255,255,0.36)",
     fontSize: 12,
     lineHeight: 18,
-    marginTop: 10,
+    marginTop: 3,
+  },
+  voiceControls: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
+  },
+  voiceButton: {
+    minHeight: 42,
+    minWidth: 92,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 999,
+    backgroundColor: "rgba(218,188,115,0.92)",
+    paddingHorizontal: 16,
+  },
+  voiceButtonSecondary: {
+    minHeight: 42,
+    minWidth: 92,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    paddingHorizontal: 16,
+  },
+  voiceButtonText: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  voiceButtonPrimaryText: {
+    color: "#080808",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   agentSuggestion: {
     borderWidth: 1,

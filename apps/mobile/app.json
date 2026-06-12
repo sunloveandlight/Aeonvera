@@ -13,11 +13,15 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.aeonvera.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "Allow Aeonvera to listen when you speak to your personal health agent."
       }
     },
     "android": {
-      "package": "com.aeonvera.app"
+      "package": "com.aeonvera.app",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
     },
     "extra": {
       "webUrl": "https://www.aeonvera.com",

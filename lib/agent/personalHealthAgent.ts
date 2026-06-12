@@ -273,6 +273,7 @@ const CLINICAL_LONGEVITY_DOMAINS = [
 ];
 
 let openaiClient: OpenAI | null = null;
+let xaiClient: OpenAI | null = null;
 
 function getOpenAI() {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -284,6 +285,21 @@ function getOpenAI() {
   }
 
   return openaiClient;
+}
+
+function getXAI() {
+  const apiKey = process.env.XAI_API_KEY;
+
+  if (!apiKey) return null;
+
+  if (!xaiClient) {
+    xaiClient = new OpenAI({
+      apiKey,
+      baseURL: process.env.XAI_BASE_URL || "https://api.x.ai/v1",
+    });
+  }
+
+  return xaiClient;
 }
 
 export async function answerPersonalHealthAgent({
@@ -301,6 +317,16 @@ export async function answerPersonalHealthAgent({
   const actions = await applyAgentInstructions({ context, question, supabase, userId });
   const updatedContext = actions.length ? await loadAgentContext(supabase, userId) : context;
   const openai = getOpenAI();
+  const xaiClinicalReview = await buildXaiClinicalReview(question, updatedContext, history);
+
+  if (!openai && xaiClinicalReview) {
+    return {
+      actions,
+      answer: xaiClinicalReview,
+      mode: "generated" as const,
+      context: updatedContext,
+    };
+  }
 
   if (!openai) {
     return {
@@ -323,7 +349,7 @@ export async function answerPersonalHealthAgent({
         },
         {
           role: "user",
-          content: `User context:\n${JSON.stringify(summarizeContext(updatedContext), null, 2)}\n\nActions already applied from this message:\n${JSON.stringify(actions, null, 2)}`,
+          content: `User context:\n${JSON.stringify(summarizeContext(updatedContext), null, 2)}\n\nActions already applied from this message:\n${JSON.stringify(actions, null, 2)}\n\nIndependent xAI/Grok clinical reasoning review, when available:\n${xaiClinicalReview || "No xAI review available for this message."}`,
         },
         ...history.slice(-6).map((message) => ({
           role: message.role,
@@ -356,6 +382,45 @@ export async function answerPersonalHealthAgent({
     mode: "fallback" as const,
     context: updatedContext,
   };
+}
+
+async function buildXaiClinicalReview(
+  question: string,
+  context: AgentContext,
+  history: AgentMessage[]
+) {
+  if (!isComplexHealthQuestion(question.toLowerCase())) return null;
+
+  const xai = getXAI();
+  if (!xai) return null;
+
+  try {
+    const completion = await xai.chat.completions.create({
+      model: process.env.XAI_MODEL || "grok-4.3",
+      temperature: 0.18,
+      max_tokens: 900,
+      messages: [
+        {
+          role: "system",
+          content: [
+            "You are a clinical reasoning reviewer for Aeonvera, a longevity decision-support product.",
+            "Analyze the user's question using preventive medicine, physiology, and risk stratification.",
+            "Do not diagnose or prescribe. Flag red flags, uncertainty, missing data, and clinician escalation needs.",
+            "Be specific, systems-oriented, and concise. Return a useful second-opinion reasoning memo.",
+          ].join(" "),
+        },
+        {
+          role: "user",
+          content: `User context:\n${JSON.stringify(summarizeContext(context), null, 2)}\n\nRecent conversation:\n${JSON.stringify(history.slice(-4), null, 2)}\n\nQuestion:\n${question}`,
+        },
+      ],
+    });
+
+    return completion.choices[0]?.message?.content?.trim() || null;
+  } catch (error) {
+    console.error("[xAI Clinical Review Error]", error instanceof Error ? error.message : error);
+    return null;
+  }
 }
 
 async function loadAgentContext(
