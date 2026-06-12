@@ -11,8 +11,19 @@ export type ClinicalBiomarkerRow = {
   measured_at?: string | null;
 };
 
+export type ClinicalProfileContext = {
+  age?: number;
+  sex?: "male" | "female" | "unknown";
+  familyCancer?: string;
+  familyDiabetes?: string;
+  familyHeartDisease?: string;
+  bodyFatPct?: number;
+  waistCm?: number;
+};
+
 export type ClinicalRangeFlag = {
   action: string;
+  context?: string;
   domain: string;
   key: ClinicalBiomarkerKey;
   label: string;
@@ -114,7 +125,7 @@ const MARKERS: MarkerDefinition[] = [
     unit: "mg/dL",
   },
   {
-    action: "Use HDL together with triglycerides, ApoB, and insulin rather than treating it alone.",
+    action: "Use HDL together with triglycerides, ApoB, blood pressure, and insulin rather than treating it alone.",
     domain: "Cardiometabolic",
     key: "hdl_cholesterol",
     label: "HDL cholesterol",
@@ -200,6 +211,16 @@ const MARKERS: MarkerDefinition[] = [
     clinicianReview: [0, 19],
     unit: "ng/mL",
   },
+  {
+    action: "Interpret testosterone with symptoms, sleep, resistance training, body composition, SHBG, LH/FSH, and clinician context.",
+    domain: "Hormonal",
+    key: "total_testosterone",
+    label: "Total testosterone",
+    optimal: [450, 900],
+    monitor: [300, 449],
+    clinicianReview: [0, 299],
+    unit: "ng/dL",
+  },
 ];
 
 const DOMAIN_REQUIREMENTS: Array<{
@@ -235,9 +256,16 @@ const DOMAIN_REQUIREMENTS: Array<{
 ];
 
 export function buildClinicalIntelligence(rows: ClinicalBiomarkerRow[]): ClinicalIntelligenceSummary {
+  return buildClinicalIntelligenceWithContext(rows);
+}
+
+export function buildClinicalIntelligenceWithContext(
+  rows: ClinicalBiomarkerRow[],
+  context: ClinicalProfileContext = {}
+): ClinicalIntelligenceSummary {
   const latest = latestBiomarkers(rows);
   const rangeFlags = Array.from(latest.values())
-    .map((row) => buildRangeFlag(row))
+    .map((row) => buildRangeFlag(row, context))
     .filter((flag): flag is ClinicalRangeFlag => Boolean(flag))
     .sort((a, b) => tierWeight(b.tier) - tierWeight(a.tier));
   const signalMap = DOMAIN_REQUIREMENTS.map((requirement) => {
@@ -252,11 +280,11 @@ export function buildClinicalIntelligence(rows: ClinicalBiomarkerRow[]): Clinica
       tier: highestTier(domainFlags.map((flag) => flag.tier)),
     };
   });
-  const missingInputs = buildMissingInputs(latest);
+  const missingInputs = buildMissingInputs(latest, context);
   const riskTier = highestTier(rangeFlags.map((flag) => flag.tier));
-  const confidence = computeConfidence(latest.size, missingInputs);
+  const confidence = computeConfidence(latest.size, missingInputs, context);
   const recommendedActions = buildRecommendedActions(rangeFlags, missingInputs);
-  const followUpQuestions = buildFollowUpQuestions(rangeFlags, missingInputs);
+  const followUpQuestions = buildFollowUpQuestions(rangeFlags, missingInputs, context);
 
   return {
     confidence,
@@ -266,7 +294,7 @@ export function buildClinicalIntelligence(rows: ClinicalBiomarkerRow[]): Clinica
     recommendedActions,
     riskTier,
     signalMap,
-    summary: buildSummary({ confidence, missingInputs, rangeFlags, riskTier }),
+    summary: buildSummary({ confidence, context, missingInputs, rangeFlags, riskTier }),
     rangeFlags,
   };
 }
@@ -287,6 +315,11 @@ export async function createClinicalInsightFromLabs({
     .order("measured_at", { ascending: false })
     .limit(160);
 
+  const context = await loadClinicalProfileContext(supabase, userId);
+  const assessmentRows = context.assessment
+    ? assessmentToBiomarkerRows(context.assessment)
+    : [];
+
   if (error) {
     if (!isMissingTable(error)) {
       console.error("[Clinical Intelligence Lab Load Error]", error.message);
@@ -295,7 +328,10 @@ export async function createClinicalInsightFromLabs({
     return null;
   }
 
-  const intelligence = buildClinicalIntelligence((data || []) as ClinicalBiomarkerRow[]);
+  const intelligence = buildClinicalIntelligenceWithContext(
+    [...((data || []) as ClinicalBiomarkerRow[]), ...assessmentRows],
+    context.profile
+  );
   if (!intelligence.rangeFlags.length && intelligence.confidence < 20) return null;
 
   const { error: insertError } = await supabase.from("clinical_insights").insert({
@@ -316,6 +352,7 @@ export async function createClinicalInsightFromLabs({
     metadata: {
       generated_from: "lab_import",
       missing_inputs: intelligence.missingInputs,
+      profile_context: compactProfileContext(context.profile),
       risk_tier: intelligence.riskTier,
       safety_level:
         intelligence.riskTier === "urgent"
@@ -357,27 +394,66 @@ function latestBiomarkers(rows: ClinicalBiomarkerRow[]) {
 }
 
 function buildRangeFlag(
-  row: ClinicalBiomarkerRow & { numericValue: number }
+  row: ClinicalBiomarkerRow & { numericValue: number },
+  context: ClinicalProfileContext
 ): ClinicalRangeFlag | null {
   const definition = MARKERS.find((marker) => marker.key === row.canonical_key);
   if (!definition) return null;
 
-  const tier = classifyValue(row.numericValue, definition);
+  const tier = classifyValue(row.numericValue, definition, context);
   const readableValue = `${round(row.numericValue)} ${definition.unit}`;
+  const contextNote = buildContextNote(row.canonical_key, tier, context);
 
   return {
     action: definition.action,
+    context: contextNote,
     domain: definition.domain,
     key: row.canonical_key,
     label: definition.label,
-    rationale: `${definition.label} is ${readableValue}. ${tierReason(tier)}`,
+    rationale: `${definition.label} is ${readableValue}. ${tierReason(tier)}${contextNote ? ` ${contextNote}` : ""}`,
     tier,
     unit: definition.unit,
     value: round(row.numericValue),
   };
 }
 
-function classifyValue(value: number, definition: MarkerDefinition): ClinicalRiskTier {
+function classifyValue(
+  value: number,
+  definition: MarkerDefinition,
+  context: ClinicalProfileContext
+): ClinicalRiskTier {
+  if (definition.key === "hdl_cholesterol") {
+    const lowCutoff = context.sex === "female" ? 50 : 40;
+    if (value < lowCutoff) return "clinician_review";
+    if (value < 60) return "monitor";
+    return "optimize";
+  }
+
+  if (definition.key === "ferritin") {
+    if (context.sex === "male") {
+      if (value < 30 || value > 300) return "clinician_review";
+      if (value < 50 || value > 200) return "monitor";
+      return "optimize";
+    }
+
+    if (context.sex === "female") {
+      if (value < 15 || value > 200) return "clinician_review";
+      if (value < 30 || value > 150) return "monitor";
+      return "optimize";
+    }
+  }
+
+  if (definition.key === "total_testosterone") {
+    if (context.sex === "male") {
+      if (value < 300 || value > 1100) return "clinician_review";
+      if (value < 450 || value > 900) return "monitor";
+      return "optimize";
+    }
+
+    if (context.sex === "female" && value > 70) return "clinician_review";
+    return "monitor";
+  }
+
   if (inRange(value, definition.urgent)) return "urgent";
   if (inRange(value, definition.clinicianReview)) return "clinician_review";
   if (inRange(value, definition.monitor)) return "monitor";
@@ -390,7 +466,10 @@ function classifyValue(value: number, definition: MarkerDefinition): ClinicalRis
   return "monitor";
 }
 
-function buildMissingInputs(latest: Map<ClinicalBiomarkerKey, ClinicalBiomarkerRow>) {
+function buildMissingInputs(
+  latest: Map<ClinicalBiomarkerKey, ClinicalBiomarkerRow>,
+  context: ClinicalProfileContext
+) {
   return DOMAIN_REQUIREMENTS.flatMap((requirement) =>
     requirement.keys
       .filter((key) => !latest.has(key))
@@ -399,8 +478,8 @@ function buildMissingInputs(latest: Map<ClinicalBiomarkerKey, ClinicalBiomarkerR
         domain: requirement.domain,
         key,
         label: readableKey(key),
-        priority: index === 0 ? "high" : "medium",
-        reason: requirement.reason,
+        priority: missingPriority(requirement.domain, key, index, context),
+        reason: missingReason(requirement.reason, key, context),
       }))
   ).slice(0, 8) as MissingClinicalInput[];
 }
@@ -433,7 +512,11 @@ function buildRecommendedActions(
   return actions.slice(0, 4);
 }
 
-function buildFollowUpQuestions(flags: ClinicalRangeFlag[], missingInputs: MissingClinicalInput[]) {
+function buildFollowUpQuestions(
+  flags: ClinicalRangeFlag[],
+  missingInputs: MissingClinicalInput[],
+  context: ClinicalProfileContext
+) {
   const questions = flags.slice(0, 3).map((flag) => {
     if (flag.tier === "urgent" || flag.tier === "clinician_review") {
       return `Has ${flag.label} been reviewed with a clinician, and was this value repeated or confirmed?`;
@@ -448,16 +531,26 @@ function buildFollowUpQuestions(flags: ClinicalRangeFlag[], missingInputs: Missi
     );
   }
 
+  if (context.familyHeartDisease && isAffirmative(context.familyHeartDisease)) {
+    questions.push("At what age did the closest first-degree relative develop cardiovascular disease, and was ApoB or Lp(a) ever measured?");
+  }
+
+  if (context.sex === "female") {
+    questions.push("Are you premenopausal, perimenopausal, postmenopausal, pregnant, or using hormonal contraception or hormone therapy?");
+  }
+
   return questions.slice(0, 5);
 }
 
 function buildSummary({
   confidence,
+  context,
   missingInputs,
   rangeFlags,
   riskTier,
 }: {
   confidence: number;
+  context: ClinicalProfileContext;
   missingInputs: MissingClinicalInput[];
   rangeFlags: ClinicalRangeFlag[];
   riskTier: ClinicalRiskTier;
@@ -470,14 +563,21 @@ function buildSummary({
     ? `Highest-yield missing data: ${missingInputs.slice(0, 3).map((input) => input.label).join(", ")}.`
     : "Missing-data burden is low for the current lab layer.";
 
-  return `Clinical intelligence is ${confidence}% confident. Risk tier: ${riskTier.replace("_", " ")}. ${flagText}. ${missingText}`;
+  const contextText = profileContextLabel(context);
+
+  return `Clinical intelligence is ${confidence}% confident${contextText ? ` using ${contextText}` : ""}. Risk tier: ${riskTier.replace("_", " ")}. ${flagText}. ${missingText}`;
 }
 
-function computeConfidence(markerCount: number, missingInputs: MissingClinicalInput[]) {
+function computeConfidence(
+  markerCount: number,
+  missingInputs: MissingClinicalInput[],
+  context: ClinicalProfileContext
+) {
   const totalExpected = Array.from(new Set(DOMAIN_REQUIREMENTS.flatMap((domain) => domain.keys))).length;
   const coverage = markerCount / Math.max(1, totalExpected);
   const missingPenalty = Math.min(0.28, missingInputs.filter((input) => input.priority === "high").length * 0.035);
-  return Math.max(10, Math.min(95, Math.round((coverage - missingPenalty) * 100)));
+  const contextBonus = (context.age ? 0.04 : 0) + (context.sex && context.sex !== "unknown" ? 0.04 : 0);
+  return Math.max(10, Math.min(95, Math.round((coverage + contextBonus - missingPenalty) * 100)));
 }
 
 function normalizeValue(row: ClinicalBiomarkerRow) {
@@ -489,8 +589,13 @@ function normalizeValue(row: ClinicalBiomarkerRow) {
   if (["triglycerides", "hdl_cholesterol", "ldl_cholesterol", "total_cholesterol"].includes(row.canonical_key) && unit.includes("mmol")) {
     return value * (row.canonical_key === "triglycerides" ? 88.57 : 38.67);
   }
+  if (row.canonical_key === "fasting_insulin" && unit.includes("pmol")) return value / 6.945;
   if (row.canonical_key === "hscrp" && unit.includes("mg/dl")) return value * 10;
   if (row.canonical_key === "apob" && unit === "g/l") return value * 100;
+  if (row.canonical_key === "fibrinogen" && unit === "g/l") return value * 100;
+  if (row.canonical_key === "total_testosterone" && unit.includes("nmol")) return value * 28.85;
+  if (row.canonical_key === "free_testosterone" && unit === "ng/dl") return value * 10;
+  if (row.canonical_key === "morning_cortisol" && unit.includes("nmol")) return value / 27.59;
   if (row.canonical_key === "vitamin_d" && unit.includes("nmol")) return value / 2.5;
   return value;
 }
@@ -525,6 +630,197 @@ function readableKey(key: ClinicalBiomarkerKey | string) {
     .replace("Tsh", "TSH")
     .replace("Hdl", "HDL")
     .replace("Ldl", "LDL");
+}
+
+async function loadClinicalProfileContext(supabase: SupabaseClient, userId: string) {
+  const { data: assessment, error } = await supabase
+    .from("longevity_assessments")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[Clinical Intelligence Context Error]", error.message);
+  }
+
+  return {
+    assessment: (assessment || null) as Record<string, unknown> | null,
+    profile: assessmentToProfileContext((assessment || null) as Record<string, unknown> | null),
+  };
+}
+
+function assessmentToProfileContext(assessment: Record<string, unknown> | null): ClinicalProfileContext {
+  if (!assessment) return {};
+
+  return {
+    age: safeNumber(assessment.age),
+    bodyFatPct: safeNumber(assessment.body_fat_pct),
+    familyCancer: safeString(assessment.family_cancer),
+    familyDiabetes: safeString(assessment.family_diabetes),
+    familyHeartDisease: safeString(assessment.family_heart_disease),
+    sex: normalizeSex(assessment.sex),
+    waistCm: safeNumber(assessment.waist_cm),
+  };
+}
+
+function assessmentToBiomarkerRows(assessment: Record<string, unknown>): ClinicalBiomarkerRow[] {
+  const measuredAt = safeString(assessment.created_at) || new Date().toISOString();
+  const mapping: Array<[string, ClinicalBiomarkerKey, string]> = [
+    ["blood_pressure_systolic", "blood_pressure_systolic", "mmHg"],
+    ["blood_pressure_diastolic", "blood_pressure_diastolic", "mmHg"],
+    ["fasting_glucose", "fasting_glucose", "mg/dL"],
+    ["fasting_insulin", "fasting_insulin", "uIU/mL"],
+    ["hba1c", "hba1c", "%"],
+    ["triglycerides", "triglycerides", "mg/dL"],
+    ["hdl", "hdl_cholesterol", "mg/dL"],
+    ["ldl", "ldl_cholesterol", "mg/dL"],
+    ["total_cholesterol", "total_cholesterol", "mg/dL"],
+    ["hscrp", "hscrp", "mg/L"],
+    ["testosterone", "total_testosterone", "ng/dL"],
+    ["cortisol", "morning_cortisol", "ug/dL"],
+  ];
+
+  return mapping.flatMap(([assessmentKey, canonicalKey, unit]) => {
+    const value = safeNumber(assessment[assessmentKey]);
+    if (value == null) return [];
+
+    return [{
+      canonical_key: canonicalKey,
+      measured_at: measuredAt,
+      raw_label: `Assessment ${readableKey(canonicalKey)}`,
+      unit,
+      value,
+    }];
+  });
+}
+
+function buildContextNote(
+  key: ClinicalBiomarkerKey,
+  tier: ClinicalRiskTier,
+  context: ClinicalProfileContext
+) {
+  const notes: string[] = [];
+  const isCardiometabolic = [
+    "apob",
+    "blood_pressure_systolic",
+    "blood_pressure_diastolic",
+    "fasting_glucose",
+    "hba1c",
+    "hdl_cholesterol",
+    "triglycerides",
+  ].includes(key);
+
+  if (isCardiometabolic && context.age && context.age >= 45 && tier !== "optimize") {
+    notes.push("Age context increases the value of trend confirmation and clinician-grade risk stratification.");
+  }
+
+  if (isCardiometabolic && context.familyHeartDisease && isAffirmative(context.familyHeartDisease)) {
+    notes.push("Family cardiovascular history makes ApoB, blood pressure, and glycemic context more important.");
+  }
+
+  if (["fasting_glucose", "hba1c", "fasting_insulin", "triglycerides"].includes(key) && context.waistCm) {
+    notes.push(`Waist context is ${round(context.waistCm)} cm, which should be interpreted with metabolic markers.`);
+  }
+
+  if (key === "ferritin" && context.sex && context.sex !== "unknown") {
+    notes.push(`Ferritin was interpreted with ${context.sex} context.`);
+  }
+
+  if (key === "hdl_cholesterol" && context.sex && context.sex !== "unknown") {
+    notes.push(`HDL was interpreted with ${context.sex} context.`);
+  }
+
+  if (key === "total_testosterone") {
+    if (context.sex === "male") {
+      notes.push("Male testosterone context was used; SHBG, LH, FSH, symptoms, and repeat morning timing still matter.");
+    } else {
+      notes.push("Testosterone is highly context-dependent outside male reference interpretation, so Aeonvera keeps this as clinician-context guidance.");
+    }
+  }
+
+  return notes.join(" ");
+}
+
+function missingPriority(
+  domain: string,
+  key: ClinicalBiomarkerKey,
+  index: number,
+  context: ClinicalProfileContext
+): "high" | "medium" | "low" {
+  if (
+    context.familyHeartDisease &&
+    isAffirmative(context.familyHeartDisease) &&
+    ["apob", "blood_pressure_systolic", "blood_pressure_diastolic"].includes(key)
+  ) {
+    return "high";
+  }
+
+  if (
+    context.familyDiabetes &&
+    isAffirmative(context.familyDiabetes) &&
+    ["fasting_insulin", "hba1c", "fasting_glucose"].includes(key)
+  ) {
+    return "high";
+  }
+
+  if (domain.includes("Hormonal") && context.sex === "female") return "high";
+  return index === 0 ? "high" : "medium";
+}
+
+function missingReason(reason: string, key: ClinicalBiomarkerKey, context: ClinicalProfileContext) {
+  if (key === "apob" && context.familyHeartDisease && isAffirmative(context.familyHeartDisease)) {
+    return `${reason} Family heart-disease context makes ApoB especially high-yield.`;
+  }
+
+  if (key === "fasting_insulin" && context.familyDiabetes && isAffirmative(context.familyDiabetes)) {
+    return `${reason} Family diabetes context makes insulin response especially high-yield.`;
+  }
+
+  return reason;
+}
+
+function profileContextLabel(context: ClinicalProfileContext) {
+  const parts = [
+    context.age ? `age ${context.age}` : null,
+    context.sex && context.sex !== "unknown" ? `${context.sex} sex context` : null,
+    context.familyHeartDisease && isAffirmative(context.familyHeartDisease)
+      ? "family cardiovascular history"
+      : null,
+    context.familyDiabetes && isAffirmative(context.familyDiabetes)
+      ? "family diabetes history"
+      : null,
+  ].filter(Boolean);
+
+  return parts.join(", ");
+}
+
+function compactProfileContext(context: ClinicalProfileContext) {
+  return Object.fromEntries(
+    Object.entries(context).filter(([, value]) => value != null && value !== "")
+  );
+}
+
+function normalizeSex(value: unknown): ClinicalProfileContext["sex"] {
+  const normalized = safeString(value)?.toLowerCase();
+  if (!normalized) return "unknown";
+  if (["male", "man", "m"].includes(normalized)) return "male";
+  if (["female", "woman", "f"].includes(normalized)) return "female";
+  return "unknown";
+}
+
+function safeNumber(value: unknown) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && value !== "" && value != null ? numeric : undefined;
+}
+
+function safeString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function isAffirmative(value: string) {
+  return /yes|true|positive|present|family|father|mother|sibling|brother|sister/i.test(value);
 }
 
 function round(value: number) {
