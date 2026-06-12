@@ -731,7 +731,7 @@ export default function App() {
     }
   }
 
-  async function acceptDailyPlan() {
+  async function acceptDailyPlan(forceRecreate = false) {
     if (acceptingDailyPlan) return;
 
     if (!dailyPlan?.plan?.items?.length) {
@@ -739,11 +739,39 @@ export default function App() {
       return;
     }
 
-    if (dailyPlan.status === "accepted" || dailyPlan.status === "auto_scheduled") {
-      setActionNotice("Today is already prepared. Aeonvera will not duplicate calendar events.");
+    if (
+      !forceRecreate &&
+      (dailyPlan.status === "accepted" || dailyPlan.status === "auto_scheduled")
+    ) {
+      const existingCount =
+        protocol?.id && dailyPlan.plan.items.length
+          ? dailyPlan.plan.items.filter(
+              (item) =>
+                nativeCalendarEvents[getReminderKey(protocol.id, item)] ||
+                localReminders[getReminderKey(protocol.id, item)]
+            ).length
+          : 0;
+
+      setActionNotice(
+        existingCount
+          ? "Today is already prepared. Tap Recreate only if you want Aeonvera to add a fresh set."
+          : "Today was prepared earlier. If you deleted the calendar events, Aeonvera can recreate them."
+      );
       Alert.alert(
-        "Already prepared",
-        "Today’s Autopilot plan has already been created. Aeonvera will not add duplicate calendar events."
+        "Today is already prepared",
+        existingCount
+          ? "Aeonvera already has calendar or notification records for this plan. Do you want to add a fresh set anyway?"
+          : "Aeonvera marked this plan prepared earlier. If you removed the events from your calendar, you can recreate them now.",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Recreate",
+            onPress: () => void acceptDailyPlan(true),
+          },
+        ]
       );
       return;
     }
@@ -761,7 +789,7 @@ export default function App() {
         if (!item.action || !protocol?.id) continue;
 
         const actionKey = getReminderKey(protocol.id, item);
-        if (nativeCalendarEvents[actionKey] || localReminders[actionKey]) {
+        if (!forceRecreate && (nativeCalendarEvents[actionKey] || localReminders[actionKey])) {
           skippedExisting += 1;
           continue;
         }
@@ -1636,14 +1664,9 @@ function AutopilotPlanCard({
           style={[
             styles.button,
             styles.autopilotPrimaryButton,
-            (acceptingDailyPlan ||
-              status === "accepted" ||
-              status === "auto_scheduled") &&
-              styles.buttonDisabled,
+            acceptingDailyPlan && styles.buttonDisabled,
           ]}
-          disabled={
-            acceptingDailyPlan || status === "accepted" || status === "auto_scheduled"
-          }
+          disabled={acceptingDailyPlan}
           onPress={() => void acceptDailyPlan()}
         >
           <Text style={styles.buttonText}>
