@@ -16,6 +16,8 @@ export type Feature =
   | "autopilot_calendar"
   | "future_self_simulator"
   | "advanced_modalities"
+  | "clinical_intelligence"
+  | "lab_trends"
   | "digital_twin"
   | "physician_exports"
   | "sovereign_modalities"
@@ -36,6 +38,8 @@ const PLAN_PERMISSIONS: Record<Plan, Feature[]> = {
     "autopilot_calendar",
     "future_self_simulator",
     "advanced_modalities",
+    "clinical_intelligence",
+    "lab_trends",
   ],
 
   sovereign: [
@@ -43,7 +47,12 @@ const PLAN_PERMISSIONS: Record<Plan, Feature[]> = {
     "core_features",
     "elite_features",
     "proactive_coach",
+    "voice_agent",
+    "autopilot_calendar",
+    "future_self_simulator",
     "advanced_modalities",
+    "clinical_intelligence",
+    "lab_trends",
     "digital_twin",
     "physician_exports",
     "sovereign_modalities",
@@ -62,6 +71,88 @@ export const PLAN_LABEL: Record<Plan, string> = {
   elite: "Elite",
   sovereign: "Sovereign",
 };
+
+export type FeatureEntitlement = {
+  feature: Feature;
+  label: string;
+  minimumPlan: Plan;
+  description: string;
+};
+
+export const FEATURE_ENTITLEMENTS: FeatureEntitlement[] = [
+  {
+    feature: "dashboard_access",
+    label: "Dashboard",
+    minimumPlan: "core",
+    description: "Core dashboard, assessment, biological age baseline, and reports.",
+  },
+  {
+    feature: "proactive_coach",
+    label: "Proactive coach",
+    minimumPlan: "elite",
+    description: "Email, push, and in-app coach delivery based on health signals.",
+  },
+  {
+    feature: "voice_agent",
+    label: "Voice agent",
+    minimumPlan: "elite",
+    description: "Mobile voice conversations and spoken clinical follow-ups.",
+  },
+  {
+    feature: "autopilot_calendar",
+    label: "Autopilot calendar",
+    minimumPlan: "elite",
+    description: "Daily planning, calendar execution, and approval-based automation.",
+  },
+  {
+    feature: "future_self_simulator",
+    label: "Future self simulator",
+    minimumPlan: "elite",
+    description: "Trajectory modeling and scenario comparisons.",
+  },
+  {
+    feature: "advanced_modalities",
+    label: "Advanced modalities",
+    minimumPlan: "elite",
+    description: "Red light, cold exposure, PEMF, and advanced recovery protocols.",
+  },
+  {
+    feature: "clinical_intelligence",
+    label: "Clinical intelligence",
+    minimumPlan: "elite",
+    description: "Clinical memory, follow-up questions, and higher-depth biomarker reasoning.",
+  },
+  {
+    feature: "lab_trends",
+    label: "Lab trends",
+    minimumPlan: "elite",
+    description: "Longitudinal lab trend intelligence beyond one-off lab import.",
+  },
+  {
+    feature: "digital_twin",
+    label: "Digital twin",
+    minimumPlan: "sovereign",
+    description: "Living health timeline and cross-signal twin intelligence.",
+  },
+  {
+    feature: "physician_exports",
+    label: "Physician exports",
+    minimumPlan: "sovereign",
+    description: "Physician-ready longitudinal export bundle.",
+  },
+  {
+    feature: "sovereign_modalities",
+    label: "Sovereign modalities",
+    minimumPlan: "sovereign",
+    description: "Clinician-reviewed HBOT, epigenetic/telomere tracking, and executive experiments.",
+  },
+  {
+    feature: "concierge_intelligence",
+    label: "Concierge intelligence",
+    minimumPlan: "sovereign",
+    description: "Highest-depth reasoning, review, and white-glove intelligence layers.",
+  },
+];
 
 export type UsageMeter =
   | "agent_question"

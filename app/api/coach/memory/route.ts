@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { canAccess } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 
 export async function GET() {
   try {
@@ -14,7 +16,27 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const memory = await loadOrBuildCoachMemoryProfile(getSupabaseAdmin(), user.id);
+    const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+
+    if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
+      return NextResponse.json(
+        {
+          memory: null,
+          locked: true,
+          migrationRequired: false,
+          upgrade: {
+            currentPlan: subscription.plan,
+            minimumPlan: "elite",
+            message:
+              "Upgrade to Elite to unlock adaptive coach memory and proactive personalization.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+
+    const memory = await loadOrBuildCoachMemoryProfile(admin, user.id);
 
     return NextResponse.json({
       memory,

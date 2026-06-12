@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recordClinicalFollowUpAnswer } from "@/lib/clinical/clinicalFollowUpResponses";
 import { runProactiveClinicalFollowUps } from "@/lib/clinical/proactiveClinicalFollowUps";
+import { canAccess } from "@/lib/auth/permissions";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,6 +12,24 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+
+    if (!canAccess(subscription.plan, subscription.status, "clinical_intelligence")) {
+      return NextResponse.json(
+        {
+          error: "Clinical follow-up intelligence is included in Elite and Sovereign.",
+          upgrade: {
+            currentPlan: subscription.plan,
+            minimumPlan: "elite",
+            message:
+              "Upgrade to Elite to unlock clinical memory, follow-up questions, and deeper biomarker reasoning.",
+          },
+        },
+        { status: 403 }
+      );
     }
 
     const body = await request.json().catch(() => ({}));
@@ -22,7 +42,7 @@ export async function POST(request: NextRequest) {
         answer,
         clinicalInsightId,
         source: body?.source === "voice_agent" ? "voice_agent" : "agent_chat",
-        supabase: getSupabaseAdmin(),
+        supabase: admin,
         userId: user.id,
       });
 
@@ -34,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     const force = body?.force === true;
     const result = await runProactiveClinicalFollowUps({
-      supabase: getSupabaseAdmin(),
+      supabase: admin,
       userId: user.id,
       force,
     });

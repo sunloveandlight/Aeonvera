@@ -215,9 +215,20 @@ type UsageMeterSnapshot = {
 };
 
 type UsageLimitsPayload = {
+  entitlements?: FeatureEntitlement[];
   plan: string | null;
   subscriptionStatus: string | null;
   usage: UsageMeterSnapshot[];
+};
+
+type FeatureEntitlement = {
+  allowed: boolean;
+  currentPlan: string | null;
+  description: string;
+  feature: string;
+  label: string;
+  minimumPlan: string;
+  minimumPlanLabel: string;
 };
 
 type ModalityRecommendation = {
@@ -1220,6 +1231,11 @@ function TierUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | nul
     usageLimits?.usage.find((item) => item.meter === "report_generation"),
     usageLimits?.usage.find((item) => item.meter === "future_self_simulation"),
   ].filter(Boolean) as UsageMeterSnapshot[];
+  const entitlements = usageLimits?.entitlements || [];
+  const lockedEntitlements = entitlements.filter((item) => !item.allowed).slice(0, 3);
+  const includedEntitlements = entitlements
+    .filter((item) => item.allowed && item.minimumPlan !== "core")
+    .slice(0, 3);
 
   if (!usageLimits || !highlighted.length) {
     return null;
@@ -1259,6 +1275,56 @@ function TierUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | nul
               {item.limit <= 0
                 ? "Upgrade to unlock this layer."
                 : `${item.used.toLocaleString()} used of ${item.limit.toLocaleString()} this month.`}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {includedEntitlements.length || lockedEntitlements.length ? (
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          <TierEntitlementGroup
+            items={includedEntitlements}
+            label="Included now"
+            tone="included"
+          />
+          <TierEntitlementGroup
+            items={lockedEntitlements}
+            label="Upgrade path"
+            tone="locked"
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TierEntitlementGroup({
+  items,
+  label,
+  tone,
+}: {
+  items: FeatureEntitlement[];
+  label: string;
+  tone: "included" | "locked";
+}) {
+  if (!items.length) return null;
+
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
+      <p
+        className={`text-[8px] uppercase tracking-[0.14em] ${
+          tone === "included" ? "text-[#dabc73]/75" : "text-white/38"
+        }`}
+      >
+        {label}
+      </p>
+      <div className="mt-3 space-y-3">
+        {items.map((item) => (
+          <div key={item.feature}>
+            <p className="text-sm font-light text-white/82">{item.label}</p>
+            <p className="mt-1 text-xs leading-5 text-white/40">
+              {tone === "locked" ? `${item.minimumPlanLabel}: ` : ""}
+              {item.description}
             </p>
           </div>
         ))}

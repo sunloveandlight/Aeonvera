@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { canAccess } from "@/lib/auth/permissions";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +12,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data, error } = await getSupabaseAdmin()
+    const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+
+    if (!canAccess(subscription.plan, subscription.status, "clinical_intelligence")) {
+      return NextResponse.json(
+        {
+          insights: [],
+          locked: true,
+          migrationRequired: false,
+          upgrade: {
+            currentPlan: subscription.plan,
+            minimumPlan: "elite",
+            message:
+              "Upgrade to Elite to unlock clinical memory, follow-up questions, and biomarker reasoning history.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+
+    const { data, error } = await admin
       .from("clinical_insights")
       .select(
         "id,source_question,answer_summary,domains,concern_status,confidence,signal_map,range_flags,follow_up_questions,recommended_actions,metadata,created_at,updated_at"

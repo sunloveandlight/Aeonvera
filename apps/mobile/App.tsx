@@ -304,9 +304,20 @@ type UsageMeterSnapshot = {
 };
 
 type UsageLimitsPayload = {
+  entitlements?: FeatureEntitlement[];
   plan: string | null;
   subscriptionStatus: string | null;
   usage: UsageMeterSnapshot[];
+};
+
+type FeatureEntitlement = {
+  allowed: boolean;
+  currentPlan: string | null;
+  description: string;
+  feature: string;
+  label: string;
+  minimumPlan: string;
+  minimumPlanLabel: string;
 };
 
 type ModalityRecommendation = {
@@ -3291,6 +3302,10 @@ function MobileUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | n
     usageLimits.usage.find((item) => item.meter === "voice_question"),
     usageLimits.usage.find((item) => item.meter === "report_generation"),
   ].filter(Boolean) as UsageMeterSnapshot[];
+  const locked = (usageLimits.entitlements || []).filter((item) => !item.allowed).slice(0, 2);
+  const included = (usageLimits.entitlements || [])
+    .filter((item) => item.allowed && item.minimumPlan !== "core")
+    .slice(0, 2);
 
   if (!highlighted.length) return null;
 
@@ -3317,6 +3332,38 @@ function MobileUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | n
           </View>
         ))}
       </View>
+      {included.length || locked.length ? (
+        <View style={styles.mobileEntitlementGrid}>
+          {included.map((item) => (
+            <MobileEntitlementPill key={item.feature} entitlement={item} tone="included" />
+          ))}
+          {locked.map((item) => (
+            <MobileEntitlementPill key={item.feature} entitlement={item} tone="locked" />
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function MobileEntitlementPill({
+  entitlement,
+  tone,
+}: {
+  entitlement: FeatureEntitlement;
+  tone: "included" | "locked";
+}) {
+  return (
+    <View
+      style={[
+        styles.mobileEntitlementPill,
+        tone === "included" && styles.mobileEntitlementPillIncluded,
+      ]}
+    >
+      <Text style={styles.mobileEntitlementStatus}>
+        {tone === "included" ? "Included" : entitlement.minimumPlanLabel}
+      </Text>
+      <Text style={styles.mobileEntitlementTitle}>{entitlement.label}</Text>
     </View>
   );
 }
@@ -5422,6 +5469,38 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 14,
     marginTop: 3,
+  },
+  mobileEntitlementGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 12,
+  },
+  mobileEntitlementPill: {
+    flexGrow: 1,
+    flexBasis: "47%",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.026)",
+    padding: 11,
+  },
+  mobileEntitlementPillIncluded: {
+    borderColor: "rgba(218,188,115,0.2)",
+    backgroundColor: "rgba(218,188,115,0.06)",
+  },
+  mobileEntitlementStatus: {
+    color: "rgba(218,188,115,0.72)",
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+  },
+  mobileEntitlementTitle: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 6,
   },
   mobileModalitiesPanel: {
     borderWidth: 1,

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { canAccess } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { buildBiologicalAgeImprovementLoop } from "@/lib/longevity/biologicalAgeImprovementLoop";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 
 export async function GET() {
   try {
@@ -14,8 +16,26 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const admin = getSupabaseAdmin();
+    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+
+    if (!canAccess(subscription.plan, subscription.status, "clinical_intelligence")) {
+      return NextResponse.json(
+        {
+          error: "Biological-age improvement loops are included in Elite and Sovereign.",
+          upgrade: {
+            currentPlan: subscription.plan,
+            minimumPlan: "elite",
+            message:
+              "Upgrade to Elite to unlock adaptive improvement loops from biological age, labs, and execution behavior.",
+          },
+        },
+        { status: 403 }
+      );
+    }
+
     const loop = await buildBiologicalAgeImprovementLoop({
-      supabase: getSupabaseAdmin(),
+      supabase: admin,
       userId: user.id,
     });
 

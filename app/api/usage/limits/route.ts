@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PLAN_USAGE_LIMITS, type UsageMeter } from "@/lib/auth/permissions";
+import {
+  canAccess,
+  FEATURE_ENTITLEMENTS,
+  PLAN_LABEL,
+  PLAN_USAGE_LIMITS,
+  type UsageMeter,
+} from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import {
@@ -33,6 +39,12 @@ export async function GET(request: NextRequest) {
     );
 
     return NextResponse.json({
+      entitlements: FEATURE_ENTITLEMENTS.map((entitlement) => ({
+        ...entitlement,
+        allowed: canAccess(subscription.plan, subscription.status, entitlement.feature),
+        currentPlan: subscription.plan,
+        minimumPlanLabel: PLAN_LABEL[entitlement.minimumPlan],
+      })),
       plan: subscription.plan,
       subscriptionStatus: subscription.status,
       usage: usage.map(serializeUsage),
