@@ -761,11 +761,11 @@ export default function App() {
       return;
     }
 
-    const currentPermission = await Calendar.getCalendarPermissions(true).catch(() => null);
+    const currentPermission = await Calendar.getCalendarPermissionsAsync().catch(() => null);
     const finalPermission =
       currentPermission && isPermissionGranted(currentPermission)
         ? currentPermission
-        : await Calendar.requestCalendarPermissions(true);
+        : await Calendar.requestCalendarPermissionsAsync();
 
     if (!isPermissionGranted(finalPermission)) {
       Alert.alert("Calendar not connected", "Calendar permission was not granted.");
@@ -789,7 +789,7 @@ export default function App() {
       .filter(Boolean)
       .join("\n\n");
 
-    const event = await calendar.createEvent({
+    const eventId = await Calendar.createEventAsync(calendar.id, {
       title,
       startDate: scheduledFor,
       endDate,
@@ -798,7 +798,6 @@ export default function App() {
       url: appUrl,
     });
 
-    const eventId = event.id;
     const calendarEventKey = getReminderKey(protocol.id, action);
     setNativeCalendarEvents((current) => ({
       ...current,
@@ -2015,7 +2014,7 @@ function getReminderKey(protocolId: string, action: ScheduledProtocolAction) {
 
 async function getWritableDeviceCalendar() {
   try {
-    const defaultCalendar = Calendar.getDefaultCalendarSync();
+    const defaultCalendar = await Calendar.getDefaultCalendarAsync();
     if (defaultCalendar?.allowsModifications) {
       return defaultCalendar;
     }
@@ -2023,11 +2022,14 @@ async function getWritableDeviceCalendar() {
     // Fall through to scanning writable calendars.
   }
 
-  const calendars = await Calendar.getCalendars(Calendar.EntityTypes.EVENT);
+  const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
   return (
-    calendars.find((calendar) => calendar.allowsModifications && calendar.isPrimary) ||
-    calendars.find((calendar) => calendar.allowsModifications && calendar.isVisible !== false) ||
-    calendars.find((calendar) => calendar.allowsModifications) ||
+    calendars.find((calendar: Calendar.Calendar) => calendar.allowsModifications && calendar.isPrimary) ||
+    calendars.find(
+      (calendar: Calendar.Calendar) =>
+        calendar.allowsModifications && calendar.isVisible !== false
+    ) ||
+    calendars.find((calendar: Calendar.Calendar) => calendar.allowsModifications) ||
     null
   );
 }
