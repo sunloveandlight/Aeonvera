@@ -197,11 +197,13 @@ function buildClinicalFollowUp(insight: ClinicalInsightRow) {
   const actionLine = action
     ? `\n\nSuggested next step: ${action}`
     : "\n\nSuggested next step: answer the follow-up so Aeonvera can tighten the protocol.";
+  const safetyLine =
+    "\n\nIf this involves severe, sudden, or worsening symptoms, seek medical care rather than waiting for optimization guidance.";
 
   return {
     title,
     primaryQuestion,
-    message: `Your ${domains.join(", ")} signal is still ${status}. ${summary}\n\nFollow-up: ${primaryQuestion}${actionLine}`,
+    message: `Your ${domains.join(", ")} signal is still ${status}. ${summary}\n\nFollow-up: ${primaryQuestion}${actionLine}${safetyLine}`,
     actions: [primaryQuestion, action].filter((item): item is string => Boolean(item)),
   };
 }

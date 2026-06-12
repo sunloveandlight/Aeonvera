@@ -174,6 +174,8 @@ type ClinicalInsight = {
       answered_at?: string;
       interpreted_status?: string;
       question?: string;
+      safety_level?: string;
+      status_reason?: string;
     }>;
     progression?: {
       status?: string;
@@ -183,6 +185,8 @@ type ClinicalInsight = {
       priorInsightCount?: number;
       lastSeenAt?: string | null;
     };
+    safety_level?: string;
+    status_reason?: string;
   } | null;
   created_at?: string | null;
 };
@@ -1242,6 +1246,8 @@ function ClinicalIntelligenceMemoryPanel({
   const nextAction = latest?.recommended_actions?.[0];
   const progression = latest?.metadata?.progression;
   const lastResponse = latest?.metadata?.follow_up_responses?.at(-1);
+  const safetyLevel = latest?.metadata?.safety_level || lastResponse?.safety_level;
+  const statusReason = latest?.metadata?.status_reason || lastResponse?.status_reason;
 
   return (
     <div className="executive-panel rounded-lg p-6 md:p-7">
@@ -1270,7 +1276,14 @@ function ClinicalIntelligenceMemoryPanel({
             ) : null}
             {followUp ? (
               <div className="mt-5 rounded-lg border border-[#dabc73]/15 bg-[#dabc73]/[0.035] p-4">
-                <p className="micro-label">Answer follow-up</p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="micro-label">Answer follow-up</p>
+                  {safetyLevel ? (
+                    <span className="rounded-md border border-white/[0.08] bg-black/20 px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-white/42">
+                      {clinicalSafetyLabel(safetyLevel)}
+                    </span>
+                  ) : null}
+                </div>
                 <textarea
                   value={answer}
                   onChange={(event) => onAnswerChange(event.target.value)}
@@ -1280,7 +1293,7 @@ function ClinicalIntelligenceMemoryPanel({
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-xs leading-5 text-white/36">
                     {lastResponse?.answer
-                      ? `Last answered: ${lastResponse.answer.slice(0, 96)}`
+                      ? `Last answer saved as ${clinicalStatusLabel(lastResponse.interpreted_status || status)}: ${lastResponse.answer.slice(0, 96)}`
                       : "Your answer updates this exact clinical thread."}
                   </p>
                   <button
@@ -1292,6 +1305,9 @@ function ClinicalIntelligenceMemoryPanel({
                     {answeringInsightId === latest.id ? "Updating" : "Answer"}
                   </button>
                 </div>
+                {statusReason ? (
+                  <p className="mt-3 text-xs leading-5 text-white/36">{statusReason}</p>
+                ) : null}
               </div>
             ) : null}
             {progression?.summary ? (
@@ -1346,6 +1362,17 @@ function ClinicalIntelligenceMemoryPanel({
                 }`}
               />
             ) : null}
+            {safetyLevel ? (
+              <MemoryStat
+                label="Safety"
+                value={clinicalSafetyLabel(safetyLevel)}
+                detail={
+                  safetyLevel === "urgent" || safetyLevel === "medical_review"
+                    ? "Review with a clinician before treating this as an optimization task."
+                    : "Tracked as decision-support, not diagnosis."
+                }
+              />
+            ) : null}
           </div>
         </div>
       ) : (
@@ -1395,6 +1422,13 @@ function clinicalProgressionLabel(status?: string) {
   if (status === "recurrent_signal") return "Recurring";
   if (status === "new_signal") return "New signal";
   return "Monitoring";
+}
+
+function clinicalSafetyLabel(status?: string) {
+  if (status === "urgent") return "Urgent review";
+  if (status === "medical_review") return "Medical review";
+  if (status === "monitor") return "Monitor";
+  return "Routine";
 }
 
 function executionStatusLabel(status: ExecutionSummary["status"]) {

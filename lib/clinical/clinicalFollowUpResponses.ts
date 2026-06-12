@@ -23,6 +23,17 @@ type DailyPlanRow = {
   } | null;
 };
 
+type ClinicalResponseInterpretation = {
+  action?: {
+    detail: string;
+    label: string;
+    type: string;
+  } | null;
+  safetyLevel: "routine" | "monitor" | "medical_review" | "urgent";
+  status: "active" | "improving" | "unresolved" | "dismissed" | "monitoring";
+  statusReason: string;
+};
+
 export async function recordClinicalFollowUpAnswer({
   answer,
   clinicalInsightId,
@@ -61,22 +72,22 @@ export async function recordClinicalFollowUpAnswer({
   if (!insight) return null;
 
   const row = insight as ClinicalInsightRow;
-  const status = inferClinicalStatus(cleanAnswer);
+  const interpretation = inferClinicalStatus(cleanAnswer);
   const question = firstString(row.follow_up_questions);
   const metadata = buildResponseMetadata({
     answer: cleanAnswer,
     insight: row,
+    interpretation,
     question,
     source,
-    status,
   });
 
   const { error: updateError } = await supabase
     .from("clinical_insights")
     .update({
-      concern_status: status,
+      concern_status: interpretation.status,
       metadata,
-      resolved_at: status === "dismissed" ? new Date().toISOString() : null,
+      resolved_at: interpretation.status === "dismissed" ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", clinicalInsightId)
@@ -93,31 +104,33 @@ export async function recordClinicalFollowUpAnswer({
   const planAction = await maybePrepareClinicalAction({
     answer: cleanAnswer,
     insight: row,
-    status,
+    interpretation,
     supabase,
     userId,
   });
 
   return {
-    action: planAction,
+    action: interpretation.action || planAction,
     insightId: clinicalInsightId,
     question,
-    status,
+    safetyLevel: interpretation.safetyLevel,
+    status: interpretation.status,
+    statusReason: interpretation.statusReason,
   };
 }
 
 function buildResponseMetadata({
   answer,
   insight,
+  interpretation,
   question,
   source,
-  status,
 }: {
   answer: string;
   insight: ClinicalInsightRow;
+  interpretation: ClinicalResponseInterpretation;
   question: string;
   source: string;
-  status: string;
 }) {
   const current = isRecord(insight.metadata) ? insight.metadata : {};
   const responses = Array.isArray(current.follow_up_responses)
@@ -127,14 +140,18 @@ function buildResponseMetadata({
   return {
     ...current,
     last_answered_at: new Date().toISOString(),
-    last_answer_status: status,
+    last_answer_status: interpretation.status,
+    safety_level: interpretation.safetyLevel,
+    status_reason: interpretation.statusReason,
     follow_up_responses: [
       ...responses,
       {
         answer,
         answered_at: new Date().toISOString(),
-        interpreted_status: status,
+        interpreted_status: interpretation.status,
         question,
+        safety_level: interpretation.safetyLevel,
+        status_reason: interpretation.statusReason,
         source,
       },
     ],
@@ -144,17 +161,21 @@ function buildResponseMetadata({
 async function maybePrepareClinicalAction({
   answer,
   insight,
-  status,
+  interpretation,
   supabase,
   userId,
 }: {
   answer: string;
   insight: ClinicalInsightRow;
-  status: string;
+  interpretation: ClinicalResponseInterpretation;
   supabase: SupabaseClient;
   userId: string;
 }) {
+  const status = interpretation.status;
   if (status === "dismissed" || status === "improving") return null;
+  if (interpretation.safetyLevel === "urgent" || interpretation.safetyLevel === "medical_review") {
+    return null;
+  }
 
   const recommendedAction = firstRecommendedAction(insight.recommended_actions);
   if (!recommendedAction) return null;
@@ -197,6 +218,7 @@ async function maybePrepareClinicalAction({
     clinical_follow_up: {
       answered_at: new Date().toISOString(),
       insight_id: insight.id,
+      safety_level: interpretation.safetyLevel,
       status,
     },
   };
@@ -233,19 +255,79 @@ async function maybePrepareClinicalAction({
 function inferClinicalStatus(answer: string) {
   const lower = answer.toLowerCase();
 
-  if (/(dismiss|ignore|not relevant|false alarm|stop tracking|remove this)/.test(lower)) {
-    return "dismissed";
+  if (hasUrgentRedFlag(lower)) {
+    return {
+      action: {
+        type: "clinical_medical_review_recommended",
+        label: "Medical review recommended",
+        detail:
+          "Aeonvera detected a potential red-flag symptom in the follow-up answer. Seek urgent medical care or local emergency support if symptoms are severe, sudden, or worsening.",
+      },
+      safetyLevel: "urgent",
+      status: "unresolved",
+      statusReason: "Potential red-flag symptoms were mentioned.",
+    } satisfies ClinicalResponseInterpretation;
   }
 
-  if (/(better|improved|improving|resolved|gone|lower|down|stable now|back to normal)/.test(lower)) {
-    return "improving";
+  if (hasMedicalReviewSignal(lower)) {
+    return {
+      action: {
+        type: "clinical_medical_review_recommended",
+        label: "Clinician review recommended",
+        detail:
+          "Aeonvera marked this thread for clinician review before turning it into an optimization protocol.",
+      },
+      safetyLevel: "medical_review",
+      status: "unresolved",
+      statusReason: "The answer mentions symptoms or clinical findings that deserve medical review.",
+    } satisfies ClinicalResponseInterpretation;
+  }
+
+  if (/(dismiss|ignore|not relevant|false alarm|stop tracking|remove this)/.test(lower)) {
+    return {
+      action: null,
+      safetyLevel: "routine",
+      status: "dismissed",
+      statusReason: "User dismissed the clinical thread.",
+    } satisfies ClinicalResponseInterpretation;
+  }
+
+  if (/(better|improved|improving|resolved|gone|stable now|back to normal|symptoms resolved|feel normal)/.test(lower)) {
+    return {
+      action: null,
+      safetyLevel: "monitor",
+      status: "improving",
+      statusReason: "User reports improvement or resolution; continue monitoring durability.",
+    } satisfies ClinicalResponseInterpretation;
   }
 
   if (/(worse|worsening|still|same|not better|continues|ongoing|higher|up|problem)/.test(lower)) {
-    return "unresolved";
+    return {
+      action: null,
+      safetyLevel: "monitor",
+      status: "unresolved",
+      statusReason: "User reports persistence or worsening.",
+    } satisfies ClinicalResponseInterpretation;
   }
 
-  return "monitoring";
+  return {
+    action: null,
+    safetyLevel: "routine",
+    status: "monitoring",
+    statusReason: "Answer was saved for trend monitoring without clear improvement or worsening.",
+  } satisfies ClinicalResponseInterpretation;
+}
+
+function hasUrgentRedFlag(lower: string) {
+  return /(\bchest pain\b|pressure in my chest|stroke|face droop|slurred speech|one-sided weakness|severe shortness of breath|can't breathe|cannot breathe|fainted|fainting|passed out|suicidal|kill myself|severe allergic|anaphylaxis|blood pressure.*(180|190|200)|hypertensive crisis)/.test(
+    lower
+  );
+}
+
+function hasMedicalReviewSignal(lower: string) {
+  return /(sleep apnea|stop breathing|blood in stool|black stool|unexplained weight loss|heart palpitations|irregular heartbeat|new severe headache|abnormal lab|very high|very low|testosterone|thyroid medication|trt|statin|metformin|medication)/.test(
+    lower
+  );
 }
 
 function firstString(value: unknown) {

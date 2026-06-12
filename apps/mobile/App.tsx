@@ -250,6 +250,8 @@ type ClinicalInsight = {
       answered_at?: string;
       interpreted_status?: string;
       question?: string;
+      safety_level?: string;
+      status_reason?: string;
     }>;
     progression?: {
       status?: string;
@@ -259,6 +261,8 @@ type ClinicalInsight = {
       priorInsightCount?: number;
       lastSeenAt?: string | null;
     };
+    safety_level?: string;
+    status_reason?: string;
   } | null;
   created_at?: string | null;
 };
@@ -2704,6 +2708,8 @@ function AgentView({
   const latestInsight = clinicalInsights[0] || null;
   const progression = latestInsight?.metadata?.progression;
   const lastClinicalResponse = latestInsight?.metadata?.follow_up_responses?.slice(-1)[0];
+  const safetyLevel = latestInsight?.metadata?.safety_level || lastClinicalResponse?.safety_level;
+  const statusReason = latestInsight?.metadata?.status_reason || lastClinicalResponse?.status_reason;
 
   return (
     <View style={styles.agentPanel}>
@@ -2760,6 +2766,9 @@ function AgentView({
             {latestInsight ? clinicalStatusLabel(latestInsight.concern_status) : "Building"}
           </Text>
         </View>
+        {safetyLevel ? (
+          <Text style={styles.clinicalSafetyPill}>{clinicalSafetyLabel(safetyLevel)}</Text>
+        ) : null}
         <Text style={styles.clinicalMemoryTitle}>
           {latestInsight?.answer_summary ||
             "Ask a deep health question and Aeonvera will remember the conclusion."}
@@ -2787,7 +2796,9 @@ function AgentView({
             />
             {lastClinicalResponse?.answer ? (
               <Text style={styles.clinicalAnswerHint}>
-                Last answer: {lastClinicalResponse.answer.slice(0, 90)}
+                Last answer saved as{" "}
+                {clinicalStatusLabel(lastClinicalResponse.interpreted_status || latestInsight.concern_status)}
+                : {lastClinicalResponse.answer.slice(0, 90)}
               </Text>
             ) : (
               <Text style={styles.clinicalAnswerHint}>
@@ -2813,6 +2824,9 @@ function AgentView({
                 <Text style={styles.voiceButtonPrimaryText}>Send Answer</Text>
               </Pressable>
             </View>
+            {statusReason ? (
+              <Text style={styles.clinicalAnswerHint}>{statusReason}</Text>
+            ) : null}
           </View>
         ) : null}
         {latestInsight?.domains?.length ? (
@@ -2928,6 +2942,13 @@ function clinicalProgressionLabel(status?: string | null) {
   if (status === "recurrent_signal") return "Recurring";
   if (status === "new_signal") return "New";
   return "Monitoring";
+}
+
+function clinicalSafetyLabel(status?: string | null) {
+  if (status === "urgent") return "Urgent review";
+  if (status === "medical_review") return "Medical review";
+  if (status === "monitor") return "Monitor";
+  return "Routine";
 }
 
 function WeeklyExecutionReviewCard({
@@ -4491,6 +4512,22 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "800",
     letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  clinicalSafetyPill: {
+    alignSelf: "flex-start",
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 6,
+    backgroundColor: "rgba(0,0,0,0.2)",
+    color: "rgba(255,255,255,0.44)",
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1,
+    marginTop: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     textTransform: "uppercase",
   },
   clinicalMemoryTitle: {

@@ -1106,6 +1106,21 @@ function summarizeClinicalMemory(insights: ClinicalInsightRow[]) {
       insight.metadata && typeof insight.metadata === "object" && "progression" in insight.metadata
         ? (insight.metadata as { progression?: unknown }).progression
         : null,
+    latestFollowUpResponse:
+      insight.metadata &&
+      typeof insight.metadata === "object" &&
+      "follow_up_responses" in insight.metadata &&
+      Array.isArray((insight.metadata as { follow_up_responses?: unknown }).follow_up_responses)
+        ? (insight.metadata as { follow_up_responses: unknown[] }).follow_up_responses.at(-1)
+        : null,
+    safetyLevel:
+      insight.metadata && typeof insight.metadata === "object" && "safety_level" in insight.metadata
+        ? (insight.metadata as { safety_level?: unknown }).safety_level
+        : null,
+    statusReason:
+      insight.metadata && typeof insight.metadata === "object" && "status_reason" in insight.metadata
+        ? (insight.metadata as { status_reason?: unknown }).status_reason
+        : null,
     createdAt: insight.created_at,
   }));
 }
@@ -1454,6 +1469,7 @@ function buildClinicalSystemPrompt() {
     "Connect systems: sleep affects glucose control and hormones; metabolic dysfunction affects inflammation and cardiovascular risk; training load affects HRV and recovery; stress affects sleep, cortisol, appetite, glucose, and adherence.",
     "Be sophisticated but not theatrical. Use precise language, explain uncertainty, and prioritize actions that are low-risk, measurable, and reversible.",
     "Safety: do not diagnose disease, prescribe medication, interpret urgent symptoms as benign, or replace a clinician. Recommend medical evaluation for chest pain, stroke symptoms, severe shortness of breath, fainting, severe hypertension, suicidal ideation, suspected sleep apnea, abnormal labs, or endocrine/cardiovascular red flags.",
+    "If clinical memory includes latestFollowUpResponse, explicitly acknowledge whether the thread is improving, unresolved, dismissed, or monitoring. Do not create optimization plans from urgent or clinician-review signals; recommend medical review first.",
     "If the user asks for a preventive medicine style analysis, give a deep structured interpretation, but label it educational and decision-support, not a diagnosis.",
     "If the user asks why something was scheduled, explain evidence, tradeoff, and adaptation. If the plan feels too heavy, simplify it.",
     "Keep ordinary answers concise. For deep analysis requests, use enough detail to be useful.",
