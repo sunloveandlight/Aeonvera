@@ -9,6 +9,10 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import WearablesPanel from "@/components/dashboard/WearablesPanel";
 import NotificationPreferencesPanel from "@/components/dashboard/NotificationPreferencesPanel";
+import {
+  buildDataSourceIntelligence,
+  type DataSourceIntelligence,
+} from "@/lib/data/dataSourceIntelligence";
 
 type Profile = {
   display_name: string | null;
@@ -95,6 +99,10 @@ type HealthState = {
   risk_scores?: Record<string, number>;
   insights?: string[];
   updated_at?: string;
+};
+
+type CalendarStatus = {
+  connected?: boolean;
 };
 
 type BioAgeHistoryPoint = {
@@ -211,6 +219,7 @@ export default function DashboardPage() {
   const [generatingReport, setGeneratingReport] = useState(false);
   const [generationMessage, setGenerationMessage] = useState<string | null>(null);
   const [healthState, setHealthState] = useState<HealthState | null>(null);
+  const [calendarStatus, setCalendarStatus] = useState<CalendarStatus | null>(null);
   const [bioAgeHistory, setBioAgeHistory] = useState<BioAgeHistoryPoint[]>([]);
   const [bioAgeSimulations, setBioAgeSimulations] = useState<BioAgeSimulation[]>([]);
   const [improvementLoop, setImprovementLoop] = useState<ImprovementLoop | null>(null);
@@ -286,6 +295,7 @@ export default function DashboardPage() {
           improvementLoopRes,
           labsRes,
           labTrendsRes,
+          calendarRes,
         ] = await Promise.all([
           supabase
             .from("longevity_reports")
@@ -363,6 +373,10 @@ export default function DashboardPage() {
           fetch("/api/labs/trends", {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
+
+          fetch("/api/calendar/google/status", {
+            credentials: "include",
+          }).then((response) => response.json()).catch(() => null),
         ]);
 
         if (reportRes.data) setReport(reportRes.data);
@@ -406,6 +420,7 @@ export default function DashboardPage() {
 
         if (alertsRes.data) setAlerts(alertsRes.data);
         if (stateRes.data) setHealthState(stateRes.data);
+        setCalendarStatus(calendarRes);
         if (wearableRes.data) setWearableRows(wearableRes.data);
         if (connectionRes?.connections) {
           setWearableConnections(connectionRes.connections);
@@ -746,6 +761,14 @@ export default function DashboardPage() {
       .filter((connection) => connection.status === "connected")
       .map((connection) => connection.provider)
   );
+  const sourceIntelligence = buildDataSourceIntelligence({
+    appleRows: wearableRows.filter((row) => row.provider === "apple"),
+    calendarConnected: Boolean(calendarStatus?.connected),
+    connectedProviders: connectedProviderSet,
+    healthState,
+    labRows,
+    wearableRows,
+  });
 
   const bioAgeColor = "text-white/86";
 
@@ -1103,6 +1126,7 @@ export default function DashboardPage() {
           appleMetricCount={wearableRows.filter((row) => row.provider === "apple").length}
           connectedProviderSet={connectedProviderSet}
           healthStateAt={healthState?.updated_at || null}
+          intelligence={sourceIntelligence}
           labCount={labRows.length}
           latestLabAt={latestLabAt}
           latestWearableAt={latestWearableAt}
@@ -1652,6 +1676,7 @@ function DataFreshnessPanel({
   appleMetricCount,
   connectedProviderSet,
   healthStateAt,
+  intelligence,
   labCount,
   latestLabAt,
   latestWearableAt,
@@ -1660,6 +1685,7 @@ function DataFreshnessPanel({
   appleMetricCount: number;
   connectedProviderSet: Set<"oura" | "whoop">;
   healthStateAt: string | null;
+  intelligence: DataSourceIntelligence;
   labCount: number;
   latestLabAt?: string | null;
   latestWearableAt?: string | null;
@@ -1702,7 +1728,13 @@ function DataFreshnessPanel({
         <div>
           <p className="micro-label">Data Freshness</p>
           <p className="mt-2 max-w-2xl text-sm leading-7 text-white/48">
-            Aeonvera is strongest when wearables, labs, calendar, and health state stay current.
+            {intelligence.headline}
+          </p>
+        </div>
+        <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] px-4 py-3 text-right">
+          <p className="micro-label">Readiness</p>
+          <p className="mt-1 text-2xl font-light text-white/80">
+            {intelligence.score}%
           </p>
         </div>
         <button
@@ -1713,6 +1745,10 @@ function DataFreshnessPanel({
           Open Data Sources
         </button>
       </div>
+
+      <p className="mt-4 max-w-4xl text-xs leading-6 text-white/40">
+        {intelligence.nextBestAction}
+      </p>
 
       <div className="mt-5 grid gap-3 md:grid-cols-4">
         {sources.map((source) => (

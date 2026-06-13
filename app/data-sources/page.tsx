@@ -16,6 +16,11 @@ import {
 } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState, { EmptyState } from "@/components/ui/AccessState";
+import {
+  buildDataSourceIntelligence,
+  formatFreshness,
+  type DataSourceIntelligence,
+} from "@/lib/data/dataSourceIntelligence";
 import { supabase } from "@/lib/supabase/client";
 
 type WearableProvider = "oura" | "whoop" | "apple";
@@ -167,7 +172,7 @@ export default function DataSourcesPage() {
   const appleRows = wearableRows.filter((row) => row.provider === "apple");
   const latestWearableAt = latestDate(wearableRows.map((row) => row.recorded_at));
   const latestLabAt = latestDate(labRows.map((row) => row.measured_at));
-  const dataCompleteness = calculateCompleteness({
+  const sourceIntelligence = buildDataSourceIntelligence({
     appleRows,
     calendarConnected: Boolean(calendarStatus?.connected),
     connectedProviders,
@@ -378,11 +383,13 @@ export default function DataSourcesPage() {
         </section>
 
         <section className="mt-6 grid gap-4 md:grid-cols-4">
-          <SignalMetric label="Completeness" value={`${dataCompleteness}%`} detail="source readiness" />
+          <SignalMetric label="Readiness" value={`${sourceIntelligence.score}%`} detail={sourceIntelligence.status} />
           <SignalMetric label="Wearable Metrics" value={wearableRows.length.toString()} detail={formatFreshness(latestWearableAt)} />
           <SignalMetric label="Lab Markers" value={labRows.length.toString()} detail={formatFreshness(latestLabAt)} />
           <SignalMetric label="Health State" value={healthState?.updated_at ? "Live" : "Building"} detail={formatFreshness(healthState?.updated_at)} />
         </section>
+
+        <SourceIntelligencePanel intelligence={sourceIntelligence} />
 
         <section className="mt-6 grid gap-5 lg:grid-cols-2">
           <SourceCard
@@ -511,6 +518,60 @@ function SignalMetric({ label, value, detail }: { label: string; value: string; 
       <p className="mt-4 text-3xl font-light text-white">{value}</p>
       <p className="mt-2 text-xs leading-5 text-white/42">{detail}</p>
     </div>
+  );
+}
+
+function SourceIntelligencePanel({
+  intelligence,
+}: {
+  intelligence: DataSourceIntelligence;
+}) {
+  return (
+    <section className="mt-6 executive-panel-soft rounded-lg border border-white/[0.08] p-5 md:p-6">
+      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <div>
+          <p className="micro-label">Source Intelligence</p>
+          <h2 className="mt-3 text-2xl font-light leading-tight text-white">
+            {intelligence.headline}
+          </h2>
+          <p className="mt-4 text-sm leading-7 text-white/48">
+            {intelligence.nextBestAction}
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {intelligence.prompts.length ? (
+            intelligence.prompts.map((prompt) => (
+              <Link
+                key={prompt.title}
+                href={prompt.href}
+                className="quiet-lift rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-white/[0.14]"
+              >
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm text-white/70">{prompt.title}</p>
+                  <span className={promptPriorityClassName(prompt.priority)}>
+                    {prompt.priority}
+                  </span>
+                </div>
+                <p className="line-clamp-3 text-xs leading-5 text-white/38">
+                  {prompt.body}
+                </p>
+                <p className="mt-4 text-[9px] uppercase tracking-[0.14em] text-[#dabc73]/72">
+                  {prompt.actionLabel}
+                </p>
+              </Link>
+            ))
+          ) : (
+            <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 sm:col-span-2">
+              <p className="text-sm text-white/70">Signal is current</p>
+              <p className="mt-2 text-xs leading-5 text-white/38">
+                Aeonvera has enough current source depth to support advanced protocol decisions.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -679,33 +740,6 @@ function RecentSignals({
   );
 }
 
-function calculateCompleteness({
-  appleRows,
-  calendarConnected,
-  connectedProviders,
-  healthState,
-  labRows,
-  wearableRows,
-}: {
-  appleRows: WearableMetricRow[];
-  calendarConnected: boolean;
-  connectedProviders: Set<"oura" | "whoop">;
-  healthState: HealthState | null;
-  labRows: LabBiomarkerRow[];
-  wearableRows: WearableMetricRow[];
-}) {
-  const points = [
-    connectedProviders.has("oura") || connectedProviders.has("whoop"),
-    appleRows.length > 0,
-    labRows.length >= 4,
-    wearableRows.length >= 8,
-    Boolean(healthState?.updated_at),
-    calendarConnected,
-  ].filter(Boolean).length;
-
-  return Math.round((points / 6) * 100);
-}
-
 function connectionDetail(connection?: WearableConnection) {
   if (!connection) return "Connected.";
   return `Connected ${formatFreshness(connection.connected_at)}. Last sync: ${formatFreshness(connection.last_synced_at)}.`;
@@ -717,22 +751,15 @@ function latestDate(values: Array<string | null | undefined>) {
     .sort((a, b) => new Date(String(b)).getTime() - new Date(String(a)).getTime())[0] || null;
 }
 
-function formatFreshness(value?: string | null) {
-  if (!value) return "not yet";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "not yet";
-
-  const diffMs = Date.now() - date.getTime();
-  const minutes = Math.max(1, Math.round(diffMs / 60000));
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 48) return `${hours} hr ago`;
-  const days = Math.round(hours / 24);
-  return `${days} day${days === 1 ? "" : "s"} ago`;
-}
-
 function formatKey(value: string) {
   return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function promptPriorityClassName(priority: "high" | "medium" | "low") {
+  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  if (priority === "high") return `${base} text-rose-100/62 bg-rose-400/[0.08]`;
+  if (priority === "medium") return `${base} royal-text bg-white/[0.035]`;
+  return `${base} text-white/34 bg-white/[0.025]`;
 }
 
 function statusLabel(status: SourceStatus) {
