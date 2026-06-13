@@ -98,7 +98,11 @@ type TwinModel = {
 type TwinProjectionResult = {
   activeScenarioIds?: string[];
   baseline?: {
+    accuracyScore?: number;
+    ageDelta?: number;
     biologicalAge: number;
+    category?: string;
+    chronologicalAge?: number;
     score: number;
   };
   controls?: Record<string, number>;
@@ -106,7 +110,11 @@ type TwinProjectionResult = {
     headline?: string;
     summary?: string;
     levers?: Array<{
+      current?: number;
+      delta?: number;
+      direction?: "increase" | "decrease";
       impact: "low" | "medium" | "high";
+      key?: string;
       label: string;
       optimized: number;
     }>;
@@ -118,6 +126,10 @@ type TwinProjectionResult = {
     score: number;
   };
 };
+
+type ProjectionLever = NonNullable<
+  NonNullable<TwinProjectionResult["futureSelf"]>["levers"]
+>[number];
 
 type SavedProjectionScenario = {
   id?: string;
@@ -939,6 +951,10 @@ function LivingTwinModelPanel({
                     ))}
                   </div>
                 ) : null}
+                <ProjectionAssumptionsPanel
+                  model={model}
+                  projectionResult={projectionResult}
+                />
                 <button
                   type="button"
                   onClick={() => void onBuildProtocol()}
@@ -963,6 +979,197 @@ function LivingTwinModelPanel({
       </div>
     </div>
   );
+}
+
+function ProjectionAssumptionsPanel({
+  model,
+  projectionResult,
+}: {
+  model: TwinModel;
+  projectionResult: TwinProjectionResult;
+}) {
+  const levers = projectionResult.futureSelf?.levers || [];
+  const visibleLevers = levers.slice(0, 5);
+  const sensitiveLever = pickSensitiveLever(levers);
+  const confidence = buildProjectionConfidence(model, projectionResult);
+  const missingData = buildProjectionMissingData(model, projectionResult);
+  const realityCheck = buildProjectionRealityCheck(model, projectionResult);
+
+  return (
+    <div className="mt-5 rounded-lg border border-white/[0.06] bg-black/20 p-4">
+      <div className="mb-4 flex flex-col gap-3 border-b border-white/[0.045] pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="micro-label">Twin Assumptions</p>
+          <p className="mt-2 text-xs leading-5 text-white/40">
+            Aeonvera is showing the assumptions behind this projection so the model feels inspectable, not mysterious.
+          </p>
+        </div>
+        <span className="premium-status-neutral rounded-md px-3 py-2 text-[10px] uppercase tracking-[0.14em]">
+          {confidence.score}% confidence
+        </span>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border border-white/[0.055] bg-white/[0.022] p-3">
+          <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+            What changed
+          </p>
+          <div className="mt-3 space-y-2">
+            {visibleLevers.length ? (
+              visibleLevers.map((lever) => (
+                <p key={`${lever.label}-${lever.optimized}`} className="text-xs leading-5 text-white/44">
+                  {lever.label}: {formatProjectionValue(lever.current)} to {formatProjectionValue(lever.optimized)}
+                </p>
+              ))
+            ) : (
+              <p className="text-xs leading-5 text-white/36">
+                Aeonvera used the selected scenario levers without a detailed lever map.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-white/[0.055] bg-white/[0.022] p-3">
+          <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+            Most sensitive lever
+          </p>
+          <p className="mt-3 text-sm leading-6 text-white/62">
+            {sensitiveLever
+              ? `${sensitiveLever.label} is carrying the strongest modeled effect.`
+              : "The model needs another scenario run to isolate the strongest lever."}
+          </p>
+          {sensitiveLever && (
+            <p className="mt-2 text-xs leading-5 text-white/36">
+              Modeled shift: {formatProjectionValue(sensitiveLever.current)} to {formatProjectionValue(sensitiveLever.optimized)}.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <ProjectionIntelligenceTile
+          label="Confidence"
+          value={confidence.label}
+          detail={confidence.detail}
+        />
+        <ProjectionIntelligenceTile
+          label="Reality check"
+          value={realityCheck.label}
+          detail={realityCheck.detail}
+        />
+        <ProjectionIntelligenceTile
+          label="Missing data"
+          value={`${missingData.length} signal${missingData.length === 1 ? "" : "s"}`}
+          detail={missingData.slice(0, 2).join(" and ") || "Enough signal exists for an initial projection."}
+        />
+      </div>
+    </div>
+  );
+}
+
+function ProjectionIntelligenceTile({
+  detail,
+  label,
+  value,
+}: {
+  detail: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/[0.055] bg-white/[0.022] p-3">
+      <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">{label}</p>
+      <p className="mt-3 text-sm text-white/66">{value}</p>
+      <p className="mt-2 text-xs leading-5 text-white/36">{detail}</p>
+    </div>
+  );
+}
+
+function buildProjectionConfidence(
+  model: TwinModel,
+  projectionResult: TwinProjectionResult
+) {
+  const baselineAccuracy = projectionResult.baseline?.accuracyScore || 0;
+  const leverCount = projectionResult.futureSelf?.levers?.length || 0;
+  const score = Math.max(
+    28,
+    Math.min(
+      94,
+      Math.round(model.readiness.score * 0.55 + baselineAccuracy * 0.25 + Math.min(leverCount, 5) * 4)
+    )
+  );
+  const label = score >= 78 ? "High" : score >= 58 ? "Moderate" : "Early";
+  const detail =
+    score >= 78
+      ? "The twin has enough longitudinal signal to treat this as a strong planning model."
+      : score >= 58
+        ? "Useful for direction, but outcomes and repeat measurements will sharpen it."
+        : "Best used as a first-pass simulation until more live data arrives.";
+
+  return { detail, label, score };
+}
+
+function buildProjectionMissingData(
+  model: TwinModel,
+  projectionResult: TwinProjectionResult
+) {
+  const missing: string[] = [];
+  const byLabel = new Map(model.domains.map((domain) => [domain.label, domain]));
+
+  if ((byLabel.get("Clinical")?.score || 0) < 55) missing.push("fresh labs");
+  if ((byLabel.get("Recovery")?.score || 0) < 55) missing.push("wearable sleep and HRV");
+  if ((byLabel.get("Execution")?.score || 0) < 55) missing.push("tracked outcomes");
+  if (!projectionResult.baseline?.accuracyScore || projectionResult.baseline.accuracyScore < 70) {
+    missing.push("stronger assessment accuracy");
+  }
+
+  return Array.from(new Set(missing)).slice(0, 4);
+}
+
+function buildProjectionRealityCheck(
+  model: TwinModel,
+  projectionResult: TwinProjectionResult
+) {
+  const highImpactLevers =
+    projectionResult.futureSelf?.levers?.filter((lever) => lever.impact === "high").length || 0;
+  const executionScore =
+    model.domains.find((domain) => domain.label === "Execution")?.score || 0;
+
+  if (executionScore >= 70 && highImpactLevers <= 2) {
+    return {
+      label: "Realistic",
+      detail: "The projected path matches the current execution layer and does not depend on too many difficult shifts.",
+    };
+  }
+
+  if (executionScore >= 45 || highImpactLevers <= 2) {
+    return {
+      label: "Plausible",
+      detail: "The projection is usable, but Aeonvera should convert it into a low-friction protocol before trusting it.",
+    };
+  }
+
+  return {
+    label: "Ambitious",
+    detail: "This scenario asks for several strong behavior shifts. The protocol should start smaller and earn intensity.",
+  };
+}
+
+function pickSensitiveLever(levers: ProjectionLever[] = []) {
+  return levers
+    .slice()
+    .sort((a, b) => leverWeight(b) - leverWeight(a))[0];
+}
+
+function leverWeight(lever: ProjectionLever) {
+  const impactWeight = lever.impact === "high" ? 3 : lever.impact === "medium" ? 2 : 1;
+  return impactWeight * 10 + Math.abs(Number(lever.delta) || 0);
+}
+
+function formatProjectionValue(value: unknown) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "unknown";
+  return Math.abs(numeric) >= 10 ? String(Math.round(numeric)) : numeric.toFixed(1);
 }
 
 function buildCustomTwinPrompt(question: string): TwinScenarioPrompt {
