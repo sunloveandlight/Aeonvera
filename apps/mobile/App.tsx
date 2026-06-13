@@ -63,6 +63,7 @@ type ReminderRepeat = "once" | "daily" | "weekly";
 
 type ScheduledProtocolAction = ProtocolAction & {
   actionIndex: number;
+  recommended_time?: string;
   scope: ActionScope;
 };
 
@@ -4648,20 +4649,21 @@ function getReminderDate(
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
+  const preferredTime = getActionRecommendedTime(action);
 
   if (scope === "today") {
-    return getRecommendedSameDaySlot(date, text);
+    return getRecommendedSameDaySlot(date, text, preferredTime);
   }
 
   if (scope === "week" || scope === "check_in") {
     date.setDate(date.getDate() + 1);
-    const slot = getRecommendedHour(text, scope);
+    const slot = preferredTime ? parseTimeSlot(preferredTime) : getRecommendedHour(text, scope);
     date.setHours(slot.hour, slot.minute, 0, 0);
     return date;
   }
 
   date.setDate(date.getDate() + 2);
-  const slot = getRecommendedHour(text, scope);
+  const slot = preferredTime ? parseTimeSlot(preferredTime) : getRecommendedHour(text, scope);
   date.setHours(slot.hour, slot.minute, 0, 0);
   return date;
 }
@@ -4855,8 +4857,8 @@ function startOfDay(date: Date) {
   return next;
 }
 
-function getRecommendedSameDaySlot(date: Date, text: string) {
-  const slot = getRecommendedHour(text, "today");
+function getRecommendedSameDaySlot(date: Date, text: string, preferredTime?: string) {
+  const slot = preferredTime ? parseTimeSlot(preferredTime) : getRecommendedHour(text, "today");
   date.setHours(slot.hour, slot.minute, 0, 0);
 
   if (date.getTime() <= Date.now() + 30 * 60 * 1000) {
@@ -4864,6 +4866,21 @@ function getRecommendedSameDaySlot(date: Date, text: string) {
   }
 
   return date;
+}
+
+function getActionRecommendedTime(action?: ProtocolAction) {
+  const recommendedTime = (action as { recommended_time?: unknown } | undefined)?.recommended_time;
+  return typeof recommendedTime === "string" && /^\d{2}:\d{2}$/.test(recommendedTime)
+    ? recommendedTime
+    : "";
+}
+
+function parseTimeSlot(value: string) {
+  const [hour, minute] = value.split(":").map(Number);
+  return {
+    hour: Number.isFinite(hour) ? Math.max(0, Math.min(23, hour)) : 10,
+    minute: Number.isFinite(minute) ? Math.max(0, Math.min(59, minute)) : 0,
+  };
 }
 
 function getRecommendedHour(text: string, scope: ActionScope) {

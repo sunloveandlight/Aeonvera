@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { canAccess } from "@/lib/auth/permissions";
+import {
+  defaultAgentPreferenceMemory,
+  getAgentPreferenceMemory,
+  type AgentPreferenceMemory,
+} from "@/lib/agent/agentPreferenceMemory";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 
 type AutopilotMode = "manual" | "suggest" | "approve" | "autopilot" | "sovereign";
@@ -73,11 +78,18 @@ export async function GET(request: NextRequest) {
 
     const today = toDateKey(new Date());
     const preferences = await getOrCreatePreferences(admin, user.id);
-    const [protocol, executionMemory] = await Promise.all([
+    const [protocol, executionMemory, preferenceMemory] = await Promise.all([
       getLatestProtocol(admin, user.id),
       getRecentExecutionMemory(admin, user.id),
+      getAgentPreferenceMemory({ supabase: admin, userId: user.id }),
     ]);
-    const prepared = buildDailyPlan({ protocol, preferences, today, executionMemory });
+    const prepared = buildDailyPlan({
+      protocol,
+      preferences,
+      today,
+      executionMemory,
+      preferenceMemory,
+    });
     const { data: existingPlan, error: existingError } = await admin
       .from("daily_execution_plans")
       .select("status,accepted_at,skipped_at,scheduled_event_ids")
@@ -359,11 +371,13 @@ async function getLatestProtocol(
 
 function buildDailyPlan({
   executionMemory,
+  preferenceMemory = defaultAgentPreferenceMemory(),
   preferences,
   protocol,
   today,
 }: {
   executionMemory: ExecutionMemory;
+  preferenceMemory?: AgentPreferenceMemory;
   preferences: PreferencesRow;
   protocol: ProtocolRow | null;
   today: string;
@@ -375,9 +389,9 @@ function buildDailyPlan({
         ...action,
         actionIndex,
         scope,
-        recommended_time: getRecommendedTime(action, scope, executionMemory),
+        recommended_time: getRecommendedTime(action, scope, executionMemory, preferenceMemory),
         execution_mode: getExecutionMode(preferences, action, scope),
-        adaptation_reason: getAdaptationReason(action, executionMemory),
+        adaptation_reason: getAdaptationReason(action, executionMemory, preferenceMemory),
       };
     })
     .filter((action) => action.action)
@@ -385,9 +399,17 @@ function buildDailyPlan({
     .sort((a, b) => actionPriority(b, executionMemory) - actionPriority(a, executionMemory));
 
   const todayLimit =
-    executionMemory.planLoad === "light" ? 2 : executionMemory.planLoad === "ambitious" ? 4 : 3;
+    getEffectivePlanLoad(executionMemory, preferenceMemory) === "light"
+      ? 2
+      : getEffectivePlanLoad(executionMemory, preferenceMemory) === "ambitious"
+        ? 4
+        : 3;
   const setupLimit =
-    executionMemory.planLoad === "light" ? 0 : executionMemory.planLoad === "ambitious" ? 2 : 1;
+    getEffectivePlanLoad(executionMemory, preferenceMemory) === "light"
+      ? 0
+      : getEffectivePlanLoad(executionMemory, preferenceMemory) === "ambitious"
+        ? 2
+        : 1;
 
   const todayItems = actions
     .filter((action) => action.scope === "today" || action.scope === "check_in")
@@ -398,7 +420,7 @@ function buildDailyPlan({
   const selectedItems = todayItems.length ? todayItems : actions.slice(0, todayLimit);
   const itemCount = selectedItems.length + setupItems.length;
   const summary = itemCount
-    ? buildAdaptiveSummary(itemCount, selectedItems, executionMemory)
+    ? buildAdaptiveSummary(itemCount, selectedItems, executionMemory, preferenceMemory)
     : "Aeonvera is ready to prepare your day once a protocol is active.";
 
   const plan = {
@@ -418,6 +440,11 @@ function buildDailyPlan({
       completion_rate: executionMemory.completionRate,
       friction_domains: executionMemory.frictionDomains,
       plan_load: executionMemory.planLoad,
+      preference_load: preferenceMemory.preferredLoad,
+      coaching_tone: preferenceMemory.coachingTone,
+      reminder_window: preferenceMemory.reminderWindow,
+      training_time: preferenceMemory.trainingTime,
+      avoid_morning_training: preferenceMemory.avoidMorningTraining,
       strong_domains: executionMemory.strongDomains,
       total_signals: executionMemory.total,
     },
@@ -536,12 +563,31 @@ function defaultExecutionMemory(): ExecutionMemory {
 function buildAdaptiveSummary(
   itemCount: number,
   selectedItems: Array<ProtocolAction & { domain?: string }>,
-  memory: ExecutionMemory
+  memory: ExecutionMemory,
+  preferenceMemory = defaultAgentPreferenceMemory()
 ) {
   const domains = selectedItems
     .slice(0, 2)
     .map((action) => action.domain || "Optimization")
     .join(" and ");
+
+  if (preferenceMemory.preferredLoad === "light") {
+    return `Aeonvera kept today deliberately light: ${itemCount} essential action${
+      itemCount === 1 ? "" : "s"
+    } around ${domains}, aligned with your preference for fewer, higher-leverage moves.`;
+  }
+
+  if (preferenceMemory.coachingTone === "direct") {
+    return `Today is clean and direct: ${itemCount} action${
+      itemCount === 1 ? "" : "s"
+    } around ${domains}. Aeonvera is removing ambiguity so execution is obvious.`;
+  }
+
+  if (preferenceMemory.coachingTone === "supportive") {
+    return `Aeonvera prepared a calmer day: ${itemCount} grounded action${
+      itemCount === 1 ? "" : "s"
+    } around ${domains}, with enough structure to move forward without excess pressure.`;
+  }
 
   if (memory.total && memory.planLoad === "light") {
     return `Aeonvera narrowed today to ${itemCount} essential action${
@@ -643,7 +689,8 @@ function classifyActionScope(action: ProtocolAction): ActionScope {
 function getRecommendedTime(
   action: ProtocolAction,
   scope: ActionScope,
-  memory = defaultExecutionMemory()
+  memory = defaultExecutionMemory(),
+  preferenceMemory = defaultAgentPreferenceMemory()
 ) {
   const text = [action.domain, action.action, action.cadence, action.why]
     .filter(Boolean)
@@ -651,6 +698,21 @@ function getRecommendedTime(
     .toLowerCase();
   const actionWasMissed = memory.missedActions.includes(normalizeMemoryKey(action.action || ""));
   const domainHasFriction = memory.frictionDomains.includes(normalizeMemoryKey(action.domain || ""));
+  const isTraining = /(zone 2|cardio|walk|steps|run|training|workout|strength|resistance|mobility|exercise|movement)/.test(text);
+
+  if (isTraining && (preferenceMemory.avoidMorningTraining || preferenceMemory.trainingTime === "later")) {
+    return actionWasMissed || domainHasFriction ? "16:30" : "17:30";
+  }
+
+  if (isTraining && preferenceMemory.trainingTime === "morning") {
+    return actionWasMissed || domainHasFriction ? "08:30" : "08:00";
+  }
+
+  if (preferenceMemory.reminderWindow === "after_lunch" && scope !== "check_in") return "13:30";
+  if (preferenceMemory.reminderWindow === "after_dinner" && scope !== "check_in") return "19:30";
+  if (preferenceMemory.reminderWindow === "evening" && scope !== "check_in") return "18:30";
+  if (preferenceMemory.reminderWindow === "afternoon" && scope !== "check_in") return "15:00";
+  if (preferenceMemory.reminderWindow === "morning") return "08:30";
 
   if (/(sleep|bedtime|wind down|evening|night|recovery|relax|caffeine)/.test(text)) {
     return actionWasMissed || domainHasFriction ? "20:00" : "20:30";
@@ -720,7 +782,27 @@ function actionPriority(
   return impact + scope + frictionBoost + missedBoost + strongBoost;
 }
 
-function getAdaptationReason(action: ProtocolAction, memory: ExecutionMemory) {
+function getAdaptationReason(
+  action: ProtocolAction,
+  memory: ExecutionMemory,
+  preferenceMemory: AgentPreferenceMemory
+) {
+  const text = [action.domain, action.action, action.why, action.cadence]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    /(training|workout|strength|resistance|zone 2|cardio|walk|exercise|movement)/.test(text) &&
+    (preferenceMemory.avoidMorningTraining || preferenceMemory.trainingTime === "later")
+  ) {
+    return "adapted_to_preferred_training_window";
+  }
+
+  if (preferenceMemory.preferredLoad === "light") return "simplified_from_stated_preference";
+  if (preferenceMemory.reminderWindow) return "timed_from_reminder_preference";
+  if (preferenceMemory.coachingTone !== "balanced") return "adapted_to_coaching_style";
+
   if (!memory.total) return "baseline";
 
   const actionKey = normalizeMemoryKey(action.action || "");
@@ -730,6 +812,14 @@ function getAdaptationReason(action: ProtocolAction, memory: ExecutionMemory) {
   if (memory.frictionDomains.includes(domain)) return "simplified_after_domain_friction";
   if (memory.strongDomains.includes(domain)) return "expanded_from_recent_strength";
   return "steady_from_recent_feedback";
+}
+
+function getEffectivePlanLoad(
+  memory: ExecutionMemory,
+  preferenceMemory: AgentPreferenceMemory
+) {
+  if (preferenceMemory.preferredLoad !== "steady") return preferenceMemory.preferredLoad;
+  return memory.planLoad;
 }
 
 function normalizeMemoryKey(value: string) {
