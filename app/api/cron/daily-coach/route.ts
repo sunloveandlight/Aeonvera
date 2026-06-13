@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { runMorningAutopilotBrief } from "@/lib/autopilot/morningAutopilot";
 import { runCoachPipeline } from "@/lib/coach/runCoachPipeline";
 import { runProactiveClinicalFollowUps } from "@/lib/clinical/proactiveClinicalFollowUps";
+import { runProactiveDataSourceFollowUps } from "@/lib/data/proactiveDataSourceFollowUps";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 /**
@@ -48,6 +49,8 @@ export async function GET(req: Request) {
       { data: protocolUsers },
       { data: autopilotUsers },
       { data: clinicalUsers, error: clinicalUsersError },
+      { data: wearableUsers, error: wearableUsersError },
+      { data: labUsers, error: labUsersError },
     ] =
       await Promise.all([
         supabase
@@ -67,6 +70,14 @@ export async function GET(req: Request) {
           .select("user_id")
           .in("concern_status", ["active", "unresolved", "monitoring"])
           .limit(5000),
+        supabase
+          .from("wearable_metrics")
+          .select("user_id")
+          .limit(5000),
+        supabase
+          .from("lab_biomarkers")
+          .select("user_id")
+          .limit(5000),
       ]);
 
     if (error) {
@@ -78,6 +89,8 @@ export async function GET(req: Request) {
       ...(protocolUsers || []),
       ...(autopilotUsers || []),
       ...(!clinicalUsersError ? clinicalUsers || [] : []),
+      ...(!wearableUsersError ? wearableUsers || [] : []),
+      ...(!labUsersError ? labUsers || [] : []),
     ];
 
     if (!users.length) {
@@ -100,6 +113,8 @@ export async function GET(req: Request) {
     let autopilotSkipped = 0;
     let clinicalFollowUpsSent = 0;
     let clinicalFollowUpsSkipped = 0;
+    let dataSourceFollowUpsSent = 0;
+    let dataSourceFollowUpsSkipped = 0;
 
     /**
      * STEP 3: RUN COACH PIPELINE PER USER
@@ -135,6 +150,18 @@ export async function GET(req: Request) {
         console.error(`Clinical follow-up failed for user ${userId}`, err);
       }
 
+      try {
+        const dataSourceFollowUp = await runProactiveDataSourceFollowUps({ supabase, userId });
+        if (dataSourceFollowUp.status === "sent") {
+          dataSourceFollowUpsSent++;
+        } else {
+          dataSourceFollowUpsSkipped++;
+        }
+      } catch (err) {
+        dataSourceFollowUpsSkipped++;
+        console.error(`Data source follow-up failed for user ${userId}`, err);
+      }
+
       processed++;
     }
 
@@ -146,6 +173,8 @@ export async function GET(req: Request) {
       autopilot_skipped: autopilotSkipped,
       clinical_followups_sent: clinicalFollowUpsSent,
       clinical_followups_skipped: clinicalFollowUpsSkipped,
+      data_source_followups_sent: dataSourceFollowUpsSent,
+      data_source_followups_skipped: dataSourceFollowUpsSkipped,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

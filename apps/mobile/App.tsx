@@ -814,6 +814,14 @@ export default function App() {
         return;
       }
 
+      if (data?.target === "data_sources") {
+        setActiveView("settings");
+        setActionNotice("Opened from your source intelligence check.");
+        playSoftHaptic();
+        void loadCompanionData(session);
+        return;
+      }
+
       if (data?.target === "coach_inbox" || alertId) {
         selectedMessageOffsetY.current = null;
         setSelectedAlertId(alertId);

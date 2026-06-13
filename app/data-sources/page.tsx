@@ -83,6 +83,7 @@ export default function DataSourcesPage() {
   const [labFile, setLabFile] = useState<File | null>(null);
   const [syncing, setSyncing] = useState<WearableProvider | null>(null);
   const [labImporting, setLabImporting] = useState(false);
+  const [sourceCheckSending, setSourceCheckSending] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -311,6 +312,33 @@ export default function DataSourcesPage() {
     }
   }
 
+  async function sendSourceCheck() {
+    try {
+      setSourceCheckSending(true);
+      setMessage("Sending source intelligence check...");
+
+      const response = await fetch("/api/notifications/test-data-source", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Source check failed.");
+      }
+
+      setMessage(
+        data.status === "sent"
+          ? "Source intelligence check sent."
+          : data.message || "Source intelligence check completed."
+      );
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Source check failed.");
+    } finally {
+      setSourceCheckSending(false);
+    }
+  }
+
   if (loading) {
     return (
       <PageContainer>
@@ -370,6 +398,14 @@ export default function DataSourcesPage() {
               >
                 <RefreshCcw size={15} />
                 Refresh
+              </button>
+              <button
+                type="button"
+                onClick={() => void sendSourceCheck()}
+                disabled={sourceCheckSending}
+                className="premium-action-secondary inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {sourceCheckSending ? "Sending" : "Send Source Check"}
               </button>
               <Link
                 href="/dashboard"

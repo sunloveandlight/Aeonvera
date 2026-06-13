@@ -21,7 +21,8 @@ type NotificationTarget =
   | "dashboard"
   | "companion"
   | "autopilot"
-  | "clinical_follow_up";
+  | "clinical_follow_up"
+  | "data_sources";
 
 type DeliveryResult = {
   in_app: "sent";
