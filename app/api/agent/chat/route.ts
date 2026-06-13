@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { answerPersonalHealthAgent } from "@/lib/agent/personalHealthAgent";
+import { buildAgentSourcePrompts, processAgentCommand } from "@/lib/agent/agentCommandRouter";
 import { recordClinicalFollowUpAnswer } from "@/lib/clinical/clinicalFollowUpResponses";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -66,15 +67,24 @@ export async function POST(request: NextRequest) {
       supabase: admin,
       userId: user.id,
     });
+    const command = await processAgentCommand({
+      question,
+      source: "agent_chat",
+      supabase: admin,
+      userId: user.id,
+    });
+    const sourcePrompts = await buildAgentSourcePrompts({ supabase: admin, userId: user.id });
 
     return NextResponse.json({
       actions: clinicalFollowUp?.action
-        ? [clinicalFollowUp.action, ...result.actions]
-        : result.actions,
+        ? [clinicalFollowUp.action, ...command.actions, ...result.actions]
+        : [...command.actions, ...result.actions],
       answer: result.answer,
       clinicalFollowUp,
+      commandActions: command.actions,
+      learnedPreferences: command.preferences,
       mode: result.mode,
-      suggestedPrompts: buildSuggestedPrompts(result.context),
+      suggestedPrompts: [...sourcePrompts, ...buildSuggestedPrompts(result.context)].slice(0, 3),
       usage: serializeUsage(usage),
     });
   } catch (error) {

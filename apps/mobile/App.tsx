@@ -1281,6 +1281,7 @@ export default function App() {
       if (Array.isArray(result?.actions)) {
         const actions = result.actions.slice(0, 4) as AgentAppliedAction[];
         setAgentActions(actions);
+        void applyAgentCommandActions(actions);
 
         if (
           actions.some((action) =>
@@ -1439,6 +1440,7 @@ export default function App() {
       if (Array.isArray(result?.actions)) {
         const actions = result.actions.slice(0, 4) as AgentAppliedAction[];
         setAgentActions(actions);
+        void applyAgentCommandActions(actions);
 
         if (
           actions.some((action) =>
@@ -1497,6 +1499,45 @@ export default function App() {
         setVoicePhase("ready_follow_up");
       },
     });
+  }
+
+  async function applyAgentCommandActions(actions: AgentAppliedAction[]) {
+    if (!actions.length || !session) return;
+
+    if (actions.some((action) => action.type === "prepare_today")) {
+      setActiveView("today");
+      setActionNotice("Aeonvera is preparing today's plan from your latest signal.");
+      await loadCompanionData(session);
+      playSoftHaptic();
+      return;
+    }
+
+    if (actions.some((action) => action.type === "open_data_sources")) {
+      setActiveView("settings");
+      setActionNotice("Aeonvera opened the source layer. Review wearables, labs, calendar, and notifications.");
+      playSoftHaptic();
+      return;
+    }
+
+    if (actions.some((action) => action.type === "open_memory")) {
+      setActiveView("agent");
+      setActionNotice("Aeonvera surfaced your personal memory model.");
+      playSoftHaptic();
+      return;
+    }
+
+    if (actions.some((action) => action.type === "schedule_later")) {
+      setActiveView("today");
+      setActionNotice("Aeonvera captured the reminder intent. Use Today to place the exact block.");
+      playSoftHaptic();
+      return;
+    }
+
+    if (actions.some((action) => action.type === "reschedule_training")) {
+      setActiveView("today");
+      setActionNotice("Aeonvera recognized the training reschedule request. Choose the training block to move.");
+      playSoftHaptic();
+    }
   }
 
   async function stopAgentSpeech() {

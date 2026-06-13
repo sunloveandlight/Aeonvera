@@ -29,6 +29,9 @@ export default function Footer() {
             <Link href="/data-sources" className="transition hover:text-white">
               Data Sources
             </Link>
+            <Link href="/memory" className="transition hover:text-white">
+              Memory
+            </Link>
             <Link href="/companion" className="transition hover:text-white">
               Companion
             </Link>
