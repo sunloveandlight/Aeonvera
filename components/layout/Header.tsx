@@ -37,6 +37,7 @@ export default function Header() {
     { href: "/companion", label: "Companion" },
     { href: "/plan", label: "Your Plan" },
     { href: "/dashboard", label: "Dashboard" },
+    { href: "/data-sources", label: "Data" },
     { href: "/digital-twin", label: "Digital Twin" },
     { href: "/assessment", label: "Assessment" },
     { href: "/report", label: "Report" },

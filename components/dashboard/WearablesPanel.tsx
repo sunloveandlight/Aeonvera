@@ -1,6 +1,7 @@
 "use client";
 
 import { KeyboardEvent, MouseEvent } from "react";
+import Link from "next/link";
 
 type WearableProvider = "oura" | "whoop" | "apple";
 
@@ -82,6 +83,12 @@ export default function WearablesPanel({
           {wearableMessage && (
             <p className="mt-3 text-sm leading-6 royal-text">{wearableMessage}</p>
           )}
+          <Link
+            href="/data-sources"
+            className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+          >
+            Open Data Sources
+          </Link>
         </div>
 
         <div className="grid grid-cols-3 gap-3 text-right">

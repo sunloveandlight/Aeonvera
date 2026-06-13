@@ -26,6 +26,9 @@ export default function Footer() {
             <Link href="/dashboard" className="transition hover:text-white">
               Dashboard
             </Link>
+            <Link href="/data-sources" className="transition hover:text-white">
+              Data Sources
+            </Link>
             <Link href="/companion" className="transition hover:text-white">
               Companion
             </Link>

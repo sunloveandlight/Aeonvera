@@ -734,6 +734,11 @@ export default function DashboardPage() {
     .filter(Boolean)
     .sort()
     .at(-1);
+  const latestLabAt = labRows
+    .map((row) => row.measured_at)
+    .filter(Boolean)
+    .sort()
+    .at(-1);
   const wearableRisk = healthState?.risk_scores || {};
   const wearableBaselines = healthState?.baseline || {};
   const connectedProviderSet = new Set(
@@ -1092,6 +1097,16 @@ export default function DashboardPage() {
           hasAssessment={hasAssessment}
           onOpenOptimization={() => router.push("/optimization")}
           onStartAssessment={() => router.push("/assessment")}
+        />
+
+        <DataFreshnessPanel
+          appleMetricCount={wearableRows.filter((row) => row.provider === "apple").length}
+          connectedProviderSet={connectedProviderSet}
+          healthStateAt={healthState?.updated_at || null}
+          labCount={labRows.length}
+          latestLabAt={latestLabAt}
+          latestWearableAt={latestWearableAt}
+          onOpenDataSources={() => router.push("/data-sources")}
         />
 
         <LabImportPanel
@@ -1633,6 +1648,92 @@ function LabImportPanel({
   );
 }
 
+function DataFreshnessPanel({
+  appleMetricCount,
+  connectedProviderSet,
+  healthStateAt,
+  labCount,
+  latestLabAt,
+  latestWearableAt,
+  onOpenDataSources,
+}: {
+  appleMetricCount: number;
+  connectedProviderSet: Set<"oura" | "whoop">;
+  healthStateAt: string | null;
+  labCount: number;
+  latestLabAt?: string | null;
+  latestWearableAt?: string | null;
+  onOpenDataSources: () => void;
+}) {
+  const sources = [
+    {
+      label: "Oura",
+      value: connectedProviderSet.has("oura") ? "Connected" : "Ready",
+      detail: connectedProviderSet.has("oura")
+        ? `Latest signal ${formatFreshness(latestWearableAt)}`
+        : "Connect from Data Sources",
+      status: connectedProviderSet.has("oura") ? "active" : "ready",
+    },
+    {
+      label: "Apple Health",
+      value: appleMetricCount ? `${appleMetricCount}` : "Ready",
+      detail: appleMetricCount
+        ? `Imported signal ${formatFreshness(latestWearableAt)}`
+        : "Upload export or screenshot",
+      status: appleMetricCount ? "active" : "ready",
+    },
+    {
+      label: "Labs",
+      value: labCount ? `${labCount}` : "Missing",
+      detail: labCount ? `Clinical panel ${formatFreshness(latestLabAt)}` : "Upload bloodwork",
+      status: labCount ? "active" : "missing",
+    },
+    {
+      label: "Health State",
+      value: healthStateAt ? "Live" : "Building",
+      detail: healthStateAt ? `Refreshed ${formatFreshness(healthStateAt)}` : "Waiting for source depth",
+      status: healthStateAt ? "active" : "ready",
+    },
+  ];
+
+  return (
+    <div className="executive-panel-soft rounded-lg border border-white/[0.08] p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="micro-label">Data Freshness</p>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-white/48">
+            Aeonvera is strongest when wearables, labs, calendar, and health state stay current.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onOpenDataSources}
+          className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+        >
+          Open Data Sources
+        </button>
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-4">
+        {sources.map((source) => (
+          <div key={source.label} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-[9px] uppercase tracking-[0.14em] text-white/28">
+                {source.label}
+              </p>
+              <span className={dataFreshnessStatusClassName(source.status)}>
+                {source.status}
+              </span>
+            </div>
+            <p className="text-lg font-light text-white/78">{source.value}</p>
+            <p className="mt-2 text-xs leading-5 text-white/36">{source.detail}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function BioAgeTrend({
   history,
   currentBioAge,
@@ -1760,6 +1861,20 @@ function formatLabKey(value: string) {
     .replace("Wbc", "WBC");
 }
 
+function formatFreshness(value?: string | null) {
+  if (!value) return "not yet";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "not yet";
+
+  const diffMs = Date.now() - date.getTime();
+  const minutes = Math.max(1, Math.round(diffMs / 60000));
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 48) return `${hours} hr ago`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
 function labTrendClassName(status: LabTrend["status"]) {
   const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
 
@@ -1767,6 +1882,13 @@ function labTrendClassName(status: LabTrend["status"]) {
   if (status === "worsening") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
   if (status === "stable") return `${base} text-white/34 bg-white/[0.025]`;
   return `${base} text-white/28 bg-white/[0.02]`;
+}
+
+function dataFreshnessStatusClassName(status: string) {
+  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  if (status === "active") return `${base} royal-text bg-white/[0.035]`;
+  if (status === "ready") return `${base} text-white/34 bg-white/[0.025]`;
+  return `${base} text-rose-200/60 bg-rose-400/[0.08]`;
 }
 
 function improvementStatusClassName(status: ImprovementLoop["status"]) {
