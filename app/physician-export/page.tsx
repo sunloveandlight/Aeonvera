@@ -6,9 +6,30 @@ import Link from "next/link";
 import { ArrowLeft, Copy, Link2, Printer, ShieldCheck, UsersRound } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState from "@/components/ui/AccessState";
+import ClinicalPacketSummary from "@/components/physician/ClinicalPacketSummary";
 import { supabase } from "@/lib/supabase/client";
 
 type ExportBundle = {
+  clinicalPacket?: {
+    activeProtocol?: {
+      detail: string;
+      domains: string[];
+      status?: string | null;
+      title: string;
+    } | null;
+    executiveSummary: string;
+    recentChanges: Array<{
+      detail: string;
+      label: string;
+      tone: "positive" | "caution" | "neutral";
+    }>;
+    reviewPriorities: string[];
+    riskFlags: Array<{
+      detail: string;
+      label: string;
+      severity: "high" | "medium" | "watch";
+    }>;
+  };
   generatedAt: string;
   patient: {
     id?: string;
@@ -463,6 +484,8 @@ function ExportDocument({ bundle }: { bundle: ExportBundle }) {
           <p>Plan: {bundle.patient.profile?.plan || "Not specified"}</p>
         </div>
       </div>
+
+      <ClinicalPacketSummary packet={bundle.clinicalPacket} />
 
       <ExportSection title="Current Snapshot">
         <div className="grid gap-3 sm:grid-cols-3">
