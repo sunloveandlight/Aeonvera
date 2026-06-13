@@ -23,10 +23,20 @@ type ClinicalPacket = {
 
 export default function ClinicalPacketSummary({
   packet,
+  role = "physician",
 }: {
   packet?: ClinicalPacket | null;
+  role?: "physician" | "coach" | "family";
 }) {
   if (!packet) return null;
+
+  const roleCopy = ROLE_COPY[role];
+  const visibleRiskFlags = role === "family"
+    ? packet.riskFlags.slice(0, 2)
+    : packet.riskFlags;
+  const visiblePriorities = role === "family"
+    ? packet.reviewPriorities.slice(0, 3)
+    : packet.reviewPriorities;
 
   return (
     <section className="mb-8 break-inside-avoid">
@@ -34,18 +44,18 @@ export default function ClinicalPacketSummary({
         <div className="mb-5 border-b border-white/[0.07] pb-4 print:border-black/15">
           <p className="micro-label print:text-black/50">Clinical Packet</p>
           <h2 className="mt-3 text-2xl font-light text-white print:text-black">
-            Executive review summary
+            {roleCopy.title}
           </h2>
           <p className="mt-4 text-sm leading-7 text-white/62 print:text-black/70">
-            {packet.executiveSummary}
+            {roleCopy.prefix} {packet.executiveSummary}
           </p>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-4">
             <ClinicalPacketBlock title="Risk flags">
-              {packet.riskFlags.length ? (
-                packet.riskFlags.map((flag) => (
+              {visibleRiskFlags.length ? (
+                visibleRiskFlags.map((flag) => (
                   <div
                     key={`${flag.label}-${flag.detail}`}
                     className="rounded-lg border border-white/[0.06] bg-black/20 p-3 print:border-black/10 print:bg-white"
@@ -95,7 +105,7 @@ export default function ClinicalPacketSummary({
           <div className="space-y-4">
             <ClinicalPacketBlock title="Review priorities">
               <div className="space-y-2">
-                {packet.reviewPriorities.map((priority, index) => (
+                {visiblePriorities.map((priority, index) => (
                   <div
                     key={`${priority}-${index}`}
                     className="rounded-lg border border-white/[0.06] bg-black/20 p-3 print:border-black/10 print:bg-white"
@@ -147,6 +157,21 @@ export default function ClinicalPacketSummary({
     </section>
   );
 }
+
+const ROLE_COPY = {
+  physician: {
+    title: "Executive clinical review summary",
+    prefix: "Designed for clinician review.",
+  },
+  coach: {
+    title: "Execution support summary",
+    prefix: "Designed for coaching and behavior support.",
+  },
+  family: {
+    title: "Family healthspan summary",
+    prefix: "Designed as a high-level support view.",
+  },
+};
 
 function ClinicalPacketBlock({
   children,

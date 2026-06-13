@@ -6,8 +6,29 @@ import { useParams } from "next/navigation";
 import { Printer, ShieldCheck } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState from "@/components/ui/AccessState";
+import ClinicalPacketSummary from "@/components/physician/ClinicalPacketSummary";
 
 type ExportBundle = {
+  clinicalPacket?: {
+    activeProtocol?: {
+      detail: string;
+      domains: string[];
+      status?: string | null;
+      title: string;
+    } | null;
+    executiveSummary: string;
+    recentChanges: Array<{
+      detail: string;
+      label: string;
+      tone: "positive" | "caution" | "neutral";
+    }>;
+    reviewPriorities: string[];
+    riskFlags: Array<{
+      detail: string;
+      label: string;
+      severity: "high" | "medium" | "watch";
+    }>;
+  };
   generatedAt: string;
   patient: {
     profile?: {
@@ -153,6 +174,11 @@ function NetworkDocument({
           <p>Expires: {formatDate(invitation.expiresAt)}</p>
         </div>
       </div>
+
+      <ClinicalPacketSummary
+        packet={bundle.clinicalPacket}
+        role={invitation.role}
+      />
 
       <ExportSection title="Current Snapshot">
         <div className="grid gap-3 sm:grid-cols-3">

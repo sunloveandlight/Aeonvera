@@ -53,7 +53,14 @@ type TwinScenarioPrompt = {
 type TwinProjectionComparison = {
   actual?: string;
   actions?: string[];
+  adjustment: {
+    detail: string;
+    title: string;
+  };
+  confidence: number;
   detail: string;
+  evidenceMissing: string[];
+  followUpQuestion: string;
   linkedProtocol?: string;
   projected?: string;
   status: "pending" | "tracking" | "on_track" | "off_track";
@@ -941,6 +948,12 @@ function buildProjectionComparisons({
               : "off_track";
 
       return {
+        adjustment: buildProjectionAdjustment({
+          actions: uniqueActions,
+          outcomeCount,
+          status,
+          title: text(scenario.title) || "Saved projection",
+        }),
         actual:
           actualImprovement != null
             ? `${actualImprovement > 0 ? "+" : ""}${actualImprovement.toFixed(1)} yrs actual`
@@ -956,6 +969,22 @@ function buildProjectionComparisons({
           status,
         }),
         actions: uniqueActions.length ? uniqueActions : undefined,
+        confidence: buildProjectionReviewConfidence({
+          actualImprovement,
+          hasLinkedProtocol: Boolean(linkedProtocol),
+          outcomeCount,
+          projectedImprovement,
+        }),
+        evidenceMissing: buildProjectionMissingEvidence({
+          actualImprovement,
+          hasLinkedProtocol: Boolean(linkedProtocol),
+          outcomeCount,
+        }),
+        followUpQuestion: buildProjectionFollowUpQuestion({
+          actions: uniqueActions,
+          status,
+          title: text(scenario.title) || "Saved projection",
+        }),
         linkedProtocol: linkedProtocol
           ? text(linkedProtocol.summary) || "Linked optimization protocol"
           : undefined,
@@ -971,6 +1000,126 @@ function buildProjectionComparisons({
     })
     .filter((item) => item.projected || item.actual)
     .slice(0, 3);
+}
+
+function buildProjectionReviewConfidence({
+  actualImprovement,
+  hasLinkedProtocol,
+  outcomeCount,
+  projectedImprovement,
+}: {
+  actualImprovement: number | null;
+  hasLinkedProtocol: boolean;
+  outcomeCount: number;
+  projectedImprovement: number | null;
+}) {
+  const score =
+    34 +
+    (projectedImprovement != null ? 16 : 0) +
+    (hasLinkedProtocol ? 14 : 0) +
+    Math.min(outcomeCount, 4) * 7 +
+    (actualImprovement != null ? 18 : 0);
+
+  return Math.min(94, Math.max(28, score));
+}
+
+function buildProjectionMissingEvidence({
+  actualImprovement,
+  hasLinkedProtocol,
+  outcomeCount,
+}: {
+  actualImprovement: number | null;
+  hasLinkedProtocol: boolean;
+  outcomeCount: number;
+}) {
+  const missing = [];
+
+  if (!hasLinkedProtocol) {
+    missing.push("linked protocol");
+  }
+
+  if (!outcomeCount) {
+    missing.push("tracked intervention outcome");
+  }
+
+  if (actualImprovement == null) {
+    missing.push("new biological-age point");
+  }
+
+  return missing.slice(0, 3);
+}
+
+function buildProjectionFollowUpQuestion({
+  actions,
+  status,
+  title,
+}: {
+  actions: string[];
+  status: TwinProjectionComparison["status"];
+  title: string;
+}) {
+  const action = actions[0];
+
+  if (status === "on_track") {
+    return action
+      ? `Should Aeonvera reinforce ${action} for another cycle?`
+      : `Should Aeonvera reinforce the pattern behind ${title}?`;
+  }
+
+  if (status === "off_track") {
+    return action
+      ? `Did ${action} fail because of adherence, intensity, timing, or the wrong lever?`
+      : `Which assumption in ${title} did not survive real life?`;
+  }
+
+  if (status === "tracking") {
+    return "Did the intervention improve, stay flat, or create friction since this projection?";
+  }
+
+  return "What evidence can Aeonvera collect next to test this projection?";
+}
+
+function buildProjectionAdjustment({
+  actions,
+  outcomeCount,
+  status,
+  title,
+}: {
+  actions: string[];
+  outcomeCount: number;
+  status: TwinProjectionComparison["status"];
+  title: string;
+}) {
+  if (status === "on_track") {
+    return {
+      title: "Reinforce",
+      detail:
+        "Keep the protocol stable, add one repeat measurement, and avoid changing too many levers at once.",
+    };
+  }
+
+  if (status === "off_track") {
+    return {
+      title: "Simplify",
+      detail:
+        "Reduce intensity, identify the friction point, and test one smaller behavior before trusting the projection.",
+    };
+  }
+
+  if (outcomeCount) {
+    return {
+      title: "Measure",
+      detail:
+        "Outcome feedback exists. Add a biological-age or biomarker update so Aeonvera can quantify reality against the model.",
+    };
+  }
+
+  return {
+    title: "Test",
+    detail: actions[0]
+      ? `Start by tracking whether ${actions[0]} changed recovery, adherence, or symptoms.`
+      : `Turn ${title} into one protocol action and log the result.`,
+  };
 }
 
 function buildProjectionComparisonDetail({

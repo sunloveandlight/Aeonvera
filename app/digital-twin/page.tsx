@@ -78,7 +78,14 @@ type TwinScenarioPrompt = {
 type TwinProjectionComparison = {
   actual?: string;
   actions?: string[];
+  adjustment: {
+    detail: string;
+    title: string;
+  };
+  confidence: number;
   detail: string;
+  evidenceMissing: string[];
+  followUpQuestion: string;
   linkedProtocol?: string;
   projected?: string;
   status: "pending" | "tracking" | "on_track" | "off_track";
@@ -1363,6 +1370,9 @@ function ProjectionRealityPanel({
                 </span>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
+                <span className="rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-white/46">
+                  {comparison.confidence}% confidence
+                </span>
                 {comparison.projected && (
                   <span className="rounded-md border border-[#dabc73]/18 bg-[#dabc73]/[0.055] px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] royal-text">
                     {comparison.projected}
@@ -1379,6 +1389,39 @@ function ProjectionRealityPanel({
                   </span>
                 )}
               </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-white/[0.05] bg-black/20 p-3">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+                    Follow-up question
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-white/48">
+                    {comparison.followUpQuestion}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-white/[0.05] bg-black/20 p-3">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+                    Auto-adjust
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-white/58">
+                    {comparison.adjustment.title}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-white/36">
+                    {comparison.adjustment.detail}
+                  </p>
+                </div>
+              </div>
+              {comparison.evidenceMissing.length ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {comparison.evidenceMissing.map((item) => (
+                    <span
+                      key={`${comparison.title}-${item}`}
+                      className="rounded-md border border-rose-300/[0.12] bg-rose-400/[0.045] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-rose-100/52"
+                    >
+                      needs {item}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
               {comparison.actions?.length ? (
                 <div className="mt-3 space-y-2 border-t border-white/[0.045] pt-3">
                   {comparison.actions.map((action) => (
