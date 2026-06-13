@@ -41,6 +41,12 @@ export default function Footer() {
             <Link href="/report" className="transition hover:text-white">
               Report
             </Link>
+            <Link href="/privacy" className="transition hover:text-white">
+              Privacy
+            </Link>
+            <Link href="/terms" className="transition hover:text-white">
+              Terms
+            </Link>
           </div>
 
         </div>
