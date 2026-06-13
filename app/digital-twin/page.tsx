@@ -74,8 +74,17 @@ type TwinScenarioPrompt = {
   scenarioIds: string[];
 };
 
+type TwinProjectionComparison = {
+  actual?: string;
+  detail: string;
+  projected?: string;
+  status: "pending" | "tracking" | "on_track" | "off_track";
+  title: string;
+};
+
 type TwinModel = {
   domains: TwinDomain[];
+  projectionComparisons: TwinProjectionComparison[];
   readiness: {
     detail: string;
     score: number;
@@ -651,6 +660,8 @@ function LivingTwinModelPanel({
             </div>
           ))}
         </div>
+
+        <ProjectionRealityPanel comparisons={model.projectionComparisons} />
       </div>
 
       <div className="executive-panel rounded-lg p-6 md:p-7">
@@ -753,6 +764,74 @@ function LivingTwinModelPanel({
       </div>
     </div>
   );
+}
+
+function ProjectionRealityPanel({
+  comparisons,
+}: {
+  comparisons: TwinProjectionComparison[];
+}) {
+  return (
+    <div className="mt-6 rounded-lg border border-white/[0.06] bg-black/20 p-5">
+      <div className="mb-4 flex flex-col gap-2 border-b border-white/[0.05] pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="micro-label">Projection vs Reality</p>
+          <p className="mt-2 text-sm text-white/58">
+            Aeonvera compares saved simulations against actual outcomes as new data arrives.
+          </p>
+        </div>
+        <span className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+          {comparisons.length ? `${comparisons.length} tracked` : "Waiting"}
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        {comparisons.length ? (
+          comparisons.map((comparison) => (
+            <div
+              key={`${comparison.title}-${comparison.projected || comparison.actual || comparison.status}`}
+              className="rounded-lg border border-white/[0.055] bg-white/[0.022] p-4"
+            >
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm text-white/76">{comparison.title}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/40">{comparison.detail}</p>
+                </div>
+                <span className={projectionStatusClassName(comparison.status)}>
+                  {comparison.status.replace(/_/g, " ")}
+                </span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {comparison.projected && (
+                  <span className="rounded-md border border-[#dabc73]/18 bg-[#dabc73]/[0.055] px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] royal-text">
+                    {comparison.projected}
+                  </span>
+                )}
+                {comparison.actual && (
+                  <span className="rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-white/46">
+                    {comparison.actual}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className="text-sm leading-6 text-white/38">
+            Run and save a projection, then add outcomes or another biological-age update. Aeonvera will begin comparing the simulation against reality here.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function projectionStatusClassName(status: TwinProjectionComparison["status"]) {
+  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+
+  if (status === "on_track") return `${base} royal-text bg-[#dabc73]/[0.08]`;
+  if (status === "off_track") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
+  if (status === "tracking") return `${base} text-white/50 bg-white/[0.045]`;
+  return `${base} text-white/28 bg-white/[0.025]`;
 }
 
 function ProjectionMetric({

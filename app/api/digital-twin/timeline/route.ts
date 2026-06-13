@@ -13,7 +13,7 @@ type TimelineEvent = {
   href?: string;
 };
 
-type TimelineRow = Record<string, string | number | boolean | string[] | null | undefined>;
+type TimelineRow = Record<string, unknown>;
 
 type TwinChange = {
   metric: string;
@@ -50,8 +50,17 @@ type TwinScenarioPrompt = {
   scenarioIds: string[];
 };
 
+type TwinProjectionComparison = {
+  actual?: string;
+  detail: string;
+  projected?: string;
+  status: "pending" | "tracking" | "on_track" | "off_track";
+  title: string;
+};
+
 type TwinModel = {
   domains: TwinDomain[];
+  projectionComparisons: TwinProjectionComparison[];
   readiness: {
     detail: string;
     score: number;
@@ -195,7 +204,7 @@ export async function GET() {
       safeQuery(() =>
         admin
           .from("future_self_scenarios")
-          .select("id, title, description, share_token, is_public, version_number, created_at")
+          .select("id, title, description, share_token, is_public, version_number, projection, future_self, created_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(10)
@@ -586,6 +595,11 @@ function buildTwinModel({
 
   return {
     domains,
+    projectionComparisons: buildProjectionComparisons({
+      bioAge,
+      outcomes,
+      scenarios,
+    }),
     readiness: {
       detail: buildTwinReadinessDetail({
         bioAge,
@@ -628,6 +642,114 @@ function buildDomain({
     score,
     status: score >= 72 ? "strong" : score >= 38 ? "learning" : "thin",
   };
+}
+
+function buildProjectionComparisons({
+  bioAge,
+  outcomes,
+  scenarios,
+}: {
+  bioAge: TimelineRow[];
+  outcomes: TimelineRow[];
+  scenarios: TimelineRow[];
+}): TwinProjectionComparison[] {
+  return scenarios
+    .slice(0, 4)
+    .map((scenario) => {
+      const createdAt = Date.parse(text(scenario.created_at));
+      const projection = safeObject(scenario.projection);
+      const futureSelf = safeObject(scenario.future_self);
+      const baseline = safeObject(futureSelf.baseline);
+      const projectedImprovement =
+        numberOrNull(projection.projectedBiologicalAgeImprovement) ??
+        numberOrNull(projection.projectedAgeDeltaImprovement);
+      const projectedBio =
+        numberOrNull(projection.biologicalAge) ??
+        numberOrNull(projection.projectedBiologicalAge);
+      const baselineBio =
+        numberOrNull(baseline.biologicalAge) ||
+        numberOrNull(baseline.biological_age) ||
+        null;
+      const actualBio = bioAge.find((row) => {
+        const measuredAt = Date.parse(text(row.created_at));
+        return Number.isFinite(createdAt) && Number.isFinite(measuredAt) && measuredAt > createdAt;
+      });
+      const actualBioValue = numberOrNull(actualBio?.biological_age);
+      const actualImprovement =
+        baselineBio != null && actualBioValue != null
+          ? round(baselineBio - actualBioValue, 1)
+          : null;
+      const outcomeCount = outcomes.filter((row) => {
+        const measuredAt = Date.parse(text(row.measured_at) || text(row.created_at));
+        return Number.isFinite(createdAt) && Number.isFinite(measuredAt) && measuredAt > createdAt;
+      }).length;
+
+      const status: TwinProjectionComparison["status"] =
+        actualImprovement == null
+          ? outcomeCount
+            ? "tracking"
+            : "pending"
+          : projectedImprovement != null && actualImprovement >= projectedImprovement * 0.65
+            ? "on_track"
+            : actualImprovement > 0
+              ? "tracking"
+              : "off_track";
+
+      return {
+        actual:
+          actualImprovement != null
+            ? `${actualImprovement > 0 ? "+" : ""}${actualImprovement.toFixed(1)} yrs actual`
+            : outcomeCount
+              ? `${outcomeCount} outcome${outcomeCount === 1 ? "" : "s"} logged`
+              : undefined,
+        detail: buildProjectionComparisonDetail({
+          actualImprovement,
+          outcomeCount,
+          projectedImprovement,
+          status,
+        }),
+        projected:
+          projectedImprovement != null
+            ? `${projectedImprovement.toFixed(1)} yrs projected`
+            : projectedBio != null
+              ? `${projectedBio.toFixed(1)} yrs target`
+              : undefined,
+        status,
+        title: text(scenario.title) || "Saved projection",
+      };
+    })
+    .filter((item) => item.projected || item.actual)
+    .slice(0, 3);
+}
+
+function buildProjectionComparisonDetail({
+  actualImprovement,
+  outcomeCount,
+  projectedImprovement,
+  status,
+}: {
+  actualImprovement: number | null;
+  outcomeCount: number;
+  projectedImprovement: number | null;
+  status: TwinProjectionComparison["status"];
+}) {
+  if (status === "on_track") {
+    return "Reality is tracking close to the projection. Aeonvera can now reinforce the protocol pattern that appears to be working.";
+  }
+
+  if (status === "off_track") {
+    return "Reality is not matching the projection yet. Aeonvera should reduce friction, reassess assumptions, or choose a more realistic lever.";
+  }
+
+  if (actualImprovement != null && projectedImprovement != null) {
+    return `The projection expected ${projectedImprovement.toFixed(1)} years of separation; reality has moved ${actualImprovement.toFixed(1)} years so far.`;
+  }
+
+  if (outcomeCount) {
+    return "Outcome feedback exists after this projection, but Aeonvera needs another biological-age point to quantify reality versus the simulation.";
+  }
+
+  return "This projection is saved. Add outcomes or another biological-age update and Aeonvera will compare the simulation against reality.";
 }
 
 function buildTwinReadinessDetail({
@@ -916,6 +1038,12 @@ function text(value: unknown) {
 function labelize(value: unknown) {
   if (typeof value !== "string") return "Health signal";
   return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function safeObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 function firstArrayText(value: unknown) {
