@@ -41,6 +41,7 @@ export default function Header() {
     { href: "/memory", label: "Memory" },
     { href: "/digital-twin", label: "Digital Twin" },
     { href: "/network", label: "Network" },
+    { href: "/life-os", label: "Life OS" },
     { href: "/assessment", label: "Assessment" },
     { href: "/report", label: "Report" },
   ];

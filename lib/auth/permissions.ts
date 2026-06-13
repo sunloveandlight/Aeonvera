@@ -20,6 +20,7 @@ export type Feature =
   | "lab_trends"
   | "digital_twin"
   | "physician_exports"
+  | "life_os"
   | "sovereign_modalities"
   | "concierge_intelligence";
 
@@ -55,6 +56,7 @@ const PLAN_PERMISSIONS: Record<Plan, Feature[]> = {
     "lab_trends",
     "digital_twin",
     "physician_exports",
+    "life_os",
     "sovereign_modalities",
     "concierge_intelligence",
   ],
@@ -139,6 +141,12 @@ export const FEATURE_ENTITLEMENTS: FeatureEntitlement[] = [
     label: "Physician exports",
     minimumPlan: "sovereign",
     description: "Physician-ready longitudinal export bundle.",
+  },
+  {
+    feature: "life_os",
+    label: "Life OS",
+    minimumPlan: "sovereign",
+    description: "Whole-life trajectory intelligence across capability, cognition, purpose, and resilience.",
   },
   {
     feature: "sovereign_modalities",
