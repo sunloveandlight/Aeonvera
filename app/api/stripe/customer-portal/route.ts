@@ -79,6 +79,7 @@ export async function POST(req: NextRequest) {
     }
 
     let flowData: Stripe.BillingPortal.SessionCreateParams.FlowData | undefined;
+    let fallbackFlowData: Stripe.BillingPortal.SessionCreateParams.FlowData | undefined;
 
     if (isPlanChange && !subscriptionId) {
       const subscriptions = await stripe.subscriptions.list({
@@ -97,6 +98,18 @@ export async function POST(req: NextRequest) {
       const subscriptionItem = subscription.items.data[0];
 
       if (subscriptionItem?.id) {
+        fallbackFlowData = {
+          type: "subscription_update",
+          subscription_update: {
+            subscription: subscription.id,
+          },
+          after_completion: {
+            type: "redirect",
+            redirect: {
+              return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?plan=${targetPlan}`,
+            },
+          },
+        };
         flowData = {
           type: "subscription_update_confirm",
           subscription_update_confirm: {
@@ -119,17 +132,22 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: profile.stripe_customer_id,
-      return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing`,
-      ...(flowData ? { flow_data: flowData } : {}),
+    const portalSession = await createPortalSessionWithFallback({
+      customerId: profile.stripe_customer_id,
+      fallbackFlowData,
+      flowData,
+      stripe,
     });
 
     return NextResponse.json({ url: portalSession.url });
   } catch (error) {
     console.error("Customer Portal Error:", error);
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Could not open Stripe billing management.";
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: message },
       { status: 500 }
     );
   }
@@ -139,4 +157,39 @@ function sanitizePlan(value: unknown): Plan | null {
   return value === "core" || value === "elite" || value === "sovereign"
     ? value
     : null;
+}
+
+async function createPortalSessionWithFallback({
+  customerId,
+  fallbackFlowData,
+  flowData,
+  stripe,
+}: {
+  customerId: string;
+  fallbackFlowData?: Stripe.BillingPortal.SessionCreateParams.FlowData;
+  flowData?: Stripe.BillingPortal.SessionCreateParams.FlowData;
+  stripe: Stripe;
+}) {
+  const baseParams = {
+    customer: customerId,
+    return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing`,
+  };
+
+  try {
+    return await stripe.billingPortal.sessions.create({
+      ...baseParams,
+      ...(flowData ? { flow_data: flowData } : {}),
+    });
+  } catch (error) {
+    if (!fallbackFlowData || !flowData) {
+      throw error;
+    }
+
+    console.warn("Stripe targeted plan change failed, opening subscription update flow.", error);
+
+    return stripe.billingPortal.sessions.create({
+      ...baseParams,
+      flow_data: fallbackFlowData,
+    });
+  }
 }
