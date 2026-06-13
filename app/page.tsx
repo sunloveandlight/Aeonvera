@@ -2,15 +2,23 @@
 
 import { type CSSProperties, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Dna, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarCheck,
+  Check,
+  Database,
+  Dna,
+  ShieldCheck,
+  Smartphone,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { isSubscriptionValid, type SubscriptionStatus } from "@/lib/auth/permissions";
 
 const METRICS = [
-  ["47+", "inputs"],
-  ["8", "domains"],
-  ["90", "day plan"],
-  ["24/7", "monitoring"],
+  ["47+", "health signals"],
+  ["8", "clinical domains"],
+  ["90", "day protocol"],
+  ["24/7", "coach memory"],
 ];
 
 const DOMAINS = [
@@ -26,23 +34,52 @@ const DOMAINS = [
 
 const CAPABILITIES = [
   {
-    title: "Biological age model",
-    body: "A structured assessment turns biometrics, lifestyle data, and optional labs into a clear biological age estimate.",
+    title: "Measure the body",
+    body: "Biological age, recovery, sleep, activity, biomarkers, and risk signals are organized into one private health state.",
   },
   {
-    title: "Clinical-domain scoring",
-    body: "Eight health domains are evaluated independently so you can see what is driving the result.",
+    title: "Understand the leverage",
+    body: "Aeonvera separates noise from signal, explains what is driving the result, and shows why each recommendation matters.",
   },
   {
-    title: "Decision-ready report",
-    body: "Your report prioritizes the highest-leverage changes and converts them into a practical 90-day plan.",
+    title: "Act without friction",
+    body: "Protocols become reminders, calendar blocks, mobile notifications, and adaptive coaching that fits your real life.",
   },
 ];
 
 const STEPS = [
-  ["Assess", "Complete a guided profile across core healthspan inputs."],
-  ["Understand", "Review biological age, risk context, and confidence."],
-  ["Improve", "Follow a focused plan and update the model as data changes."],
+  ["Signal", "Wearables, labs, assessments, calendars, and feedback rebuild your live health state."],
+  ["Intelligence", "Aeonvera reasons across the domains and selects the highest-leverage next move."],
+  ["Execution", "The app turns the plan into reminders, calendar blocks, notifications, and follow-up memory."],
+];
+
+const ECOSYSTEM = [
+  {
+    icon: Database,
+    title: "Labs + biomarkers",
+    body: "ApoB, glucose, hs-CRP, hormones, thyroid, vitamin D, and more.",
+  },
+  {
+    icon: Dna,
+    title: "Wearables + recovery",
+    body: "Oura, Apple Health imports, HRV, sleep, resting heart rate, and VO2 max.",
+  },
+  {
+    icon: Smartphone,
+    title: "Mobile companion",
+    body: "Voice, notifications, reminders, action feedback, and native calendar execution.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Autopilot execution",
+    body: "Daily plans move from insight into the actual structure of your day.",
+  },
+];
+
+const INTELLIGENCE_LOOP = [
+  ["Reads", "Sleep, recovery, labs, assessment, adherence, and preferences."],
+  ["Decides", "Ranks the next action by leverage, confidence, timing, and friction."],
+  ["Acts", "Schedules, reminds, explains, adapts, and remembers what works."],
 ];
 
 type Plan = "core" | "elite" | "sovereign";
@@ -362,17 +399,30 @@ export default function HomePage() {
           <div className="flex flex-col justify-between">
             <div className="premium-status mb-8 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm">
               <ShieldCheck size={16} className="royal-text" />
-              Private longevity intelligence
+              Private health intelligence that acts
             </div>
 
             <h1 className="max-w-4xl text-5xl font-light leading-[1.04] text-white md:text-6xl xl:text-7xl">
-              Know your biological age. Improve it with precision.
+              Your body, understood in real time.
             </h1>
 
             <p className="mt-7 max-w-2xl text-lg leading-8 text-white/60 md:text-xl">
-              Aeonvera gives you a decision-ready view of your healthspan:
-              biological age, domain signals, risk context, and a practical plan.
+              Aeonvera turns labs, wearables, biological age, recovery, and
+              behavior into a private operating system for your health. It does
+              not just measure. It explains, plans, reminds, schedules, and adapts.
             </p>
+
+            <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
+              {["Measure", "Understand", "Act"].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-lg border border-white/[0.08] bg-white/[0.035] px-4 py-3 text-sm text-white/62"
+                >
+                  <span className="royal-text mr-2">•</span>
+                  {item}
+                </div>
+              ))}
+            </div>
 
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -392,6 +442,36 @@ export default function HomePage() {
           </div>
 
           <HeroVisual restingHeartRate={restingHeartRate} />
+        </div>
+      </section>
+
+      <section className="px-6 pb-24 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <p className="text-eyebrow">Ecosystem</p>
+              <h2 className="mt-4 max-w-3xl text-3xl font-light leading-tight md:text-5xl">
+                Every signal becomes part of the same intelligence layer.
+              </h2>
+            </div>
+            <p className="max-w-md text-sm leading-7 text-white/50">
+              Wearables measure continuously. Aeonvera connects the measurement
+              layer to reasoning, coaching, protocol execution, and memory.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {ECOSYSTEM.map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="premium-surface rounded-lg p-6">
+                  <Icon size={20} className="royal-text" />
+                  <h3 className="mt-8 text-lg font-light text-white">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-white/52">{item.body}</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -437,8 +517,8 @@ export default function HomePage() {
                 A healthspan dashboard that stays out of your way.
               </h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-white/55">
-                No decorative complexity. No noisy wellness feed. Just the
-                numbers that matter, the domains behind them, and what to do next.
+                No noisy wellness feed. Aeonvera keeps the decisive signals in
+                view, then moves the next action into your phone, calendar, and day.
               </p>
             </div>
 
@@ -460,7 +540,7 @@ export default function HomePage() {
             <div>
               <p className="text-eyebrow">Coverage</p>
               <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
-                One model across eight clinical domains.
+                One model across the domains that shape healthspan.
               </h2>
             </div>
             <div className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
@@ -479,7 +559,7 @@ export default function HomePage() {
           <div className="mb-12 max-w-3xl">
             <p className="text-eyebrow">Platform</p>
             <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
-              Professional health intelligence, reduced to essentials.
+              From signal to protocol to execution.
             </h2>
           </div>
 
@@ -497,11 +577,28 @@ export default function HomePage() {
 
       <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
+          <div className="mb-14 grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+            <div>
+              <p className="text-eyebrow">Intelligence Loop</p>
+              <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
+                The system gets sharper as your life produces signal.
+              </h2>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {INTELLIGENCE_LOOP.map(([title, body]) => (
+                <div key={title} className="rounded-lg border border-white/[0.08] bg-white/[0.035] p-5">
+                  <p className="text-sm font-medium royal-text">{title}</p>
+                  <p className="mt-3 text-sm leading-6 text-white/52">{body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
               <p className="text-eyebrow">Workflow</p>
               <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
-                Built for repeatable progress.
+                Built for progress you can actually live.
               </h2>
             </div>
             <div className="space-y-6">
@@ -525,7 +622,7 @@ export default function HomePage() {
             <div>
               <p className="text-eyebrow">Membership</p>
               <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
-                Choose your level of support.
+                Choose how much intelligence you want Aeonvera to run.
               </h2>
             </div>
             <Link href="/pricing" className="inline-flex items-center gap-2 text-sm font-medium royal-text">
@@ -579,10 +676,11 @@ export default function HomePage() {
       <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-4xl font-light leading-tight md:text-6xl">
-            Start with the number that changes the conversation.
+            Start with the number. Build the operating system.
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/55">
-            Your biological age is the baseline. Aeonvera helps you make it useful.
+            Biological age is the baseline. Aeonvera turns it into a living
+            plan for recovery, performance, prevention, and long-term healthspan.
           </p>
           <Link
             href={authenticated ? "/assessment" : "/login?mode=signup"}
