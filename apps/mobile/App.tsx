@@ -1,6 +1,14 @@
 import "react-native-url-polyfill/auto";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import {
   Alert,
   Animated,
@@ -190,9 +198,14 @@ type DailyExecutionPlan = {
     items?: DailyPlanItem[];
     memory?: {
       completion_rate?: number;
+      avoid_morning_training?: boolean;
+      coaching_tone?: "direct" | "supportive" | "balanced";
       friction_domains?: string[];
       plan_load?: "light" | "steady" | "ambitious";
+      preference_load?: "light" | "steady" | "ambitious";
+      reminder_window?: string;
       strong_domains?: string[];
+      training_time?: "morning" | "midday" | "later";
       total_signals?: number;
     };
     principles?: string[];
@@ -222,6 +235,21 @@ type DiagnosticCheck = {
   detail: string;
   label: string;
   status: "pass" | "warn" | "fail";
+};
+
+type ActionReceipt = {
+  createdAt: string;
+  detail: string;
+  id: string;
+  reason?: string;
+  title: string;
+  tone?: "success" | "info" | "warning";
+};
+
+type AeonveraNotice = {
+  detail: string;
+  label: string;
+  title: string;
 };
 
 type AgentChatMessage = {
@@ -455,6 +483,7 @@ export default function App() {
   >({});
   const [coachMessages, setCoachMessages] = useState<CoachMessage[]>([]);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [actionReceipts, setActionReceipts] = useState<ActionReceipt[]>([]);
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [inboxNotice, setInboxNotice] = useState<string | null>(null);
@@ -498,6 +527,17 @@ export default function App() {
   const [lastVoiceTranscript, setLastVoiceTranscript] = useState<string | null>(null);
   const [lastVoiceAnswer, setLastVoiceAnswer] = useState<string | null>(null);
   const [voiceSpeaking, setVoiceSpeaking] = useState(false);
+
+  function pushActionReceipt(receipt: Omit<ActionReceipt, "createdAt" | "id">) {
+    const nextReceipt: ActionReceipt = {
+      ...receipt,
+      createdAt: new Date().toISOString(),
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    };
+
+    setActionNotice(receipt.detail);
+    setActionReceipts((current) => [nextReceipt, ...current].slice(0, 4));
+  }
   const [notificationFocusTick, setNotificationFocusTick] = useState(0);
   const scrollRef = useRef<ScrollView | null>(null);
   const inboxOffsetY = useRef(0);
@@ -1081,7 +1121,12 @@ export default function App() {
     }
 
     setAutopilotPreferences(result.preferences as AutopilotPreferences);
-    setActionNotice("Autopilot preferences updated.");
+    pushActionReceipt({
+      title: "Autopilot updated",
+      detail: "Aeonvera saved the new control settings for future plans.",
+      reason: "Your daily execution layer will use these preferences before placing reminders or calendar blocks.",
+      tone: "success",
+    });
   }
 
   async function updateDailyPlanStatus(
@@ -1134,11 +1179,14 @@ export default function App() {
     ) {
       const existingCount = activeArtifacts.activeCalendar + activeArtifacts.activeNotifications;
 
-      setActionNotice(
-        existingCount
-          ? "Today is already prepared. Tap Recreate only if you want Aeonvera to add a fresh set."
-          : "Today was prepared earlier. If you deleted the calendar events, Aeonvera can recreate them."
-      );
+      pushActionReceipt({
+        title: existingCount ? "Plan already prepared" : "Plan can be restored",
+        detail: existingCount
+          ? "Today is already prepared. Recreate only if you want Aeonvera to add a fresh set."
+          : "Today was prepared earlier. If you deleted the calendar events, Aeonvera can recreate them.",
+        reason: "Aeonvera checked the device artifacts first so it does not create duplicates without your approval.",
+        tone: existingCount ? "info" : "warning",
+      });
       Alert.alert(
         "Today is already prepared",
         existingCount
@@ -1229,7 +1277,12 @@ export default function App() {
             ? "Today was already prepared. No duplicate calendar events were created."
             : "Today is accepted. Aeonvera will hold the plan in your active queue.";
 
-      setActionNotice(confirmation);
+      pushActionReceipt({
+        title: "Today is prepared",
+        detail: confirmation,
+        reason: "Aeonvera placed only the highest-leverage actions and skipped duplicates it could still detect.",
+        tone: scheduled || notified ? "success" : "info",
+      });
       playSoftHaptic();
       Alert.alert("Today is prepared", confirmation);
     } finally {
@@ -1239,7 +1292,12 @@ export default function App() {
 
   async function skipDailyPlan() {
     await updateDailyPlanStatus("skipped");
-    setActionNotice("Autopilot paused for today. Your protocol remains available below.");
+    pushActionReceipt({
+      title: "Autopilot paused",
+      detail: "Autopilot paused for today. Your protocol remains available below.",
+      reason: "Aeonvera will keep the plan visible without placing more execution blocks today.",
+      tone: "info",
+    });
     playSoftHaptic();
   }
 
@@ -1514,7 +1572,12 @@ export default function App() {
     const prepareAction = actions.find((action) => action.type === "prepare_today");
     if (prepareAction) {
       setActiveView("today");
-      setActionNotice("Aeonvera is preparing and placing today's highest-leverage actions.");
+      pushActionReceipt({
+        title: "Preparing today",
+        detail: "Aeonvera is preparing and placing today's highest-leverage actions.",
+        reason: "The agent chose this because your current plan is ready to become real calendar or notification support.",
+        tone: "info",
+      });
       await executePrepareTodayFromAgent();
       playSoftHaptic();
       return;
@@ -1530,7 +1593,12 @@ export default function App() {
 
     if (actions.some((action) => action.type === "open_memory")) {
       setActiveView("agent");
-      setActionNotice("Aeonvera surfaced your personal memory model.");
+      pushActionReceipt({
+        title: "Memory surfaced",
+        detail: "Aeonvera surfaced your personal memory model.",
+        reason: "This shows what the coach has learned about your motivation, friction, and best interventions.",
+        tone: "info",
+      });
       playSoftHaptic();
       return;
     }
@@ -1556,12 +1624,22 @@ export default function App() {
 
     if (!items.length) {
       await loadCompanionData(session);
-      setActionNotice("Aeonvera refreshed Today. Create or refresh a protocol before it can schedule actions.");
+      pushActionReceipt({
+        title: "Protocol needed",
+        detail: "Aeonvera refreshed Today. Create or refresh a protocol before it can schedule actions.",
+        reason: "Autopilot can only place actions that already exist in your active protocol.",
+        tone: "warning",
+      });
       return;
     }
 
     if (acceptingDailyPlan) {
-      setActionNotice("Aeonvera is already preparing today.");
+      pushActionReceipt({
+        title: "Already preparing",
+        detail: "Aeonvera is already preparing today.",
+        reason: "The current placement run is still active, so Aeonvera will not start a second one.",
+        tone: "info",
+      });
       return;
     }
 
@@ -1573,7 +1651,12 @@ export default function App() {
 
     if (!item) {
       await loadCompanionData(session);
-      setActionNotice("Aeonvera refreshed Today, but there is no protocol action ready to remind you about yet.");
+      pushActionReceipt({
+        title: "No reminder target",
+        detail: "Aeonvera refreshed Today, but there is no protocol action ready to remind you about yet.",
+        reason: "Create or refresh a protocol so the agent has a concrete action to hold for later.",
+        tone: "warning",
+      });
       return;
     }
 
@@ -1581,9 +1664,14 @@ export default function App() {
     const notificationId = await scheduleActionReminder(item, item.scope, preset, "once", true);
 
     if (notificationId) {
-      setActionNotice(
-        `Aeonvera scheduled a phone reminder for ${item.domain || "your protocol"} ${preset === "tomorrow" ? "tomorrow" : "soon"}.`
-      );
+      pushActionReceipt({
+        title: "Reminder scheduled",
+        detail: `Aeonvera scheduled a phone reminder for ${item.domain || "your protocol"} ${
+          preset === "tomorrow" ? "tomorrow" : "soon"
+        }.`,
+        reason: "The agent chose a notification because this action needs a nudge more than a calendar block.",
+        tone: "success",
+      });
       Alert.alert(
         "Reminder scheduled",
         `Aeonvera will remind you about ${item.action}.`
@@ -1595,7 +1683,12 @@ export default function App() {
     const item = pickBestExecutableAction("training");
 
     if (!item) {
-      setActionNotice("Aeonvera could not find a training block to move yet.");
+      pushActionReceipt({
+        title: "No training block found",
+        detail: "Aeonvera could not find a training block to move yet.",
+        reason: "Add a training action to your protocol and the agent can move it into the calendar.",
+        tone: "warning",
+      });
       Alert.alert(
         "No training block found",
         "Aeonvera could not find a training action in today’s protocol. Add or refresh a protocol first."
@@ -1607,9 +1700,14 @@ export default function App() {
     const event = await scheduleActionToNativeCalendar(item, preset, true);
 
     if (event) {
-      setActionNotice(
-        `Aeonvera moved ${item.domain || "training"} to ${formatReminderDate(new Date(event.scheduledFor))}.`
-      );
+      pushActionReceipt({
+        title: "Training moved",
+        detail: `Aeonvera moved ${item.domain || "training"} to ${formatReminderDate(
+          new Date(event.scheduledFor)
+        )}.`,
+        reason: event.reason || "Aeonvera selected the next clean calendar window.",
+        tone: "success",
+      });
       Alert.alert(
         "Training moved",
         `Aeonvera added it to your calendar for ${formatReminderDate(new Date(event.scheduledFor))}.`
@@ -1626,22 +1724,42 @@ export default function App() {
     }
 
     if (provider === "apple_health") {
-      setActionNotice("Aeonvera opened Settings. Import Apple Health from the source controls.");
+      pushActionReceipt({
+        title: "Apple Health source",
+        detail: "Aeonvera opened Settings. Import Apple Health from the source controls.",
+        reason: "Wearable and Health signals strengthen the agent's timing, recovery, and readiness decisions.",
+        tone: "info",
+      });
       return;
     }
 
     if (provider === "whoop") {
-      setActionNotice("Aeonvera opened Settings. Connect WHOOP when your developer access is ready.");
+      pushActionReceipt({
+        title: "WHOOP source",
+        detail: "Aeonvera opened Settings. Connect WHOOP when your developer access is ready.",
+        reason: "WHOOP recovery and strain can become one of the inputs behind daily plan intensity.",
+        tone: "info",
+      });
       return;
     }
 
-    setActionNotice("Aeonvera opened the source layer. Review wearables, labs, calendar, and notifications.");
+    pushActionReceipt({
+      title: "Source layer opened",
+      detail: "Aeonvera opened the source layer. Review wearables, labs, calendar, and notifications.",
+      reason: "More source coverage gives the agent better judgment before it acts.",
+      tone: "info",
+    });
   }
 
   async function syncOuraFromAgent() {
     if (!session) return;
 
-    setActionNotice("Aeonvera is refreshing Oura now.");
+    pushActionReceipt({
+      title: "Refreshing Oura",
+      detail: "Aeonvera is refreshing Oura now.",
+      reason: "New recovery and sleep signals can change today's readiness and future plan timing.",
+      tone: "info",
+    });
 
     const response = await fetch(`${appUrl}/api/wearables/oura/sync`, {
       method: "POST",
@@ -1656,7 +1774,12 @@ export default function App() {
     if (!response.ok) {
       const message =
         result?.error || "Aeonvera could not refresh Oura. Check the connection in Settings.";
-      setActionNotice(message);
+      pushActionReceipt({
+        title: "Oura needs attention",
+        detail: message,
+        reason: "Aeonvera could not complete the wearable refresh from the current connection state.",
+        tone: "warning",
+      });
       Alert.alert("Oura sync", message);
       return;
     }
@@ -1666,7 +1789,12 @@ export default function App() {
     const message = imported
       ? `Oura refreshed. Aeonvera imported ${imported} new signal${imported === 1 ? "" : "s"}.`
       : "Oura refreshed. Aeonvera did not find new signals in this window.";
-    setActionNotice(message);
+    pushActionReceipt({
+      title: "Oura refreshed",
+      detail: message,
+      reason: "Aeonvera will fold these signals into readiness, recovery, and plan timing.",
+      tone: "success",
+    });
     Alert.alert("Oura refreshed", message);
   }
 
@@ -1871,7 +1999,12 @@ export default function App() {
       const message = event
         ? `Feedback saved. Aeonvera rescheduled it for ${formatReminderDate(new Date(event.scheduledFor))}.`
         : "Feedback saved. Aeonvera could not create a new calendar block.";
-      setActionNotice(message);
+      pushActionReceipt({
+        title: "Feedback integrated",
+        detail: message,
+        reason: "Aeonvera uses this response to adjust timing and reduce future friction.",
+        tone: event ? "success" : "warning",
+      });
       Alert.alert("Feedback saved", message);
     } else {
       const message =
@@ -1880,7 +2013,12 @@ export default function App() {
           : outcome === "partly"
             ? "Marked partly complete. Aeonvera will look for friction, not failure."
             : "Marked missed. Aeonvera will adapt the timing and load.";
-      setActionNotice(message);
+      pushActionReceipt({
+        title: "Feedback integrated",
+        detail: message,
+        reason: "This becomes part of your execution memory so future plans are more personal.",
+        tone: outcome === "done" ? "success" : "info",
+      });
       Alert.alert("Feedback saved", message);
     }
 
@@ -1992,12 +2130,15 @@ export default function App() {
       },
     });
 
-    setActionNotice(
-      `Phone notification scheduled ${formatReminderDate(scheduledFor)}${
-        repeat === "once" ? "" : `, ${repeat}`
-      }.`
-    );
     if (!silent) {
+      pushActionReceipt({
+        title: "Notification scheduled",
+        detail: `Phone notification scheduled ${formatReminderDate(scheduledFor)}${
+          repeat === "once" ? "" : `, ${repeat}`
+        }.`,
+        reason: "Aeonvera chose a reminder because this action benefits from a timely nudge, not a full calendar block.",
+        tone: "success",
+      });
       Alert.alert(
         "Phone notification scheduled",
         `Aeonvera will send a phone notification ${formatReminderDate(scheduledFor)}${
@@ -2142,11 +2283,14 @@ export default function App() {
 
     const calendarAppName = Platform.OS === "ios" ? "Apple Calendar" : "Android Calendar";
     if (!silent) {
-      setActionNotice(
-        `${calendarAppName} event added ${formatReminderDate(scheduledFor)} in ${
+      pushActionReceipt({
+        title: `${calendarAppName} updated`,
+        detail: `${calendarAppName} event added ${formatReminderDate(scheduledFor)} in ${
           calendar.title || "your calendar"
-        }. ${schedule.reason}`
-      );
+        }. ${schedule.reason}`,
+        reason: "Aeonvera selected the best clean window it could find on your device calendar.",
+        tone: "success",
+      });
       playSoftHaptic();
     }
     if (!silent) {
@@ -2543,6 +2687,7 @@ export default function App() {
               <TodayView
                 adherenceEvents={adherenceEvents}
                 actionNotice={actionNotice}
+                actionReceipts={actionReceipts}
                 acceptingDailyPlan={acceptingDailyPlan}
                 autopilotMessage={autopilotMessage}
                 autopilotPreferences={autopilotPreferences}
@@ -2565,6 +2710,7 @@ export default function App() {
                 localReminders={localReminders}
                 pendingFeedback={pendingFeedback}
                 recordExecutionFeedback={recordExecutionFeedback}
+                setActionReceipts={setActionReceipts}
                 setActionNotice={setActionNotice}
                 onAskWhy={(question) => {
                   playSoftHaptic();
@@ -2681,6 +2827,7 @@ function TodayView({
   adjustAutopilot,
   adherenceEvents,
   actionNotice,
+  actionReceipts,
   autopilotMessage,
   autopilotPreferences,
   biologicalAge,
@@ -2696,6 +2843,7 @@ function TodayView({
   pendingFeedback,
   protocol,
   recordExecutionFeedback,
+  setActionReceipts,
   skipDailyPlan,
   setActionNotice,
 }: {
@@ -2704,6 +2852,7 @@ function TodayView({
   adjustAutopilot: () => void;
   adherenceEvents: AdherenceEvent[];
   actionNotice: string | null;
+  actionReceipts: ActionReceipt[];
   autopilotMessage: string | null;
   autopilotPreferences: AutopilotPreferences | null;
   biologicalAge: BiologicalAgePoint | null;
@@ -2722,6 +2871,7 @@ function TodayView({
     feedback: PendingFeedback,
     outcome: "done" | "partly" | "missed" | "reschedule"
   ) => Promise<void>;
+  setActionReceipts: Dispatch<SetStateAction<ActionReceipt[]>>;
   skipDailyPlan: () => Promise<void>;
   setActionNotice: (message: string | null) => void;
 }) {
@@ -2755,6 +2905,13 @@ function TodayView({
   const commandRecommendation = buildMobileRecommendation({
     dailyPlan,
     executionSummary,
+    primaryAction,
+  });
+  const noticedSignals = buildAeonveraNotices({
+    dailyPlan,
+    executionSummary,
+    localReminders,
+    nativeCalendarEvents,
     primaryAction,
   });
 
@@ -2828,6 +2985,15 @@ function TodayView({
         protocol={protocol}
         skipDailyPlan={skipDailyPlan}
       />
+
+      <ActionReceiptsCard
+        receipts={actionReceipts}
+        onClear={(receiptId) =>
+          setActionReceipts((current) => current.filter((receipt) => receipt.id !== receiptId))
+        }
+      />
+
+      <AeonveraNoticedCard notices={noticedSignals} onAskWhy={onAskWhy} />
 
       <WeeklyExecutionReviewCard executionSummary={executionSummary} />
 
@@ -3553,6 +3719,83 @@ function MobileUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | n
           ))}
         </View>
       ) : null}
+    </View>
+  );
+}
+
+function ActionReceiptsCard({
+  onClear,
+  receipts,
+}: {
+  onClear: (receiptId: string) => void;
+  receipts: ActionReceipt[];
+}) {
+  if (!receipts.length) return null;
+
+  return (
+    <View style={styles.agentReceiptPanel}>
+      <View style={styles.receiptHeader}>
+        <View>
+          <Text style={styles.cardLabel}>Action Receipts</Text>
+          <Text style={styles.receiptTitle}>What Aeonvera just did</Text>
+        </View>
+        <Text style={styles.receiptCount}>{receipts.length}</Text>
+      </View>
+      <View style={styles.receiptList}>
+        {receipts.slice(0, 3).map((receipt) => (
+          <Pressable
+            key={receipt.id}
+            style={[
+              styles.receiptItem,
+              receipt.tone === "warning" && styles.receiptItemWarning,
+            ]}
+            onPress={() => onClear(receipt.id)}
+          >
+            <View style={styles.receiptItemHeader}>
+              <Text style={styles.actionNoticeLabel}>{receipt.title}</Text>
+              <Text style={styles.receiptTime}>{formatCompactReceiptTime(receipt.createdAt)}</Text>
+            </View>
+            <Text style={styles.actionNoticeText}>{receipt.detail}</Text>
+            {receipt.reason ? (
+              <Text style={styles.receiptReason}>Why Aeonvera did this: {receipt.reason}</Text>
+            ) : null}
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function AeonveraNoticedCard({
+  notices,
+  onAskWhy,
+}: {
+  notices: AeonveraNotice[];
+  onAskWhy: (question?: string) => void;
+}) {
+  if (!notices.length) return null;
+
+  return (
+    <View style={styles.noticedPanel}>
+      <View style={styles.receiptHeader}>
+        <View>
+          <Text style={styles.cardLabel}>What Aeonvera Noticed</Text>
+          <Text style={styles.receiptTitle}>The signal behind today</Text>
+        </View>
+      </View>
+      <View style={styles.noticeList}>
+        {notices.slice(0, 3).map((notice) => (
+          <Pressable
+            key={`${notice.label}-${notice.title}`}
+            style={styles.noticeItem}
+            onPress={() => onAskWhy(`Why did Aeonvera notice this: ${notice.title}?`)}
+          >
+            <Text style={styles.actionNoticeLabel}>{notice.label}</Text>
+            <Text style={styles.noticeTitle}>{notice.title}</Text>
+            <Text style={styles.actionNoticeText}>{notice.detail}</Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
@@ -4501,6 +4744,118 @@ function buildMobileRecommendation({
   };
 }
 
+function buildAeonveraNotices({
+  dailyPlan,
+  executionSummary,
+  localReminders,
+  nativeCalendarEvents,
+  primaryAction,
+}: {
+  dailyPlan: DailyExecutionPlan | null;
+  executionSummary: ExecutionSummary | null;
+  localReminders: Record<string, LocalReminder>;
+  nativeCalendarEvents: Record<string, NativeCalendarEvent>;
+  primaryAction: ProtocolAction | null;
+}) {
+  const memory = dailyPlan?.plan?.memory;
+  const notices: AeonveraNotice[] = [];
+  const scheduledCount = Object.keys(nativeCalendarEvents).length;
+  const reminderCount = Object.keys(localReminders).length;
+
+  if (memory?.preference_load === "light" || memory?.plan_load === "light") {
+    notices.push({
+      label: "Load",
+      title: "Today is intentionally lighter.",
+      detail:
+        "Aeonvera is favoring fewer, higher-leverage actions because your execution memory responds better to a cleaner plan.",
+    });
+  } else if (memory?.plan_load === "ambitious") {
+    notices.push({
+      label: "Load",
+      title: "Today has a stronger push.",
+      detail:
+        "Recent signals support a more ambitious plan, but Aeonvera is still keeping the most important action visible first.",
+    });
+  }
+
+  if (memory?.avoid_morning_training || memory?.training_time === "later") {
+    notices.push({
+      label: "Timing",
+      title: "Training is being protected from the morning.",
+      detail:
+        "Aeonvera learned that later training is a better fit, so it will avoid forcing workouts into the first part of the day.",
+    });
+  } else if (memory?.training_time === "morning") {
+    notices.push({
+      label: "Timing",
+      title: "Morning training is a known fit.",
+      detail:
+        "Your preference memory supports earlier movement, so Aeonvera can place training with less friction when the day is open.",
+    });
+  }
+
+  if (memory?.reminder_window) {
+    notices.push({
+      label: "Reminder",
+      title: `Your preferred nudge window is ${memory.reminder_window}.`,
+      detail:
+        "Aeonvera will use this window when a notification is more appropriate than placing another calendar block.",
+    });
+  }
+
+  if (executionSummary?.topSkippedPattern) {
+    notices.push({
+      label: "Friction",
+      title: `${executionSummary.topSkippedPattern.label} is the clearest friction pattern.`,
+      detail:
+        "Aeonvera will simplify this domain before adding more intensity, because consistency beats a heavier plan that does not land.",
+    });
+  } else if (executionSummary?.status === "strong") {
+    notices.push({
+      label: "Momentum",
+      title: "Execution is compounding.",
+      detail:
+        "Your recent completion pattern is strong enough for Aeonvera to keep the plan moving without overexplaining every step.",
+    });
+  }
+
+  if (scheduledCount || reminderCount) {
+    notices.push({
+      label: "Placed",
+      title: `${scheduledCount} calendar block${scheduledCount === 1 ? "" : "s"} and ${reminderCount} reminder${
+        reminderCount === 1 ? "" : "s"
+      } are active.`,
+      detail:
+        "Aeonvera is tracking what it already placed so it can avoid accidental duplicates and keep today clean.",
+    });
+  }
+
+  if (primaryAction?.why && notices.length < 3) {
+    notices.push({
+      label: "Leverage",
+      title: primaryAction.domain || "Highest leverage",
+      detail: primaryAction.why,
+    });
+  }
+
+  if (!notices.length && dailyPlan?.summary) {
+    notices.push({
+      label: "Plan",
+      title: "The day has a prepared structure.",
+      detail:
+        "Aeonvera has enough protocol context to explain and place the next action when you are ready.",
+    });
+  }
+
+  return notices.slice(0, 3);
+}
+
+function formatCompactReceiptTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Now";
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
 function formatBiologicalAgeValue(value: BiologicalAgePoint["biological_age"]) {
   const numeric = parseFiniteNumber(value);
   return numeric == null ? null : `${numeric.toFixed(1)}y`;
@@ -5385,6 +5740,93 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.68)",
     fontSize: 13,
     lineHeight: 19,
+  },
+  agentReceiptPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.22)",
+    borderRadius: 10,
+    backgroundColor: "rgba(218,188,115,0.065)",
+    padding: 16,
+  },
+  receiptHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  receiptTitle: {
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  receiptCount: {
+    minWidth: 28,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(218,188,115,0.3)",
+    borderRadius: 999,
+    color: "rgba(238,214,154,0.88)",
+    fontSize: 11,
+    fontWeight: "700",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    textAlign: "center",
+  },
+  receiptList: {
+    gap: 9,
+    marginTop: 14,
+  },
+  receiptItem: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.09)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.2)",
+    padding: 12,
+  },
+  receiptItemWarning: {
+    borderColor: "rgba(238,214,154,0.26)",
+    backgroundColor: "rgba(218,188,115,0.075)",
+  },
+  receiptItemHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  receiptTime: {
+    color: "rgba(255,255,255,0.36)",
+    fontSize: 10,
+  },
+  receiptReason: {
+    color: "rgba(255,255,255,0.5)",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 8,
+  },
+  noticedPanel: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.045)",
+    padding: 16,
+  },
+  noticeList: {
+    gap: 9,
+    marginTop: 14,
+  },
+  noticeItem: {
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.16)",
+    padding: 12,
+  },
+  noticeTitle: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 14,
+    fontWeight: "500",
+    lineHeight: 20,
+    marginBottom: 5,
   },
   feedbackPanel: {
     borderWidth: 1,
