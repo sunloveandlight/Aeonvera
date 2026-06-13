@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Activity, ArrowRight, Brain, Clock3, Dna, FileText, FlaskConical, HeartPulse, Printer, Sparkles, type LucideIcon } from "lucide-react";
+import { Activity, ArrowRight, Brain, Clock3, Dna, FileText, FlaskConical, HeartPulse, Printer, Sparkles, UsersRound, type LucideIcon } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState, { EmptyState } from "@/components/ui/AccessState";
 import { supabase } from "@/lib/supabase/client";
@@ -497,6 +497,12 @@ export default function DigitalTwinPage() {
               className="premium-action-secondary inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
             >
               Export <Printer size={16} />
+            </Link>
+            <Link
+              href="/network"
+              className="premium-action-secondary inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+            >
+              Network <UsersRound size={16} />
             </Link>
           </div>
         </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowLeft, Copy, Link2, Printer, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Copy, Link2, Printer, ShieldCheck, UsersRound } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState from "@/components/ui/AccessState";
 import { supabase } from "@/lib/supabase/client";
@@ -231,13 +231,21 @@ export default function PhysicianExportPage() {
           >
             <ArrowLeft size={16} /> Digital Twin
           </Link>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="premium-action inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
-          >
-            <Printer size={16} /> Print / Save PDF
-          </button>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/network"
+              className="premium-action-secondary inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+            >
+              <UsersRound size={16} /> Care Network
+            </Link>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="premium-action inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+            >
+              <Printer size={16} /> Print / Save PDF
+            </button>
+          </div>
         </div>
 
         {loading ? (
