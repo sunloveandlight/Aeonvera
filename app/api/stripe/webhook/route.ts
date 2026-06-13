@@ -14,6 +14,16 @@ function getStripe() {
   });
 }
 
+function getWebhookSecret() {
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!secret) {
+    throw new Error("Missing STRIPE_WEBHOOK_SECRET");
+  }
+
+  return secret;
+}
+
 type AllowedPlan = "core" | "elite" | "sovereign";
 
 function getPlanFromPriceId(priceId?: string | null): AllowedPlan | null {
@@ -57,7 +67,7 @@ export async function POST(req: NextRequest) {
     const event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      getWebhookSecret()
     );
 
     // ----------------------------
@@ -170,7 +180,7 @@ export async function POST(req: NextRequest) {
       }
 
       default:
-        console.log(`Unhandled Stripe event: ${event.type}`);
+        console.info(`Unhandled Stripe event: ${event.type}`);
     }
 
     return NextResponse.json({ received: true });

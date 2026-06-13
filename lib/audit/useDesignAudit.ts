@@ -75,7 +75,7 @@ export function useDesignAudit(enabled = false) {
           ? "WARN"
           : "INFO";
 
-      console.log(
+      console.info(
         `${prefix} [${issue.category}] ${issue.message}`
       );
     });
