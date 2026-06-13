@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Copy, ShieldCheck, UsersRound } from "lucide-react";
+import { ArrowLeft, Clock3, Copy, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState from "@/components/ui/AccessState";
 import { supabase } from "@/lib/supabase/client";
@@ -23,6 +23,14 @@ type CareInvitation = {
   role: CareRole;
   status: "pending" | "active" | "expired" | "revoked";
   url: string;
+};
+
+type RoleRecommendation = {
+  detail: string;
+  priority: "high" | "medium" | "low";
+  reason: string;
+  role: CareRole;
+  title: string;
 };
 
 const ROLE_COPY: Record<CareRole, { title: string; detail: string }> = {
@@ -60,6 +68,7 @@ const ROLE_ALLOWED_PERMISSIONS: Record<CareRole, string[]> = ROLE_DEFAULTS;
 
 export default function NetworkPage() {
   const [invitations, setInvitations] = useState<CareInvitation[]>([]);
+  const [recommendations, setRecommendations] = useState<RoleRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [signedOut, setSignedOut] = useState(false);
   const [locked, setLocked] = useState(false);
@@ -109,6 +118,7 @@ export default function NetworkPage() {
 
         if (!cancelled) {
           setInvitations(data.invitations || []);
+          setRecommendations(data.recommendations || []);
           if (data.migrationRequired) setMessage(data.message || null);
         }
       } catch (error) {
@@ -180,6 +190,31 @@ export default function NetworkPage() {
       setMessage("Invitation revoked.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not revoke invitation.");
+    }
+  }
+
+  async function extendInvitation(id: string, expiresInDays: number) {
+    setMessage(null);
+
+    try {
+      const response = await fetch("/api/care-network/invitations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ action: "extend", expiresInDays, id }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not extend invitation.");
+      }
+
+      setInvitations((current) =>
+        current.map((invite) => (invite.id === id ? data.invitation : invite))
+      );
+      setMessage(`Access extended for ${expiresInDays} days.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not extend invitation.");
     }
   }
 
@@ -259,6 +294,13 @@ export default function NetworkPage() {
             ]}
           />
         ) : (
+          <div className="space-y-6">
+            <NetworkIntelligencePanel
+              invitations={invitations}
+              recommendations={recommendations}
+              onSelectRole={setRole}
+            />
+
           <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr]">
             <div className="executive-panel rounded-lg p-6 md:p-7">
               <div className="mb-6 flex items-start justify-between gap-4 border-b border-white/[0.06] pb-5">
@@ -393,6 +435,9 @@ export default function NetworkPage() {
                         <p className="mt-2 text-xs text-white/32">
                           Expires {formatDate(invitation.expiresAt)}
                         </p>
+                        <p className="mt-1 text-xs text-white/32">
+                          Last opened {formatDateTime(invitation.lastAccessedAt)}
+                        </p>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -413,6 +458,25 @@ export default function NetworkPage() {
                         </button>
                       </div>
                     </div>
+                    {invitation.status !== "revoked" && (
+                      <div className="mt-4 border-t border-white/[0.05] pt-3">
+                        <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-white/28">
+                          Extend access
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {[7, 14, 30, 90].map((days) => (
+                            <button
+                              key={`${invitation.id}-${days}`}
+                              type="button"
+                              onClick={() => void extendInvitation(invitation.id, days)}
+                              className="premium-action-secondary inline-flex h-8 items-center justify-center rounded-md px-3 text-[11px]"
+                            >
+                              {days} days
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="mt-3 flex flex-wrap gap-2">
                       {invitation.permissions.map((permission) => (
                         <span
@@ -436,10 +500,146 @@ export default function NetworkPage() {
               </div>
             </div>
           </div>
+          </div>
         )}
       </div>
     </PageContainer>
   );
+}
+
+function NetworkIntelligencePanel({
+  invitations,
+  onSelectRole,
+  recommendations,
+}: {
+  invitations: CareInvitation[];
+  onSelectRole: (role: CareRole) => void;
+  recommendations: RoleRecommendation[];
+}) {
+  const activity = buildActivity(invitations);
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+      <div className="executive-panel rounded-lg p-6 md:p-7">
+        <div className="mb-5 flex items-start justify-between gap-4 border-b border-white/[0.06] pb-4">
+          <div>
+            <p className="micro-label">Network Activity</p>
+            <h2 className="mt-3 text-3xl font-light text-white">Who has seen what.</h2>
+          </div>
+          <Clock3 className="royal-text" size={22} />
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <MetricPill label="Active" value={countStatus(invitations, "active")} />
+          <MetricPill label="Pending" value={countStatus(invitations, "pending")} />
+          <MetricPill label="Expiring" value={countExpiring(invitations)} />
+        </div>
+
+        <div className="mt-5 space-y-2">
+          {activity.map((item) => (
+            <div
+              key={item}
+              className="rounded-md border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-sm leading-6 text-white/50"
+            >
+              {item}
+            </div>
+          ))}
+          {!activity.length && (
+            <div className="rounded-md border border-white/[0.06] bg-white/[0.025] px-3 py-3 text-sm leading-6 text-white/45">
+              No network activity yet. Aeonvera will show openings, expirations, and pending invites here.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="executive-panel rounded-lg p-6 md:p-7">
+        <div className="mb-5 flex items-start justify-between gap-4 border-b border-white/[0.06] pb-4">
+          <div>
+            <p className="micro-label">Recommended Roles</p>
+            <h2 className="mt-3 text-3xl font-light text-white">Invite with intent.</h2>
+          </div>
+          <Sparkles className="royal-text" size={22} />
+        </div>
+
+        <div className="space-y-3">
+          {recommendations.map((recommendation) => (
+            <button
+              key={`${recommendation.role}-${recommendation.title}`}
+              type="button"
+              onClick={() => onSelectRole(recommendation.role)}
+              className="w-full rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 text-left transition hover:border-[#dabc73]/24 hover:bg-[#dabc73]/[0.05]"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-white/76">{recommendation.title}</p>
+                <span className="rounded-full border border-white/[0.08] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-white/34">
+                  {recommendation.role}
+                </span>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-white/42">
+                {recommendation.detail}
+              </p>
+              <p className="mt-3 text-[11px] leading-5 text-[#dabc73]/70">
+                Why Aeonvera recommends this: {recommendation.reason}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MetricPill({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border border-white/[0.06] bg-black/20 px-3 py-3">
+      <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">{label}</p>
+      <p className="mt-2 text-2xl font-light text-white">{value}</p>
+    </div>
+  );
+}
+
+function buildActivity(invitations: CareInvitation[]) {
+  return invitations.slice(0, 6).flatMap((invitation) => {
+    const name = invitation.memberName || invitation.memberEmail;
+    const role = ROLE_COPY[invitation.role].title.toLowerCase();
+    const items: string[] = [];
+
+    if (invitation.status === "revoked") {
+      items.push(`${name}'s ${role} access has been revoked.`);
+      return items;
+    }
+
+    if (invitation.status === "expired") {
+      items.push(`${name}'s ${role} link has expired.`);
+      return items;
+    }
+
+    if (invitation.lastAccessedAt) {
+      items.push(`${name} opened the ${role} view ${formatRelative(invitation.lastAccessedAt)}.`);
+    } else if (invitation.acceptedAt) {
+      items.push(`${name} accepted ${role} access ${formatRelative(invitation.acceptedAt)}.`);
+    } else {
+      items.push(`${name} has not opened the ${role} invite yet.`);
+    }
+
+    const days = daysUntil(invitation.expiresAt);
+    if (days !== null && days >= 0 && days <= 5) {
+      items.push(`${name}'s ${role} access expires in ${days || 1} day${days === 1 ? "" : "s"}.`);
+    }
+
+    return items;
+  });
+}
+
+function countStatus(invitations: CareInvitation[], status: CareInvitation["status"]) {
+  return invitations.filter((invitation) => invitation.status === status).length;
+}
+
+function countExpiring(invitations: CareInvitation[]) {
+  return invitations.filter((invitation) => {
+    const days = daysUntil(invitation.expiresAt);
+    return invitation.status !== "revoked" && days !== null && days >= 0 && days <= 5;
+  }).length;
 }
 
 function formatDate(value?: string) {
@@ -451,4 +651,38 @@ function formatDate(value?: string) {
     day: "numeric",
     year: "numeric",
   }).format(date);
+}
+
+function formatDateTime(value?: string | null) {
+  if (!value) return "not yet";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "not yet";
+  return new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "short",
+  }).format(date);
+}
+
+function formatRelative(value?: string | null) {
+  if (!value) return "recently";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "recently";
+  const diffMs = date.getTime() - Date.now();
+  const diffHours = Math.round(diffMs / (60 * 60 * 1000));
+  if (Math.abs(diffHours) < 24) {
+    return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(diffHours, "hour");
+  }
+  return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
+    Math.round(diffHours / 24),
+    "day"
+  );
+}
+
+function daysUntil(value?: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return Math.ceil((date.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
 }

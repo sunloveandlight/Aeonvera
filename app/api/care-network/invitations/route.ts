@@ -27,6 +27,14 @@ type CareNetworkRow = {
   status?: string;
 };
 
+type RoleRecommendation = {
+  detail: string;
+  priority: "high" | "medium" | "low";
+  reason: string;
+  role: CareNetworkRole;
+  title: string;
+};
+
 const SELECT_FIELDS =
   "id,invite_token,member_email,member_name,role,status,permissions,expires_at,accepted_at,revoked_at,access_count,last_accessed_at,created_at";
 
@@ -55,7 +63,12 @@ export async function GET() {
       throw error;
     }
 
-    return NextResponse.json({ invitations: mapInvitations(data || []) });
+    const recommendations = await buildRoleRecommendations(admin, auth.userId);
+
+    return NextResponse.json({
+      invitations: mapInvitations(data || []),
+      recommendations,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not load care network invitations.";
@@ -136,17 +149,21 @@ export async function PATCH(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
-    const { data, error } = await admin
-      .from("care_network_memberships")
-      .update({
-        revoked_at: new Date().toISOString(),
-        status: "revoked",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .eq("owner_user_id", auth.userId)
-      .select(SELECT_FIELDS)
-      .single();
+    const action = typeof body?.action === "string" ? body.action : "revoke";
+    const update =
+      action === "extend"
+        ? await extendInvitation({
+            admin,
+            expiresInDays: body?.expiresInDays,
+            id,
+            ownerUserId: auth.userId,
+          })
+        : await revokeInvitation({
+            admin,
+            id,
+            ownerUserId: auth.userId,
+          });
+    const { data, error } = update;
 
     if (error) throw error;
 
@@ -156,6 +173,145 @@ export async function PATCH(request: NextRequest) {
       error instanceof Error ? error.message : "Could not revoke invitation.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+async function revokeInvitation({
+  admin,
+  id,
+  ownerUserId,
+}: {
+  admin: ReturnType<typeof getSupabaseAdmin>;
+  id: string;
+  ownerUserId: string;
+}) {
+  return admin
+    .from("care_network_memberships")
+    .update({
+      revoked_at: new Date().toISOString(),
+      status: "revoked",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("owner_user_id", ownerUserId)
+    .select(SELECT_FIELDS)
+    .single();
+}
+
+async function extendInvitation({
+  admin,
+  expiresInDays,
+  id,
+  ownerUserId,
+}: {
+  admin: ReturnType<typeof getSupabaseAdmin>;
+  expiresInDays: unknown;
+  id: string;
+  ownerUserId: string;
+}) {
+  const { data: existing, error: existingError } = await admin
+    .from("care_network_memberships")
+    .select("id,accepted_at,revoked_at")
+    .eq("id", id)
+    .eq("owner_user_id", ownerUserId)
+    .single();
+
+  if (existingError) return { data: null, error: existingError };
+  if ((existing as Pick<CareNetworkRow, "revoked_at"> | null)?.revoked_at) {
+    return {
+      data: null,
+      error: new Error("Revoked invitations cannot be extended. Create a new invitation instead."),
+    };
+  }
+
+  const days = clampDays(expiresInDays);
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  const status = (existing as Pick<CareNetworkRow, "accepted_at"> | null)?.accepted_at
+    ? "active"
+    : "pending";
+
+  return admin
+    .from("care_network_memberships")
+    .update({
+      expires_at: expiresAt.toISOString(),
+      status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("owner_user_id", ownerUserId)
+    .select(SELECT_FIELDS)
+    .single();
+}
+
+async function buildRoleRecommendations(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string
+): Promise<RoleRecommendation[]> {
+  const [labs, insights, protocols, outcomes, wearables, age] = await Promise.all([
+    safeCount(admin, "lab_biomarkers", userId),
+    safeCount(admin, "clinical_insights", userId),
+    safeCount(admin, "optimization_protocols", userId),
+    safeCount(admin, "intervention_outcomes", userId),
+    safeCount(admin, "wearable_metrics", userId),
+    safeCount(admin, "biological_age_history", userId),
+  ]);
+
+  const recommendations: RoleRecommendation[] = [];
+
+  if (labs + insights > 0) {
+    recommendations.push({
+      role: "physician",
+      title: "Physician review is ready",
+      detail: "Your labs and clinical insights can now be packaged into a controlled medical review view.",
+      reason: "Aeonvera found clinical-grade context worth sharing with a physician.",
+      priority: "high",
+    });
+  }
+
+  if (protocols + outcomes + wearables > 0) {
+    recommendations.push({
+      role: "coach",
+      title: "Coach support would be useful",
+      detail: "Your execution history can help a coach focus on adherence, recovery, and weekly course correction.",
+      reason: "Aeonvera found protocol and behavior signals that benefit from human accountability.",
+      priority: labs + insights > 0 ? "medium" : "high",
+    });
+  }
+
+  if (age + protocols > 0) {
+    recommendations.push({
+      role: "family",
+      title: "Family support can stay lightweight",
+      detail: "Share high-level progress without exposing labs or deeper clinical notes.",
+      reason: "Aeonvera found a safe support view for motivation without unnecessary medical detail.",
+      priority: "low",
+    });
+  }
+
+  if (!recommendations.length) {
+    recommendations.push({
+      role: "physician",
+      title: "Start with a physician-ready baseline",
+      detail: "Invite a trusted clinician once labs, wearables, or biological age data are connected.",
+      reason: "Aeonvera is preparing the network structure before deeper records arrive.",
+      priority: "medium",
+    });
+  }
+
+  return recommendations;
+}
+
+async function safeCount(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  table: string,
+  userId: string
+) {
+  const { count, error } = await admin
+    .from(table)
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  if (error) return 0;
+  return count || 0;
 }
 
 async function requireNetworkAccess(): Promise<{
