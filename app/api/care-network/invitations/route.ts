@@ -4,10 +4,12 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
 import {
   DEFAULT_PHYSICIAN_EXPORT_SECTIONS,
-  normalizeSections,
 } from "@/lib/digital-twin/physicianExportBundle";
-
-type CareRole = "physician" | "coach" | "family";
+import {
+  permissionsForCareRole,
+  sanitizeCareRole,
+  type CareNetworkRole,
+} from "@/lib/care-network/rolePermissions";
 
 type CareNetworkRow = {
   accepted_at?: string | null;
@@ -21,22 +23,8 @@ type CareNetworkRow = {
   member_name?: string | null;
   permissions?: string[];
   revoked_at?: string | null;
-  role?: CareRole;
+  role?: CareNetworkRole;
   status?: string;
-};
-
-const ROLE_DEFAULT_PERMISSIONS: Record<CareRole, string[]> = {
-  physician: [
-    "snapshot",
-    "biological_age",
-    "labs",
-    "protocols",
-    "outcomes",
-    "wearables",
-    "clinical_insights",
-  ],
-  coach: ["snapshot", "protocols", "outcomes", "wearables"],
-  family: ["snapshot", "biological_age", "protocols"],
 };
 
 const SELECT_FIELDS =
@@ -81,7 +69,7 @@ export async function POST(request: NextRequest) {
     if (auth.response) return auth.response;
 
     const body = await request.json().catch(() => ({}));
-    const role = sanitizeRole(body?.role);
+    const role = sanitizeCareRole(body?.role);
     const memberEmail = sanitizeEmail(body?.memberEmail);
 
     if (!memberEmail) {
@@ -94,11 +82,10 @@ export async function POST(request: NextRequest) {
         : null;
     const expiresInDays = clampDays(body?.expiresInDays);
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
-    const permissions = normalizeSections(
-      Array.isArray(body?.permissions)
-        ? body.permissions
-        : ROLE_DEFAULT_PERMISSIONS[role]
-    );
+    const permissions = permissionsForCareRole({
+      requested: body?.permissions,
+      role,
+    });
 
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
@@ -248,18 +235,15 @@ function mapInvitation(row: CareNetworkRow) {
     lastAccessedAt: row.last_accessed_at || null,
     memberEmail: row.member_email || "",
     memberName: row.member_name || null,
-    permissions: normalizeSections(row.permissions || DEFAULT_PHYSICIAN_EXPORT_SECTIONS),
+    permissions: permissionsForCareRole({
+      requested: row.permissions || DEFAULT_PHYSICIAN_EXPORT_SECTIONS,
+      role: row.role || "physician",
+    }),
     revokedAt: row.revoked_at || null,
     role: row.role || "physician",
     status,
     url: `/care-network/${row.invite_token}`,
   };
-}
-
-function sanitizeRole(value: unknown): CareRole {
-  return value === "coach" || value === "family" || value === "physician"
-    ? value
-    : "physician";
 }
 
 function sanitizeEmail(value: unknown) {

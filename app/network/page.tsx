@@ -56,6 +56,8 @@ const ROLE_DEFAULTS: Record<CareRole, string[]> = {
   family: ["snapshot", "biological_age", "protocols"],
 };
 
+const ROLE_ALLOWED_PERMISSIONS: Record<CareRole, string[]> = ROLE_DEFAULTS;
+
 export default function NetworkPage() {
   const [invitations, setInvitations] = useState<CareInvitation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -195,6 +197,8 @@ export default function NetworkPage() {
   }
 
   function togglePermission(permission: string) {
+    if (!ROLE_ALLOWED_PERMISSIONS[form.role].includes(permission)) return;
+
     setForm((current) => {
       const next = current.permissions.includes(permission)
         ? current.permissions.filter((item) => item !== permission)
@@ -329,7 +333,9 @@ export default function NetworkPage() {
                     Permissions
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {PERMISSIONS.map(([key, label]) => (
+                    {PERMISSIONS.filter(([key]) =>
+                      ROLE_ALLOWED_PERMISSIONS[form.role].includes(key)
+                    ).map(([key, label]) => (
                       <button
                         key={key}
                         type="button"
@@ -344,6 +350,9 @@ export default function NetworkPage() {
                       </button>
                     ))}
                   </div>
+                  <p className="mt-3 text-xs leading-5 text-white/34">
+                    Aeonvera limits each role to the minimum useful information surface. Change the role to change the available scope.
+                  </p>
                 </div>
 
                 <button

@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import {
   buildPhysicianExportBundle,
-  normalizeSections,
 } from "@/lib/digital-twin/physicianExportBundle";
+import {
+  permissionsForCareRole,
+  sanitizeCareRole,
+  type CareNetworkRole,
+} from "@/lib/care-network/rolePermissions";
 
 type NetworkMembershipRow = {
   access_count?: number;
@@ -15,7 +19,7 @@ type NetworkMembershipRow = {
   owner_user_id: string;
   permissions?: string[];
   revoked_at?: string | null;
-  role?: "physician" | "coach" | "family";
+  role?: CareNetworkRole;
   status?: string;
 };
 
@@ -77,9 +81,13 @@ export async function GET(
       })
       .eq("invite_token", inviteToken);
 
+    const role = sanitizeCareRole(invite.role);
     const bundle = await buildPhysicianExportBundle({
       email: null,
-      sections: normalizeSections(invite.permissions),
+      sections: permissionsForCareRole({
+        requested: invite.permissions,
+        role,
+      }),
       userId: invite.owner_user_id,
     });
 
@@ -89,7 +97,7 @@ export async function GET(
         expiresAt: invite.expires_at,
         memberEmail: invite.member_email,
         memberName: invite.member_name,
-        role: invite.role || "physician",
+        role,
       },
     });
   } catch (error) {
