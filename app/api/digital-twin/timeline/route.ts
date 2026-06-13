@@ -52,7 +52,9 @@ type TwinScenarioPrompt = {
 
 type TwinProjectionComparison = {
   actual?: string;
+  actions?: string[];
   detail: string;
+  linkedProtocol?: string;
   projected?: string;
   status: "pending" | "tracking" | "on_track" | "off_track";
   title: string;
@@ -180,7 +182,7 @@ export async function GET() {
       safeQuery(() =>
         admin
           .from("optimization_protocols")
-          .select("id, summary, focus_domains, status, created_at")
+          .select("id, protocol, summary, focus_domains, status, created_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(10)
@@ -204,7 +206,7 @@ export async function GET() {
       safeQuery(() =>
         admin
           .from("future_self_scenarios")
-          .select("id, title, description, share_token, is_public, version_number, projection, future_self, created_at")
+          .select("id, title, description, share_token, is_public, version_number, protocol_id, projection, future_self, created_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(10)
@@ -229,7 +231,7 @@ export async function GET() {
       safeQuery(() =>
         admin
           .from("intervention_outcomes")
-          .select("id, domain, action, success, outcome, confidence, notes, measured_at, created_at")
+          .select("id, protocol_id, domain, action, success, outcome, confidence, notes, measured_at, created_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(16)
@@ -323,6 +325,7 @@ export async function GET() {
         labRows: labsRes.data,
         outcomeRows: outcomeRes.data,
         preferenceRows: preferenceRes.data,
+        protocolRows: protocolRes.data,
         scenarioRows: scenarioRes.data,
         wearableRows: wearableRes.data,
       }),
@@ -512,6 +515,7 @@ function buildTwinModel({
   labRows,
   outcomeRows,
   preferenceRows,
+  protocolRows,
   scenarioRows,
   wearableRows,
 }: {
@@ -523,6 +527,7 @@ function buildTwinModel({
   labRows: unknown;
   outcomeRows: unknown;
   preferenceRows: unknown;
+  protocolRows: unknown;
   scenarioRows: unknown;
   wearableRows: unknown;
 }): TwinModel {
@@ -533,6 +538,7 @@ function buildTwinModel({
   const labs = asRows(labRows);
   const outcomes = asRows(outcomeRows);
   const preferences = asRows(preferenceRows);
+  const protocols = asRows(protocolRows);
   const scenarios = asRows(scenarioRows);
   const wearables = asRows(wearableRows);
 
@@ -598,6 +604,7 @@ function buildTwinModel({
     projectionComparisons: buildProjectionComparisons({
       bioAge,
       outcomes,
+      protocols,
       scenarios,
     }),
     readiness: {
@@ -647,10 +654,12 @@ function buildDomain({
 function buildProjectionComparisons({
   bioAge,
   outcomes,
+  protocols,
   scenarios,
 }: {
   bioAge: TimelineRow[];
   outcomes: TimelineRow[];
+  protocols: TimelineRow[];
   scenarios: TimelineRow[];
 }): TwinProjectionComparison[] {
   return scenarios
@@ -660,6 +669,8 @@ function buildProjectionComparisons({
       const projection = safeObject(scenario.projection);
       const futureSelf = safeObject(scenario.future_self);
       const baseline = safeObject(futureSelf.baseline);
+      const scenarioProtocolId = text(scenario.protocol_id);
+      const linkedProtocol = protocols.find((row) => text(row.id) === scenarioProtocolId);
       const projectedImprovement =
         numberOrNull(projection.projectedBiologicalAgeImprovement) ??
         numberOrNull(projection.projectedAgeDeltaImprovement);
@@ -679,10 +690,21 @@ function buildProjectionComparisons({
         baselineBio != null && actualBioValue != null
           ? round(baselineBio - actualBioValue, 1)
           : null;
-      const outcomeCount = outcomes.filter((row) => {
+      const relatedOutcomes = outcomes.filter((row) => {
         const measuredAt = Date.parse(text(row.measured_at) || text(row.created_at));
-        return Number.isFinite(createdAt) && Number.isFinite(measuredAt) && measuredAt > createdAt;
-      }).length;
+        const isAfterScenario =
+          Number.isFinite(createdAt) && Number.isFinite(measuredAt) && measuredAt > createdAt;
+        const matchesProtocol =
+          !scenarioProtocolId || text(row.protocol_id) === scenarioProtocolId;
+        return isAfterScenario && matchesProtocol;
+      });
+      const outcomeCount = relatedOutcomes.length;
+      const actions = extractProtocolActions(linkedProtocol).concat(
+        relatedOutcomes
+          .map((row) => text(row.action))
+          .filter(Boolean)
+      );
+      const uniqueActions = Array.from(new Set(actions)).slice(0, 3);
 
       const status: TwinProjectionComparison["status"] =
         actualImprovement == null
@@ -704,10 +726,16 @@ function buildProjectionComparisons({
               : undefined,
         detail: buildProjectionComparisonDetail({
           actualImprovement,
+          actions: uniqueActions,
+          linkedProtocolSummary: text(linkedProtocol?.summary),
           outcomeCount,
           projectedImprovement,
           status,
         }),
+        actions: uniqueActions.length ? uniqueActions : undefined,
+        linkedProtocol: linkedProtocol
+          ? text(linkedProtocol.summary) || "Linked optimization protocol"
+          : undefined,
         projected:
           projectedImprovement != null
             ? `${projectedImprovement.toFixed(1)} yrs projected`
@@ -724,32 +752,57 @@ function buildProjectionComparisons({
 
 function buildProjectionComparisonDetail({
   actualImprovement,
+  actions,
+  linkedProtocolSummary,
   outcomeCount,
   projectedImprovement,
   status,
 }: {
   actualImprovement: number | null;
+  actions: string[];
+  linkedProtocolSummary: string;
   outcomeCount: number;
   projectedImprovement: number | null;
   status: TwinProjectionComparison["status"];
 }) {
+  const actionText = actions.length
+    ? ` The leading action trail is ${actions.slice(0, 2).join(" and ")}.`
+    : "";
+  const protocolText = linkedProtocolSummary
+    ? ` It is linked to this protocol: ${linkedProtocolSummary}.`
+    : "";
+
   if (status === "on_track") {
-    return "Reality is tracking close to the projection. Aeonvera can now reinforce the protocol pattern that appears to be working.";
+    return `Reality is tracking close to the projection. Aeonvera can now reinforce the protocol pattern that appears to be working.${actionText || protocolText}`;
   }
 
   if (status === "off_track") {
-    return "Reality is not matching the projection yet. Aeonvera should reduce friction, reassess assumptions, or choose a more realistic lever.";
+    return `Reality is not matching the projection yet. Aeonvera should reduce friction, reassess assumptions, or choose a more realistic lever.${actionText || protocolText}`;
   }
 
   if (actualImprovement != null && projectedImprovement != null) {
-    return `The projection expected ${projectedImprovement.toFixed(1)} years of separation; reality has moved ${actualImprovement.toFixed(1)} years so far.`;
+    return `The projection expected ${projectedImprovement.toFixed(1)} years of separation; reality has moved ${actualImprovement.toFixed(1)} years so far.${actionText || protocolText}`;
   }
 
   if (outcomeCount) {
-    return "Outcome feedback exists after this projection, but Aeonvera needs another biological-age point to quantify reality versus the simulation.";
+    return `Outcome feedback exists after this projection, but Aeonvera needs another biological-age point to quantify reality versus the simulation.${actionText || protocolText}`;
   }
 
-  return "This projection is saved. Add outcomes or another biological-age update and Aeonvera will compare the simulation against reality.";
+  return `This projection is saved. Add outcomes or another biological-age update and Aeonvera will compare the simulation against reality.${protocolText}`;
+}
+
+function extractProtocolActions(protocolRow: TimelineRow | undefined) {
+  const protocol = safeObject(protocolRow?.protocol);
+  const primary = Array.isArray(protocol.primary_protocol)
+    ? protocol.primary_protocol
+    : [];
+
+  return primary
+    .map((item) => {
+      const row = safeObject(item);
+      return text(row.action);
+    })
+    .filter(Boolean);
 }
 
 function buildTwinReadinessDetail({
@@ -1107,6 +1160,7 @@ function isMissingTableError(error: unknown) {
   const candidate = error as { code?: string; message?: string };
   return (
     candidate.code === "42P01" ||
+    candidate.code === "PGRST204" ||
     candidate.code === "PGRST205" ||
     candidate.message?.includes("schema cache")
   );

@@ -76,7 +76,9 @@ type TwinScenarioPrompt = {
 
 type TwinProjectionComparison = {
   actual?: string;
+  actions?: string[];
   detail: string;
+  linkedProtocol?: string;
   projected?: string;
   status: "pending" | "tracking" | "on_track" | "off_track";
   title: string;
@@ -117,6 +119,13 @@ type TwinProjectionResult = {
   };
 };
 
+type SavedProjectionScenario = {
+  id?: string;
+  protocol_id?: string | null;
+  share_token?: string | null;
+  title?: string | null;
+};
+
 const TYPE_FILTERS: Array<TimelineEvent["type"] | "all"> = [
   "all",
   "biological_age",
@@ -155,7 +164,10 @@ export default function DigitalTwinPage() {
   const [activeType, setActiveType] = useState<TimelineEvent["type"] | "all">("all");
   const [projectionResult, setProjectionResult] = useState<TwinProjectionResult | null>(null);
   const [projectionMessage, setProjectionMessage] = useState<string | null>(null);
+  const [projectionProtocolMessage, setProjectionProtocolMessage] = useState<string | null>(null);
   const [projectionSavedMessage, setProjectionSavedMessage] = useState<string | null>(null);
+  const [projectionScenario, setProjectionScenario] = useState<SavedProjectionScenario | null>(null);
+  const [generatingProjectionProtocol, setGeneratingProjectionProtocol] = useState(false);
   const [runningProjection, setRunningProjection] = useState<string | null>(null);
 
   useEffect(() => {
@@ -261,8 +273,10 @@ export default function DigitalTwinPage() {
   async function runTwinProjection(prompt: TwinScenarioPrompt) {
     setRunningProjection(prompt.question);
     setProjectionMessage(null);
+    setProjectionProtocolMessage(null);
     setProjectionSavedMessage(null);
     setProjectionResult(null);
+    setProjectionScenario(null);
 
     try {
       const response = await fetch("/api/longevity/simulator", {
@@ -305,6 +319,8 @@ export default function DigitalTwinPage() {
         throw new Error(saved?.error || "Projection ran, but could not be saved to the timeline.");
       }
 
+      const savedScenario = saved?.scenario as SavedProjectionScenario | undefined;
+      setProjectionScenario(savedScenario || null);
       setProjectionSavedMessage("Saved to your Digital Twin timeline.");
 
       const timelineResponse = await fetch("/api/digital-twin/timeline", {
@@ -318,6 +334,116 @@ export default function DigitalTwinPage() {
       );
     } finally {
       setRunningProjection(null);
+    }
+  }
+
+  async function buildProtocolFromProjection() {
+    if (!projectionResult?.projection || !projectionResult.controls) {
+      setProjectionProtocolMessage("Run a projection before generating a linked protocol.");
+      return;
+    }
+
+    setGeneratingProjectionProtocol(true);
+    setProjectionProtocolMessage(null);
+
+    try {
+      const projectionTitle = projectionScenario?.title || "Digital Twin projection";
+      const levers =
+        projectionResult.futureSelf?.levers
+          ?.slice(0, 4)
+          .map((lever) => `${lever.label}: ${lever.impact} impact`)
+          .join("; ") || "Selected simulation levers";
+
+      const response = await fetch("/api/optimization/protocol", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          answers: {
+            priority: projectionTitle,
+            sleep: "Use sleep and recovery levers only when they support the projected path.",
+            nutrition: "Support the projected biological-age separation with realistic nutrition execution.",
+            training: "Build training cadence from the selected simulator levers.",
+            metabolic: "Track biomarkers and biological-age movement against the projection.",
+            stress: "Reduce friction so the projection can survive real life.",
+          },
+          questions: [
+            {
+              id: "priority",
+              domain: "Digital Twin",
+              prompt: "What should this protocol optimize?",
+              options: [projectionTitle],
+            },
+            {
+              id: "sleep",
+              domain: "Recovery",
+              prompt: "How should recovery support this projection?",
+              options: ["Use sleep and recovery levers only when they support the projected path."],
+            },
+            {
+              id: "nutrition",
+              domain: "Nutrition",
+              prompt: "How should nutrition support this projection?",
+              options: ["Support the projected biological-age separation with realistic nutrition execution."],
+            },
+            {
+              id: "training",
+              domain: "Training",
+              prompt: "How should training support this projection?",
+              options: ["Build training cadence from the selected simulator levers."],
+            },
+            {
+              id: "metabolic",
+              domain: "Biomarkers",
+              prompt: "What should be measured?",
+              options: ["Track biomarkers and biological-age movement against the projection."],
+            },
+            {
+              id: "stress",
+              domain: "Stress",
+              prompt: "What should the protocol avoid?",
+              options: ["Reduce friction so the projection can survive real life."],
+            },
+          ],
+          context: [
+            `Digital Twin scenario: ${projectionTitle}.`,
+            `Projected biological age: ${projectionResult.projection.biologicalAge.toFixed(1)} years.`,
+            `Projected biological-age improvement: ${projectionResult.projection.projectedBiologicalAgeImprovement.toFixed(1)} years.`,
+            `Model score target: ${projectionResult.projection.score}.`,
+            `Primary levers: ${levers}.`,
+          ].join(" "),
+          projectionContext: {
+            controls: projectionResult.controls,
+            projection: projectionResult.projection,
+          },
+          sourceScenarioShareToken: projectionScenario?.share_token || undefined,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not generate a linked protocol.");
+      }
+
+      setProjectionScenario((current) => ({
+        ...(current || {}),
+        protocol_id: data.protocol?.id || current?.protocol_id || null,
+      }));
+      setProjectionProtocolMessage(
+        "Linked protocol generated. Aeonvera can now compare the projection, the actions, and the outcomes together."
+      );
+
+      const timelineResponse = await fetch("/api/digital-twin/timeline", {
+        credentials: "include",
+      });
+      const timelineData = await timelineResponse.json();
+      if (timelineResponse.ok) setPayload(timelineData);
+    } catch (error) {
+      setProjectionProtocolMessage(
+        error instanceof Error ? error.message : "Could not generate a linked protocol."
+      );
+    } finally {
+      setGeneratingProjectionProtocol(false);
     }
   }
 
@@ -424,8 +550,12 @@ export default function DigitalTwinPage() {
               <LivingTwinModelPanel
                 model={payload.model}
                 projectionMessage={projectionMessage}
+                projectionProtocolMessage={projectionProtocolMessage}
                 projectionResult={projectionResult}
                 projectionSavedMessage={projectionSavedMessage}
+                projectionScenario={projectionScenario}
+                generatingProjectionProtocol={generatingProjectionProtocol}
+                onBuildProtocol={buildProtocolFromProjection}
                 runningProjection={runningProjection}
                 onRunProjection={runTwinProjection}
               />
@@ -603,18 +733,26 @@ function DigitalTwinIntelligencePanel({
 }
 
 function LivingTwinModelPanel({
+  generatingProjectionProtocol,
   model,
+  onBuildProtocol,
   onRunProjection,
   projectionMessage,
+  projectionProtocolMessage,
   projectionResult,
   projectionSavedMessage,
+  projectionScenario,
   runningProjection,
 }: {
+  generatingProjectionProtocol: boolean;
   model: TwinModel;
+  onBuildProtocol: () => Promise<void>;
   onRunProjection: (prompt: TwinScenarioPrompt) => Promise<void>;
   projectionMessage: string | null;
+  projectionProtocolMessage: string | null;
   projectionResult: TwinProjectionResult | null;
   projectionSavedMessage: string | null;
+  projectionScenario: SavedProjectionScenario | null;
   runningProjection: string | null;
 }) {
   return (
@@ -751,12 +889,23 @@ function LivingTwinModelPanel({
                     ))}
                   </div>
                 ) : null}
-                <Link
-                  href="/optimization"
-                  className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-xs font-medium"
+                <button
+                  type="button"
+                  onClick={() => void onBuildProtocol()}
+                  disabled={generatingProjectionProtocol}
+                  className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-55"
                 >
-                  Turn into protocol
-                </Link>
+                  {generatingProjectionProtocol
+                    ? "Generating protocol"
+                    : projectionScenario?.protocol_id
+                      ? "Regenerate linked protocol"
+                      : "Generate linked protocol"}
+                </button>
+                {projectionProtocolMessage && (
+                  <p className="mt-3 text-xs leading-5 text-white/48">
+                    {projectionProtocolMessage}
+                  </p>
+                )}
               </>
             )}
           </div>
@@ -812,7 +961,21 @@ function ProjectionRealityPanel({
                     {comparison.actual}
                   </span>
                 )}
+                {comparison.linkedProtocol && (
+                  <span className="rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-white/46">
+                    linked protocol
+                  </span>
+                )}
               </div>
+              {comparison.actions?.length ? (
+                <div className="mt-3 space-y-2 border-t border-white/[0.045] pt-3">
+                  {comparison.actions.map((action) => (
+                    <p key={`${comparison.title}-${action}`} className="text-[11px] leading-5 text-white/38">
+                      {action}
+                    </p>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ))
         ) : (
