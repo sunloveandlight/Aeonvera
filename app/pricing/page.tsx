@@ -250,7 +250,9 @@ export default function PricingPage() {
 
       const res = await fetch("/api/stripe/customer-portal", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ plan }),
       });
 
       const data = await res.json();
