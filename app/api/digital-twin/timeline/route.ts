@@ -35,6 +35,30 @@ type TwinIntelligence = {
   };
 };
 
+type TwinDomain = {
+  detail: string;
+  evidence: number;
+  label: string;
+  score: number;
+  status: "strong" | "learning" | "thin";
+};
+
+type TwinScenarioPrompt = {
+  detail: string;
+  href: string;
+  question: string;
+};
+
+type TwinModel = {
+  domains: TwinDomain[];
+  readiness: {
+    detail: string;
+    score: number;
+    status: string;
+  };
+  scenarioPrompts: TwinScenarioPrompt[];
+};
+
 export async function GET() {
   try {
     const supabaseUser = await createClient();
@@ -107,6 +131,10 @@ export async function GET() {
       wearableRes,
       outcomeRes,
       healthMetricRes,
+      clinicalInsightRes,
+      preferenceRes,
+      dailyPlanRes,
+      calendarRes,
     ] = await Promise.all([
       safeQuery(() =>
         admin
@@ -204,7 +232,54 @@ export async function GET() {
           .order("measured_at", { ascending: false })
           .limit(80)
       ),
+      safeQuery(() =>
+        admin
+          .from("clinical_insights")
+          .select("id, domains, concern_status, confidence, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(12)
+      ),
+      safeQuery(() =>
+        admin
+          .from("agent_preferences")
+          .select("id, category, preference_key, confidence, updated_at")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(16)
+      ),
+      safeQuery(() =>
+        admin
+          .from("daily_execution_plans")
+          .select("id, status, autopilot_mode, plan_date, updated_at")
+          .eq("user_id", user.id)
+          .order("plan_date", { ascending: false })
+          .limit(10)
+      ),
+      safeQuery(() =>
+        admin
+          .from("calendar_events")
+          .select("id, status, provider, scheduled_for, created_at")
+          .eq("user_id", user.id)
+          .order("scheduled_for", { ascending: false })
+          .limit(16)
+      ),
     ]);
+
+    const counts = {
+      assessments: assessmentRes.data?.length || 0,
+      biologicalAgePoints: bioAgeRes.data?.length || 0,
+      labs: labsRes.data?.length || 0,
+      protocols: protocolRes.data?.length || 0,
+      reports: reportRes.data?.length || 0,
+      scenarios: scenarioRes.data?.length || 0,
+      wearableMetrics: wearableRes.data?.length || 0,
+      outcomes: outcomeRes.data?.length || 0,
+      clinicalInsights: clinicalInsightRes.data?.length || 0,
+      preferences: preferenceRes.data?.length || 0,
+      dailyPlans: dailyPlanRes.data?.length || 0,
+      calendarEvents: calendarRes.data?.length || 0,
+    };
 
     const events = [
       ...mapAssessments(assessmentRes.data),
@@ -222,33 +297,27 @@ export async function GET() {
       profile: profileRes.data || null,
       state: healthStateRes.data || null,
       intelligence: buildTwinIntelligence({
-        counts: {
-          assessments: assessmentRes.data?.length || 0,
-          biologicalAgePoints: bioAgeRes.data?.length || 0,
-          labs: labsRes.data?.length || 0,
-          protocols: protocolRes.data?.length || 0,
-          reports: reportRes.data?.length || 0,
-          scenarios: scenarioRes.data?.length || 0,
-          wearableMetrics: wearableRes.data?.length || 0,
-          outcomes: outcomeRes.data?.length || 0,
-        },
+        counts,
         state: healthStateRes.data,
         bioAgeRows: bioAgeRes.data,
         healthMetricRows: healthMetricRes.data,
         outcomeRows: outcomeRes.data,
         labRows: labsRes.data,
       }),
+      model: buildTwinModel({
+        counts,
+        bioAgeRows: bioAgeRes.data,
+        clinicalInsightRows: clinicalInsightRes.data,
+        dailyPlanRows: dailyPlanRes.data,
+        healthMetricRows: healthMetricRes.data,
+        labRows: labsRes.data,
+        outcomeRows: outcomeRes.data,
+        preferenceRows: preferenceRes.data,
+        scenarioRows: scenarioRes.data,
+        wearableRows: wearableRes.data,
+      }),
       timeline: events.slice(0, 60),
-      counts: {
-        assessments: assessmentRes.data?.length || 0,
-        biologicalAgePoints: bioAgeRes.data?.length || 0,
-        labs: labsRes.data?.length || 0,
-        protocols: protocolRes.data?.length || 0,
-        reports: reportRes.data?.length || 0,
-        scenarios: scenarioRes.data?.length || 0,
-        wearableMetrics: wearableRes.data?.length || 0,
-        outcomes: outcomeRes.data?.length || 0,
-      },
+      counts,
     });
   } catch (error) {
     const message =
@@ -424,6 +493,253 @@ function buildWhatWorked(outcomes: TimelineRow[], bioAge: TimelineRow[]): TwinCh
   ];
 }
 
+function buildTwinModel({
+  counts,
+  bioAgeRows,
+  clinicalInsightRows,
+  dailyPlanRows,
+  healthMetricRows,
+  labRows,
+  outcomeRows,
+  preferenceRows,
+  scenarioRows,
+  wearableRows,
+}: {
+  counts: Record<string, number>;
+  bioAgeRows: unknown;
+  clinicalInsightRows: unknown;
+  dailyPlanRows: unknown;
+  healthMetricRows: unknown;
+  labRows: unknown;
+  outcomeRows: unknown;
+  preferenceRows: unknown;
+  scenarioRows: unknown;
+  wearableRows: unknown;
+}): TwinModel {
+  const bioAge = asRows(bioAgeRows);
+  const clinicalInsights = asRows(clinicalInsightRows);
+  const dailyPlans = asRows(dailyPlanRows);
+  const healthMetrics = asRows(healthMetricRows);
+  const labs = asRows(labRows);
+  const outcomes = asRows(outcomeRows);
+  const preferences = asRows(preferenceRows);
+  const scenarios = asRows(scenarioRows);
+  const wearables = asRows(wearableRows);
+
+  const domains: TwinDomain[] = [
+    buildDomain({
+      label: "Health",
+      evidence: counts.assessments + counts.biologicalAgePoints + counts.labs,
+      maxEvidence: 14,
+      detail: `${counts.biologicalAgePoints || 0} biological-age point${counts.biologicalAgePoints === 1 ? "" : "s"} and ${counts.labs || 0} biomarker signal${counts.labs === 1 ? "" : "s"} are shaping the health layer.`,
+    }),
+    buildDomain({
+      label: "Behavior",
+      evidence: counts.preferences + counts.outcomes + counts.dailyPlans,
+      maxEvidence: 24,
+      detail: `${counts.preferences || 0} learned preference${counts.preferences === 1 ? "" : "s"}, ${counts.dailyPlans || 0} daily plan${counts.dailyPlans === 1 ? "" : "s"}, and ${counts.outcomes || 0} tracked outcome${counts.outcomes === 1 ? "" : "s"} are shaping behavior prediction.`,
+    }),
+    buildDomain({
+      label: "Recovery",
+      evidence: wearables.filter((row) =>
+        /sleep|recovery|hrv|resting|readiness/i.test(
+          [row.metric_name, row.provider].filter(Boolean).join(" ")
+        )
+      ).length,
+      maxEvidence: 10,
+      detail:
+        "Sleep, recovery, HRV, and resting-heart-rate signals determine how hard Aeonvera should push the next plan.",
+    }),
+    buildDomain({
+      label: "Clinical",
+      evidence: clinicalInsights.length + labs.length,
+      maxEvidence: 20,
+      detail: `${clinicalInsights.length} clinical insight${clinicalInsights.length === 1 ? "" : "s"} and ${labs.length} lab import${labs.length === 1 ? "" : "s"} are available for deeper reasoning.`,
+    }),
+    buildDomain({
+      label: "Scenario",
+      evidence: scenarios.length + counts.protocols,
+      maxEvidence: 14,
+      detail: `${scenarios.length} future-self scenario${scenarios.length === 1 ? "" : "s"} and ${counts.protocols || 0} protocol${counts.protocols === 1 ? "" : "s"} connect simulation to execution.`,
+    }),
+    buildDomain({
+      label: "Execution",
+      evidence: dailyPlans.filter((row) =>
+        ["accepted", "adjusted", "auto_scheduled"].includes(text(row.status))
+      ).length + outcomes.length,
+      maxEvidence: 18,
+      detail:
+        "Accepted plans, calendar execution, and outcome feedback teach the twin what actually changes your day.",
+    }),
+  ];
+
+  const readinessScore = Math.round(average(domains.map((domain) => domain.score)));
+  const readinessStatus =
+    readinessScore >= 78
+      ? "Living simulation"
+      : readinessScore >= 56
+        ? "Learning model"
+        : readinessScore >= 34
+          ? "Baseline model"
+          : "Awaiting signals";
+
+  return {
+    domains,
+    readiness: {
+      detail: buildTwinReadinessDetail({
+        bioAge,
+        clinicalInsights,
+        healthMetrics,
+        outcomes,
+        preferences,
+        scenarios,
+      }),
+      score: readinessScore,
+      status: readinessStatus,
+    },
+    scenarioPrompts: buildScenarioPrompts({
+      bioAge,
+      clinicalInsights,
+      healthMetrics,
+      outcomes,
+      preferences,
+      scenarios,
+    }),
+  };
+}
+
+function buildDomain({
+  detail,
+  evidence,
+  label,
+  maxEvidence,
+}: {
+  detail: string;
+  evidence: number;
+  label: string;
+  maxEvidence: number;
+}): TwinDomain {
+  const score = Math.max(12, Math.min(96, Math.round((evidence / Math.max(maxEvidence, 1)) * 100)));
+  return {
+    detail,
+    evidence,
+    label,
+    score,
+    status: score >= 72 ? "strong" : score >= 38 ? "learning" : "thin",
+  };
+}
+
+function buildTwinReadinessDetail({
+  bioAge,
+  clinicalInsights,
+  healthMetrics,
+  outcomes,
+  preferences,
+  scenarios,
+}: {
+  bioAge: TimelineRow[];
+  clinicalInsights: TimelineRow[];
+  healthMetrics: TimelineRow[];
+  outcomes: TimelineRow[];
+  preferences: TimelineRow[];
+  scenarios: TimelineRow[];
+}) {
+  if (bioAge.length >= 2 && outcomes.length >= 2 && scenarios.length >= 1) {
+    return "Aeonvera can now compare biological-age direction, outcome feedback, and scenario intent inside one personal model.";
+  }
+
+  if (clinicalInsights.length && preferences.length && healthMetrics.length) {
+    return "The twin has clinical memory, behavior preferences, and live health metrics. The next unlock is more outcome feedback.";
+  }
+
+  if (bioAge.length || healthMetrics.length || clinicalInsights.length) {
+    return "The twin has a useful baseline. Add repeated outcomes and scenarios to make it predictive instead of descriptive.";
+  }
+
+  return "Complete the assessment, import labs or wearable data, and run one protocol so the twin can form its first baseline.";
+}
+
+function buildScenarioPrompts({
+  bioAge,
+  clinicalInsights,
+  healthMetrics,
+  outcomes,
+  preferences,
+  scenarios,
+}: {
+  bioAge: TimelineRow[];
+  clinicalInsights: TimelineRow[];
+  healthMetrics: TimelineRow[];
+  outcomes: TimelineRow[];
+  preferences: TimelineRow[];
+  scenarios: TimelineRow[];
+}): TwinScenarioPrompt[] {
+  const prompts: TwinScenarioPrompt[] = [];
+  const latestBio = numberOrNull(bioAge[0]?.biological_age);
+  const topClinicalDomain = firstArrayText(clinicalInsights[0]?.domains);
+  const strongestPreference = preferences[0];
+  const latestOutcome = outcomes[0];
+  const hasRecoveryMetrics = healthMetrics.some((row) =>
+    /sleep|recovery|hrv|resting/i.test(text(row.metric))
+  );
+
+  if (latestBio != null) {
+    prompts.push({
+      question: "What happens if I lower my biological age by 2 years?",
+      detail:
+        "Projects the strongest levers across sleep, training, nutrition, recovery, biomarkers, and adherence.",
+      href: "/optimization",
+    });
+  }
+
+  if (topClinicalDomain) {
+    prompts.push({
+      question: `What if I optimize ${labelize(topClinicalDomain).toLowerCase()} first?`,
+      detail:
+        "Uses clinical memory to ask what improves fastest, what needs labs, and what should be watched carefully.",
+      href: "/optimization",
+    });
+  }
+
+  if (hasRecoveryMetrics) {
+    prompts.push({
+      question: "What happens if I improve recovery for the next 30 days?",
+      detail:
+        "Compares sleep, HRV, training intensity, caffeine timing, and recovery interventions against expected readiness.",
+      href: "/optimization",
+    });
+  }
+
+  if (latestOutcome) {
+    prompts.push({
+      question: `What should change after ${text(latestOutcome.action) || "my last intervention"}?`,
+      detail:
+        "Turns the last tracked result into the next protocol adjustment instead of treating it as a static log.",
+      href: "/digital-twin",
+    });
+  }
+
+  if (strongestPreference) {
+    prompts.push({
+      question: "What plan would fit the way I actually follow through?",
+      detail:
+        "Uses learned preferences and friction history to simulate a more realistic day, not an idealized one.",
+      href: "/optimization",
+    });
+  }
+
+  if (!scenarios.length) {
+    prompts.push({
+      question: "What if I build my first future-self scenario?",
+      detail:
+        "Creates a baseline simulation that can later be compared against labs, wearables, and real outcomes.",
+      href: "/optimization",
+    });
+  }
+
+  return prompts.slice(0, 4);
+}
+
 function buildModelState(counts: Record<string, number>) {
   const activeInputs = [
     counts.assessments,
@@ -575,6 +891,10 @@ function text(value: unknown) {
 function labelize(value: unknown) {
   if (typeof value !== "string") return "Health signal";
   return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function firstArrayText(value: unknown) {
+  return Array.isArray(value) && typeof value[0] === "string" ? value[0] : "";
 }
 
 function readRiskScores(value: unknown): Record<string, number> {

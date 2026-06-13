@@ -34,6 +34,7 @@ type DigitalTwinPayload = {
     updated_at?: string;
   } | null;
   intelligence?: TwinIntelligence;
+  model?: TwinModel;
   timeline: TimelineEvent[];
   counts: Record<string, number>;
 };
@@ -56,6 +57,30 @@ type TwinIntelligence = {
     detail: string;
     href: string;
   };
+};
+
+type TwinDomain = {
+  detail: string;
+  evidence: number;
+  label: string;
+  score: number;
+  status: "strong" | "learning" | "thin";
+};
+
+type TwinScenarioPrompt = {
+  detail: string;
+  href: string;
+  question: string;
+};
+
+type TwinModel = {
+  domains: TwinDomain[];
+  readiness: {
+    detail: string;
+    score: number;
+    status: string;
+  };
+  scenarioPrompts: TwinScenarioPrompt[];
 };
 
 const TYPE_FILTERS: Array<TimelineEvent["type"] | "all"> = [
@@ -294,6 +319,8 @@ export default function DigitalTwinPage() {
               <DigitalTwinIntelligencePanel intelligence={payload.intelligence} />
             )}
 
+            {payload.model && <LivingTwinModelPanel model={payload.model} />}
+
             <div className="mt-6 grid gap-6 lg:grid-cols-[0.78fr_1.22fr]">
               <div className="space-y-6">
                 <div className="executive-panel rounded-lg p-6 md:p-7">
@@ -461,6 +488,89 @@ function DigitalTwinIntelligencePanel({
           {intelligence.nextMove.detail}
         </p>
       </Link>
+    </div>
+  );
+}
+
+function LivingTwinModelPanel({ model }: { model: TwinModel }) {
+  return (
+    <div className="mt-6 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="executive-panel rounded-lg p-6 md:p-7">
+        <div className="mb-6 flex flex-col gap-4 border-b border-white/[0.06] pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="micro-label">Living Twin Map</p>
+            <h2 className="mt-3 text-3xl font-light text-white">
+              {model.readiness.status}.
+            </h2>
+          </div>
+          <div className="premium-status-neutral rounded-md px-3 py-2 text-[10px] uppercase tracking-[0.14em]">
+            {model.readiness.score}% formed
+          </div>
+        </div>
+        <p className="text-sm leading-7 text-white/50">
+          {model.readiness.detail}
+        </p>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          {model.domains.map((domain) => (
+            <div
+              key={domain.label}
+              className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm text-white/76">{domain.label}</p>
+                  <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/28">
+                    {domain.status}
+                  </p>
+                </div>
+                <p className="royal-text text-xl font-light">{domain.score}</p>
+              </div>
+              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                <div
+                  className="h-full rounded-full bg-[rgb(var(--gold))]"
+                  style={{ width: `${Math.max(8, Math.min(domain.score, 100))}%` }}
+                />
+              </div>
+              <p className="mt-4 text-xs leading-5 text-white/38">{domain.detail}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="executive-panel rounded-lg p-6 md:p-7">
+        <div className="mb-6 border-b border-white/[0.06] pb-5">
+          <p className="micro-label">Scenario Intelligence</p>
+          <h2 className="mt-3 text-3xl font-light text-white">
+            Questions the twin can now model.
+          </h2>
+        </div>
+        <div className="space-y-3">
+          {model.scenarioPrompts.map((prompt) => (
+            <Link
+              key={prompt.question}
+              href={prompt.href}
+              className="quiet-lift block rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-white/[0.14]"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm leading-6 text-white/76">{prompt.question}</p>
+                  <p className="mt-2 text-xs leading-5 text-white/38">{prompt.detail}</p>
+                </div>
+                <ArrowRight size={16} className="mt-1 shrink-0 royal-text" />
+              </div>
+            </Link>
+          ))}
+          {!model.scenarioPrompts.length && (
+            <EmptyState
+              eyebrow="Scenario layer"
+              title="The model needs one more signal."
+              body="Add a future-self scenario, outcome, wearable trend, or clinical insight and Aeonvera will begin proposing simulations."
+              action={{ href: "/optimization", label: "Create scenario" }}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
