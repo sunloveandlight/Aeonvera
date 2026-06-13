@@ -13,15 +13,6 @@ function getTierDestination(plan: Plan | null) {
   return "/dashboard?activated=core";
 }
 
-function getInitialStatus() {
-  if (typeof window === "undefined") return "Finalizing account access...";
-
-  const requestedPlan = new URLSearchParams(window.location.search).get("plan");
-  return requestedPlan
-    ? `Activating your ${requestedPlan} membership...`
-    : "Finalizing account access...";
-}
-
 function getRequestedPlan(): Plan | null {
   if (typeof window === "undefined") return null;
   const plan = new URLSearchParams(window.location.search).get("plan");
@@ -30,7 +21,7 @@ function getRequestedPlan(): Plan | null {
 
 export default function SuccessPage() {
   const router = useRouter();
-  const [status, setStatus] = useState(getInitialStatus);
+  const [status, setStatus] = useState("Finalizing account access...");
 
   /**
    * FIXED: use ref to track cancellation and timeout
@@ -50,6 +41,10 @@ export default function SuccessPage() {
       attempts++;
 
       try {
+        if (requestedPlan && attempts === 1) {
+          setStatus(`Activating your ${requestedPlan} membership...`);
+        }
+
         await fetch("/api/stripe/sync-subscription", {
           method: "POST",
           credentials: "include",
