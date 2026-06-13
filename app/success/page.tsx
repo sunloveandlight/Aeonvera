@@ -22,6 +22,12 @@ function getInitialStatus() {
     : "Finalizing account access...";
 }
 
+function getRequestedPlan(): Plan | null {
+  if (typeof window === "undefined") return null;
+  const plan = new URLSearchParams(window.location.search).get("plan");
+  return plan === "core" || plan === "elite" || plan === "sovereign" ? plan : null;
+}
+
 export default function SuccessPage() {
   const router = useRouter();
   const [status, setStatus] = useState(getInitialStatus);
@@ -36,6 +42,7 @@ export default function SuccessPage() {
   useEffect(() => {
     cancelledRef.current = false;
     let attempts = 0;
+    const requestedPlan = getRequestedPlan();
 
     const checkStatus = async () => {
       if (cancelledRef.current) return;
@@ -43,6 +50,11 @@ export default function SuccessPage() {
       attempts++;
 
       try {
+        await fetch("/api/stripe/sync-subscription", {
+          method: "POST",
+          credentials: "include",
+        }).catch(() => null);
+
         const {
           data: { user },
         } = await supabase.auth.getUser();
@@ -64,8 +76,11 @@ export default function SuccessPage() {
 
         const allowed =
           profile && isUserAllowed(profile.plan, profile.subscription_status);
+        const requestedPlanActive = requestedPlan
+          ? profile?.plan === requestedPlan
+          : true;
 
-        if (allowed) {
+        if (allowed && requestedPlanActive) {
           const plan = profile.plan as Plan | null;
           cancelledRef.current = true;
           setStatus(`Opening your ${plan || "Aeonvera"} experience...`);
@@ -74,6 +89,9 @@ export default function SuccessPage() {
         }
 
         if (attempts < 20) {
+          if (requestedPlan && profile?.plan && profile.plan !== requestedPlan) {
+            setStatus(`Confirming your ${requestedPlan} membership with Stripe...`);
+          }
           timeoutRef.current = setTimeout(checkStatus, 1500);
         } else {
           setStatus(
