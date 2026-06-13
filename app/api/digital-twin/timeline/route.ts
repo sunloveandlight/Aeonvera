@@ -71,6 +71,22 @@ type TwinModel = {
   scenarioPrompts: TwinScenarioPrompt[];
 };
 
+type TwinAudit = {
+  blindSpots: Array<{
+    actionHref: string;
+    detail: string;
+    label: string;
+  }>;
+  evidencePriorities: string[];
+  freshness: {
+    detail: string;
+    label: string;
+    status: "current" | "warming" | "stale";
+    updatedAt?: string;
+  };
+  recommendationReason: string;
+};
+
 export async function GET() {
   try {
     const supabaseUser = await createClient();
@@ -329,6 +345,17 @@ export async function GET() {
         scenarioRows: scenarioRes.data,
         wearableRows: wearableRes.data,
       }),
+      audit: buildTwinAudit({
+        counts,
+        bioAgeRows: bioAgeRes.data,
+        clinicalInsightRows: clinicalInsightRes.data,
+        healthMetricRows: healthMetricRes.data,
+        labRows: labsRes.data,
+        outcomeRows: outcomeRes.data,
+        scenarioRows: scenarioRes.data,
+        state: healthStateRes.data,
+        wearableRows: wearableRes.data,
+      }),
       timeline: events.slice(0, 60),
       counts,
     });
@@ -429,6 +456,202 @@ function buildTwinIntelligence({
     worked: worked.slice(0, 3),
     nextMove,
   };
+}
+
+function buildTwinAudit({
+  bioAgeRows,
+  clinicalInsightRows,
+  counts,
+  healthMetricRows,
+  labRows,
+  outcomeRows,
+  scenarioRows,
+  state,
+  wearableRows,
+}: {
+  bioAgeRows: unknown;
+  clinicalInsightRows: unknown;
+  counts: Record<string, number>;
+  healthMetricRows: unknown;
+  labRows: unknown;
+  outcomeRows: unknown;
+  scenarioRows: unknown;
+  state: unknown;
+  wearableRows: unknown;
+}): TwinAudit {
+  const bioAge = asRows(bioAgeRows);
+  const clinicalInsights = asRows(clinicalInsightRows);
+  const healthMetrics = asRows(healthMetricRows);
+  const labs = asRows(labRows);
+  const outcomes = asRows(outcomeRows);
+  const scenarios = asRows(scenarioRows);
+  const wearables = asRows(wearableRows);
+  const latestDate = latestSignalDate([
+    ...bioAge.map((row) => text(row.created_at)),
+    ...healthMetrics.map((row) => text(row.measured_at)),
+    ...labs.map((row) => text(row.measured_at)),
+    ...outcomes.map((row) => text(row.measured_at) || text(row.created_at)),
+    ...scenarios.map((row) => text(row.created_at)),
+    ...wearables.map((row) => text(row.recorded_at)),
+    text((state as { updated_at?: unknown } | null)?.updated_at),
+  ]);
+  const daysOld = latestDate ? daysSince(latestDate) : null;
+  const blindSpots = [];
+
+  if (labs.length < 2) {
+    blindSpots.push({
+      actionHref: "/dashboard",
+      label: "Biomarker direction",
+      detail:
+        "Aeonvera needs a second lab layer to separate true trend from a single baseline.",
+    });
+  }
+
+  if (wearables.length < 5 && healthMetrics.length < 5) {
+    blindSpots.push({
+      actionHref: "/data-sources",
+      label: "Live recovery signal",
+      detail:
+        "Wearable sleep, HRV, resting-heart-rate, and activity data make the twin more adaptive day to day.",
+    });
+  }
+
+  if (outcomes.length < 2) {
+    blindSpots.push({
+      actionHref: "/digital-twin",
+      label: "Reality feedback",
+      detail:
+        "Tracked outcomes teach the model which protocols actually work for this person.",
+    });
+  }
+
+  if (!scenarios.length) {
+    blindSpots.push({
+      actionHref: "/optimization",
+      label: "Future hypothesis",
+      detail:
+        "A saved future-self scenario gives Aeonvera something to compare against real changes.",
+    });
+  }
+
+  if (!clinicalInsights.length) {
+    blindSpots.push({
+      actionHref: "/companion",
+      label: "Clinical thread",
+      detail:
+        "Clinical follow-up memory helps the model connect symptoms, labs, recovery, and behavior.",
+    });
+  }
+
+  return {
+    blindSpots: blindSpots.slice(0, 4),
+    evidencePriorities: buildEvidencePriorities({
+      counts,
+      healthMetrics,
+      labs,
+      outcomes,
+      scenarios,
+      wearables,
+    }),
+    freshness: {
+      detail:
+        daysOld == null
+          ? "No live signal has reached the twin yet."
+          : daysOld <= 7
+            ? "Recent data is feeding the model."
+            : daysOld <= 30
+              ? "The twin is usable, but another fresh signal would improve confidence."
+              : "The twin is relying on older evidence and should be refreshed before major decisions.",
+      label:
+        daysOld == null
+          ? "No signal"
+          : daysOld === 0
+            ? "Updated today"
+            : `${daysOld} day${daysOld === 1 ? "" : "s"} old`,
+      status: daysOld == null || daysOld > 30 ? "stale" : daysOld > 7 ? "warming" : "current",
+      updatedAt: latestDate || undefined,
+    },
+    recommendationReason: buildRecommendationReason({
+      counts,
+      outcomes,
+      state,
+      labs,
+    }),
+  };
+}
+
+function buildEvidencePriorities({
+  counts,
+  healthMetrics,
+  labs,
+  outcomes,
+  scenarios,
+  wearables,
+}: {
+  counts: Record<string, number>;
+  healthMetrics: TimelineRow[];
+  labs: TimelineRow[];
+  outcomes: TimelineRow[];
+  scenarios: TimelineRow[];
+  wearables: TimelineRow[];
+}) {
+  const priorities = [];
+
+  if (outcomes.length < 2) {
+    priorities.push("Track two intervention outcomes so prediction can learn from reality.");
+  }
+
+  if (labs.length < 2) {
+    priorities.push("Add another lab import to turn biomarker status into biomarker direction.");
+  }
+
+  if (wearables.length + healthMetrics.length < 10) {
+    priorities.push("Connect or refresh wearable data so recovery and strain are current.");
+  }
+
+  if (!scenarios.length) {
+    priorities.push("Run one future-self simulation so the twin can compare hypothesis against life.");
+  }
+
+  if ((counts.protocols || 0) < 1) {
+    priorities.push("Generate one protocol to connect model insight to execution.");
+  }
+
+  return priorities.slice(0, 3);
+}
+
+function buildRecommendationReason({
+  counts,
+  labs,
+  outcomes,
+  state,
+}: {
+  counts: Record<string, number>;
+  labs: TimelineRow[];
+  outcomes: TimelineRow[];
+  state: unknown;
+}) {
+  const riskScores = readRiskScores(state);
+  const topRisk = Object.entries(riskScores).sort((a, b) => Number(b[1]) - Number(a[1]))[0];
+  const latestOutcome = outcomes[0];
+
+  if (topRisk) {
+    return `Aeonvera is prioritizing ${labelize(topRisk[0]).toLowerCase()} because it is currently the highest risk domain in the model at ${Math.round(Number(topRisk[1]))}%.`;
+  }
+
+  if (latestOutcome) {
+    return `Aeonvera is using the latest tracked result, ${text(latestOutcome.action) || labelize(latestOutcome.domain)}, to decide whether the next protocol should reinforce or adjust course.`;
+  }
+
+  if (labs.length < 2) {
+    return "Aeonvera is asking for more lab evidence because the model can see baseline status but not enough biomarker direction yet.";
+  }
+
+  if ((counts.scenarios || 0) < 1) {
+    return "Aeonvera is recommending a scenario because the twin needs a future hypothesis before it can compare projected change against real outcomes.";
+  }
+
+  return "Aeonvera is recommending the next protocol because the model has enough baseline signal to begin learning from execution feedback.";
 }
 
 function buildMetricChanges(rows: TimelineRow[]): TwinChange[] {
@@ -1154,6 +1377,25 @@ function round(value: number, decimals: number) {
 
 function formatNumber(value: number) {
   return Math.abs(value) >= 10 ? `${Math.round(value)}` : value.toFixed(1);
+}
+
+function latestSignalDate(values: string[]) {
+  const latest = values
+    .map((value) => {
+      const time = Date.parse(value);
+      return Number.isFinite(time) ? time : null;
+    })
+    .filter((value): value is number => value != null)
+    .sort((a, b) => b - a)[0];
+
+  return latest ? new Date(latest).toISOString() : "";
+}
+
+function daysSince(value: string) {
+  const time = Date.parse(value);
+  if (!Number.isFinite(time)) return null;
+
+  return Math.max(0, Math.floor((Date.now() - time) / (24 * 60 * 60 * 1000)));
 }
 
 function isMissingTableError(error: unknown) {

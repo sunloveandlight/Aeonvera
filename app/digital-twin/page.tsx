@@ -34,6 +34,7 @@ type DigitalTwinPayload = {
     updated_at?: string;
   } | null;
   intelligence?: TwinIntelligence;
+  audit?: TwinAudit;
   model?: TwinModel;
   timeline: TimelineEvent[];
   counts: Record<string, number>;
@@ -93,6 +94,22 @@ type TwinModel = {
     status: string;
   };
   scenarioPrompts: TwinScenarioPrompt[];
+};
+
+type TwinAudit = {
+  blindSpots: Array<{
+    actionHref: string;
+    detail: string;
+    label: string;
+  }>;
+  evidencePriorities: string[];
+  freshness: {
+    detail: string;
+    label: string;
+    status: "current" | "warming" | "stale";
+    updatedAt?: string;
+  };
+  recommendationReason: string;
 };
 
 type TwinProjectionResult = {
@@ -577,6 +594,10 @@ export default function DigitalTwinPage() {
               <DigitalTwinIntelligencePanel intelligence={payload.intelligence} />
             )}
 
+            {payload.audit && (
+              <DigitalTwinAuditPanel audit={payload.audit} />
+            )}
+
             {payload.model && (
               <LivingTwinModelPanel
                 model={payload.model}
@@ -762,6 +783,97 @@ function DigitalTwinIntelligencePanel({
           {intelligence.nextMove.detail}
         </p>
       </Link>
+    </div>
+  );
+}
+
+function DigitalTwinAuditPanel({ audit }: { audit: TwinAudit }) {
+  return (
+    <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
+      <div className="mb-6 flex flex-col gap-4 border-b border-white/[0.06] pb-5 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="micro-label">Model Audit</p>
+          <h2 className="mt-3 text-3xl font-light text-white">
+            What the twin trusts right now.
+          </h2>
+        </div>
+        <div className={freshnessClassName(audit.freshness.status)}>
+          {audit.freshness.label}
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+          <p className="micro-label">Why Aeonvera recommends this</p>
+          <p className="mt-4 text-sm leading-7 text-white/62">
+            {audit.recommendationReason}
+          </p>
+          <div className="mt-5 rounded-lg border border-white/[0.055] bg-black/20 p-4">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+              Evidence freshness
+            </p>
+            <p className="mt-3 text-sm leading-6 text-white/58">
+              {audit.freshness.detail}
+            </p>
+            {audit.freshness.updatedAt && (
+              <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-white/24">
+                Latest signal {formatShortDate(audit.freshness.updatedAt)}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+            <p className="micro-label">Blind Spots</p>
+            <div className="mt-4 space-y-3">
+              {audit.blindSpots.length ? (
+                audit.blindSpots.map((spot) => (
+                  <Link
+                    key={spot.label}
+                    href={spot.actionHref}
+                    className="quiet-lift block rounded-lg border border-white/[0.055] bg-black/20 p-3 transition hover:border-white/[0.14]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm text-white/72">{spot.label}</p>
+                        <p className="mt-2 text-xs leading-5 text-white/38">
+                          {spot.detail}
+                        </p>
+                      </div>
+                      <ArrowRight size={14} className="mt-0.5 shrink-0 royal-text" />
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-sm leading-6 text-white/42">
+                  The model has enough signal for the current recommendation layer.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+            <p className="micro-label">Next Evidence</p>
+            <div className="mt-4 space-y-3">
+              {audit.evidencePriorities.length ? (
+                audit.evidencePriorities.map((priority) => (
+                  <div
+                    key={priority}
+                    className="rounded-lg border border-white/[0.055] bg-black/20 p-3"
+                  >
+                    <p className="text-xs leading-5 text-white/48">{priority}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm leading-6 text-white/42">
+                  Keep executing and logging outcomes. The next improvement is higher signal density, not more complexity.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1358,6 +1470,14 @@ function changeStatusClassName(direction: TwinChange["direction"]) {
   if (direction === "declining") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
   if (direction === "stable") return `${base} text-white/34 bg-white/[0.025]`;
   return `${base} text-white/28 bg-white/[0.02]`;
+}
+
+function freshnessClassName(status: TwinAudit["freshness"]["status"]) {
+  const base = "rounded-md px-3 py-2 text-[10px] uppercase tracking-[0.14em]";
+
+  if (status === "current") return `${base} royal-text bg-[#dabc73]/[0.08]`;
+  if (status === "warming") return `${base} text-white/52 bg-white/[0.045]`;
+  return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
 }
 
 function TimelineEventCard({ event }: { event: TimelineEvent }) {
