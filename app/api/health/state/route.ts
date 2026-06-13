@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import { buildHealthState } from "@/lib/state/healthStateEngine";
 import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
 import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAge";
@@ -9,16 +10,27 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const requestedUserId = body.userId;
-    const userId = await resolveAuthorizedUserId(req, requestedUserId);
+    const authorization = await resolveAuthorizedUserId(req, requestedUserId);
 
-    if (!userId) {
+    if (!authorization) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
+    const { isCron, userId } = authorization;
     const supabase = getSupabaseAdmin();
+    if (!isCron) {
+      const entitlement = await requireServerFeatureAccess({
+        feature: "dashboard_access",
+        lockedMessage: "Activate Core to process health-state data.",
+        supabase,
+        userId,
+      });
+      if (!entitlement.allowed) return entitlement.response;
+    }
+
 
     /**
      * STEP 1: GET LAST PROCESSING TIME
@@ -177,7 +189,9 @@ async function resolveAuthorizedUserId(req: NextRequest, requestedUserId?: strin
   const auth = req.headers.get("authorization");
 
   if (cronSecret && auth === `Bearer ${cronSecret}`) {
-    return typeof requestedUserId === "string" ? requestedUserId : null;
+    return typeof requestedUserId === "string"
+      ? { isCron: true, userId: requestedUserId }
+      : null;
   }
 
   const supabase = await createClient();
@@ -188,5 +202,5 @@ async function resolveAuthorizedUserId(req: NextRequest, requestedUserId?: strin
   if (!user) return null;
   if (requestedUserId && requestedUserId !== user.id) return null;
 
-  return user.id;
+  return { isCron: false, userId: user.id };
 }

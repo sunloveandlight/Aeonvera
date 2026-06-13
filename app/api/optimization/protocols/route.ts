@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 
 const SELECT_FIELDS =
   "id,protocol,summary,focus_domains,status,created_at,updated_at";
@@ -18,6 +19,14 @@ export async function GET() {
     }
 
     const admin = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to view protocol history.",
+      supabase: admin,
+      userId: user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const { data, error } = await admin
       .from("optimization_protocols")
       .select(SELECT_FIELDS)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 
 const BASE_SELECT =
   "id,domain,action,success,confidence,created_at";
@@ -11,6 +12,14 @@ export async function GET() {
   try {
     const user = await requireUser();
     const admin = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to track intervention outcomes.",
+      supabase: admin,
+      userId: user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const result = await admin
       .from("intervention_outcomes")
       .select(EXTENDED_SELECT)
@@ -63,6 +72,14 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to track intervention outcomes.",
+      supabase: admin,
+      userId: user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const payload = {
       user_id: user.id,
       protocol_id: sanitizeUuid(body.protocolId) || null,

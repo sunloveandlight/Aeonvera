@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import { parseAppleHealthPayload, parseAppleHealthText } from "@/lib/wearables/apple";
 import { ingestWearableMetrics } from "@/lib/wearables/ingestWearableMetrics";
 import type { WearableRawMetric } from "@/lib/wearables/types";
@@ -33,6 +34,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const admin = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to import Apple Health data.",
+      supabase: admin,
+      userId: user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const metrics = await parseImportRequest(request);
 
     if (metrics.length === 0) {
@@ -43,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await ingestWearableMetrics({
-      supabase: getSupabaseAdmin(),
+      supabase: admin,
       userId: user.id,
       provider: "apple",
       metrics,

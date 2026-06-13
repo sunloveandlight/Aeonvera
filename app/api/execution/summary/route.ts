@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import { buildExecutionSummary, getExecutionWindow } from "@/lib/execution/executionSummary";
 
 export async function GET(request: NextRequest) {
@@ -12,6 +13,14 @@ export async function GET(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to view execution intelligence.",
+      supabase: admin,
+      userId: user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const window = getExecutionWindow();
     const [outcomeRes, calendarRes] = await Promise.all([
       safeQuery(() =>

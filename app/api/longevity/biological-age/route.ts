@@ -8,6 +8,7 @@ import {
 } from "@/lib/longevity/biologicalAgeEngine";
 import { buildAssessmentInput } from "@/lib/longevity/assessmentInput";
 import { loadLatestLabInputValues } from "@/lib/labs/latestLabInputs";
+import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 
 type CookieToSet = {
   name: string;
@@ -43,6 +44,14 @@ export async function GET() {
     }
 
     const supabase = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to view biological age history.",
+      supabase,
+      userId: user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const { data, error } = await supabase
       .from("biological_age_history")
       .select("id, chronological_age, biological_age, age_delta, score, accuracy_score, category, source, result, created_at")
@@ -77,6 +86,13 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id;
     const supabase = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to calculate biological age.",
+      supabase,
+      userId,
+    });
+    if (!entitlement.allowed) return entitlement.response;
 
     const { data: assessment, error: assessmentError } = await supabase
       .from("longevity_assessments")
