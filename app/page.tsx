@@ -338,7 +338,7 @@ export default function HomePage() {
   function getPlanActionLabel(plan: Plan) {
     if (!activePlan) return `Choose ${PLANS.find((item) => item.id === plan)?.name || plan}`;
     if (plan === activePlan) return "Manage current plan";
-    if (PLAN_RANK[plan] < PLAN_RANK[activePlan]) return "Included";
+    if (PLAN_RANK[plan] < PLAN_RANK[activePlan]) return `Downgrade to ${PLANS.find((item) => item.id === plan)?.name || plan}`;
     return `Upgrade to ${PLANS.find((item) => item.id === plan)?.name || plan}`;
   }
 
@@ -648,13 +648,13 @@ export default function HomePage() {
                 }`}
               >
                 <h3 className="text-xl font-light">{plan.name}</h3>
-                {activePlan && PLAN_RANK[plan.id] <= PLAN_RANK[activePlan] ? (
+                {activePlan && plan.id === activePlan ? (
                   <div className="mt-6">
                     <p className="text-[10px] uppercase tracking-[0.14em] royal-text">
-                      {plan.id === activePlan ? "Current membership" : "Already unlocked"}
+                      Current membership
                     </p>
                     <p className="mt-2 text-2xl font-light text-white/82">
-                      {plan.id === activePlan ? "Active tier" : "Included"}
+                      Active tier
                     </p>
                   </div>
                 ) : (

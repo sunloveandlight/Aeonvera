@@ -317,8 +317,8 @@ export default function PricingPage() {
 
   const activePlanDetails = activePlan ? PLAN_BY_ID[activePlan] : null;
   const ownedCopy = activePlan ? OWNED_TIER_COPY[activePlan] : null;
-  const upgradePlans = activePlan
-    ? PLANS.filter((plan) => PLAN_RANK[plan.id] > PLAN_RANK[activePlan])
+  const planChangeOptions = activePlan
+    ? PLANS.filter((plan) => plan.id !== activePlan)
     : [];
 
   return (
@@ -335,8 +335,8 @@ export default function PricingPage() {
                 variant="secondary"
                 className="mx-auto mt-6 block max-w-2xl text-center text-lg leading-8"
               >
-                Pricing is hidden because you already have access. From here,
-                you can manage billing or move into any higher tier.
+                Your current tier stays active until you choose otherwise. From
+                here, you can manage billing or move into any other plan.
               </Text>
             </div>
           ) : (
@@ -366,11 +366,7 @@ export default function PricingPage() {
       <Section className="px-6 pb-24 lg:px-8" intensity="low">
         <PageContainer>
           {activePlan && ownedCopy && activePlanDetails ? (
-            <div
-              className={`mx-auto grid max-w-6xl gap-5 ${
-                upgradePlans.length > 1 ? "lg:grid-cols-3" : "lg:grid-cols-[1.1fr_0.9fr]"
-              }`}
-            >
+            <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-3">
               <button
                 type="button"
                 onClick={() => handleBillingPortal(activePlan)}
@@ -413,34 +409,43 @@ export default function PricingPage() {
                 </div>
               </button>
 
-              {upgradePlans.length > 0 ? (
-                upgradePlans.map((upgradePlan) => (
+              {planChangeOptions.map((planOption) => {
+                const isDowngrade = PLAN_RANK[planOption.id] < PLAN_RANK[activePlan];
+                const actionLabel = isDowngrade ? "Downgrade" : "Upgrade";
+
+                return (
                   <button
-                    key={upgradePlan.id}
+                    key={planOption.id}
                     type="button"
-                    onClick={() => handleBillingPortal(upgradePlan.id)}
+                    onClick={() => handleBillingPortal(planOption.id)}
                     disabled={loadingPlan !== null}
                     className="membership-upgrade-card quiet-lift flex flex-col items-start rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <div className="membership-card-top w-full">
                       <div className="membership-card-emblem flex size-12 items-center justify-center rounded-lg bg-white/[0.06] text-white/86">
-                        {upgradePlan.id === "sovereign" ? <Crown size={22} /> : <Sparkles size={22} />}
+                        {planOption.id === "sovereign" ? <Crown size={22} /> : <Sparkles size={22} />}
                       </div>
                       <p className="micro-label">
-                        {upgradePlan.id === "sovereign" ? "Executive upgrade" : "Optimization upgrade"}
+                        {isDowngrade
+                          ? "Plan adjustment"
+                          : planOption.id === "sovereign"
+                            ? "Executive upgrade"
+                            : "Optimization upgrade"}
                       </p>
                       <h2 className="membership-card-title text-3xl font-light text-white md:text-4xl">
-                        {upgradePlan.name}
+                        {planOption.name}
                       </h2>
                     </div>
                     <p className="mt-5 text-sm leading-7 text-white/55">
-                      {upgradePlan.id === "sovereign"
-                        ? "Move directly into the full executive digital-twin path."
-                        : ownedCopy.upgradeIntro}
+                      {isDowngrade
+                        ? `Move to ${planOption.name} if you want a simpler monthly membership. Stripe will show the billing effect before anything changes.`
+                        : planOption.id === "sovereign"
+                          ? "Move directly into the full executive digital-twin path."
+                          : ownedCopy.upgradeIntro}
                     </p>
 
                     <div className="mt-8 space-y-3">
-                      {upgradePlan.features.slice(1, 5).map((feature) => (
+                      {planOption.features.slice(1, 5).map((feature) => (
                         <div key={feature} className="flex gap-3 text-sm leading-6 text-white/68">
                           <Check size={16} className="mt-1 shrink-0 royal-text" />
                           <span>{feature}</span>
@@ -449,38 +454,17 @@ export default function PricingPage() {
                     </div>
 
                     <div className="premium-action mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium">
-                      {loadingPlan === upgradePlan.id ? "Opening" : `Upgrade to ${upgradePlan.name}`}
-                      {loadingPlan !== upgradePlan.id && <ArrowRight size={16} />}
+                      {loadingPlan === planOption.id
+                        ? "Opening"
+                        : `${actionLabel} to ${planOption.name}`}
+                      {loadingPlan !== planOption.id && <ArrowRight size={16} />}
                     </div>
                     <p className="mt-4 text-center text-xs leading-5 text-white/35">
                       Billing details and proration are confirmed securely before any change.
                     </p>
                   </button>
-                ))
-              ) : (
-                <div className="membership-upgrade-card rounded-lg p-7">
-                  <div className="mb-7 flex size-12 items-center justify-center rounded-lg bg-white/[0.06] text-white/86">
-                    <Crown size={22} />
-                  </div>
-                  <p className="micro-label">Highest tier</p>
-                  <h2 className="mt-4 text-3xl font-light text-white md:text-4xl">
-                    Everything is unlocked.
-                  </h2>
-                  <p className="mt-5 text-sm leading-7 text-white/55">
-                    Sovereign is the top tier. There is no upsell above this,
-                    only account management and deeper product experiences.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => handleBillingPortal(activePlan)}
-                    disabled={loadingPlan !== null}
-                    className="premium-action mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {loadingPlan === activePlan ? "Opening" : "Manage membership"}
-                    {loadingPlan !== activePlan && <Settings size={16} />}
-                  </button>
-                </div>
-              )}
+                );
+              })}
             </div>
           ) : (
             <div className="grid gap-5 lg:grid-cols-3">

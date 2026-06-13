@@ -4,12 +4,6 @@ import { createServerClient } from "@supabase/ssr";
 
 type Plan = "core" | "elite" | "sovereign";
 
-const PLAN_RANK: Record<Plan, number> = {
-  core: 1,
-  elite: 2,
-  sovereign: 3,
-};
-
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("Missing STRIPE_SECRET_KEY");
@@ -69,29 +63,37 @@ export async function POST(req: NextRequest) {
     }
 
     const currentPlan = sanitizePlan(profile.plan);
-    const subscriptionId =
+    let subscriptionId =
       typeof profile.stripe_subscription_id === "string"
         ? profile.stripe_subscription_id
         : null;
     const priceIds = getPriceIds();
     const targetPriceId = targetPlan ? priceIds[targetPlan] : null;
-    const isUpgrade =
-      Boolean(targetPlan && currentPlan) &&
-      PLAN_RANK[targetPlan as Plan] > PLAN_RANK[currentPlan as Plan];
+    const isPlanChange = Boolean(targetPlan && currentPlan && targetPlan !== currentPlan);
 
-    if (isUpgrade && !targetPriceId) {
+    if (isPlanChange && !targetPriceId) {
       return NextResponse.json(
-        { error: "Missing Stripe price for the selected upgrade." },
+        { error: "Missing Stripe price for the selected plan change." },
         { status: 500 }
       );
     }
 
     let flowData: Stripe.BillingPortal.SessionCreateParams.FlowData | undefined;
 
-    if (isUpgrade && subscriptionId && targetPriceId) {
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
-        expand: ["items.data.price"],
+    if (isPlanChange && !subscriptionId) {
+      const subscriptions = await stripe.subscriptions.list({
+        customer: profile.stripe_customer_id,
+        status: "all",
+        limit: 10,
       });
+      subscriptionId =
+        subscriptions.data.find((subscription) =>
+          ["active", "trialing", "past_due"].includes(subscription.status)
+        )?.id || null;
+    }
+
+    if (isPlanChange && subscriptionId && targetPriceId) {
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       const subscriptionItem = subscription.items.data[0];
 
       if (subscriptionItem?.id) {
