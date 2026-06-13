@@ -47,6 +47,7 @@ type TwinScenarioPrompt = {
   detail: string;
   href: string;
   question: string;
+  scenarioIds: string[];
 };
 
 type TwinModel = {
@@ -689,6 +690,7 @@ function buildScenarioPrompts({
       detail:
         "Projects the strongest levers across sleep, training, nutrition, recovery, biomarkers, and adherence.",
       href: "/optimization",
+      scenarioIds: ["sleep-30", "vo2-15", "stress-reset", "training-consistency"],
     });
   }
 
@@ -698,6 +700,7 @@ function buildScenarioPrompts({
       detail:
         "Uses clinical memory to ask what improves fastest, what needs labs, and what should be watched carefully.",
       href: "/optimization",
+      scenarioIds: scenarioIdsForDomain(topClinicalDomain),
     });
   }
 
@@ -707,6 +710,7 @@ function buildScenarioPrompts({
       detail:
         "Compares sleep, HRV, training intensity, caffeine timing, and recovery interventions against expected readiness.",
       href: "/optimization",
+      scenarioIds: ["sleep-30", "stress-reset"],
     });
   }
 
@@ -716,6 +720,7 @@ function buildScenarioPrompts({
       detail:
         "Turns the last tracked result into the next protocol adjustment instead of treating it as a static log.",
       href: "/digital-twin",
+      scenarioIds: scenarioIdsForDomain(text(latestOutcome.domain)),
     });
   }
 
@@ -725,6 +730,7 @@ function buildScenarioPrompts({
       detail:
         "Uses learned preferences and friction history to simulate a more realistic day, not an idealized one.",
       href: "/optimization",
+      scenarioIds: ["training-consistency", "sleep-30"],
     });
   }
 
@@ -734,10 +740,29 @@ function buildScenarioPrompts({
       detail:
         "Creates a baseline simulation that can later be compared against labs, wearables, and real outcomes.",
       href: "/optimization",
+      scenarioIds: ["sleep-30", "training-consistency"],
     });
   }
 
   return prompts.slice(0, 4);
+}
+
+function scenarioIdsForDomain(value: string) {
+  const normalized = value.toLowerCase();
+
+  if (/sleep|recovery|stress|cortisol|anxiety|inflammation/.test(normalized)) {
+    return ["sleep-30", "stress-reset"];
+  }
+
+  if (/cardio|heart|vo2|movement|training|exercise|fitness/.test(normalized)) {
+    return ["vo2-15", "training-consistency"];
+  }
+
+  if (/weight|body|composition|metabolic|glucose|insulin|nutrition/.test(normalized)) {
+    return ["lose-20-pounds", "training-consistency"];
+  }
+
+  return ["sleep-30", "training-consistency"];
 }
 
 function buildModelState(counts: Record<string, number>) {

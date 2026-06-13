@@ -71,6 +71,7 @@ type TwinScenarioPrompt = {
   detail: string;
   href: string;
   question: string;
+  scenarioIds: string[];
 };
 
 type TwinModel = {
@@ -81,6 +82,29 @@ type TwinModel = {
     status: string;
   };
   scenarioPrompts: TwinScenarioPrompt[];
+};
+
+type TwinProjectionResult = {
+  activeScenarioIds?: string[];
+  baseline?: {
+    biologicalAge: number;
+    score: number;
+  };
+  futureSelf?: {
+    headline?: string;
+    summary?: string;
+    levers?: Array<{
+      impact: "low" | "medium" | "high";
+      label: string;
+      optimized: number;
+    }>;
+  };
+  projection?: {
+    biologicalAge: number;
+    projectedAgeDeltaImprovement: number;
+    projectedBiologicalAgeImprovement: number;
+    score: number;
+  };
 };
 
 const TYPE_FILTERS: Array<TimelineEvent["type"] | "all"> = [
@@ -119,6 +143,9 @@ export default function DigitalTwinPage() {
     notes: "",
   });
   const [activeType, setActiveType] = useState<TimelineEvent["type"] | "all">("all");
+  const [projectionResult, setProjectionResult] = useState<TwinProjectionResult | null>(null);
+  const [projectionMessage, setProjectionMessage] = useState<string | null>(null);
+  const [runningProjection, setRunningProjection] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -217,6 +244,37 @@ export default function DigitalTwinPage() {
       setOutcomeMessage(error instanceof Error ? error.message : "Could not save outcome.");
     } finally {
       setSavingOutcome(false);
+    }
+  }
+
+  async function runTwinProjection(prompt: TwinScenarioPrompt) {
+    setRunningProjection(prompt.question);
+    setProjectionMessage(null);
+    setProjectionResult(null);
+
+    try {
+      const response = await fetch("/api/longevity/simulator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          scenarioIds: prompt.scenarioIds,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not run this projection.");
+      }
+
+      setProjectionResult(data as TwinProjectionResult);
+      setProjectionMessage(`Projection complete: ${prompt.question}`);
+    } catch (error) {
+      setProjectionMessage(
+        error instanceof Error ? error.message : "Could not run this projection."
+      );
+    } finally {
+      setRunningProjection(null);
     }
   }
 
@@ -319,7 +377,15 @@ export default function DigitalTwinPage() {
               <DigitalTwinIntelligencePanel intelligence={payload.intelligence} />
             )}
 
-            {payload.model && <LivingTwinModelPanel model={payload.model} />}
+            {payload.model && (
+              <LivingTwinModelPanel
+                model={payload.model}
+                projectionMessage={projectionMessage}
+                projectionResult={projectionResult}
+                runningProjection={runningProjection}
+                onRunProjection={runTwinProjection}
+              />
+            )}
 
             <div className="mt-6 grid gap-6 lg:grid-cols-[0.78fr_1.22fr]">
               <div className="space-y-6">
@@ -492,7 +558,19 @@ function DigitalTwinIntelligencePanel({
   );
 }
 
-function LivingTwinModelPanel({ model }: { model: TwinModel }) {
+function LivingTwinModelPanel({
+  model,
+  onRunProjection,
+  projectionMessage,
+  projectionResult,
+  runningProjection,
+}: {
+  model: TwinModel;
+  onRunProjection: (prompt: TwinScenarioPrompt) => Promise<void>;
+  projectionMessage: string | null;
+  projectionResult: TwinProjectionResult | null;
+  runningProjection: string | null;
+}) {
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
       <div className="executive-panel rounded-lg p-6 md:p-7">
@@ -547,19 +625,26 @@ function LivingTwinModelPanel({ model }: { model: TwinModel }) {
         </div>
         <div className="space-y-3">
           {model.scenarioPrompts.map((prompt) => (
-            <Link
+            <button
               key={prompt.question}
-              href={prompt.href}
-              className="quiet-lift block rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-white/[0.14]"
+              type="button"
+              onClick={() => void onRunProjection(prompt)}
+              disabled={Boolean(runningProjection)}
+              className="quiet-lift block w-full rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 text-left transition hover:border-white/[0.14] disabled:cursor-not-allowed disabled:opacity-55"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm leading-6 text-white/76">{prompt.question}</p>
                   <p className="mt-2 text-xs leading-5 text-white/38">{prompt.detail}</p>
+                  <p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-white/24">
+                    {prompt.scenarioIds.length} model lever{prompt.scenarioIds.length === 1 ? "" : "s"}
+                  </p>
                 </div>
-                <ArrowRight size={16} className="mt-1 shrink-0 royal-text" />
+                <span className="mt-1 shrink-0 royal-text">
+                  {runningProjection === prompt.question ? "Running" : "Run"}
+                </span>
               </div>
-            </Link>
+            </button>
           ))}
           {!model.scenarioPrompts.length && (
             <EmptyState
@@ -570,7 +655,79 @@ function LivingTwinModelPanel({ model }: { model: TwinModel }) {
             />
           )}
         </div>
+
+        {(projectionMessage || projectionResult) && (
+          <div className="mt-5 rounded-lg border border-[#dabc73]/20 bg-[#dabc73]/[0.055] p-5">
+            <p className="micro-label">Projection Result</p>
+            {projectionMessage && (
+              <p className="mt-3 text-sm leading-6 text-white/52">{projectionMessage}</p>
+            )}
+            {projectionResult?.projection && (
+              <>
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  <ProjectionMetric
+                    label="Projected age"
+                    value={projectionResult.projection.biologicalAge.toFixed(1)}
+                    suffix="years"
+                  />
+                  <ProjectionMetric
+                    label="Age separation"
+                    value={projectionResult.projection.projectedBiologicalAgeImprovement.toFixed(1)}
+                    suffix="years"
+                  />
+                  <ProjectionMetric
+                    label="Twin score"
+                    value={String(projectionResult.projection.score)}
+                    suffix="score"
+                  />
+                </div>
+                <p className="mt-5 text-sm leading-7 text-white/58">
+                  {projectionResult.futureSelf?.summary ||
+                    projectionResult.futureSelf?.headline ||
+                    "Aeonvera projected this scenario against your current biological-age model."}
+                </p>
+                {projectionResult.futureSelf?.levers?.length ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {projectionResult.futureSelf.levers.slice(0, 4).map((lever) => (
+                      <span
+                        key={`${lever.label}-${lever.optimized}`}
+                        className="rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-white/42"
+                      >
+                        {lever.label} / {lever.impact}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+                <Link
+                  href="/optimization"
+                  className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-xs font-medium"
+                >
+                  Turn into protocol
+                </Link>
+              </>
+            )}
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+function ProjectionMetric({
+  label,
+  suffix,
+  value,
+}: {
+  label: string;
+  suffix: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/[0.07] bg-black/20 p-3">
+      <p className="text-2xl font-light text-white/88">{value}</p>
+      <p className="mt-1 text-[9px] uppercase tracking-[0.14em] text-white/28">
+        {label} / {suffix}
+      </p>
     </div>
   );
 }
