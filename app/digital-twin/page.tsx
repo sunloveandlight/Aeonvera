@@ -167,6 +167,7 @@ export default function DigitalTwinPage() {
   const [projectionProtocolMessage, setProjectionProtocolMessage] = useState<string | null>(null);
   const [projectionSavedMessage, setProjectionSavedMessage] = useState<string | null>(null);
   const [projectionScenario, setProjectionScenario] = useState<SavedProjectionScenario | null>(null);
+  const [customWhatIf, setCustomWhatIf] = useState("");
   const [generatingProjectionProtocol, setGeneratingProjectionProtocol] = useState(false);
   const [runningProjection, setRunningProjection] = useState<string | null>(null);
 
@@ -335,6 +336,18 @@ export default function DigitalTwinPage() {
     } finally {
       setRunningProjection(null);
     }
+  }
+
+  async function runCustomWhatIf() {
+    const question = customWhatIf.trim();
+
+    if (!question) {
+      setProjectionMessage("Ask the twin what you want to model first.");
+      return;
+    }
+
+    const prompt = buildCustomTwinPrompt(question);
+    await runTwinProjection(prompt);
   }
 
   async function buildProtocolFromProjection() {
@@ -554,8 +567,11 @@ export default function DigitalTwinPage() {
                 projectionResult={projectionResult}
                 projectionSavedMessage={projectionSavedMessage}
                 projectionScenario={projectionScenario}
+                customWhatIf={customWhatIf}
                 generatingProjectionProtocol={generatingProjectionProtocol}
                 onBuildProtocol={buildProtocolFromProjection}
+                onCustomWhatIfChange={setCustomWhatIf}
+                onRunCustomWhatIf={runCustomWhatIf}
                 runningProjection={runningProjection}
                 onRunProjection={runTwinProjection}
               />
@@ -733,9 +749,12 @@ function DigitalTwinIntelligencePanel({
 }
 
 function LivingTwinModelPanel({
+  customWhatIf,
   generatingProjectionProtocol,
   model,
   onBuildProtocol,
+  onCustomWhatIfChange,
+  onRunCustomWhatIf,
   onRunProjection,
   projectionMessage,
   projectionProtocolMessage,
@@ -744,9 +763,12 @@ function LivingTwinModelPanel({
   projectionScenario,
   runningProjection,
 }: {
+  customWhatIf: string;
   generatingProjectionProtocol: boolean;
   model: TwinModel;
   onBuildProtocol: () => Promise<void>;
+  onCustomWhatIfChange: (value: string) => void;
+  onRunCustomWhatIf: () => Promise<void>;
   onRunProjection: (prompt: TwinScenarioPrompt) => Promise<void>;
   projectionMessage: string | null;
   projectionProtocolMessage: string | null;
@@ -806,10 +828,38 @@ function LivingTwinModelPanel({
         <div className="mb-6 border-b border-white/[0.06] pb-5">
           <p className="micro-label">Scenario Intelligence</p>
           <h2 className="mt-3 text-3xl font-light text-white">
-            Questions the twin can now model.
+            Ask what your future self becomes.
           </h2>
         </div>
+
+        <div className="mb-5 rounded-lg border border-[#dabc73]/18 bg-[#dabc73]/[0.045] p-4">
+          <label htmlFor="digital-twin-what-if" className="micro-label">
+            Ask What If
+          </label>
+          <textarea
+            id="digital-twin-what-if"
+            value={customWhatIf}
+            onChange={(event) => onCustomWhatIfChange(event.target.value)}
+            className="mt-3 min-h-24 w-full resize-none rounded-md border border-white/[0.08] bg-black/20 p-3 text-sm leading-6 text-white/72 outline-none placeholder:text-white/24"
+            placeholder="What happens if I stop alcohol, add Zone 2 three times a week, and sleep 45 minutes longer?"
+          />
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs leading-5 text-white/38">
+              Aeonvera converts your question into model levers, saves the projection, then can turn it into a protocol.
+            </p>
+            <button
+              type="button"
+              onClick={() => void onRunCustomWhatIf()}
+              disabled={Boolean(runningProjection)}
+              className="premium-action inline-flex h-10 shrink-0 items-center justify-center rounded-md px-4 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-55"
+            >
+              {runningProjection === customWhatIf.trim() ? "Modeling" : "Model this"}
+            </button>
+          </div>
+        </div>
+
         <div className="space-y-3">
+          <p className="micro-label">Suggested Models</p>
           {model.scenarioPrompts.map((prompt) => (
             <button
               key={prompt.question}
@@ -913,6 +963,43 @@ function LivingTwinModelPanel({
       </div>
     </div>
   );
+}
+
+function buildCustomTwinPrompt(question: string): TwinScenarioPrompt {
+  const normalized = question.toLowerCase();
+  const scenarioIds = new Set<string>();
+
+  if (/sleep|bed|wake|insomnia|rest|recovery|rem|deep|nap/.test(normalized)) {
+    scenarioIds.add("sleep-30");
+  }
+
+  if (/zone 2|vo2|cardio|aerobic|run|running|bike|cycling|walk|walking|steps|heart|hrv|resting heart/.test(normalized)) {
+    scenarioIds.add("vo2-15");
+  }
+
+  if (/lift|lifting|strength|resistance|muscle|training|workout|gym|exercise/.test(normalized)) {
+    scenarioIds.add("training-consistency");
+  }
+
+  if (/weight|fat|lean|waist|body composition|pounds|lbs|kg|metabolic|glucose|insulin|a1c|hba1c|triglyceride|alcohol|drinking|sugar|carb|protein/.test(normalized)) {
+    scenarioIds.add("lose-20-pounds");
+  }
+
+  if (/stress|cortisol|anxiety|burnout|meditation|breath|breathing|sauna|cold|red light|pemf|hyperbaric|recovery|alcohol|caffeine/.test(normalized)) {
+    scenarioIds.add("stress-reset");
+  }
+
+  if (!scenarioIds.size) {
+    scenarioIds.add("sleep-30");
+    scenarioIds.add("training-consistency");
+  }
+
+  return {
+    question,
+    detail: `Custom Digital Twin question interpreted as ${scenarioIds.size} model lever${scenarioIds.size === 1 ? "" : "s"}.`,
+    href: "/digital-twin",
+    scenarioIds: Array.from(scenarioIds).slice(0, 5),
+  };
 }
 
 function ProjectionRealityPanel({
