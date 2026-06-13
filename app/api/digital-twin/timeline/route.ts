@@ -195,7 +195,7 @@ export async function GET() {
       safeQuery(() =>
         admin
           .from("future_self_scenarios")
-          .select("id, title, description, share_token, version_number, created_at")
+          .select("id, title, description, share_token, is_public, version_number, created_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(10)
@@ -873,7 +873,7 @@ function mapScenarios(rows: unknown): TimelineEvent[] {
     detail: text(row.description) || "Future self projection stored.",
     occurred_at: text(row.created_at),
     signal: row.version_number ? `v${row.version_number}` : "saved",
-    href: row.share_token ? `/future-self/${row.share_token}` : "/optimization",
+    href: row.is_public && row.share_token ? `/future-self/${row.share_token}` : "/digital-twin",
   }));
 }
 

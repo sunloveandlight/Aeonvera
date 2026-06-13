@@ -90,6 +90,7 @@ type TwinProjectionResult = {
     biologicalAge: number;
     score: number;
   };
+  controls?: Record<string, number>;
   futureSelf?: {
     headline?: string;
     summary?: string;
@@ -145,6 +146,7 @@ export default function DigitalTwinPage() {
   const [activeType, setActiveType] = useState<TimelineEvent["type"] | "all">("all");
   const [projectionResult, setProjectionResult] = useState<TwinProjectionResult | null>(null);
   const [projectionMessage, setProjectionMessage] = useState<string | null>(null);
+  const [projectionSavedMessage, setProjectionSavedMessage] = useState<string | null>(null);
   const [runningProjection, setRunningProjection] = useState<string | null>(null);
 
   useEffect(() => {
@@ -250,6 +252,7 @@ export default function DigitalTwinPage() {
   async function runTwinProjection(prompt: TwinScenarioPrompt) {
     setRunningProjection(prompt.question);
     setProjectionMessage(null);
+    setProjectionSavedMessage(null);
     setProjectionResult(null);
 
     try {
@@ -269,6 +272,37 @@ export default function DigitalTwinPage() {
 
       setProjectionResult(data as TwinProjectionResult);
       setProjectionMessage(`Projection complete: ${prompt.question}`);
+
+      const saveResponse = await fetch("/api/longevity/future-self/scenarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: prompt.question.replace(/\?$/, ""),
+          description:
+            data.futureSelf?.summary ||
+            data.futureSelf?.headline ||
+            "Digital Twin projection saved from scenario intelligence.",
+          scenarioIds: data.activeScenarioIds || prompt.scenarioIds,
+          controls: data.controls || {},
+          projection: data.projection || {},
+          futureSelf: data.futureSelf || {},
+          isPublic: false,
+        }),
+      });
+      const saved = await saveResponse.json().catch(() => null);
+
+      if (!saveResponse.ok) {
+        throw new Error(saved?.error || "Projection ran, but could not be saved to the timeline.");
+      }
+
+      setProjectionSavedMessage("Saved to your Digital Twin timeline.");
+
+      const timelineResponse = await fetch("/api/digital-twin/timeline", {
+        credentials: "include",
+      });
+      const timelineData = await timelineResponse.json();
+      if (timelineResponse.ok) setPayload(timelineData);
     } catch (error) {
       setProjectionMessage(
         error instanceof Error ? error.message : "Could not run this projection."
@@ -382,6 +416,7 @@ export default function DigitalTwinPage() {
                 model={payload.model}
                 projectionMessage={projectionMessage}
                 projectionResult={projectionResult}
+                projectionSavedMessage={projectionSavedMessage}
                 runningProjection={runningProjection}
                 onRunProjection={runTwinProjection}
               />
@@ -563,12 +598,14 @@ function LivingTwinModelPanel({
   onRunProjection,
   projectionMessage,
   projectionResult,
+  projectionSavedMessage,
   runningProjection,
 }: {
   model: TwinModel;
   onRunProjection: (prompt: TwinScenarioPrompt) => Promise<void>;
   projectionMessage: string | null;
   projectionResult: TwinProjectionResult | null;
+  projectionSavedMessage: string | null;
   runningProjection: string | null;
 }) {
   return (
@@ -661,6 +698,11 @@ function LivingTwinModelPanel({
             <p className="micro-label">Projection Result</p>
             {projectionMessage && (
               <p className="mt-3 text-sm leading-6 text-white/52">{projectionMessage}</p>
+            )}
+            {projectionSavedMessage && (
+              <p className="mt-2 text-xs uppercase tracking-[0.14em] royal-text">
+                {projectionSavedMessage}
+              </p>
             )}
             {projectionResult?.projection && (
               <>
