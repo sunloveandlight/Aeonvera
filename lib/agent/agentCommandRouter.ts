@@ -30,7 +30,7 @@ export async function processAgentCommand({
   userId,
 }: {
   question: string;
-  source: "agent_chat" | "voice_agent";
+  source: "agent_chat" | "mobile";
   supabase: SupabaseClient;
   userId: string;
 }): Promise<{ actions: AgentAction[]; preferences: PreferenceCandidate[] }> {
@@ -218,7 +218,7 @@ async function savePreferences({
   userId,
 }: {
   preferences: PreferenceCandidate[];
-  source: "agent_chat" | "voice_agent";
+  source: "agent_chat" | "mobile";
   supabase: SupabaseClient;
   userId: string;
 }) {

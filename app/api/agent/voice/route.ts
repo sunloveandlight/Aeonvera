@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     });
     const command = await processAgentCommand({
       question: transcript,
-      source: "voice_agent",
+      source: "mobile",
       supabase: admin,
       userId: user.id,
     });
