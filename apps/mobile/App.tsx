@@ -232,6 +232,12 @@ type AgentAppliedAction = {
   type: string;
   label: string;
   detail: string;
+  command?: {
+    operation?: string;
+    preset?: ReminderPreset;
+    provider?: string;
+    target?: string;
+  };
 };
 
 type AgentSendOptions = {
@@ -1504,17 +1510,19 @@ export default function App() {
   async function applyAgentCommandActions(actions: AgentAppliedAction[]) {
     if (!actions.length || !session) return;
 
-    if (actions.some((action) => action.type === "prepare_today")) {
+    const prepareAction = actions.find((action) => action.type === "prepare_today");
+    if (prepareAction) {
       setActiveView("today");
-      setActionNotice("Aeonvera is preparing today's plan from your latest signal.");
-      await loadCompanionData(session);
+      setActionNotice("Aeonvera is preparing and placing today's highest-leverage actions.");
+      await executePrepareTodayFromAgent();
       playSoftHaptic();
       return;
     }
 
-    if (actions.some((action) => action.type === "open_data_sources")) {
+    const dataSourceAction = actions.find((action) => action.type === "open_data_sources");
+    if (dataSourceAction) {
       setActiveView("settings");
-      setActionNotice("Aeonvera opened the source layer. Review wearables, labs, calendar, and notifications.");
+      await executeDataSourceCommand(dataSourceAction);
       playSoftHaptic();
       return;
     }
@@ -1526,18 +1534,172 @@ export default function App() {
       return;
     }
 
-    if (actions.some((action) => action.type === "schedule_later")) {
+    const reminderAction = actions.find((action) => action.type === "schedule_later");
+    if (reminderAction) {
       setActiveView("today");
-      setActionNotice("Aeonvera captured the reminder intent. Use Today to place the exact block.");
+      await executeReminderCommand(reminderAction);
       playSoftHaptic();
       return;
     }
 
-    if (actions.some((action) => action.type === "reschedule_training")) {
+    const rescheduleAction = actions.find((action) => action.type === "reschedule_training");
+    if (rescheduleAction) {
       setActiveView("today");
-      setActionNotice("Aeonvera recognized the training reschedule request. Choose the training block to move.");
+      await executeTrainingRescheduleCommand(rescheduleAction);
       playSoftHaptic();
     }
+  }
+
+  async function executePrepareTodayFromAgent() {
+    const items = getExecutableActionItems();
+
+    if (!items.length) {
+      await loadCompanionData(session);
+      setActionNotice("Aeonvera refreshed Today. Create or refresh a protocol before it can schedule actions.");
+      return;
+    }
+
+    if (acceptingDailyPlan) {
+      setActionNotice("Aeonvera is already preparing today.");
+      return;
+    }
+
+    await acceptDailyPlan(false);
+  }
+
+  async function executeReminderCommand(action: AgentAppliedAction) {
+    const item = pickBestExecutableAction("any");
+
+    if (!item) {
+      await loadCompanionData(session);
+      setActionNotice("Aeonvera refreshed Today, but there is no protocol action ready to remind you about yet.");
+      return;
+    }
+
+    const preset = normalizeAgentReminderPreset(action.command?.preset);
+    const notificationId = await scheduleActionReminder(item, item.scope, preset, "once", true);
+
+    if (notificationId) {
+      setActionNotice(
+        `Aeonvera scheduled a phone reminder for ${item.domain || "your protocol"} ${preset === "tomorrow" ? "tomorrow" : "soon"}.`
+      );
+      Alert.alert(
+        "Reminder scheduled",
+        `Aeonvera will remind you about ${item.action}.`
+      );
+    }
+  }
+
+  async function executeTrainingRescheduleCommand(action: AgentAppliedAction) {
+    const item = pickBestExecutableAction("training");
+
+    if (!item) {
+      setActionNotice("Aeonvera could not find a training block to move yet.");
+      Alert.alert(
+        "No training block found",
+        "Aeonvera could not find a training action in today’s protocol. Add or refresh a protocol first."
+      );
+      return;
+    }
+
+    const preset = normalizeAgentReminderPreset(action.command?.preset || "tomorrow");
+    const event = await scheduleActionToNativeCalendar(item, preset, true);
+
+    if (event) {
+      setActionNotice(
+        `Aeonvera moved ${item.domain || "training"} to ${formatReminderDate(new Date(event.scheduledFor))}.`
+      );
+      Alert.alert(
+        "Training moved",
+        `Aeonvera added it to your calendar for ${formatReminderDate(new Date(event.scheduledFor))}.`
+      );
+    }
+  }
+
+  async function executeDataSourceCommand(action: AgentAppliedAction) {
+    const provider = action.command?.provider;
+
+    if (provider === "oura") {
+      await syncOuraFromAgent();
+      return;
+    }
+
+    if (provider === "apple_health") {
+      setActionNotice("Aeonvera opened Settings. Import Apple Health from the source controls.");
+      return;
+    }
+
+    if (provider === "whoop") {
+      setActionNotice("Aeonvera opened Settings. Connect WHOOP when your developer access is ready.");
+      return;
+    }
+
+    setActionNotice("Aeonvera opened the source layer. Review wearables, labs, calendar, and notifications.");
+  }
+
+  async function syncOuraFromAgent() {
+    if (!session) return;
+
+    setActionNotice("Aeonvera is refreshing Oura now.");
+
+    const response = await fetch(`${appUrl}/api/wearables/oura/sync`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ source: "mobile_agent" }),
+    });
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const message =
+        result?.error || "Aeonvera could not refresh Oura. Check the connection in Settings.";
+      setActionNotice(message);
+      Alert.alert("Oura sync", message);
+      return;
+    }
+
+    await loadCompanionData(session);
+    const imported = Number(result?.inserted || result?.upserted || result?.count || 0);
+    const message = imported
+      ? `Oura refreshed. Aeonvera imported ${imported} new signal${imported === 1 ? "" : "s"}.`
+      : "Oura refreshed. Aeonvera did not find new signals in this window.";
+    setActionNotice(message);
+    Alert.alert("Oura refreshed", message);
+  }
+
+  function getExecutableActionItems() {
+    const planItems = dailyPlan?.plan?.items || [];
+    if (planItems.length) return planItems;
+
+    return (protocol?.protocol?.primary_protocol || [])
+      .filter((item) => item.action)
+      .map((item, index) => ({
+        ...item,
+        actionIndex: index,
+        scope: classifyActionScope(item),
+      }));
+  }
+
+  function pickBestExecutableAction(kind: "any" | "training") {
+    const items = getExecutableActionItems();
+    if (kind === "training") {
+      return (
+        items.find((item) =>
+          /(training|workout|strength|cardio|zone 2|resistance|walk|exercise|movement)/i.test(
+            [item.domain, item.action, item.cadence].filter(Boolean).join(" ")
+          )
+        ) || null
+      );
+    }
+
+    return (
+      items.find((item) => item.scope === "today") ||
+      items.find((item) => item.scope === "week") ||
+      items[0] ||
+      null
+    );
   }
 
   async function stopAgentSpeech() {
@@ -4502,6 +4664,10 @@ function getReminderDate(
   const slot = getRecommendedHour(text, scope);
   date.setHours(slot.hour, slot.minute, 0, 0);
   return date;
+}
+
+function normalizeAgentReminderPreset(value: unknown): ReminderPreset {
+  return value === "soon" || value === "tomorrow" ? value : "default";
 }
 
 async function findIntelligentCalendarSlot(

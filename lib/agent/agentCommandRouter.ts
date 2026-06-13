@@ -103,11 +103,14 @@ function detectAgentActions(question: string): AgentAction[] {
   }
 
   if (/\b(remind|notify|notification)\b.*\b(later|tonight|tomorrow|after lunch|after dinner)\b/.test(text)) {
+    const preset = text.includes("tomorrow") ? "tomorrow" : "soon";
     actions.push({
       type: "schedule_later",
       label: "Reminder intent captured",
-      detail: "Aeonvera recognized that this should become a timed reminder.",
-      command: { target: "today", operation: "schedule_later" },
+      detail: preset === "tomorrow"
+        ? "Aeonvera recognized that this should become a reminder tomorrow."
+        : "Aeonvera recognized that this should become a timed reminder.",
+      command: { target: "today", operation: "schedule_later", preset },
     });
   }
 
@@ -115,17 +118,24 @@ function detectAgentActions(question: string): AgentAction[] {
     actions.push({
       type: "reschedule_training",
       label: "Training reschedule intent",
-      detail: "Aeonvera recognized a training reschedule request and will route it to today's plan.",
-      command: { target: "today", operation: "reschedule_training" },
+      detail: "Aeonvera recognized a training reschedule request and will move the next training block.",
+      command: { target: "today", operation: "reschedule_training", preset: "tomorrow" },
     });
   }
 
   if (/\b(source|data|oura|apple health|labs?|biomarker|wearable|hrv)\b.*\b(missing|stale|refresh|sync|import|connect|update)\b/.test(text)) {
+    const provider = text.includes("oura")
+      ? "oura"
+      : text.includes("whoop")
+        ? "whoop"
+        : text.includes("apple health")
+          ? "apple_health"
+          : undefined;
     actions.push({
       type: "open_data_sources",
       label: "Source check opened",
       detail: "Aeonvera recognized a data-source request.",
-      command: { target: "data_sources", operation: "open" },
+      command: { target: "data_sources", operation: provider ? "sync" : "open", provider },
     });
   }
 
