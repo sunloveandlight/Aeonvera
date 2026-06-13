@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 
 type PushPlatform = "web" | "ios" | "android";
 
@@ -40,6 +41,13 @@ export async function POST(request: NextRequest) {
 
     const keys = body.keys || body.subscription?.keys || {};
     const admin = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to connect device notifications.",
+      supabase: admin,
+      userId: user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
 
     const existingQuery = admin
       .from("push_subscriptions")
@@ -104,6 +112,14 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json();
     const admin = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to update device notifications.",
+      supabase: admin,
+      userId: user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const { data, error } = await admin
       .from("push_subscriptions")
       .update({

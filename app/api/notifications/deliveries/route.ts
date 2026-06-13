@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 
 export async function GET() {
   try {
@@ -14,6 +15,14 @@ export async function GET() {
     }
 
     const admin = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to view Aeonvera notifications.",
+      supabase: admin,
+      userId: user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const { data, error } = await admin
       .from("notification_deliveries")
       .select("id, channel, status, title, message, payload, error, created_at, sent_at")

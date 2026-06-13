@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { runProactiveDataSourceFollowUps } from "@/lib/data/proactiveDataSourceFollowUps";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +17,14 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "proactive_coach",
+      lockedMessage: "Upgrade to Elite to send proactive data-source coach messages.",
+      supabase: admin,
+      userId: mobileUser.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const result = await runProactiveDataSourceFollowUps({
       force: true,
       supabase: admin,

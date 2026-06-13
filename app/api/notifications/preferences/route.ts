@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 
 type Preferences = {
   user_id: string;
@@ -24,6 +25,14 @@ export async function GET() {
     }
 
     const admin = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to manage notification preferences.",
+      supabase: admin,
+      userId: user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const sleepSchedule = await deriveQuietHours(admin, user.id);
     const { data, error } = await admin
       .from("notification_preferences")
@@ -74,6 +83,14 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const admin = getSupabaseAdmin();
+    const entitlement = await requireServerFeatureAccess({
+      feature: "dashboard_access",
+      lockedMessage: "Activate Core to manage notification preferences.",
+      supabase: admin,
+      userId: user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const sleepSchedule = await deriveQuietHours(admin, user.id);
     const nextPreferences: Preferences = {
       user_id: user.id,

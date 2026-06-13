@@ -5,6 +5,8 @@ import { fetchWhoopMetrics } from "@/lib/wearables/whoop";
 import { ingestWearableMetrics } from "@/lib/wearables/ingestWearableMetrics";
 import { getValidWearableAccessToken } from "@/lib/wearables/oauth";
 import type { WearableOAuthProvider } from "@/lib/wearables/oauth";
+import { canAccess } from "@/lib/auth/permissions";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 
 type ConnectionRow = {
   user_id: string;
@@ -47,8 +49,19 @@ async function syncWearables(request: NextRequest) {
 
     const window = getSyncWindow();
     const results = [];
+    let skippedLocked = 0;
 
     for (const connection of (data || []) as ConnectionRow[]) {
+      const subscription = await getUserPlanForUsage({
+        supabase: admin,
+        userId: connection.user_id,
+      });
+
+      if (!canAccess(subscription.plan, subscription.status, "elite_features")) {
+        skippedLocked++;
+        continue;
+      }
+
       const accessToken = await getValidWearableAccessToken({
         supabase: admin,
         userId: connection.user_id,
@@ -87,7 +100,12 @@ async function syncWearables(request: NextRequest) {
       });
     }
 
-    return NextResponse.json({ success: true, synced: results.length, results });
+    return NextResponse.json({
+      success: true,
+      synced: results.length,
+      skippedLocked,
+      results,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Wearable cron sync failed.";
