@@ -1038,6 +1038,7 @@ a.royal-gradient {
 .membership-current-card,
 .membership-upgrade-card {
   position: relative;
+  min-width: 0;
   overflow: hidden;
   border: 1px solid rgba(218, 220, 224, 0.1);
   background:
@@ -1073,12 +1074,12 @@ button.membership-upgrade-card {
 
 .membership-card-title {
   margin-top: 1rem;
+  overflow-wrap: anywhere;
 }
 
 .membership-active-badge {
-  position: absolute;
-  top: 1.75rem;
-  right: 1.75rem;
+  align-self: flex-start;
+  margin-top: 1.5rem;
 }
 
 .membership-current-card {

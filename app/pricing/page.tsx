@@ -389,7 +389,7 @@ export default function PricingPage() {
                   Active
                 </div>
 
-                <div className="mt-9 grid w-full gap-3 sm:grid-cols-2">
+                <div className="mt-9 grid w-full gap-3">
                   {ownedCopy.owned.map((item) => (
                     <div key={item} className="flex gap-3 rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 text-sm leading-6 text-white/68">
                       <Check size={16} className="mt-1 shrink-0 royal-text" />
@@ -398,11 +398,11 @@ export default function PricingPage() {
                   ))}
                 </div>
 
-                <div className="mt-9 flex w-full items-center justify-between gap-4 border-t border-white/[0.07] pt-5">
+                <div className="mt-9 flex w-full flex-col items-stretch gap-4 border-t border-white/[0.07] pt-5">
                   <span className="text-sm text-white/42">
                     Opens billing, invoices, payment method, and cancellation settings.
                   </span>
-                  <span className="premium-action-secondary inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium">
+                  <span className="premium-action-secondary inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium">
                     {loadingPlan === activePlan ? "Opening" : "Manage"}
                     {loadingPlan !== activePlan && <Settings size={16} />}
                   </span>
