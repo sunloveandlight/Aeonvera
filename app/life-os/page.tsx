@@ -6,9 +6,12 @@ import {
   ArrowRight,
   Brain,
   BriefcaseBusiness,
+  CheckCircle2,
   CircleDollarSign,
   HeartPulse,
   Network,
+  PauseCircle,
+  RotateCcw,
   Sparkles,
   Target,
   Zap,
@@ -52,6 +55,20 @@ type LifeOsPayload = {
   };
 };
 
+type LifePriority = {
+  completedAt?: string | null;
+  createdAt?: string;
+  desiredOutcome: string;
+  domain: string;
+  horizonDays: number;
+  id: string;
+  nextAction: string;
+  priority: number;
+  status: "active" | "paused" | "completed" | "archived";
+  title: string;
+  updatedAt?: string;
+};
+
 const DOMAIN_ICONS: Record<string, LucideIcon> = {
   cognition: Brain,
   emotional_resilience: HeartPulse,
@@ -72,6 +89,9 @@ export default function LifeOsPage() {
   const [signedOut, setSignedOut] = useState(false);
   const [locked, setLocked] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [priorities, setPriorities] = useState<LifePriority[]>([]);
+  const [priorityMessage, setPriorityMessage] = useState<string | null>(null);
+  const [savingPriority, setSavingPriority] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,6 +135,22 @@ export default function LifeOsPage() {
             );
           }
         }
+
+        const prioritiesResponse = await fetch("/api/life-os/priorities", {
+          credentials: "include",
+        });
+        const prioritiesData = await prioritiesResponse.json();
+
+        if (!prioritiesResponse.ok && prioritiesResponse.status !== 503) {
+          throw new Error(prioritiesData.error || "Could not load Life OS priorities.");
+        }
+
+        if (!cancelled) {
+          setPriorities(prioritiesData.priorities || []);
+          if (prioritiesData.migrationRequired) {
+            setPriorityMessage(prioritiesData.message || null);
+          }
+        }
       } catch (error) {
         if (!cancelled) {
           setMessage(error instanceof Error ? error.message : "Could not load Life OS.");
@@ -136,6 +172,77 @@ export default function LifeOsPage() {
     () => [...domains].sort((a, b) => b.score - a.score).slice(0, 3),
     [domains]
   );
+  const weakestDomain = useMemo(
+    () => [...domains].sort((a, b) => a.score - b.score)[0],
+    [domains]
+  );
+
+  async function createPriority(domain: LifeDomain) {
+    setSavingPriority(domain.domain);
+    setPriorityMessage(null);
+
+    try {
+      const response = await fetch("/api/life-os/priorities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          desiredOutcome: domain.desiredState,
+          domain: domain.domain,
+          horizonDays: 90,
+          nextAction: domain.nextAction,
+          priority: domain.score < 45 ? 5 : 4,
+          title: `Stabilize ${domain.label}`,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not create priority.");
+      }
+
+      setPriorities((current) => [data.priority, ...current]);
+      setPriorityMessage(`${domain.label} is now a 90-day Life OS priority.`);
+    } catch (error) {
+      setPriorityMessage(error instanceof Error ? error.message : "Could not create priority.");
+    } finally {
+      setSavingPriority(null);
+    }
+  }
+
+  async function updatePriorityStatus(id: string, status: LifePriority["status"]) {
+    setSavingPriority(id);
+    setPriorityMessage(null);
+
+    try {
+      const response = await fetch("/api/life-os/priorities", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id, status }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not update priority.");
+      }
+
+      setPriorities((current) =>
+        current
+          .map((priority) => (priority.id === id ? data.priority : priority))
+          .filter((priority) => priority.status !== "archived")
+      );
+      setPriorityMessage(
+        status === "completed"
+          ? "Priority completed. Aeonvera will treat this as progress evidence."
+          : "Priority updated."
+      );
+    } catch (error) {
+      setPriorityMessage(error instanceof Error ? error.message : "Could not update priority.");
+    } finally {
+      setSavingPriority(null);
+    }
+  }
 
   return (
     <PageContainer>
@@ -222,9 +329,66 @@ export default function LifeOsPage() {
                     Ask Aeonvera
                     <ArrowRight size={15} />
                   </Link>
+                  {weakestDomain ? (
+                    <button
+                      type="button"
+                      onClick={() => void createPriority(weakestDomain)}
+                      disabled={savingPriority === weakestDomain.domain}
+                      className="premium-action-secondary inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {savingPriority === weakestDomain.domain ? "Committing" : "Make priority"}
+                      <Target size={15} />
+                    </button>
+                  ) : null}
                 </div>
               </section>
             ) : null}
+
+            <section className="executive-panel rounded-lg p-6 md:p-7">
+              <div className="mb-5 flex flex-col gap-4 border-b border-white/[0.06] pb-5 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="micro-label">90-Day Priorities</p>
+                  <h2 className="mt-3 text-3xl font-light text-white">
+                    Convert trajectory into commitment.
+                  </h2>
+                  <p className="mt-3 max-w-3xl text-sm leading-7 text-white/48">
+                    Life OS priorities are the bridge between future-self intelligence and daily behavior.
+                  </p>
+                  {priorityMessage ? (
+                    <p className="mt-3 text-sm leading-6 text-[#dabc73]/76">{priorityMessage}</p>
+                  ) : null}
+                </div>
+                {weakestDomain ? (
+                  <button
+                    type="button"
+                    onClick={() => void createPriority(weakestDomain)}
+                    disabled={savingPriority === weakestDomain.domain}
+                    className="premium-action inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Commit {weakestDomain.label}
+                    <ArrowRight size={15} />
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="grid gap-3 lg:grid-cols-2">
+                {priorities.map((priority) => (
+                  <PriorityCard
+                    key={priority.id}
+                    priority={priority}
+                    saving={savingPriority === priority.id}
+                    onStatus={updatePriorityStatus}
+                  />
+                ))}
+                {!priorities.length && (
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+                    <p className="text-sm leading-7 text-white/48">
+                      No active Life OS priorities yet. Commit the highest-leverage constraint and Aeonvera will begin treating it as a live trajectory objective.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </section>
 
             <section className="grid gap-4 md:grid-cols-3">
               {topDomains.map((domain) => (
@@ -287,6 +451,81 @@ function DomainCard({ domain }: { domain: LifeDomain }) {
               {key.replace(/([A-Z])/g, " $1")} {value}
             </span>
           ))}
+      </div>
+    </article>
+  );
+}
+
+function PriorityCard({
+  onStatus,
+  priority,
+  saving,
+}: {
+  onStatus: (id: string, status: LifePriority["status"]) => Promise<void>;
+  priority: LifePriority;
+  saving: boolean;
+}) {
+  return (
+    <article className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm text-white/78">{priority.title}</p>
+          <p className="mt-1 text-xs capitalize text-white/34">
+            {priority.domain.replace(/_/g, " ")} / {priority.status} / {priority.horizonDays} days
+          </p>
+        </div>
+        <span className="rounded-full border border-[#dabc73]/20 bg-[#dabc73]/[0.07] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-[#dabc73]/72">
+          P{priority.priority}
+        </span>
+      </div>
+
+      {priority.desiredOutcome ? (
+        <p className="mt-3 text-xs leading-6 text-white/46">{priority.desiredOutcome}</p>
+      ) : null}
+      {priority.nextAction ? (
+        <p className="mt-3 text-xs leading-6 text-[#dabc73]/72">
+          Next action: {priority.nextAction}
+        </p>
+      ) : null}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {priority.status !== "completed" ? (
+          <button
+            type="button"
+            onClick={() => void onStatus(priority.id, "completed")}
+            disabled={saving}
+            className="premium-action-secondary inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <CheckCircle2 size={14} /> Complete
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => void onStatus(priority.id, "active")}
+            disabled={saving}
+            className="premium-action-secondary inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RotateCcw size={14} /> Reactivate
+          </button>
+        )}
+        {priority.status === "active" ? (
+          <button
+            type="button"
+            onClick={() => void onStatus(priority.id, "paused")}
+            disabled={saving}
+            className="premium-action-secondary inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <PauseCircle size={14} /> Pause
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => void onStatus(priority.id, "archived")}
+          disabled={saving}
+          className="premium-action-secondary inline-flex h-9 items-center justify-center rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Archive
+        </button>
       </div>
     </article>
   );
