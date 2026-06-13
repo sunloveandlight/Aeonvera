@@ -8,9 +8,12 @@ import {
   sanitizeCareRole,
   type CareNetworkRole,
 } from "@/lib/care-network/rolePermissions";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
+import { verifyShareAccessCode } from "@/lib/security/shareAccess";
 
 type NetworkMembershipRow = {
   access_count?: number;
+  access_code_hash?: string | null;
   accepted_at?: string | null;
   expires_at?: string;
   invite_token: string;
@@ -24,10 +27,13 @@ type NetworkMembershipRow = {
 };
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: RouteContext<"/api/care-network/[inviteToken]">
 ) {
   try {
+    const rateLimited = rateLimitRequest(request, "care-network", 60, 60_000);
+    if (rateLimited) return rateLimited;
+
     const { inviteToken } = await context.params;
 
     if (!isUuid(inviteToken)) {
@@ -37,7 +43,7 @@ export async function GET(
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
       .from("care_network_memberships")
-      .select("owner_user_id,invite_token,member_email,member_name,role,status,permissions,expires_at,accepted_at,revoked_at,access_count")
+      .select("owner_user_id,invite_token,access_code_hash,member_email,member_name,role,status,permissions,expires_at,accepted_at,revoked_at,access_count")
       .eq("invite_token", inviteToken)
       .maybeSingle();
 
@@ -67,6 +73,21 @@ export async function GET(
         .update({ status: "expired", updated_at: new Date().toISOString() })
         .eq("invite_token", inviteToken);
       return NextResponse.json({ error: "This invitation has expired." }, { status: 410 });
+    }
+
+    if (
+      !verifyShareAccessCode(
+        request.nextUrl.searchParams.get("code"),
+        invite.access_code_hash
+      )
+    ) {
+      return NextResponse.json(
+        {
+          codeRequired: true,
+          error: "Enter the access code that was shared with this invitation.",
+        },
+        { status: 401 }
+      );
     }
 
     const now = new Date().toISOString();

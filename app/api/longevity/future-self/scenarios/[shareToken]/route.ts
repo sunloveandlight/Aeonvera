@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 const SELECT_FIELDS =
   "id,title,description,scenario_ids,controls,projection,future_self,share_token,is_public,created_at,updated_at";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: RouteContext<"/api/longevity/future-self/scenarios/[shareToken]">
 ) {
   try {
+    const rateLimited = rateLimitRequest(request, "future-self-share", 90, 60_000);
+    if (rateLimited) return rateLimited;
+
     const { shareToken } = await context.params;
 
     if (!isUuid(shareToken)) {

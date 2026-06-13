@@ -10,6 +10,10 @@ import {
   sanitizeCareRole,
   type CareNetworkRole,
 } from "@/lib/care-network/rolePermissions";
+import {
+  createShareAccessCode,
+  hashShareAccessCode,
+} from "@/lib/security/shareAccess";
 
 type CareNetworkRow = {
   accepted_at?: string | null;
@@ -36,7 +40,7 @@ type RoleRecommendation = {
 };
 
 const SELECT_FIELDS =
-  "id,invite_token,member_email,member_name,role,status,permissions,expires_at,accepted_at,revoked_at,access_count,last_accessed_at,created_at";
+  "id,invite_token,member_email,member_name,role,status,permissions,expires_at,accepted_at,revoked_at,access_count,last_accessed_at,created_at,access_code_hash";
 
 export async function GET() {
   try {
@@ -99,11 +103,13 @@ export async function POST(request: NextRequest) {
       requested: body?.permissions,
       role,
     });
+    const accessCode = createShareAccessCode();
 
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
       .from("care_network_memberships")
       .insert({
+        access_code_hash: hashShareAccessCode(accessCode),
         owner_user_id: auth.userId,
         member_email: memberEmail,
         member_name: memberName,
@@ -128,7 +134,12 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    return NextResponse.json({ invitation: mapInvitation(data as CareNetworkRow) });
+    return NextResponse.json({
+      invitation: {
+        ...mapInvitation(data as CareNetworkRow),
+        accessCode,
+      },
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not create invitation.";
@@ -395,6 +406,7 @@ function mapInvitation(row: CareNetworkRow) {
       requested: row.permissions || DEFAULT_PHYSICIAN_EXPORT_SECTIONS,
       role: row.role || "physician",
     }),
+    requiresAccessCode: Boolean((row as CareNetworkRow & { access_code_hash?: string | null }).access_code_hash),
     revokedAt: row.revoked_at || null,
     role: row.role || "physician",
     status,

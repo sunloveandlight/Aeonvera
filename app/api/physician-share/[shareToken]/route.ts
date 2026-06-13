@@ -4,11 +4,14 @@ import {
   buildPhysicianExportBundle,
   normalizeSections,
 } from "@/lib/digital-twin/physicianExportBundle";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
+import { verifyShareAccessCode } from "@/lib/security/shareAccess";
 
 type ShareLinkRow = {
   access_count?: number;
   expires_at?: string;
   included_sections?: string[];
+  access_code_hash?: string | null;
   recipient_label?: string | null;
   revoked_at?: string | null;
   share_token: string;
@@ -16,10 +19,13 @@ type ShareLinkRow = {
 };
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: RouteContext<"/api/physician-share/[shareToken]">
 ) {
   try {
+    const rateLimited = rateLimitRequest(request, "physician-share", 60, 60_000);
+    if (rateLimited) return rateLimited;
+
     const { shareToken } = await context.params;
 
     if (!isUuid(shareToken)) {
@@ -29,7 +35,7 @@ export async function GET(
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
       .from("physician_share_links")
-      .select("user_id,share_token,recipient_label,included_sections,expires_at,revoked_at,access_count")
+      .select("user_id,share_token,access_code_hash,recipient_label,included_sections,expires_at,revoked_at,access_count")
       .eq("share_token", shareToken)
       .maybeSingle();
 
@@ -55,6 +61,21 @@ export async function GET(
 
     if (link.expires_at && Date.parse(link.expires_at) < Date.now()) {
       return NextResponse.json({ error: "This share link has expired." }, { status: 410 });
+    }
+
+    if (
+      !verifyShareAccessCode(
+        request.nextUrl.searchParams.get("code"),
+        link.access_code_hash
+      )
+    ) {
+      return NextResponse.json(
+        {
+          codeRequired: true,
+          error: "Enter the access code that was shared with this export.",
+        },
+        { status: 401 }
+      );
     }
 
     await admin

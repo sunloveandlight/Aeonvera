@@ -70,13 +70,16 @@ type ExportBundle = {
 };
 
 type ShareLink = {
+  accessCode?: string;
   accessCount: number;
   createdAt?: string;
   expiresAt?: string;
   id: string;
   includedSections: string[];
   lastAccessedAt?: string | null;
+  recipientEmail?: string | null;
   recipientLabel?: string | null;
+  requiresAccessCode?: boolean;
   revokedAt?: string | null;
   shareToken: string;
   status: "active" | "expired" | "revoked";
@@ -193,7 +196,11 @@ export default function PhysicianExportPage() {
 
       setShareLinks((current) => [data.link, ...current]);
       setRecipientLabel("");
-      setShareMessage("Secure share link created.");
+      setShareMessage(
+        data.link?.accessCode
+          ? `Secure share link created. Access code: ${data.link.accessCode}`
+          : "Secure share link created."
+      );
     } catch (error) {
       setShareMessage(error instanceof Error ? error.message : "Could not create share link.");
     } finally {
@@ -228,8 +235,17 @@ export default function PhysicianExportPage() {
 
   async function copyShareLink(link: ShareLink) {
     const absoluteUrl = `${window.location.origin}${link.url}`;
-    await navigator.clipboard.writeText(absoluteUrl);
-    setShareMessage("Secure share link copied.");
+    const copyText = link.accessCode
+      ? `${absoluteUrl}\nAccess code: ${link.accessCode}`
+      : absoluteUrl;
+    await navigator.clipboard.writeText(copyText);
+    setShareMessage(
+      link.accessCode
+        ? "Secure link and access code copied."
+        : link.requiresAccessCode
+          ? "Secure link copied. Use the access code shown when this link was created."
+          : "Secure share link copied."
+    );
   }
 
   function toggleSection(section: string) {
@@ -443,6 +459,15 @@ function ShareLinkManager({
                 <p className="mt-1 text-xs text-white/36">
                   {link.status} / expires {formatDate(link.expiresAt)} / opened {link.accessCount} time{link.accessCount === 1 ? "" : "s"}
                 </p>
+                {link.accessCode ? (
+                  <p className="mt-2 inline-flex rounded-md border border-[#dabc73]/20 bg-[#dabc73]/[0.06] px-2 py-1 text-xs text-[#dabc73]/80">
+                    Access code: {link.accessCode}
+                  </p>
+                ) : link.requiresAccessCode ? (
+                  <p className="mt-2 text-xs text-white/34">
+                    Protected by an access code shown when this link was created.
+                  </p>
+                ) : null}
               </div>
               <div className="flex flex-wrap gap-2">
                 <button

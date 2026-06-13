@@ -11,6 +11,7 @@ type CareRole = "physician" | "coach" | "family";
 
 type CareInvitation = {
   acceptedAt?: string | null;
+  accessCode?: string;
   accessCount: number;
   createdAt?: string;
   expiresAt?: string;
@@ -20,6 +21,7 @@ type CareInvitation = {
   memberEmail: string;
   memberName?: string | null;
   permissions: string[];
+  requiresAccessCode?: boolean;
   role: CareRole;
   status: "pending" | "active" | "expired" | "revoked";
   url: string;
@@ -160,7 +162,11 @@ export default function NetworkPage() {
         memberEmail: "",
         memberName: "",
       }));
-      setMessage("Care network invitation created.");
+      setMessage(
+        data.invitation?.accessCode
+          ? `Care network invitation created. Access code: ${data.invitation.accessCode}`
+          : "Care network invitation created."
+      );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not create invitation.");
     } finally {
@@ -219,8 +225,18 @@ export default function NetworkPage() {
   }
 
   async function copyInvitation(invitation: CareInvitation) {
-    await navigator.clipboard.writeText(`${window.location.origin}${invitation.url}`);
-    setMessage("Invitation link copied.");
+    const absoluteUrl = `${window.location.origin}${invitation.url}`;
+    const copyText = invitation.accessCode
+      ? `${absoluteUrl}\nAccess code: ${invitation.accessCode}`
+      : absoluteUrl;
+    await navigator.clipboard.writeText(copyText);
+    setMessage(
+      invitation.accessCode
+        ? "Invitation link and access code copied."
+        : invitation.requiresAccessCode
+          ? "Invitation link copied. Use the access code shown when this invite was created."
+          : "Invitation link copied."
+    );
   }
 
   function setRole(role: CareRole) {
@@ -438,6 +454,15 @@ export default function NetworkPage() {
                         <p className="mt-1 text-xs text-white/32">
                           Last opened {formatDateTime(invitation.lastAccessedAt)}
                         </p>
+                        {invitation.accessCode ? (
+                          <p className="mt-2 inline-flex rounded-md border border-[#dabc73]/20 bg-[#dabc73]/[0.06] px-2 py-1 text-xs text-[#dabc73]/80">
+                            Access code: {invitation.accessCode}
+                          </p>
+                        ) : invitation.requiresAccessCode ? (
+                          <p className="mt-2 text-xs text-white/34">
+                            Protected by an access code shown when this invite was created.
+                          </p>
+                        ) : null}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <button

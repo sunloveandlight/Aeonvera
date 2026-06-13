@@ -6,6 +6,10 @@ import {
   DEFAULT_PHYSICIAN_EXPORT_SECTIONS,
   normalizeSections,
 } from "@/lib/digital-twin/physicianExportBundle";
+import {
+  createShareAccessCode,
+  hashShareAccessCode,
+} from "@/lib/security/shareAccess";
 
 type ShareLinkRow = {
   access_count?: number;
@@ -14,13 +18,14 @@ type ShareLinkRow = {
   id: string;
   included_sections?: string[];
   last_accessed_at?: string | null;
+  recipient_email?: string | null;
   recipient_label?: string | null;
   revoked_at?: string | null;
   share_token: string;
 };
 
 const SELECT_FIELDS =
-  "id,share_token,recipient_label,included_sections,expires_at,revoked_at,access_count,last_accessed_at,created_at";
+  "id,share_token,recipient_email,recipient_label,included_sections,expires_at,revoked_at,access_count,last_accessed_at,created_at,access_code_hash";
 
 export async function GET() {
   try {
@@ -67,13 +72,17 @@ export async function POST(request: NextRequest) {
       typeof body?.recipientLabel === "string"
         ? body.recipientLabel.trim().slice(0, 80) || null
         : null;
+    const recipientEmail = sanitizeEmail(body?.recipientEmail);
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
+    const accessCode = createShareAccessCode();
 
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
       .from("physician_share_links")
       .insert({
         user_id: auth.userId,
+        access_code_hash: hashShareAccessCode(accessCode),
+        recipient_email: recipientEmail || null,
         recipient_label: recipientLabel,
         included_sections: includedSections,
         expires_at: expiresAt.toISOString(),
@@ -95,7 +104,12 @@ export async function POST(request: NextRequest) {
       throw error;
     }
 
-    return NextResponse.json({ link: mapLink(data as ShareLinkRow) });
+    return NextResponse.json({
+      link: {
+        ...mapLink(data as ShareLinkRow),
+        accessCode,
+      },
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not create share link.";
@@ -203,12 +217,20 @@ function mapLink(row: ShareLinkRow) {
     expiresAt: row.expires_at,
     includedSections: normalizeSections(row.included_sections || DEFAULT_PHYSICIAN_EXPORT_SECTIONS),
     lastAccessedAt: row.last_accessed_at || null,
+    recipientEmail: row.recipient_email || null,
     recipientLabel: row.recipient_label || null,
+    requiresAccessCode: Boolean((row as ShareLinkRow & { access_code_hash?: string | null }).access_code_hash),
     revokedAt: row.revoked_at || null,
     shareToken: row.share_token,
     status: row.revoked_at ? "revoked" : expired ? "expired" : "active",
     url: `/physician-share/${row.share_token}`,
   };
+}
+
+function sanitizeEmail(value: unknown) {
+  if (typeof value !== "string") return "";
+  const normalized = value.trim().toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) ? normalized.slice(0, 160) : "";
 }
 
 function clampDays(value: unknown) {
