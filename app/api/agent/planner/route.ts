@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getCommandOrbToolMeta, type CommandOrbToolId } from "@/lib/agent/commandOrbTools";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
@@ -31,6 +32,11 @@ type PlanIntent = {
   direction: "change" | "downgrade" | "upgrade";
   targetPlan: PlanId | null;
 };
+type PlannerAction =
+  | { intent: ControlIntent; kind: "control" }
+  | { intent: PlanIntent; kind: "plan" }
+  | { href: string; kind: "navigation"; label: string }
+  | { kind: "answer"; text: string };
 type ContextRow = Record<string, unknown>;
 type UserStatePacket = {
   activeCareMembers: number;
@@ -114,6 +120,7 @@ function planCommand(command: string, currentPage: string, userState: UserStateP
         userState.activePhysicianLinks > 0
           ? `You already have ${userState.activePhysicianLinks} active physician link${userState.activePhysicianLinks === 1 ? "" : "s"}. I can create another secure link with ${formatSections(sectionPlan.sections)}.`
           : `I can create a secure physician link with ${formatSections(sectionPlan.sections)}.`,
+      tool: toolMeta("create_physician_share_link"),
     };
   }
 
@@ -134,6 +141,7 @@ function planCommand(command: string, currentPage: string, userState: UserStateP
       confidence: 0.91,
       handled: true,
       message: `I can invite ${email} as ${role} and include ${formatSections(sectionPlan.sections)}. You currently have ${userState.activeCareMembers} active care-network member${userState.activeCareMembers === 1 ? "" : "s"}.`,
+      tool: toolMeta("create_care_network_invite"),
     };
   }
 
@@ -145,6 +153,7 @@ function planCommand(command: string, currentPage: string, userState: UserStateP
       confidence: 0.88,
       handled: true,
       message: buildPlanMessage(planIntent.direction, targetPlan, userState),
+      tool: toolMeta(targetPlan === userState.membership.plan ? "open_billing" : "change_plan"),
     };
   }
 
@@ -156,8 +165,12 @@ function planCommand(command: string, currentPage: string, userState: UserStateP
       confidence: 0.84,
       handled: true,
       message: controlMessage(refinedIntent.type, userState),
+      tool: toolMeta(toolIdForControlIntent(refinedIntent.type)),
     };
   }
+
+  const answerTool = resolveAnswerTool(text, userState);
+  if (answerTool) return answerTool;
 
   const nextBestAction = resolveNextBestAction(text, userState);
   if (nextBestAction) {
@@ -171,6 +184,7 @@ function planCommand(command: string, currentPage: string, userState: UserStateP
       confidence: 0.8,
       handled: true,
       message: `I can open ${navigation.label}.`,
+      tool: toolMeta("explain_current_page"),
     };
   }
 
@@ -179,6 +193,10 @@ function planCommand(command: string, currentPage: string, userState: UserStateP
     confidence: 0,
     handled: false,
   };
+}
+
+function toolMeta(id: CommandOrbToolId) {
+  return getCommandOrbToolMeta(id);
 }
 
 async function loadUserStatePacket(
@@ -338,6 +356,32 @@ function refineControlIntent(intent: ControlIntent, userState: UserStatePacket):
   return intent;
 }
 
+function resolveAnswerTool(text: string, userState: UserStatePacket) {
+  if (/\b(what do you know|what you know|what do you remember|what you remember|summarize me|my context|my state|what data do you have)\b/.test(text)) {
+    const message = buildUserStateSummary(userState);
+    return {
+      action: { kind: "answer", text: message } satisfies PlannerAction,
+      confidence: 0.86,
+      handled: true,
+      message,
+      tool: toolMeta("summarize_user_state"),
+    };
+  }
+
+  if (/\b(what can i do here|what is this page|explain this page|what can you do here)\b/.test(text)) {
+    const message = `You are in ${userState.currentPage.label}. I can ${userState.currentPage.usefulActions.slice(0, 3).join(", ")}.`;
+    return {
+      action: { kind: "answer", text: message } satisfies PlannerAction,
+      confidence: 0.82,
+      handled: true,
+      message,
+      tool: toolMeta("explain_current_page"),
+    };
+  }
+
+  return null;
+}
+
 function resolveNextBestAction(text: string, userState: UserStatePacket) {
   if (!/\b(what next|what should i do|next step|help me|guide me|start|begin|focus on|where should i go)\b/.test(text)) {
     return null;
@@ -350,6 +394,7 @@ function resolveNextBestAction(text: string, userState: UserStatePacket) {
       confidence: 0.82,
       handled: true,
       message: `Your strongest next move is already in today's plan: ${dailyAction}. I can simplify it into the two highest-leverage actions.`,
+      tool: toolMeta("recommend_next_action"),
     };
   }
 
@@ -360,6 +405,7 @@ function resolveNextBestAction(text: string, userState: UserStatePacket) {
       confidence: 0.8,
       handled: true,
       message: `Your clearest Life OS priority is ${priorityAction}. I can open Life OS so you can move that forward.`,
+      tool: toolMeta("recommend_next_action"),
     };
   }
 
@@ -369,6 +415,7 @@ function resolveNextBestAction(text: string, userState: UserStatePacket) {
       confidence: 0.82,
       handled: true,
       message: "The highest-leverage gap is live recovery and sleep data. I can open Data Sources so you can connect Oura.",
+      tool: toolMeta("recommend_next_action"),
     };
   }
 
@@ -378,6 +425,7 @@ function resolveNextBestAction(text: string, userState: UserStatePacket) {
       confidence: 0.81,
       handled: true,
       message: "Your Oura connection is available, and the next useful move is refreshing sleep and recovery signals.",
+      tool: toolMeta("recommend_next_action"),
     };
   }
 
@@ -387,6 +435,7 @@ function resolveNextBestAction(text: string, userState: UserStatePacket) {
       confidence: 0.78,
       handled: true,
       message: "Your intelligence layer will get much sharper with labs. I can open the report area so you can add biomarkers.",
+      tool: toolMeta("recommend_next_action"),
     };
   }
 
@@ -396,6 +445,7 @@ function resolveNextBestAction(text: string, userState: UserStatePacket) {
       confidence: 0.79,
       handled: true,
       message: "The next best step is generating your first longevity report from the data Aeonvera has.",
+      tool: toolMeta("recommend_next_action"),
     };
   }
 
@@ -404,7 +454,22 @@ function resolveNextBestAction(text: string, userState: UserStatePacket) {
     confidence: 0.72,
     handled: true,
     message: `You are in ${userState.currentPage.label}. The most useful things here are ${userState.currentPage.usefulActions.slice(0, 2).join(" and ")}.`,
+    tool: toolMeta("recommend_next_action"),
   };
+}
+
+function toolIdForControlIntent(type: ControlIntent["type"]): CommandOrbToolId {
+  const map: Record<ControlIntent["type"], CommandOrbToolId> = {
+    create_physician_share: "create_physician_share_link",
+    generate_report: "generate_longevity_report",
+    manage_care_network: "create_care_network_invite",
+    open_oura: "connect_oura",
+    prepare_today: "prepare_daily_plan",
+    simplify_plan: "simplify_daily_plan",
+    sync_oura: "sync_oura",
+  };
+
+  return map[type];
 }
 
 function resolvePlanIntent(text: string): PlanIntent | null {
@@ -678,6 +743,43 @@ function staleOuraSync(userState: UserStatePacket) {
   const lastSync = new Date(lastSyncedAt).getTime();
   if (!Number.isFinite(lastSync)) return true;
   return Date.now() - lastSync > 1000 * 60 * 60 * 18;
+}
+
+function buildUserStateSummary(userState: UserStatePacket) {
+  const parts = [
+    userState.displayName ? `I know this is ${userState.displayName}'s account.` : "I know this signed-in account.",
+    userState.membership.plan
+      ? `Membership is ${titleCase(userState.membership.plan)} with status ${userState.membership.status || "unknown"}.`
+      : "Membership is not fully activated yet.",
+    userState.dailyPlan
+      ? `Today's plan is available${userState.dailyPlan.summary ? `: ${userState.dailyPlan.summary}` : "."}`
+      : "Today's plan has not been prepared yet.",
+    userState.latestReport
+      ? `A longevity report exists${userState.latestReport.primary_goal ? ` with primary goal: ${stringValue(userState.latestReport.primary_goal)}` : "."}`
+      : "No longevity report is available yet.",
+    userState.topLabs.length
+      ? `I can see ${userState.topLabs.length} recent lab marker${userState.topLabs.length === 1 ? "" : "s"}.`
+      : "No lab biomarkers are connected yet.",
+    userState.wearableConnections.length
+      ? `Wearables connected: ${userState.wearableConnections.map((connection) => stringValue(connection.provider)).filter(Boolean).join(", ")}.`
+      : "No wearable source is connected yet.",
+    userState.lifePriorities.length
+      ? `Top Life OS priority: ${firstPriorityAction(userState.lifePriorities)}.`
+      : "No active Life OS priority is set yet.",
+    userState.activeCareMembers
+      ? `${userState.activeCareMembers} care-network member${userState.activeCareMembers === 1 ? "" : "s"} are active.`
+      : "No active care-network members yet.",
+  ];
+
+  const gaps = Object.entries(userState.missingContext)
+    .filter(([, missing]) => missing)
+    .map(([key]) => key.replace(/^needs/, "").replace(/[A-Z]/g, (letter) => ` ${letter.toLowerCase()}`));
+
+  if (gaps.length) {
+    parts.push(`The biggest data gaps are ${gaps.slice(0, 3).join(", ")}.`);
+  }
+
+  return parts.join(" ");
 }
 
 function isRecord(value: unknown): value is ContextRow {

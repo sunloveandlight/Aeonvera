@@ -72,6 +72,7 @@ type ControlIntent =
   | { type: "sync_oura" };
 type CareRole = "coach" | "family" | "physician";
 type PlannerAction =
+  | { kind: "answer"; text: string }
   | { intent: ControlIntent; kind: "control" }
   | { intent: PlanIntent; kind: "plan" }
   | { href: string; kind: "navigation"; label: string };
@@ -80,6 +81,13 @@ type PlannerResult = {
   confidence?: number;
   handled?: boolean;
   message?: string;
+  tool?: {
+    confirmationRequired?: boolean;
+    id?: string;
+    label?: string;
+    minimumPlan?: string;
+    risk?: string;
+  } | null;
 };
 type PendingRealtimeAction =
   | { intent: ControlIntent; type: "control" }
@@ -592,6 +600,11 @@ export default function AeonCommandOrb() {
 
     const plannedAction = await resolveServerPlannedAction(transcript);
     if (plannedAction) {
+      if (plannedAction.action.kind === "answer") {
+        setRealtimeStatus("I answered that from your Aeonvera context.");
+        return;
+      }
+
       setRealtimeStatus("I will handle that after I finish.");
       pendingRealtimeActionRef.current = toPendingRealtimeAction(plannedAction.action);
       return;
@@ -654,6 +667,10 @@ export default function AeonCommandOrb() {
   }
 
   async function executePlannedAction(action: PlannerAction) {
+    if (action.kind === "answer") {
+      return;
+    }
+
     if (action.kind === "control") {
       await handleControlIntent(action.intent);
       return;
@@ -1429,6 +1446,10 @@ function isPlannerAction(value: unknown): value is PlannerAction {
     );
   }
 
+  if (action.kind === "answer") {
+    return typeof action.text === "string";
+  }
+
   return false;
 }
 
@@ -1457,7 +1478,7 @@ function isPlanIntent(value: unknown): value is PlanIntent {
   );
 }
 
-function toPendingRealtimeAction(action: PlannerAction): PendingRealtimeAction {
+function toPendingRealtimeAction(action: Exclude<PlannerAction, { kind: "answer" }>): PendingRealtimeAction {
   if (action.kind === "control") return { intent: action.intent, type: "control" };
   if (action.kind === "plan") return { intent: action.intent, type: "plan" };
   return {
