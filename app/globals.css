@@ -223,8 +223,8 @@ body::after {
 .aeon-command-orb {
   position: relative;
   display: inline-flex;
-  width: 4.85rem;
-  height: 4.85rem;
+  width: 3.9rem;
+  height: 3.9rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
@@ -237,9 +237,9 @@ body::after {
   color: rgba(255, 255, 255, 0.92);
   box-shadow:
     0 0 0 1px rgba(218, 188, 115, 0.09),
-    0 0 46px rgba(218, 188, 115, 0.2),
-    0 0 72px rgba(74, 228, 210, 0.1),
-    0 28px 84px rgba(0, 0, 0, 0.56),
+    0 0 34px rgba(218, 188, 115, 0.18),
+    0 0 54px rgba(74, 228, 210, 0.09),
+    0 22px 62px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
     inset 0 -22px 38px rgba(0, 0, 0, 0.38);
   backdrop-filter: blur(24px) saturate(160%);
@@ -260,7 +260,7 @@ body::after {
 .aeon-command-orb::after {
   content: "";
   position: absolute;
-  inset: -0.62rem;
+  inset: -0.48rem;
   border-radius: inherit;
   border: 1px solid rgba(218, 188, 115, 0.1);
   opacity: 0.68;
@@ -276,7 +276,7 @@ body::after {
 }
 
 .aeon-command-orb::after {
-  inset: -1.18rem;
+  inset: -0.9rem;
   border-color: rgba(74, 228, 210, 0.08);
   opacity: 0.36;
   animation-delay: 1.15s;
@@ -299,9 +299,9 @@ body::after {
   transform: translateY(-3px) scale(1.015);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 0 62px rgba(218, 188, 115, 0.28),
-    0 0 94px rgba(74, 228, 210, 0.14),
-    0 32px 92px rgba(0, 0, 0, 0.58),
+    0 0 48px rgba(218, 188, 115, 0.25),
+    0 0 74px rgba(74, 228, 210, 0.12),
+    0 24px 72px rgba(0, 0, 0, 0.54),
     inset 0 1px 0 rgba(255, 255, 255, 0.34),
     inset 0 -22px 38px rgba(0, 0, 0, 0.34);
 }
@@ -314,9 +314,9 @@ body::after {
   border-color: rgba(119, 250, 226, 0.46);
   box-shadow:
     0 0 0 1px rgba(119, 250, 226, 0.12),
-    0 0 66px rgba(119, 250, 226, 0.24),
-    0 0 104px rgba(218, 188, 115, 0.26),
-    0 32px 92px rgba(0, 0, 0, 0.58),
+    0 0 52px rgba(119, 250, 226, 0.22),
+    0 0 78px rgba(218, 188, 115, 0.23),
+    0 24px 72px rgba(0, 0, 0, 0.54),
     inset 0 1px 0 rgba(255, 255, 255, 0.32),
     inset 0 -22px 38px rgba(0, 0, 0, 0.34);
 }
@@ -330,7 +330,7 @@ body::after {
 
 .aeon-command-orb-field {
   position: absolute;
-  inset: -0.95rem;
+  inset: -0.72rem;
   border-radius: inherit;
   pointer-events: none;
   transform-style: preserve-3d;
@@ -367,7 +367,7 @@ body::after {
 
 .aeon-command-orb-ribbon {
   position: absolute;
-  inset: -0.55rem;
+  inset: -0.42rem;
   border-radius: 999px;
   opacity: 0.58;
   filter: blur(0.35px);
@@ -388,7 +388,7 @@ body::after {
 }
 
 .aeon-command-orb-ribbon-b {
-  inset: -1rem;
+  inset: -0.74rem;
   background:
     conic-gradient(
       from 180deg,
@@ -474,8 +474,8 @@ body::after {
 .aeon-command-orb-core {
   position: relative;
   display: inline-flex;
-  width: 3.18rem;
-  height: 3.18rem;
+  width: 2.52rem;
+  height: 2.52rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
@@ -510,7 +510,7 @@ body::after {
 
 .aeon-command-orb-plasma {
   position: absolute;
-  inset: 0.38rem;
+  inset: 0.3rem;
   border-radius: 48% 52% 46% 54%;
   background:
     radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.88), transparent 11%),
@@ -546,16 +546,16 @@ body::after {
   justify-content: center;
   gap: 0.18rem;
   z-index: 1;
-  width: 1.12rem;
-  height: 1rem;
+  width: 0.9rem;
+  height: 0.82rem;
   opacity: 0.64;
   animation: aeon-orb-wave-idle 1.8s ease-in-out infinite;
 }
 
 .aeon-command-orb-wave span {
   display: block;
-  width: 0.13rem;
-  min-height: 0.34rem;
+  width: 0.1rem;
+  min-height: 0.28rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.86);
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.32);
