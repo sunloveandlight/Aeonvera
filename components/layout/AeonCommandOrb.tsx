@@ -85,17 +85,6 @@ const STARTER_PROMPTS = [
   "Explain my plan like a coach",
 ];
 
-const ASSISTANT_OPENINGS = [
-  "I can review today, sync Oura, create a physician link, change your plan, or answer a health question. What should I handle first?",
-  "Tell me the task: prepare today, simplify your plan, generate a report, manage billing, or open any area of Aeonvera.",
-  "I am ready. Say something like sync Oura, create a physician share link, upgrade to Sovereign, or explain my plan.",
-  "What should I do for you: review your signals, open your plan, invite your care team, generate a report, or answer a question?",
-  "Give me a direct command or question. I can move through the site, prepare your day, manage sharing, or help interpret your health data.",
-  "What do you want done now: update data, review today, change membership, create a secure share, or ask Aeonvera?",
-  "I can take action or think with you. Try: prepare my day, sync my wearable, make a doctor link, or show my Digital Twin.",
-  "Name the outcome. I can open the right page, adjust your plan flow, create sharing links, or explain what your signals mean.",
-];
-
 const VOICE_OPTIONS = [
   { id: "marin", label: "Marin", tone: "Warm, calm, premium" },
   { id: "cedar", label: "Cedar", tone: "Grounded and steady" },
@@ -168,7 +157,6 @@ const NAVIGATION_INTENTS = [
 export default function AeonCommandOrb() {
   const pathname = usePathname();
   const router = useRouter();
-  const lastOpeningIndexRef = useRef<number | null>(null);
   const pendingRealtimeActionRef = useRef<PendingRealtimeAction | null>(null);
   const realtimePeerRef = useRef<RTCPeerConnection | null>(null);
   const realtimeStreamRef = useRef<MediaStream | null>(null);
@@ -409,7 +397,6 @@ export default function AeonCommandOrb() {
           ? "Your browser may ask for microphone access. Choose Allow once for this site."
           : "Opening the microphone."
       );
-      const opening = pickAssistantOpening(lastOpeningIndexRef);
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -451,13 +438,14 @@ export default function AeonCommandOrb() {
 
       const channel = peer.createDataChannel("aeonvera-realtime-events");
       channel.onopen = () => {
-        setRealtimeStatus(opening);
+        setRealtimeStatus("Aeonvera is reading your current context.");
         setSpeaking(true);
         channel.send(
           JSON.stringify({
             type: "response.create",
             response: {
-              instructions: `Say this warmly and naturally, then pause for the user: "${opening}"`,
+              instructions:
+                "Open the conversation in one short, specific sentence using the user's current Aeonvera context. Mention one concrete thing you can help with now, then ask what they want to do. Do not give a generic greeting.",
               output_modalities: ["audio"],
             },
           })
@@ -468,15 +456,16 @@ export default function AeonCommandOrb() {
       const offer = await peer.createOffer({ offerToReceiveAudio: true });
       await peer.setLocalDescription(offer);
 
-      const response = await fetch(
-        `/api/agent/realtime?voice=${encodeURIComponent(selectedVoice)}`,
-        {
-          body: offer.sdp || "",
-          credentials: "include",
-          headers: { "Content-Type": "application/sdp" },
-          method: "POST",
-        }
-      );
+      const params = new URLSearchParams({
+        page: pathname || "/",
+        voice: selectedVoice,
+      });
+      const response = await fetch(`/api/agent/realtime?${params.toString()}`, {
+        body: offer.sdp || "",
+        credentials: "include",
+        headers: { "Content-Type": "application/sdp" },
+        method: "POST",
+      });
       const answer = await response.text();
 
       if (!response.ok) {
@@ -1430,17 +1419,6 @@ function inferPlanTarget(direction: PlanIntent["direction"], currentPlan: PlanId
 
 function asPlanId(value: unknown): PlanId | null {
   return value === "core" || value === "elite" || value === "sovereign" ? value : null;
-}
-
-function pickAssistantOpening(lastOpeningIndexRef: { current: number | null }) {
-  if (ASSISTANT_OPENINGS.length === 1) return ASSISTANT_OPENINGS[0];
-
-  let nextIndex = Math.floor(Math.random() * ASSISTANT_OPENINGS.length);
-  while (nextIndex === lastOpeningIndexRef.current) {
-    nextIndex = Math.floor(Math.random() * ASSISTANT_OPENINGS.length);
-  }
-  lastOpeningIndexRef.current = nextIndex;
-  return ASSISTANT_OPENINGS[nextIndex];
 }
 
 async function readMicrophonePermission() {

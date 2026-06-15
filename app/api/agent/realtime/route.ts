@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Realtime voice needs a valid SDP offer." }, { status: 400 });
     }
     const voice = sanitizeRealtimeVoice(request.nextUrl.searchParams.get("voice"));
+    const currentPage = sanitizePagePath(request.nextUrl.searchParams.get("page"));
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
         type: "realtime",
         model: REALTIME_MODEL,
         output_modalities: ["audio"],
-        instructions: await buildRealtimeInstructions(admin, user.id, subscription),
+        instructions: await buildRealtimeInstructions(admin, user.id, subscription, currentPage),
         max_output_tokens: 900,
         audio: {
           input: {
@@ -131,6 +132,12 @@ function sanitizeRealtimeVoice(value: string | null) {
   return "marin";
 }
 
+function sanitizePagePath(value: string | null) {
+  const path = value?.trim() || "/";
+  if (!path.startsWith("/")) return "/";
+  return path.slice(0, 120);
+}
+
 async function getAuthenticatedUser(request: NextRequest) {
   const supabase = await createClient();
   const {
@@ -152,9 +159,10 @@ async function getAuthenticatedUser(request: NextRequest) {
 async function buildRealtimeInstructions(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
-  subscription: Awaited<ReturnType<typeof getUserPlanForUsage>>
+  subscription: Awaited<ReturnType<typeof getUserPlanForUsage>>,
+  currentPage: string
 ) {
-  const context = await loadRealtimeContext(supabase, userId, subscription);
+  const context = await loadRealtimeContext(supabase, userId, subscription, currentPage);
 
   return [
     "You are Aeonvera, a premium realtime longevity and health optimization voice agent.",
@@ -164,8 +172,10 @@ async function buildRealtimeInstructions(
     "You can discuss advanced longevity protocols, biomarkers, sleep architecture, metabolism, cardiovascular performance, hormones, cognition, recovery, stress, and behavior change.",
     "You are not a replacement for a physician. Do not diagnose, prescribe medication, or claim certainty. For alarming symptoms, abnormal lab clusters, pregnancy, acute chest pain, neurological deficits, severe shortness of breath, or self-harm risk, tell the user to seek urgent professional care.",
     "Use the user's Aeonvera context below when it is present. If data is missing, ask for the highest-yield missing input instead of pretending.",
+    "Use the intelligence brief first. It is a distilled operating picture for this session.",
     "If the user's context shows missing wearables, labs, reports, preferences, or daily plan data, offer to open the exact area that fixes the gap.",
     "When the user asks 'what should I do' or speaks vaguely, infer the most useful next step from today's plan, priorities, risks, and recent actions.",
+    "If the user is already on the relevant page, offer to perform or explain the next step there instead of navigating away.",
     "For site actions such as upgrading, downgrading, opening pages, connecting data sources, sharing exports, or changing settings, acknowledge the request briefly. The Aeonvera client will execute supported actions from the user's transcript.",
     "When recommending advanced modalities, separate evidence strength, risk, cost, contraindications, and whether clinician supervision is needed.",
     "If the user asks for a plan, give one clear next action, one reason, and one way Aeonvera can schedule or track it.",
@@ -177,7 +187,8 @@ async function buildRealtimeInstructions(
 async function loadRealtimeContext(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
-  subscription: Awaited<ReturnType<typeof getUserPlanForUsage>>
+  subscription: Awaited<ReturnType<typeof getUserPlanForUsage>>,
+  currentPage: string
 ) {
   const today = new Date().toISOString().slice(0, 10);
   const periodStart = new Date();
@@ -335,25 +346,56 @@ async function loadRealtimeContext(
     ),
   ]);
 
+  const todayContext = compactDailyPlan(dailyPlan);
+  const coachMemory = compactCoachMemory(memory);
+  const protocolContext = compactProtocol(protocol);
+  const missingContext = inferMissingContext({
+    dailyPlan,
+    labs,
+    latestReport,
+    preferences,
+    wearableConnections,
+  });
+  const membership = {
+    plan: subscription.plan || stringValue(profile?.plan) || "unknown",
+    status: subscription.status || stringValue(profile?.subscription_status) || "unknown",
+  };
+  const usageThisMonth = summarizeUsageEvents(usageEvents);
+  const pageContext = describeCurrentPage(currentPage);
+  const latestLabs = latestRowsByKey(labs, "canonical_key").slice(0, 14);
+
   return {
+    intelligenceBrief: buildIntelligenceBrief({
+      biologicalAge,
+      coachMemory,
+      currentPage: pageContext,
+      latestLabs,
+      latestReport,
+      lifeDomains,
+      lifePriorities,
+      membership,
+      missingContext,
+      recentActions,
+      today: todayContext,
+      usageThisMonth,
+      wearableConnections,
+    }),
+    currentPage: pageContext,
     identity: {
       displayName: stringValue(profile?.display_name),
       lifeStage: stringValue(profile?.life_stage),
       entityState: stringValue(profile?.entity_state),
       onboardingCompleted: booleanValue(profile?.onboarding_completed),
     },
-    membership: {
-      plan: subscription.plan || stringValue(profile?.plan) || "unknown",
-      status: subscription.status || stringValue(profile?.subscription_status) || "unknown",
-    },
-    usageThisMonth: summarizeUsageEvents(usageEvents),
-    today: compactDailyPlan(dailyPlan),
+    membership,
+    usageThisMonth,
+    today: todayContext,
     autopilot: autopilotPreferences,
-    coachMemory: compactCoachMemory(memory),
+    coachMemory,
     healthState,
-    protocol: compactProtocol(protocol),
+    protocol: protocolContext,
     latestReport,
-    latestLabs: latestRowsByKey(labs, "canonical_key").slice(0, 14),
+    latestLabs,
     biologicalAge,
     clinicalMemory: insights.slice(0, 5),
     preferences,
@@ -363,13 +405,7 @@ async function loadRealtimeContext(
       priorities: lifePriorities,
     },
     recentAeonveraActions: recentActions,
-    missingContext: inferMissingContext({
-      dailyPlan,
-      labs,
-      latestReport,
-      preferences,
-      wearableConnections,
-    }),
+    missingContext,
   };
 }
 
@@ -494,6 +530,175 @@ function inferMissingContext({
     needsPreferences: preferences.length === 0,
     needsWearableConnection: wearableConnections.length === 0,
   };
+}
+
+function describeCurrentPage(path: string) {
+  const pageMap = [
+    {
+      label: "Dashboard",
+      path: "/dashboard",
+      usefulActions: ["review current signals", "open today's plan", "explain the highest-risk signal"],
+    },
+    {
+      label: "Ask Aeonvera",
+      path: "/companion",
+      usefulActions: ["answer a health question", "simplify today's plan", "explain a recommendation"],
+    },
+    {
+      label: "Data Sources",
+      path: "/data-sources",
+      usefulActions: ["sync Oura", "open wearable connections", "identify missing data"],
+    },
+    {
+      label: "Digital Twin",
+      path: "/digital-twin",
+      usefulActions: ["explain future trajectory", "compare scenarios", "identify leverage points"],
+    },
+    {
+      label: "Life OS",
+      path: "/life-os",
+      usefulActions: ["review priorities", "choose next action", "rebalance domains"],
+    },
+    {
+      label: "Care Network",
+      path: "/network",
+      usefulActions: ["create an invite", "explain permissions", "review active members"],
+    },
+    {
+      label: "Physician Export",
+      path: "/physician-export",
+      usefulActions: ["create a physician share link", "explain what is included", "prepare a clinical summary"],
+    },
+    {
+      label: "Plan",
+      path: "/plan",
+      usefulActions: ["review usage", "compare tiers", "open billing"],
+    },
+    {
+      label: "Pricing",
+      path: "/pricing",
+      usefulActions: ["upgrade", "downgrade", "compare Core, Elite, and Sovereign"],
+    },
+    {
+      label: "Report",
+      path: "/report",
+      usefulActions: ["generate a report", "explain biological age", "summarize risk factors"],
+    },
+  ];
+
+  const match = pageMap.find((page) => path === page.path || path.startsWith(`${page.path}/`));
+  return match || { label: "Aeonvera", path, usefulActions: ["answer a question", "open the right area", "prepare the next step"] };
+}
+
+function buildIntelligenceBrief({
+  biologicalAge,
+  coachMemory,
+  currentPage,
+  latestLabs,
+  latestReport,
+  lifeDomains,
+  lifePriorities,
+  membership,
+  missingContext,
+  recentActions,
+  today,
+  usageThisMonth,
+  wearableConnections,
+}: {
+  biologicalAge: ContextRow | null;
+  coachMemory: ReturnType<typeof compactCoachMemory>;
+  currentPage: ReturnType<typeof describeCurrentPage>;
+  latestLabs: ContextRow[];
+  latestReport: ContextRow | null;
+  lifeDomains: ContextRow[];
+  lifePriorities: ContextRow[];
+  membership: { plan: string | null; status: string | null };
+  missingContext: ReturnType<typeof inferMissingContext>;
+  recentActions: ContextRow[];
+  today: ReturnType<typeof compactDailyPlan>;
+  usageThisMonth: Record<string, number>;
+  wearableConnections: ContextRow[];
+}) {
+  const nextActions = buildRecommendedActions({
+    currentPage,
+    latestReport,
+    lifePriorities,
+    missingContext,
+    today,
+    wearableConnections,
+  });
+
+  return {
+    currentPage: currentPage.label,
+    membership,
+    recommendedOpeningStyle: "brief, specific, context-aware, one concrete offer",
+    primaryFocus:
+      today?.topActions?.[0] ||
+      firstPriorityAction(lifePriorities) ||
+      stringValue(latestReport?.primary_goal) ||
+      "Find the highest-leverage next action.",
+    nextBestActions: nextActions,
+    dataCompleteness: {
+      labsAvailable: latestLabs.length > 0,
+      reportAvailable: Boolean(latestReport),
+      wearableConnected: wearableConnections.length > 0,
+      dailyPlanAvailable: Boolean(today),
+    },
+    personalization: {
+      communicationStyle: coachMemory?.communicationStyle,
+      knownFailurePatterns: coachMemory?.failurePatterns?.slice(0, 2) || [],
+      bestInterventions: coachMemory?.bestInterventions?.slice(0, 2) || [],
+    },
+    latestBiologicalAge: biologicalAge,
+    topLifeDomains: lifeDomains.slice(0, 3),
+    recentActions: recentActions.slice(0, 4),
+    usageThisMonth,
+  };
+}
+
+function buildRecommendedActions({
+  currentPage,
+  latestReport,
+  lifePriorities,
+  missingContext,
+  today,
+  wearableConnections,
+}: {
+  currentPage: ReturnType<typeof describeCurrentPage>;
+  latestReport: ContextRow | null;
+  lifePriorities: ContextRow[];
+  missingContext: ReturnType<typeof inferMissingContext>;
+  today: ReturnType<typeof compactDailyPlan>;
+  wearableConnections: ContextRow[];
+}) {
+  const actions = new Set<string>();
+
+  if (today?.topActions?.[0] && isRecord(today.topActions[0])) {
+    const action = stringValue(today.topActions[0].action);
+    if (action) actions.add(`Focus first on: ${action}`);
+  }
+
+  const priorityAction = firstPriorityAction(lifePriorities);
+  if (priorityAction) actions.add(`Advance Life OS priority: ${priorityAction}`);
+
+  if (missingContext.needsWearableConnection) {
+    actions.add("Open Data Sources and connect Oura or WHOOP.");
+  } else if (wearableConnections.some((connection) => stringValue(connection.provider) === "oura")) {
+    actions.add("Sync Oura for the latest recovery and sleep data.");
+  }
+
+  if (missingContext.needsLabData) actions.add("Import labs to improve biomarker intelligence.");
+  if (missingContext.needsLongevityReport) actions.add("Generate a longevity report.");
+  if (latestReport?.primary_goal) actions.add(`Review report goal: ${stringValue(latestReport.primary_goal)}`);
+
+  currentPage.usefulActions.forEach((action) => actions.add(action));
+
+  return Array.from(actions).slice(0, 6);
+}
+
+function firstPriorityAction(priorities: ContextRow[]) {
+  const firstPriority = priorities[0];
+  return stringValue(firstPriority?.next_action) || stringValue(firstPriority?.title);
 }
 
 function isRecord(value: unknown): value is ContextRow {
