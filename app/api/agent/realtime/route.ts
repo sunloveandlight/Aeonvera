@@ -15,6 +15,7 @@ export const runtime = "nodejs";
 
 const REALTIME_MODEL = process.env.OPENAI_REALTIME_MODEL || "gpt-realtime-2";
 const REALTIME_VOICE = process.env.OPENAI_REALTIME_VOICE || "marin";
+const ALLOWED_REALTIME_VOICES = new Set(["marin", "cedar", "alloy", "verse", "shimmer"]);
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,6 +29,7 @@ export async function POST(request: NextRequest) {
     if (!sdp || !sdp.includes("v=0")) {
       return NextResponse.json({ error: "Realtime voice needs a valid SDP offer." }, { status: 400 });
     }
+    const voice = sanitizeRealtimeVoice(request.nextUrl.searchParams.get("voice"));
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
             },
           },
           output: {
-            voice: REALTIME_VOICE,
+            voice,
             speed: 0.98,
           },
         },
@@ -120,6 +122,13 @@ export async function POST(request: NextRequest) {
       error instanceof Error ? error.message : "Aeonvera realtime voice could not start.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+function sanitizeRealtimeVoice(value: string | null) {
+  const normalized = value?.trim().toLowerCase() || "";
+  if (ALLOWED_REALTIME_VOICES.has(normalized)) return normalized;
+  if (ALLOWED_REALTIME_VOICES.has(REALTIME_VOICE)) return REALTIME_VOICE;
+  return "marin";
 }
 
 async function getAuthenticatedUser(request: NextRequest) {

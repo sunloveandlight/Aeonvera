@@ -2,45 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Mic, Send, Sparkles, Volume2, X } from "lucide-react";
+import { Mic, PhoneOff, Send, Sparkles, Volume2, X } from "lucide-react";
 
 type CommandMessage = {
   content: string;
   role: "assistant" | "user";
 };
 
-type SpeechRecognitionResultLike = {
-  readonly isFinal: boolean;
-  readonly [index: number]: {
-    readonly transcript: string;
-  };
+type VoiceId = (typeof VOICE_OPTIONS)[number]["id"];
+
+type RealtimeEvent = {
+  error?: { message?: string };
+  transcript?: string;
+  type?: string;
 };
-
-type SpeechRecognitionEventLike = Event & {
-  readonly results: {
-    readonly length: number;
-    readonly [index: number]: SpeechRecognitionResultLike;
-  };
-};
-
-type SpeechRecognitionLike = EventTarget & {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  onend: (() => void) | null;
-  onerror: (() => void) | null;
-  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  start: () => void;
-  stop: () => void;
-};
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
-
-type SpeechWindow = Window &
-  typeof globalThis & {
-    SpeechRecognition?: SpeechRecognitionConstructor;
-    webkitSpeechRecognition?: SpeechRecognitionConstructor;
-  };
 
 const HIDDEN_ROUTES = [
   "/care-network/",
@@ -56,6 +31,16 @@ const STARTER_PROMPTS = [
   "Open my Digital Twin",
   "Explain my plan like a coach",
 ];
+
+const VOICE_OPTIONS = [
+  { id: "marin", label: "Marin", tone: "Warm, calm, premium" },
+  { id: "cedar", label: "Cedar", tone: "Grounded and steady" },
+  { id: "alloy", label: "Alloy", tone: "Clear and neutral" },
+  { id: "verse", label: "Verse", tone: "Expressive and conversational" },
+  { id: "shimmer", label: "Shimmer", tone: "Bright and light" },
+] as const;
+
+const DEFAULT_VOICE: VoiceId = "marin";
 
 const NAVIGATION_INTENTS = [
   {
@@ -113,7 +98,9 @@ const NAVIGATION_INTENTS = [
 export default function AeonCommandOrb() {
   const pathname = usePathname();
   const router = useRouter();
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const realtimePeerRef = useRef<RTCPeerConnection | null>(null);
+  const realtimeStreamRef = useRef<MediaStream | null>(null);
+  const realtimeAudioRef = useRef<HTMLAudioElement | null>(null);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<CommandMessage[]>([
@@ -123,13 +110,10 @@ export default function AeonCommandOrb() {
         "I can answer, guide, and move through Aeonvera with you. Ask naturally.",
     },
   ]);
-  const [listening, setListening] = useState(false);
   const [thinking, setThinking] = useState(false);
-  const [voiceAvailable] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const speechWindow = window as SpeechWindow;
-    return Boolean(speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition);
-  });
+  const [selectedVoice, setSelectedVoice] = useState<VoiceId>(getSavedVoice);
+  const [realtimeActive, setRealtimeActive] = useState(false);
+  const [realtimeStatus, setRealtimeStatus] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
 
   const hidden = useMemo(
@@ -137,18 +121,34 @@ export default function AeonCommandOrb() {
     [pathname]
   );
 
-  const stopListening = useCallback((updateState = true) => {
-    recognitionRef.current?.stop();
-    recognitionRef.current = null;
-    if (updateState) setListening(false);
+  const selectedVoiceOption = useMemo(
+    () => VOICE_OPTIONS.find((voice) => voice.id === selectedVoice) || VOICE_OPTIONS[0],
+    [selectedVoice]
+  );
+
+  const stopRealtimeVoice = useCallback((updateState = true) => {
+    realtimePeerRef.current?.close();
+    realtimePeerRef.current = null;
+
+    realtimeStreamRef.current?.getTracks().forEach((track) => track.stop());
+    realtimeStreamRef.current = null;
+
+    if (realtimeAudioRef.current) {
+      realtimeAudioRef.current.srcObject = null;
+    }
+
+    if (updateState) {
+      setRealtimeActive(false);
+      setRealtimeStatus(null);
+      setSpeaking(false);
+    }
   }, []);
 
   useEffect(() => {
     return () => {
-      recognitionRef.current?.stop();
-      window.speechSynthesis?.cancel();
+      stopRealtimeVoice(false);
     };
-  }, []);
+  }, [stopRealtimeVoice]);
 
   if (hidden) return null;
 
@@ -165,7 +165,6 @@ export default function AeonCommandOrb() {
     if (navigation) {
       const answer = `Opening ${navigation.label}. I will stay here if you want to keep talking.`;
       setMessages((current) => [...current, { role: "assistant", content: answer }]);
-      speak(answer);
       router.push(navigation.href);
       setThinking(false);
       return;
@@ -192,7 +191,6 @@ export default function AeonCommandOrb() {
           ? data.answer
           : "I read the signal, but I need a little more context to answer well.";
       setMessages((current) => [...current, { role: "assistant", content: answer }]);
-      speak(answer);
     } catch (error) {
       const answer =
         error instanceof Error
@@ -204,75 +202,148 @@ export default function AeonCommandOrb() {
     }
   }
 
-  function toggleListening() {
-    if (listening) {
-      stopListening();
-      return;
-    }
+  async function startRealtimeVoice() {
+    if (realtimeActive || thinking) return;
 
-    const speechWindow = window as SpeechWindow;
-    const Recognition =
-      speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+    setOpen(true);
+    setRealtimeStatus("Opening a live voice line.");
 
-    if (!Recognition) {
+    try {
+      if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection === "undefined") {
+        throw new Error("Realtime voice needs a browser with microphone and WebRTC support.");
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          autoGainControl: true,
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
+      const peer = new RTCPeerConnection();
+      const remoteStream = new MediaStream();
+      const audio = new Audio();
+
+      audio.autoplay = true;
+      audio.srcObject = remoteStream;
+      realtimeAudioRef.current = audio;
+      realtimePeerRef.current = peer;
+      realtimeStreamRef.current = stream;
+
+      stream.getAudioTracks().forEach((track) => peer.addTrack(track, stream));
+
+      peer.ontrack = (event) => {
+        event.streams[0]?.getAudioTracks().forEach((track) => remoteStream.addTrack(track));
+        if (!event.streams[0]) remoteStream.addTrack(event.track);
+        setSpeaking(true);
+        void audio.play().catch(() => undefined);
+      };
+
+      peer.onconnectionstatechange = () => {
+        if (peer.connectionState === "connected") {
+          setRealtimeActive(true);
+          setRealtimeStatus("Speak naturally. Aeonvera is listening.");
+          return;
+        }
+
+        if (["closed", "disconnected", "failed"].includes(peer.connectionState)) {
+          stopRealtimeVoice();
+        }
+      };
+
+      const channel = peer.createDataChannel("aeonvera-realtime-events");
+      channel.onopen = () => setRealtimeStatus("Speak naturally. Aeonvera is listening.");
+      channel.onmessage = (event) => handleRealtimeEvent(event.data);
+
+      const offer = await peer.createOffer({ offerToReceiveAudio: true });
+      await peer.setLocalDescription(offer);
+
+      const response = await fetch(
+        `/api/agent/realtime?voice=${encodeURIComponent(selectedVoice)}`,
+        {
+          body: offer.sdp || "",
+          credentials: "include",
+          headers: { "Content-Type": "application/sdp" },
+          method: "POST",
+        }
+      );
+      const answer = await response.text();
+
+      if (!response.ok) {
+        throw new Error(readRealtimeError(answer));
+      }
+
+      await peer.setRemoteDescription({ sdp: answer, type: "answer" });
+      setRealtimeActive(true);
+      setRealtimeStatus("Speak naturally. Aeonvera is listening.");
       setMessages((current) => [
         ...current,
         {
           role: "assistant",
-          content: "Voice is not available in this browser yet. You can type to me here.",
+          content: `${selectedVoiceOption.label} voice is live. Ask naturally and I will answer out loud.`,
         },
       ]);
+    } catch (error) {
+      stopRealtimeVoice();
+      const answer =
+        error instanceof Error ? error.message : "Realtime voice could not start.";
+      setMessages((current) => [...current, { role: "assistant", content: answer }]);
+    }
+  }
+
+  function handleRealtimeEvent(rawEvent: string) {
+    const event = parseRealtimeEvent(rawEvent);
+    if (!event?.type) return;
+
+    if (event.type === "conversation.item.input_audio_transcription.completed") {
+      const transcript = event.transcript?.trim();
+      if (transcript) {
+        setMessages((current) => [...current, { role: "user", content: transcript }]);
+      }
       return;
     }
 
-    const recognition = new Recognition();
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-    recognition.onresult = (event) => {
-      let finalTranscript = "";
-      let interimTranscript = "";
-
-      for (let index = 0; index < event.results.length; index += 1) {
-        const result = event.results[index];
-        const transcript = result?.[0]?.transcript || "";
-        if (result?.isFinal) finalTranscript += transcript;
-        else interimTranscript += transcript;
+    if (event.type === "response.output_audio_transcript.done") {
+      const transcript = event.transcript?.trim();
+      if (transcript) {
+        setMessages((current) => [...current, { role: "assistant", content: transcript }]);
       }
+      setSpeaking(false);
+      setRealtimeStatus("Listening.");
+      return;
+    }
 
-      const next = finalTranscript || interimTranscript;
-      if (next) setInput(next.trim());
+    if (event.type === "response.created") {
+      setSpeaking(true);
+      setRealtimeStatus("Aeonvera is answering.");
+      return;
+    }
 
-      if (finalTranscript.trim()) {
-        stopListening();
-        void submitCommand(finalTranscript);
-      }
-    };
-    recognition.onerror = () => setListening(false);
-    recognition.onend = () => setListening(false);
-    recognitionRef.current = recognition;
-    recognition.start();
-    setOpen(true);
-    setListening(true);
+    if (event.type === "response.done") {
+      setSpeaking(false);
+      setRealtimeStatus("Listening.");
+      return;
+    }
+
+    if (event.type === "error") {
+      setSpeaking(false);
+      setRealtimeStatus(event.error?.message || "Realtime voice had trouble.");
+    }
+  }
+
+  function handleVoiceChange(value: string) {
+    const nextVoice = asVoiceId(value);
+    setSelectedVoice(nextVoice);
+    window.localStorage.setItem("aeonvera.voice", nextVoice);
+    if (realtimeActive) {
+      stopRealtimeVoice();
+      setRealtimeStatus("Voice changed. Start the live line again.");
+    }
   }
 
   function closeOrb() {
-    stopListening();
-    window.speechSynthesis?.cancel();
-    setSpeaking(false);
+    stopRealtimeVoice();
     setOpen(false);
-  }
-
-  function speak(text: string) {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text.slice(0, 700));
-    utterance.rate = 0.96;
-    utterance.pitch = 0.92;
-    utterance.onstart = () => setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-    window.speechSynthesis.speak(utterance);
   }
 
   return (
@@ -294,6 +365,28 @@ export default function AeonCommandOrb() {
             </button>
           </div>
 
+          <div className="mb-4 grid gap-3 rounded-lg border border-white/[0.08] bg-white/[0.035] p-3 md:grid-cols-[1fr_auto] md:items-center">
+            <div>
+              <p className="text-sm text-white/72">Live voice: {selectedVoiceOption.label}</p>
+              <p className="mt-1 text-xs leading-5 text-white/42">{selectedVoiceOption.tone}</p>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-white/42">
+              Voice
+              <select
+                value={selectedVoice}
+                onChange={(event) => handleVoiceChange(event.target.value)}
+                className="h-9 rounded-md border border-white/[0.1] bg-black/45 px-3 text-sm text-white/72 outline-none transition focus:border-[#dabc73]/45"
+                aria-label="Choose Aeonvera voice"
+              >
+                {VOICE_OPTIONS.map((voice) => (
+                  <option key={voice.id} value={voice.id}>
+                    {voice.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
           <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
             {messages.slice(-6).map((message, index) => (
               <div
@@ -310,6 +403,11 @@ export default function AeonCommandOrb() {
             {thinking ? (
               <div className="inline-flex rounded-lg border border-[#dabc73]/16 bg-[#dabc73]/[0.045] px-3 py-2 text-sm text-[#dabc73]/72">
                 Aeonvera is reading the signal.
+              </div>
+            ) : null}
+            {realtimeStatus ? (
+              <div className="inline-flex rounded-lg border border-emerald-300/14 bg-emerald-300/[0.06] px-3 py-2 text-sm text-emerald-100/68">
+                {realtimeStatus}
               </div>
             ) : null}
           </div>
@@ -338,20 +436,24 @@ export default function AeonCommandOrb() {
               value={input}
               onChange={(event) => setInput(event.target.value)}
               className="h-11 min-w-0 flex-1 rounded-md border border-white/[0.08] bg-black/25 px-3 text-sm text-white/76 outline-none placeholder:text-white/24 focus:border-[#dabc73]/45"
-              placeholder={listening ? "Listening..." : "Ask or command Aeonvera..."}
+              placeholder={
+                realtimeActive ? "Live voice is open..." : "Ask or command Aeonvera..."
+              }
             />
             <button
               type="button"
-              onClick={toggleListening}
+              onClick={() =>
+                realtimeActive ? stopRealtimeVoice() : void startRealtimeVoice()
+              }
               className={`inline-flex size-11 items-center justify-center rounded-md border transition ${
-                listening
+                realtimeActive
                   ? "border-[#dabc73]/45 bg-[#dabc73]/[0.12] text-[#dabc73]"
                   : "border-white/[0.08] bg-white/[0.035] text-white/60 hover:text-white"
               }`}
-              aria-label={listening ? "Stop listening" : "Speak to Aeonvera"}
-              disabled={!voiceAvailable && thinking}
+              aria-label={realtimeActive ? "End live voice" : "Start live voice"}
+              disabled={thinking}
             >
-              <Mic size={17} />
+              {realtimeActive ? <PhoneOff size={17} /> : <Mic size={17} />}
             </button>
             <button
               type="submit"
@@ -375,7 +477,7 @@ export default function AeonCommandOrb() {
           }
         }}
         className={`aeon-command-orb ${open ? "aeon-command-orb-open" : ""} ${
-          listening ? "aeon-command-orb-listening" : ""
+          realtimeActive ? "aeon-command-orb-listening" : ""
         } ${speaking ? "aeon-command-orb-speaking" : ""}`}
         aria-label="Open Aeonvera intelligence"
       >
@@ -385,6 +487,32 @@ export default function AeonCommandOrb() {
       </button>
     </div>
   );
+}
+
+function asVoiceId(value: string): VoiceId {
+  return VOICE_OPTIONS.some((voice) => voice.id === value) ? (value as VoiceId) : DEFAULT_VOICE;
+}
+
+function getSavedVoice(): VoiceId {
+  if (typeof window === "undefined") return DEFAULT_VOICE;
+  return asVoiceId(window.localStorage.getItem("aeonvera.voice") || DEFAULT_VOICE);
+}
+
+function parseRealtimeEvent(rawEvent: string): RealtimeEvent | null {
+  try {
+    return JSON.parse(rawEvent) as RealtimeEvent;
+  } catch {
+    return null;
+  }
+}
+
+function readRealtimeError(body: string) {
+  try {
+    const parsed = JSON.parse(body) as { error?: string };
+    return parsed.error || "OpenAI realtime voice session could not start.";
+  } catch {
+    return body || "OpenAI realtime voice session could not start.";
+  }
 }
 
 function resolveNavigationIntent(question: string) {
