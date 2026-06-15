@@ -954,7 +954,7 @@ export default function AeonCommandOrb() {
         <div className="aeon-orb-live-pill mb-4 inline-flex max-w-[min(92vw,28rem)] items-center gap-3 rounded-full px-4 py-2 text-sm text-white/72">
           <span
             className={`size-2 rounded-full ${
-              speaking ? "bg-[#dabc73]" : realtimeActive ? "bg-emerald-300" : "bg-white/35"
+              speaking ? "bg-[rgb(var(--gold))]" : realtimeActive ? "bg-emerald-300" : "bg-white/35"
             }`}
           />
           <span className="truncate">
@@ -990,7 +990,7 @@ export default function AeonCommandOrb() {
               <select
                 value={selectedVoice}
                 onChange={(event) => handleVoiceChange(event.target.value)}
-                className="h-9 rounded-md border border-white/[0.1] bg-black/45 px-3 text-sm text-white/72 outline-none transition focus:border-[#dabc73]/45"
+                className="h-9 rounded-md border border-white/[0.1] bg-black/45 px-3 text-sm text-white/72 outline-none transition focus:border-[rgba(var(--gold),0.45)]"
                 aria-label="Choose Aeonvera voice"
               >
                 {VOICE_OPTIONS.map((voice) => (
@@ -1008,7 +1008,7 @@ export default function AeonCommandOrb() {
                 key={`${message.role}-${index}-${message.content.slice(0, 12)}`}
                 className={`rounded-lg border px-3 py-2 text-sm leading-6 ${
                   message.role === "assistant"
-                    ? "border-[#dabc73]/16 bg-[#dabc73]/[0.045] text-white/68"
+                    ? "border-[rgba(var(--gold),0.16)] bg-[rgba(var(--gold),0.045)] text-white/68"
                     : "ml-auto max-w-[86%] border-white/[0.08] bg-white/[0.045] text-white/76"
                 }`}
               >
@@ -1016,7 +1016,7 @@ export default function AeonCommandOrb() {
               </div>
             ))}
             {thinking ? (
-              <div className="inline-flex rounded-lg border border-[#dabc73]/16 bg-[#dabc73]/[0.045] px-3 py-2 text-sm text-[#dabc73]/72">
+              <div className="inline-flex rounded-lg border border-[rgba(var(--gold),0.16)] bg-[rgba(var(--gold),0.045)] px-3 py-2 text-sm text-[rgba(var(--gold),0.72)]">
                 Aeonvera is reading the signal.
               </div>
             ) : null}
@@ -1046,7 +1046,7 @@ export default function AeonCommandOrb() {
                         receipt.tone === "success"
                           ? "bg-emerald-300"
                           : receipt.tone === "caution"
-                            ? "bg-[#dabc73]"
+                            ? "bg-[rgb(var(--gold))]"
                             : "bg-white/36"
                       }`}
                       aria-hidden="true"
@@ -1074,7 +1074,7 @@ export default function AeonCommandOrb() {
                 key={prompt}
                 type="button"
                 onClick={() => void submitCommand(prompt)}
-                className="rounded-md border border-white/[0.08] bg-white/[0.035] px-3 py-2 text-xs text-white/52 transition hover:border-[#dabc73]/22 hover:text-white/78"
+                className="rounded-md border border-white/[0.08] bg-white/[0.035] px-3 py-2 text-xs text-white/52 transition hover:border-[rgba(var(--gold),0.22)] hover:text-white/78"
               >
                 {prompt}
               </button>
@@ -1091,7 +1091,7 @@ export default function AeonCommandOrb() {
             <input
               value={input}
               onChange={(event) => setInput(event.target.value)}
-              className="h-11 min-w-0 flex-1 rounded-md border border-white/[0.08] bg-black/25 px-3 text-sm text-white/76 outline-none placeholder:text-white/24 focus:border-[#dabc73]/45"
+              className="h-11 min-w-0 flex-1 rounded-md border border-white/[0.08] bg-black/25 px-3 text-sm text-white/76 outline-none placeholder:text-white/24 focus:border-[rgba(var(--gold),0.45)]"
               placeholder={
                 realtimeActive ? "Live voice is open..." : "Ask or command Aeonvera..."
               }
@@ -1103,7 +1103,7 @@ export default function AeonCommandOrb() {
               }
               className={`inline-flex size-11 items-center justify-center rounded-md border transition ${
                 realtimeActive
-                  ? "border-[#dabc73]/45 bg-[#dabc73]/[0.12] text-[#dabc73]"
+                  ? "border-[rgba(var(--gold),0.45)] bg-[rgba(var(--gold),0.12)] text-[rgb(var(--gold))]"
                   : "border-white/[0.08] bg-white/[0.035] text-white/60 hover:text-white"
               }`}
               aria-label={realtimeActive ? "End live voice" : "Start live voice"}
@@ -1140,25 +1140,15 @@ export default function AeonCommandOrb() {
           } ${speaking ? "aeon-command-orb-speaking" : ""}`}
           aria-label={realtimeActive ? "Stop Aeonvera voice" : "Talk to Aeonvera"}
         >
-          <span className="aeon-command-orb-field" aria-hidden="true">
-            <span className="aeon-command-orb-orbit aeon-command-orb-orbit-a" />
-            <span className="aeon-command-orb-orbit aeon-command-orb-orbit-b" />
-            <span className="aeon-command-orb-orbit aeon-command-orb-orbit-c" />
-            <span className="aeon-command-orb-ribbon aeon-command-orb-ribbon-a" />
-            <span className="aeon-command-orb-ribbon aeon-command-orb-ribbon-b" />
-            <span className="aeon-command-orb-particle aeon-command-orb-particle-a" />
-            <span className="aeon-command-orb-particle aeon-command-orb-particle-b" />
-            <span className="aeon-command-orb-particle aeon-command-orb-particle-c" />
-            <span className="aeon-command-orb-particle aeon-command-orb-particle-d" />
-          </span>
           <span className="aeon-command-orb-core" aria-hidden="true">
-            <span className="aeon-command-orb-plasma" />
-            <span className="aeon-command-orb-wave">
-              <span />
-              <span />
-              <span />
-              <span />
-            </span>
+            {realtimeActive || speaking ? (
+              <span className="aeon-command-orb-wave">
+                <span />
+                <span />
+                <span />
+                <span />
+              </span>
+            ) : null}
           </span>
           <span className="sr-only">
             {realtimeActive ? "Aeonvera voice is active" : "Aeonvera voice is ready"}

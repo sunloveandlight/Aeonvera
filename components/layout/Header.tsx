@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, Menu, UserCircle, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 type NavItem = {
@@ -18,6 +18,7 @@ export default function Header() {
   const [authChecked, setAuthChecked] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -66,7 +67,7 @@ export default function Header() {
         { href: "/dashboard", label: "Today" },
         { href: "/companion", label: "Ask" },
         { href: "/plan", label: "Plan" },
-        { href: "/pricing", label: "Settings" },
+        { href: "/settings", label: "Settings" },
       ]
     : [
         { href: "/pricing", label: "Pricing", public: true },
@@ -111,7 +112,10 @@ export default function Header() {
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setMoreOpen((open) => !open)}
+                onClick={() => {
+                  setAccountOpen(false);
+                  setMoreOpen((open) => !open);
+                }}
                 className={`premium-nav-link inline-flex items-center gap-1.5 ${
                   secondaryActive || moreOpen ? "premium-nav-link-active" : ""
                 }`}
@@ -160,14 +164,59 @@ export default function Header() {
           {!authChecked ? (
             <div className="hidden h-9 w-24 rounded-md border border-white/10 bg-white/[0.035] sm:block" />
           ) : authenticated ? (
-            <>
+            <div className="relative hidden sm:block">
               <button
-                onClick={handleLogout}
-                className="hidden h-9 items-center text-xs font-medium leading-none text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  setAccountOpen((open) => !open);
+                }}
+                className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-medium leading-none transition ${
+                  accountOpen
+                    ? "border-white/[0.16] bg-white/[0.06] text-white/82"
+                    : "border-white/[0.08] bg-white/[0.025] text-white/54 hover:border-white/[0.14] hover:text-white/80"
+                }`}
+                aria-expanded={accountOpen}
+                aria-haspopup="menu"
               >
-                Sign Out
+                <UserCircle size={15} />
+                Account
               </button>
-            </>
+              {accountOpen ? (
+                <div
+                  className="absolute right-0 top-11 w-60 rounded-lg border border-white/[0.08] bg-black/90 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl"
+                  role="menu"
+                >
+                  <Link
+                    href="/settings"
+                    onClick={() => setAccountOpen(false)}
+                    className="block rounded-md px-3 py-2 text-sm text-white/64 transition hover:bg-white/[0.05] hover:text-white/86"
+                    role="menuitem"
+                  >
+                    Settings
+                  </Link>
+                  <Link
+                    href="/pricing"
+                    onClick={() => setAccountOpen(false)}
+                    className="block rounded-md px-3 py-2 text-sm text-white/64 transition hover:bg-white/[0.05] hover:text-white/86"
+                    role="menuitem"
+                  >
+                    Membership
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setAccountOpen(false);
+                      void handleLogout();
+                    }}
+                    className="mt-1 block w-full rounded-md border-t border-white/[0.06] px-3 py-2 text-left text-sm text-white/42 transition hover:bg-white/[0.05] hover:text-white/72"
+                    type="button"
+                    role="menuitem"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              ) : null}
+            </div>
           ) : (
             <>
               <Link
@@ -197,7 +246,10 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={() => {
+                    setMobileOpen(false);
+                    setMoreOpen(false);
+                  }}
                   className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/75"
                 >
                   {item.label}
@@ -206,7 +258,10 @@ export default function Header() {
             {!authChecked ? null : authenticated ? (
               <>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => {
+                    setMobileOpen(false);
+                    void handleLogout();
+                  }}
                   className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-left text-sm text-white/75"
                   type="button"
                 >

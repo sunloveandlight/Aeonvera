@@ -57,6 +57,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith("/plan") ||
     pathname.startsWith("/assessment") ||
     pathname.startsWith("/report") ||
+    pathname.startsWith("/settings") ||
     pathname.startsWith("/success");
 
   if (!user && isProtected) {
@@ -85,6 +86,7 @@ export const config = {
     "/plan/:path*",
     "/assessment/:path*",
     "/report/:path*",
+    "/settings/:path*",
     "/success",
   ],
 };

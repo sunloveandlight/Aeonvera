@@ -184,6 +184,8 @@ const MODEL_INPUTS: Array<[string, keyof DigitalTwinPayload["counts"], LucideIco
   ["Reports", "reports", FileText],
 ];
 
+const TIMELINE_INITIAL_COUNT = 5;
+
 export default function DigitalTwinPage() {
   const [payload, setPayload] = useState<DigitalTwinPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -198,6 +200,7 @@ export default function DigitalTwinPage() {
     notes: "",
   });
   const [activeType, setActiveType] = useState<TimelineEvent["type"] | "all">("all");
+  const [timelineExpanded, setTimelineExpanded] = useState(false);
   const [projectionResult, setProjectionResult] = useState<TwinProjectionResult | null>(null);
   const [projectionMessage, setProjectionMessage] = useState<string | null>(null);
   const [projectionProtocolMessage, setProjectionProtocolMessage] = useState<string | null>(null);
@@ -260,6 +263,9 @@ export default function DigitalTwinPage() {
       ? events
       : events.filter((event) => event.type === activeType);
   }, [activeType, payload]);
+  const visibleTimeline = timelineExpanded
+    ? timeline
+    : timeline.slice(0, TIMELINE_INITIAL_COUNT);
   const latestBioAge = payload?.profile?.biological_age;
   const insight = payload?.state?.insights?.[0] || "Your living health model is assembling from assessments, labs, protocols, coach signals, and wearable data.";
 
@@ -685,23 +691,26 @@ export default function DigitalTwinPage() {
               </div>
 
               <div className="executive-panel rounded-lg p-6 md:p-7">
-                <div className="mb-6 flex flex-col gap-4 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+                <div className="mb-5 flex flex-col gap-5 border-b border-white/[0.06] pb-5">
                   <div>
-                    <p className="micro-label">Health Timeline</p>
-                    <h2 className="mt-3 text-3xl font-light text-white">
-                      Signal history.
+                    <p className="micro-label">Recent Signals</p>
+                    <h2 className="mt-3 text-2xl font-light text-white md:text-3xl">
+                      The changes worth noticing.
                     </h2>
                     <p className="mt-3 max-w-xl text-sm leading-6 text-white/42">
-                      A contained audit trail of the signals currently teaching your model.
+                      A concise view of what is teaching your Digital Twin. The full history stays tucked away until you need it.
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] md:flex-wrap md:overflow-visible md:pb-0">
                     {TYPE_FILTERS.map((type) => (
                       <button
                         key={type}
                         type="button"
-                        onClick={() => setActiveType(type)}
-                        className={`rounded-md border px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] transition ${
+                        onClick={() => {
+                          setActiveType(type);
+                          setTimelineExpanded(false);
+                        }}
+                        className={`shrink-0 rounded-md border px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] transition ${
                           activeType === type
                             ? "border-white/[0.2] bg-white/[0.07] royal-text"
                             : "border-white/[0.07] bg-white/[0.02] text-white/34 hover:text-white/60"
@@ -713,8 +722,14 @@ export default function DigitalTwinPage() {
                   </div>
                 </div>
 
-                <div className="max-h-[28rem] space-y-3 overflow-y-auto pr-1 [scrollbar-color:rgba(218,188,115,0.28)_transparent]">
-                  {timeline.map((event) => (
+                <div
+                  className={`space-y-3 pr-1 ${
+                    timelineExpanded
+                      ? "max-h-[22rem] overflow-y-auto rounded-lg [scrollbar-color:rgba(218,188,115,0.28)_transparent]"
+                      : ""
+                  }`}
+                >
+                  {visibleTimeline.map((event) => (
                     <TimelineEventCard key={event.id} event={event} />
                   ))}
                   {!timeline.length && (
@@ -726,6 +741,19 @@ export default function DigitalTwinPage() {
                     />
                   )}
                 </div>
+                {timeline.length > TIMELINE_INITIAL_COUNT ? (
+                  <div className="mt-4 border-t border-white/[0.06] pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setTimelineExpanded((expanded) => !expanded)}
+                      className="inline-flex h-10 w-full items-center justify-center rounded-md border border-white/[0.07] bg-white/[0.025] px-4 text-sm text-white/58 transition hover:border-[#dabc73]/24 hover:bg-white/[0.04] hover:text-white/82"
+                    >
+                      {timelineExpanded
+                        ? "Show recent signals only"
+                        : `View full history (${timeline.length} signals)`}
+                    </button>
+                  </div>
+                ) : null}
               </div>
             </div>
           </>
@@ -1541,23 +1569,28 @@ type TwinSummaryCardData = {
   label: string;
   suffix: string;
   value: string;
+  variant?: "metric" | "date";
 };
 
 function TwinSummaryCard({ card }: { card: TwinSummaryCardData }) {
-  const { Icon, label, suffix, value } = card;
+  const { Icon, label, suffix, value, variant = "metric" } = card;
+  const valueClassName =
+    variant === "date"
+      ? "tabular-nums text-[1.72rem] font-light leading-none text-white/88 md:text-[1.9rem]"
+      : "tabular-nums text-[2.45rem] font-light leading-none text-white/88";
 
   return (
-    <div className="executive-panel flex min-h-[8rem] flex-col justify-between rounded-lg p-5">
+    <div className="executive-panel flex min-h-[8.25rem] flex-col justify-between rounded-lg p-5">
       <div className="flex items-center justify-between gap-3">
         <p className="micro-label leading-4">{label}</p>
         <Icon size={17} className="shrink-0 royal-text" />
       </div>
 
-      <div className="mt-5 flex items-baseline gap-2">
-        <p className="tabular-nums text-[2.45rem] font-light leading-none text-white/88">
+      <div className="mt-5 grid min-h-[3.25rem] grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
+        <p className={valueClassName}>
           {value}
         </p>
-        <p className="pb-1 text-xs uppercase tracking-[0.14em] text-white/24">
+        <p className="pb-1 text-right text-xs uppercase tracking-[0.14em] text-white/24">
           {suffix}
         </p>
       </div>
@@ -1573,7 +1606,13 @@ function buildSummaryCards(
     { Icon: Dna, label: "Bio age", suffix: "years", value: latestBioAge ? `${latestBioAge}` : "--" },
     { Icon: Sparkles, label: "Protocols", suffix: "generated", value: `${payload.counts.protocols || 0}` },
     { Icon: Activity, label: "Signals", suffix: "events", value: `${totalSignals(payload.counts)}` },
-    { Icon: Clock3, label: "Updated", suffix: "model", value: formatShortDate(payload.state?.updated_at) },
+    {
+      Icon: Clock3,
+      label: "Updated",
+      suffix: "model",
+      value: formatShortDate(payload.state?.updated_at),
+      variant: "date",
+    },
   ];
 }
 
