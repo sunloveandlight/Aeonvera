@@ -463,6 +463,16 @@ const ACTION_SECTIONS: {
   },
 ];
 
+const MOBILE_ASSISTANT_OPENINGS = [
+  "How may I serve you today?",
+  "What would you like to focus on today?",
+  "I am here. What can I help you with?",
+  "How can I be of service?",
+  "Tell me what you need, and I will help you move through it.",
+  "What should we make easier right now?",
+  "I am listening. What matters most today?",
+];
+
 export default function App() {
   const [activeView, setActiveView] = useState<ActiveView>("today");
   const [pushStatus, setPushStatus] = useState("Not requested");
@@ -1411,6 +1421,10 @@ export default function App() {
 
       await Speech.stop();
       setVoiceSpeaking(false);
+      const opening = pickMobileAssistantOpening();
+      setVoicePhase("connecting");
+      setVoiceStatus(opening);
+      await speakMobileOpening(opening, setVoiceSpeaking);
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
         playsInSilentModeIOS: true,
@@ -5540,6 +5554,38 @@ function playSoftHaptic() {
   if (Platform.OS === "android") {
     Vibration.vibrate(12);
   }
+}
+
+function pickMobileAssistantOpening() {
+  return MOBILE_ASSISTANT_OPENINGS[
+    Math.floor(Math.random() * MOBILE_ASSISTANT_OPENINGS.length)
+  ];
+}
+
+function speakMobileOpening(
+  text: string,
+  setVoiceSpeaking: Dispatch<SetStateAction<boolean>>
+) {
+  return new Promise<void>((resolve) => {
+    setVoiceSpeaking(true);
+    Speech.speak(text, {
+      language: "en-US",
+      pitch: 0.96,
+      rate: Platform.OS === "ios" ? 0.52 : 0.88,
+      onDone: () => {
+        setVoiceSpeaking(false);
+        resolve();
+      },
+      onError: () => {
+        setVoiceSpeaking(false);
+        resolve();
+      },
+      onStopped: () => {
+        setVoiceSpeaking(false);
+        resolve();
+      },
+    });
+  });
 }
 
 function formatReminderDate(date: Date) {

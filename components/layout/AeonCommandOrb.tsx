@@ -33,6 +33,16 @@ const STARTER_PROMPTS = [
   "Explain my plan like a coach",
 ];
 
+const ASSISTANT_OPENINGS = [
+  "How may I serve you today?",
+  "What would you like to focus on today?",
+  "I am here. What can I help you with?",
+  "How can I be of service?",
+  "Tell me what you need, and I will help you move through it.",
+  "What should we make easier right now?",
+  "I am listening. What matters most today?",
+];
+
 const VOICE_OPTIONS = [
   { id: "marin", label: "Marin", tone: "Warm, calm, premium" },
   { id: "cedar", label: "Cedar", tone: "Grounded and steady" },
@@ -144,6 +154,8 @@ export default function AeonCommandOrb() {
       realtimeAudioRef.current.srcObject = null;
     }
 
+    window.speechSynthesis?.cancel();
+
     if (updateState) {
       setRealtimeActive(false);
       setRealtimeStatus(null);
@@ -226,6 +238,13 @@ export default function AeonCommandOrb() {
       if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection === "undefined") {
         throw new Error("Realtime voice needs a browser with microphone and WebRTC support.");
       }
+
+      const opening = pickAssistantOpening();
+      setRealtimeStatus(opening);
+      setSpeaking(true);
+      await speakBrowserOpening(opening);
+      setSpeaking(false);
+      setRealtimeStatus("Opening the microphone.");
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -738,6 +757,33 @@ function inferPlanTarget(direction: PlanIntent["direction"], currentPlan: PlanId
 
 function asPlanId(value: unknown): PlanId | null {
   return value === "core" || value === "elite" || value === "sovereign" ? value : null;
+}
+
+function pickAssistantOpening() {
+  return ASSISTANT_OPENINGS[Math.floor(Math.random() * ASSISTANT_OPENINGS.length)];
+}
+
+function speakBrowserOpening(text: string) {
+  return new Promise<void>((resolve) => {
+    if (
+      typeof window === "undefined" ||
+      !window.speechSynthesis ||
+      !window.SpeechSynthesisUtterance
+    ) {
+      resolve();
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-US";
+    utterance.pitch = 0.94;
+    utterance.rate = 0.88;
+    utterance.volume = 0.9;
+    utterance.onend = () => resolve();
+    utterance.onerror = () => resolve();
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  });
 }
 
 function isActiveSubscription(value: unknown) {
