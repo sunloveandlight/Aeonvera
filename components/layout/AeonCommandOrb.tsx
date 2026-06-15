@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Keyboard, Mic, PhoneOff, Send, Sparkles, Volume2, X } from "lucide-react";
+import { Keyboard, Mic, PhoneOff, Send, X } from "lucide-react";
 
 type CommandMessage = {
   content: string;
@@ -644,12 +644,22 @@ export default function AeonCommandOrb() {
           } ${speaking ? "aeon-command-orb-speaking" : ""}`}
           aria-label={realtimeActive ? "Stop Aeonvera voice" : "Talk to Aeonvera"}
         >
-          <span className="aeon-command-orb-core">
-            {realtimeActive ? (
-              speaking ? <Volume2 size={22} /> : <Mic size={22} />
-            ) : (
-              <Sparkles size={22} />
-            )}
+          <span className="aeon-command-orb-field" aria-hidden="true">
+            <span className="aeon-command-orb-orbit aeon-command-orb-orbit-a" />
+            <span className="aeon-command-orb-orbit aeon-command-orb-orbit-b" />
+            <span className="aeon-command-orb-orbit aeon-command-orb-orbit-c" />
+          </span>
+          <span className="aeon-command-orb-core" aria-hidden="true">
+            <span className="aeon-command-orb-plasma" />
+            <span className="aeon-command-orb-wave">
+              <span />
+              <span />
+              <span />
+              <span />
+            </span>
+          </span>
+          <span className="sr-only">
+            {realtimeActive ? "Aeonvera voice is active" : "Aeonvera voice is ready"}
           </span>
         </button>
       </div>
