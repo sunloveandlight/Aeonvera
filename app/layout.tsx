@@ -17,9 +17,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AEONVERA",
-  description: "Longevity Intelligence Platform",
+  title: {
+    default: "Aeonvera",
+    template: "%s | Aeonvera",
+  },
+  description:
+    "Private longevity intelligence for labs, wearables, biological age, protocols, and adaptive health coaching.",
   applicationName: "Aeonvera",
+  metadataBase: new URL("https://www.aeonvera.com"),
   appleWebApp: {
     capable: true,
     title: "Aeonvera",
@@ -31,6 +36,20 @@ export const metadata: Metadata = {
   icons: {
     icon: "/aeonvera-app-icon.svg",
     apple: "/aeonvera-app-icon.svg",
+  },
+  openGraph: {
+    title: "Aeonvera",
+    description:
+      "Private longevity intelligence for labs, wearables, biological age, protocols, and adaptive health coaching.",
+    siteName: "Aeonvera",
+    type: "website",
+    url: "https://www.aeonvera.com",
+  },
+  twitter: {
+    card: "summary",
+    title: "Aeonvera",
+    description:
+      "Private longevity intelligence for labs, wearables, biological age, protocols, and adaptive health coaching.",
   },
 };
 

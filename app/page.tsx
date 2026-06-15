@@ -184,13 +184,13 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
             </div>
 
             <div className="hero-age-copy">
-              <p className="hero-age-label font-medium uppercase tracking-[0.14em] text-white/42">Biological age</p>
+              <p className="hero-age-label font-medium uppercase tracking-[0.14em] text-white/42">Example biological age</p>
               <div className="hero-age-value flex items-end gap-2">
                 <p className="hero-age-number hero-metric-glow font-light leading-none">38.4</p>
                 <p className="hero-age-unit leading-none text-white/42">years</p>
               </div>
               <p className="hero-age-note font-medium text-white/50">
-                2.6 years below chronological baseline.
+                Demo profile: 2.6 years below chronological baseline.
               </p>
             </div>
           </div>
@@ -221,9 +221,9 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
 
         <div className="mt-auto grid gap-3 pt-5 sm:grid-cols-3">
           {[
-            ["Risk score", "24", "low"],
-            ["Accuracy", "84%", "high"],
-            ["Priority", "Sleep", "next"],
+            ["Demo risk score", "24", "low"],
+            ["Model confidence", "84%", "example"],
+            ["Example priority", "Sleep", "next"],
           ].map(([label, value, note]) => (
             <div key={label} className="rounded-lg border border-white/[0.06] bg-white/[0.035] p-4">
               <p className="text-sm text-white/40">{label}</p>

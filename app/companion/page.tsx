@@ -1494,9 +1494,9 @@ function DailyBriefSignal({ label, value }: { label: string; value: string }) {
 
 function ExecutionStat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-3">
-      <p className="text-2xl font-light text-white/86">{value}</p>
-      <p className="mt-1 text-[8px] uppercase tracking-[0.14em] text-white/30">
+    <div className="flex min-h-[5.5rem] flex-col justify-between rounded-lg border border-white/[0.07] bg-white/[0.025] p-3">
+      <p className="tabular-nums text-2xl font-light leading-none text-white/86">{value}</p>
+      <p className="text-[8px] uppercase tracking-[0.14em] text-white/30">
         {label}
       </p>
     </div>

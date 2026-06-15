@@ -585,9 +585,9 @@ export default function OptimizationPage() {
                   ["Domains", "12"],
                   ["Mode", complete ? "Map" : "Intake"],
                 ].map(([label, value]) => (
-                  <div key={label} className="rounded-lg border border-white/[0.06] bg-white/[0.035] p-4">
+                  <div key={label} className="flex min-h-[5.75rem] flex-col justify-between rounded-lg border border-white/[0.06] bg-white/[0.035] p-4">
                     <p className="text-sm text-white/40">{label}</p>
-                    <p className="mt-2 text-2xl font-light text-white">{value}</p>
+                    <p className="tabular-nums text-2xl font-light leading-none text-white">{value}</p>
                   </div>
                 ))}
               </div>

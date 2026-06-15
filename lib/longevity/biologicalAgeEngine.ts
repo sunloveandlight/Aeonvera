@@ -196,7 +196,7 @@ export function computeBiologicalAge(
   /**
    * ─── EXERCISE ───
    */
-  const exercise = computeExercise(input, missingDataPoints);
+  const exercise = computeExercise(input);
   factors.push(...exercise.factors);
   weightedDelta += exercise.delta * DOMAIN_WEIGHTS.exercise;
   totalWeight += DOMAIN_WEIGHTS.exercise;
@@ -204,7 +204,7 @@ export function computeBiologicalAge(
   /**
    * ─── LIFESTYLE ───
    */
-  const lifestyle = computeLifestyle(input, missingDataPoints);
+  const lifestyle = computeLifestyle(input);
   factors.push(...lifestyle.factors);
   weightedDelta += lifestyle.delta * DOMAIN_WEIGHTS.lifestyle;
   totalWeight += DOMAIN_WEIGHTS.lifestyle;
@@ -957,10 +957,7 @@ function computeSleep(
  * EXERCISE DOMAIN
  * =========================
  */
-function computeExercise(
-  input: AssessmentInput,
-  missing: string[]
-): { delta: number; factors: BiologicalAgeFactor[] } {
+function computeExercise(input: AssessmentInput): { delta: number; factors: BiologicalAgeFactor[] } {
   const factors: BiologicalAgeFactor[] = [];
   let delta = 0;
 
@@ -1024,10 +1021,7 @@ function computeExercise(
  * LIFESTYLE DOMAIN
  * =========================
  */
-function computeLifestyle(
-  input: AssessmentInput,
-  missing: string[]
-): { delta: number; factors: BiologicalAgeFactor[] } {
+function computeLifestyle(input: AssessmentInput): { delta: number; factors: BiologicalAgeFactor[] } {
   const factors: BiologicalAgeFactor[] = [];
   let delta = 0;
 

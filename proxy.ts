@@ -45,8 +45,16 @@ export async function proxy(req: NextRequest) {
 
   const isAuthPage = pathname.startsWith("/login");
   const isProtected =
+    pathname.startsWith("/companion") ||
+    pathname.startsWith("/data-sources") ||
     pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/digital-twin") ||
+    pathname.startsWith("/life-os") ||
+    pathname.startsWith("/memory") ||
+    pathname.startsWith("/network") ||
     pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/physician-export") ||
+    pathname.startsWith("/plan") ||
     pathname.startsWith("/assessment") ||
     pathname.startsWith("/report") ||
     pathname.startsWith("/success");
@@ -65,8 +73,16 @@ export async function proxy(req: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/companion/:path*",
+    "/data-sources/:path*",
+    "/digital-twin/:path*",
+    "/life-os/:path*",
     "/login",
+    "/memory/:path*",
+    "/network/:path*",
     "/onboarding/:path*",
+    "/physician-export/:path*",
+    "/plan/:path*",
     "/assessment/:path*",
     "/report/:path*",
     "/success",

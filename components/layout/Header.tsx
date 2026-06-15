@@ -40,8 +40,8 @@ export default function Header() {
 
   const primaryNavItems: NavItem[] = authenticated
     ? [
-        { href: "/dashboard", label: "Dashboard" },
-        { href: "/digital-twin", label: "Twin" },
+        { href: "/dashboard", label: "Today" },
+        { href: "/companion", label: "Ask" },
         { href: "/plan", label: "Plan" },
       ]
     : [
@@ -51,31 +51,27 @@ export default function Header() {
 
   const secondaryNavItems: NavItem[] = authenticated
     ? [
+        { href: "/digital-twin", label: "Digital Twin" },
         { href: "/life-os", label: "Life OS" },
         { href: "/network", label: "Care Network" },
         { href: "/data-sources", label: "Data Sources" },
-        { href: "/memory", label: "Memory" },
-        { href: "/assessment", label: "Assessment" },
         { href: "/report", label: "Report" },
+        { href: "/memory", label: "Memory" },
         { href: "/pricing", label: "Pricing", public: true },
-        { href: "/optimization", label: "Optimize", public: true },
       ]
     : [];
 
-  const mobileNavItems: NavItem[] = [
-    { href: "/pricing", label: "Pricing", public: true },
-    { href: "/optimization", label: "Optimize", public: true },
-    { href: "/companion", label: "Ask Aeonvera" },
-    { href: "/plan", label: "Your Plan" },
-    { href: "/dashboard", label: "Dashboard" },
-    { href: "/digital-twin", label: "Digital Twin" },
-    { href: "/life-os", label: "Life OS" },
-    { href: "/network", label: "Care Network" },
-    { href: "/data-sources", label: "Data Sources" },
-    { href: "/memory", label: "Memory" },
-    { href: "/assessment", label: "Assessment" },
-    { href: "/report", label: "Report" },
-  ];
+  const mobileNavItems: NavItem[] = authenticated
+    ? [
+        { href: "/dashboard", label: "Today" },
+        { href: "/companion", label: "Ask" },
+        { href: "/plan", label: "Plan" },
+        { href: "/pricing", label: "Settings" },
+      ]
+    : [
+        { href: "/pricing", label: "Pricing", public: true },
+        { href: "/optimization", label: "Optimize", public: true },
+      ];
   const visibleSecondaryItems = secondaryNavItems.filter(
     (item) => item.public || authenticated
   );
@@ -165,12 +161,6 @@ export default function Header() {
             <div className="hidden h-9 w-24 rounded-md border border-white/10 bg-white/[0.035] sm:block" />
           ) : authenticated ? (
             <>
-              <Link
-                href="/companion"
-                className="premium-nav-action hidden px-4 text-xs font-medium leading-none transition sm:inline-flex"
-              >
-                Ask Aeonvera
-              </Link>
               <button
                 onClick={handleLogout}
                 className="hidden h-9 items-center text-xs font-medium leading-none text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"

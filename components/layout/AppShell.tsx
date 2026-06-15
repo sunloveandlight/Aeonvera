@@ -13,7 +13,8 @@ type AppShellProps = {
 
 export default function AppShell({ children }: AppShellProps) {
   const { enabled, toggle } = useDesignOverlay();
-  useDesignAudit(enabled);
+  const designToolsEnabled = process.env.NODE_ENV !== "production";
+  useDesignAudit(designToolsEnabled && enabled);
 
   return (
     <main
@@ -35,14 +36,16 @@ export default function AppShell({ children }: AppShellProps) {
       <AeonCommandOrb />
 
       {/* DESIGN SYSTEM OVERLAY INDICATOR */}
-      {enabled && (
+      {designToolsEnabled && enabled && (
         <div className="premium-status-neutral fixed bottom-5 right-5 z-[99999] rounded-md px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em]">
           DESIGN SYSTEM MODE
         </div>
       )}
 
       {/* TOGGLE */}
-      <DesignOverlayToggle enabled={enabled} onToggle={toggle} />
+      {designToolsEnabled ? (
+        <DesignOverlayToggle enabled={enabled} onToggle={toggle} />
+      ) : null}
     </main>
   );
 }

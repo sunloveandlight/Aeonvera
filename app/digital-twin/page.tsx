@@ -260,6 +260,9 @@ export default function DigitalTwinPage() {
       ? events
       : events.filter((event) => event.type === activeType);
   }, [activeType, payload]);
+  const timelinePreview = useMemo(() => timeline.slice(0, 12), [timeline]);
+  const hiddenTimelineCount = Math.max(0, timeline.length - timelinePreview.length);
+  const timelineTypeSummary = useMemo(() => summarizeTimelineTypes(timeline), [timeline]);
 
   const latestBioAge = payload?.profile?.biological_age;
   const insight = payload?.state?.insights?.[0] || "Your living health model is assembling from assessments, labs, protocols, coach signals, and wearable data.";
@@ -579,21 +582,8 @@ export default function DigitalTwinPage() {
         ) : payload ? (
           <>
             <div className="grid gap-4 md:grid-cols-4">
-              {buildSummaryCards(payload, latestBioAge).map(([label, value, suffix, Icon]) => (
-                <div key={String(label)} className="executive-panel rounded-lg p-5">
-                  <div className="mb-5 flex items-center justify-between gap-3">
-                    <p className="micro-label">{String(label)}</p>
-                    <Icon size={17} className="royal-text" />
-                  </div>
-                  <div className="flex items-end gap-2">
-                    <p className="text-4xl font-light leading-none text-white/88">
-                      {String(value)}
-                    </p>
-                    <p className="mb-1 text-xs uppercase tracking-[0.14em] text-white/24">
-                      {String(suffix)}
-                    </p>
-                  </div>
-                </div>
+              {buildSummaryCards(payload, latestBioAge).map((card) => (
+                <TwinSummaryCard key={card.label} card={card} />
               ))}
             </div>
 
@@ -703,8 +693,12 @@ export default function DigitalTwinPage() {
                   <div>
                     <p className="micro-label">Health Timeline</p>
                     <h2 className="mt-3 text-3xl font-light text-white">
-                      Every signal in one chronology.
+                      Latest meaningful changes.
                     </h2>
+                    <p className="mt-3 max-w-xl text-sm leading-6 text-white/42">
+                      Aeonvera is showing the newest signal clusters first. Older entries stay in
+                      the model without overwhelming the page.
+                    </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {TYPE_FILTERS.map((type) => (
@@ -724,10 +718,40 @@ export default function DigitalTwinPage() {
                   </div>
                 </div>
 
+                {timeline.length ? (
+                  <div className="mb-5 grid gap-3 sm:grid-cols-3">
+                    {timelineTypeSummary.map(([type, count]) => (
+                      <div
+                        key={type}
+                        className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-3"
+                      >
+                        <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                          {type.replace(/_/g, " ")}
+                        </p>
+                        <p className="mt-2 text-xl font-light leading-none text-white/78">
+                          {count}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+
                 <div className="space-y-3">
-                  {timeline.map((event) => (
+                  {timelinePreview.map((event) => (
                     <TimelineEventCard key={event.id} event={event} />
                   ))}
+                  {hiddenTimelineCount > 0 ? (
+                    <div className="rounded-lg border border-white/[0.06] bg-black/20 p-4 text-center">
+                      <p className="text-sm text-white/52">
+                        {hiddenTimelineCount} older signal{hiddenTimelineCount === 1 ? "" : "s"} are
+                        folded into the model.
+                      </p>
+                      <p className="mt-2 text-xs leading-5 text-white/32">
+                        Use the filters above to inspect a specific signal type without turning the
+                        page into a raw event log.
+                      </p>
+                    </div>
+                  ) : null}
                   {!timeline.length && (
                     <EmptyState
                       eyebrow="No signals yet"
@@ -1547,16 +1571,59 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
   return event.href ? <Link href={event.href}>{content}</Link> : content;
 }
 
+type TwinSummaryCardData = {
+  Icon: LucideIcon;
+  label: string;
+  suffix: string;
+  value: string;
+};
+
+function TwinSummaryCard({ card }: { card: TwinSummaryCardData }) {
+  const { Icon, label, suffix, value } = card;
+
+  return (
+    <div className="executive-panel grid min-h-[10.5rem] grid-rows-[auto_1fr] rounded-lg p-5">
+      <div className="flex min-h-8 items-start justify-between gap-3">
+        <p className="micro-label max-w-[9rem] leading-4">{label}</p>
+        <Icon size={17} className="mt-0.5 shrink-0 royal-text" />
+      </div>
+
+      <div className="mt-6 flex h-full flex-col justify-end">
+        <p className="tabular-nums text-4xl font-light leading-none text-white/88">
+          {value}
+        </p>
+        <p className="mt-2 min-h-4 text-xs uppercase tracking-[0.14em] text-white/24">
+          {suffix}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function buildSummaryCards(
   payload: DigitalTwinPayload,
   latestBioAge?: number | null
-): Array<[string, string, string, LucideIcon]> {
+): TwinSummaryCardData[] {
   return [
-    ["Bio age", latestBioAge ? `${latestBioAge}` : "--", "years", Dna],
-    ["Protocols", `${payload.counts.protocols || 0}`, "generated", Sparkles],
-    ["Signals", `${totalSignals(payload.counts)}`, "events", Activity],
-    ["Updated", formatShortDate(payload.state?.updated_at), "model", Clock3],
+    { Icon: Dna, label: "Bio age", suffix: "years", value: latestBioAge ? `${latestBioAge}` : "--" },
+    { Icon: Sparkles, label: "Protocols", suffix: "generated", value: `${payload.counts.protocols || 0}` },
+    { Icon: Activity, label: "Signals", suffix: "events", value: `${totalSignals(payload.counts)}` },
+    { Icon: Clock3, label: "Updated", suffix: "model", value: formatShortDate(payload.state?.updated_at) },
   ];
+}
+
+function summarizeTimelineTypes(events: TimelineEvent[]): Array<[TimelineEvent["type"], number]> {
+  const counts = events.reduce<Partial<Record<TimelineEvent["type"], number>>>(
+    (summary, event) => ({
+      ...summary,
+      [event.type]: (summary[event.type] || 0) + 1,
+    }),
+    {}
+  );
+
+  return Object.entries(counts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3) as Array<[TimelineEvent["type"], number]>;
 }
 
 function totalSignals(counts: Record<string, number>) {

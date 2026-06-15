@@ -670,9 +670,9 @@ function NetworkIntelligencePanel({
 
 function MetricPill({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md border border-white/[0.06] bg-black/20 px-3 py-3">
+    <div className="flex min-h-[5.5rem] flex-col justify-between rounded-md border border-white/[0.06] bg-black/20 px-3 py-3">
       <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">{label}</p>
-      <p className="mt-2 text-2xl font-light text-white">{value}</p>
+      <p className="tabular-nums text-2xl font-light leading-none text-white">{value}</p>
     </div>
   );
 }

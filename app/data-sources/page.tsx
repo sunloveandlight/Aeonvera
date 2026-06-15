@@ -549,10 +549,12 @@ export default function DataSourcesPage() {
 
 function SignalMetric({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className="executive-panel rounded-lg p-5">
+    <div className="executive-panel flex min-h-[10rem] flex-col rounded-lg p-5">
       <p className="micro-label">{label}</p>
-      <p className="mt-4 text-3xl font-light text-white">{value}</p>
-      <p className="mt-2 text-xs leading-5 text-white/42">{detail}</p>
+      <div className="mt-auto pt-5">
+        <p className="tabular-nums text-3xl font-light leading-none text-white">{value}</p>
+        <p className="mt-3 min-h-10 text-xs leading-5 text-white/42">{detail}</p>
+      </div>
     </div>
   );
 }
