@@ -487,7 +487,7 @@ export default function AeonCommandOrb() {
   }
 
   return (
-    <div className="aeon-orb-system fixed inset-x-0 bottom-5 z-40 mx-auto flex w-full max-w-3xl flex-col items-center px-4">
+    <div className="aeon-orb-system fixed inset-x-0 bottom-3 z-40 mx-auto flex w-full max-w-2xl flex-col items-center px-3">
       {!open && (realtimeStatus || realtimeActive || speaking) ? (
         <div className="aeon-orb-live-pill mb-4 inline-flex max-w-[min(92vw,28rem)] items-center gap-3 rounded-full px-4 py-2 text-sm text-white/72">
           <span
