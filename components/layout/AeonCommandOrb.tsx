@@ -648,6 +648,12 @@ export default function AeonCommandOrb() {
             <span className="aeon-command-orb-orbit aeon-command-orb-orbit-a" />
             <span className="aeon-command-orb-orbit aeon-command-orb-orbit-b" />
             <span className="aeon-command-orb-orbit aeon-command-orb-orbit-c" />
+            <span className="aeon-command-orb-ribbon aeon-command-orb-ribbon-a" />
+            <span className="aeon-command-orb-ribbon aeon-command-orb-ribbon-b" />
+            <span className="aeon-command-orb-particle aeon-command-orb-particle-a" />
+            <span className="aeon-command-orb-particle aeon-command-orb-particle-b" />
+            <span className="aeon-command-orb-particle aeon-command-orb-particle-c" />
+            <span className="aeon-command-orb-particle aeon-command-orb-particle-d" />
           </span>
           <span className="aeon-command-orb-core" aria-hidden="true">
             <span className="aeon-command-orb-plasma" />

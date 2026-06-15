@@ -248,7 +248,8 @@ body::after {
   overflow: visible;
   animation:
     aeon-orb-breathe 5.4s ease-in-out infinite,
-    aeon-orb-drift 9s ease-in-out infinite;
+    aeon-orb-drift 9s ease-in-out infinite,
+    aeon-orb-float-path 11s ease-in-out infinite;
   transition:
     border-color 220ms ease,
     box-shadow 220ms ease,
@@ -265,6 +266,13 @@ body::after {
   opacity: 0.68;
   animation: aeon-orb-ring 3.8s ease-in-out infinite;
   z-index: -1;
+}
+
+.aeon-command-orb::before {
+  background:
+    radial-gradient(circle at 20% 18%, rgba(218, 188, 115, 0.16), transparent 16%),
+    radial-gradient(circle at 78% 82%, rgba(74, 228, 210, 0.14), transparent 18%);
+  filter: blur(0.2px);
 }
 
 .aeon-command-orb::after {
@@ -317,7 +325,10 @@ body::after {
 }
 
 .aeon-command-orb-listening {
-  animation-duration: 1.35s;
+  animation:
+    aeon-orb-breathe 1.35s ease-in-out infinite,
+    aeon-orb-drift 4.2s ease-in-out infinite,
+    aeon-orb-float-path 5s ease-in-out infinite;
   border-color: rgba(119, 250, 226, 0.46);
   box-shadow:
     0 0 0 1px rgba(119, 250, 226, 0.12),
@@ -326,6 +337,13 @@ body::after {
     0 32px 92px rgba(0, 0, 0, 0.58),
     inset 0 1px 0 rgba(255, 255, 255, 0.32),
     inset 0 -22px 38px rgba(0, 0, 0, 0.34);
+}
+
+.aeon-command-orb-speaking {
+  animation:
+    aeon-orb-breathe 860ms ease-in-out infinite,
+    aeon-orb-drift 2.8s ease-in-out infinite,
+    aeon-orb-float-path 3.4s ease-in-out infinite;
 }
 
 .aeon-command-orb-field {
@@ -363,6 +381,107 @@ body::after {
   border-top-color: rgba(255, 255, 255, 0.22);
   border-bottom-color: rgba(218, 188, 115, 0.12);
   animation: aeon-orb-orbit-c 9s linear infinite;
+}
+
+.aeon-command-orb-ribbon {
+  position: absolute;
+  inset: -0.55rem;
+  border-radius: 999px;
+  opacity: 0.58;
+  filter: blur(0.35px);
+  mix-blend-mode: screen;
+  mask-image: conic-gradient(from 0deg, transparent 0deg, #000 38deg, #000 78deg, transparent 118deg, transparent 360deg);
+}
+
+.aeon-command-orb-ribbon-a {
+  background:
+    conic-gradient(
+      from 20deg,
+      transparent,
+      rgba(218, 188, 115, 0.68),
+      rgba(255, 255, 255, 0.46),
+      transparent 34%
+    );
+  animation: aeon-orb-ribbon-a 3.8s linear infinite;
+}
+
+.aeon-command-orb-ribbon-b {
+  inset: -1rem;
+  background:
+    conic-gradient(
+      from 180deg,
+      transparent,
+      rgba(74, 228, 210, 0.62),
+      rgba(255, 255, 255, 0.34),
+      transparent 30%
+    );
+  animation: aeon-orb-ribbon-b 4.8s linear infinite reverse;
+}
+
+.aeon-command-orb-particle {
+  position: absolute;
+  width: 0.26rem;
+  height: 0.26rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 0 8px rgba(255, 255, 255, 0.42),
+    0 0 16px rgba(74, 228, 210, 0.36);
+  opacity: 0.58;
+  transform-origin: 2.9rem 2.9rem;
+  mix-blend-mode: screen;
+}
+
+.aeon-command-orb-particle-a {
+  left: 50%;
+  top: 0.1rem;
+  animation: aeon-orb-particle-a 4.4s ease-in-out infinite;
+}
+
+.aeon-command-orb-particle-b {
+  right: 0.25rem;
+  top: 44%;
+  animation: aeon-orb-particle-b 5.2s ease-in-out infinite 420ms;
+}
+
+.aeon-command-orb-particle-c {
+  bottom: 0.2rem;
+  left: 31%;
+  animation: aeon-orb-particle-c 4.8s ease-in-out infinite 760ms;
+}
+
+.aeon-command-orb-particle-d {
+  left: 0.28rem;
+  top: 34%;
+  animation: aeon-orb-particle-d 5.6s ease-in-out infinite 1s;
+}
+
+.aeon-command-orb-listening .aeon-command-orb-ribbon-a,
+.aeon-command-orb-listening .aeon-command-orb-ribbon-b,
+.aeon-command-orb-speaking .aeon-command-orb-ribbon-a,
+.aeon-command-orb-speaking .aeon-command-orb-ribbon-b {
+  opacity: 0.88;
+}
+
+.aeon-command-orb-listening .aeon-command-orb-ribbon-a {
+  animation-duration: 1.9s;
+}
+
+.aeon-command-orb-listening .aeon-command-orb-ribbon-b {
+  animation-duration: 2.35s;
+}
+
+.aeon-command-orb-speaking .aeon-command-orb-ribbon-a {
+  animation-duration: 1.15s;
+}
+
+.aeon-command-orb-speaking .aeon-command-orb-ribbon-b {
+  animation-duration: 1.45s;
+}
+
+.aeon-command-orb-listening .aeon-command-orb-particle,
+.aeon-command-orb-speaking .aeon-command-orb-particle {
+  opacity: 0.94;
 }
 
 .aeon-command-orb-speaking .aeon-command-orb-core,
@@ -426,6 +545,18 @@ body::after {
     0 0 26px rgba(104, 236, 216, 0.22);
 }
 
+.aeon-command-orb-listening .aeon-command-orb-plasma {
+  animation:
+    aeon-orb-plasma 2.4s ease-in-out infinite,
+    aeon-orb-aurora 6s linear infinite reverse;
+}
+
+.aeon-command-orb-speaking .aeon-command-orb-plasma {
+  animation:
+    aeon-orb-plasma 1.45s ease-in-out infinite,
+    aeon-orb-aurora 3.8s linear infinite reverse;
+}
+
 .aeon-command-orb-wave {
   position: relative;
   display: inline-flex;
@@ -481,6 +612,22 @@ body::after {
   }
   50% {
     transform: translateY(-3px) scale(1.026);
+  }
+}
+
+@keyframes aeon-orb-float-path {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  25% {
+    translate: 0.08rem -0.06rem;
+  }
+  50% {
+    translate: -0.05rem -0.11rem;
+  }
+  75% {
+    translate: -0.09rem 0.04rem;
   }
 }
 
@@ -555,6 +702,58 @@ body::after {
 @keyframes aeon-orb-orbit-c {
   to {
     transform: rotateX(74deg) rotateY(0deg) rotateZ(360deg);
+  }
+}
+
+@keyframes aeon-orb-ribbon-a {
+  to {
+    transform: rotate(360deg) scale(1.03);
+  }
+}
+
+@keyframes aeon-orb-ribbon-b {
+  to {
+    transform: rotate(360deg) scale(0.98);
+  }
+}
+
+@keyframes aeon-orb-particle-a {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(-0.12rem) scale(0.76);
+  }
+  50% {
+    transform: rotate(176deg) translateY(-0.72rem) scale(1.16);
+  }
+}
+
+@keyframes aeon-orb-particle-b {
+  0%,
+  100% {
+    transform: rotate(0deg) translateX(0) scale(0.72);
+  }
+  50% {
+    transform: rotate(-158deg) translateX(0.62rem) scale(1.08);
+  }
+}
+
+@keyframes aeon-orb-particle-c {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0) scale(0.7);
+  }
+  50% {
+    transform: rotate(142deg) translateY(0.58rem) scale(1.2);
+  }
+}
+
+@keyframes aeon-orb-particle-d {
+  0%,
+  100% {
+    transform: rotate(0deg) translateX(0) scale(0.78);
+  }
+  50% {
+    transform: rotate(-184deg) translateX(-0.5rem) scale(1.14);
   }
 }
 
