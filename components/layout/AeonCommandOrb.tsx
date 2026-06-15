@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Mic, PhoneOff, Send, Sparkles, Volume2, X } from "lucide-react";
+import { Keyboard, Mic, PhoneOff, Send, Sparkles, Volume2, X } from "lucide-react";
 
 type CommandMessage = {
   content: string;
@@ -219,7 +219,7 @@ export default function AeonCommandOrb() {
   async function startRealtimeVoice() {
     if (realtimeActive || thinking) return;
 
-    setOpen(true);
+    setOpen(false);
     setRealtimeStatus("Opening a live voice line.");
 
     try {
@@ -290,18 +290,12 @@ export default function AeonCommandOrb() {
       await peer.setRemoteDescription({ sdp: answer, type: "answer" });
       setRealtimeActive(true);
       setRealtimeStatus("Speak naturally. Aeonvera is listening.");
-      setMessages((current) => [
-        ...current,
-        {
-          role: "assistant",
-          content: `${selectedVoiceOption.label} voice is live. Ask naturally and I will answer out loud.`,
-        },
-      ]);
     } catch (error) {
       stopRealtimeVoice();
       const answer =
         error instanceof Error ? error.message : "Realtime voice could not start.";
       setMessages((current) => [...current, { role: "assistant", content: answer }]);
+      setOpen(true);
     }
   }
 
@@ -494,12 +488,25 @@ export default function AeonCommandOrb() {
 
   return (
     <div className="aeon-orb-system fixed inset-x-0 bottom-5 z-40 mx-auto flex w-full max-w-3xl flex-col items-center px-4">
+      {!open && (realtimeStatus || realtimeActive || speaking) ? (
+        <div className="aeon-orb-live-pill mb-4 inline-flex max-w-[min(92vw,28rem)] items-center gap-3 rounded-full px-4 py-2 text-sm text-white/72">
+          <span
+            className={`size-2 rounded-full ${
+              speaking ? "bg-[#dabc73]" : realtimeActive ? "bg-emerald-300" : "bg-white/35"
+            }`}
+          />
+          <span className="truncate">
+            {speaking ? "Aeonvera is answering." : realtimeStatus || "Aeonvera is listening."}
+          </span>
+        </div>
+      ) : null}
+
       {open ? (
-        <section className="aeon-orb-panel mb-4 w-full rounded-lg p-4 md:p-5">
+        <section className="aeon-orb-panel mb-4 w-full max-w-2xl rounded-lg p-4 md:p-5">
           <div className="mb-4 flex items-start justify-between gap-4 border-b border-white/[0.07] pb-4">
             <div>
               <p className="micro-label">Aeonvera Intelligence</p>
-              <h2 className="mt-2 text-2xl font-light text-white">Command the system.</h2>
+              <h2 className="mt-2 text-2xl font-light text-white">Ask or adjust.</h2>
             </div>
             <button
               type="button"
@@ -533,8 +540,8 @@ export default function AeonCommandOrb() {
             </label>
           </div>
 
-          <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
-            {messages.slice(-6).map((message, index) => (
+          <div className="max-h-44 space-y-3 overflow-y-auto pr-1">
+            {messages.slice(-3).map((message, index) => (
               <div
                 key={`${message.role}-${index}-${message.content.slice(0, 12)}`}
                 className={`rounded-lg border px-3 py-2 text-sm leading-6 ${
@@ -613,24 +620,39 @@ export default function AeonCommandOrb() {
         </section>
       ) : null}
 
-      <button
-        type="button"
-        onClick={() => {
-          if (open) {
-            closeOrb();
-          } else {
-            setOpen(true);
-          }
-        }}
-        className={`aeon-command-orb ${open ? "aeon-command-orb-open" : ""} ${
-          realtimeActive ? "aeon-command-orb-listening" : ""
-        } ${speaking ? "aeon-command-orb-speaking" : ""}`}
-        aria-label="Open Aeonvera intelligence"
-      >
-        <span className="aeon-command-orb-core">
-          {speaking ? <Volume2 size={22} /> : <Sparkles size={22} />}
-        </span>
-      </button>
+      <div className="flex items-end gap-3">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="aeon-orb-text-toggle inline-flex size-11 items-center justify-center rounded-full"
+          aria-label="Open Aeonvera text and voice settings"
+        >
+          <Keyboard size={17} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (realtimeActive) {
+              stopRealtimeVoice();
+            } else {
+              void startRealtimeVoice();
+            }
+          }}
+          className={`aeon-command-orb ${open ? "aeon-command-orb-open" : ""} ${
+            realtimeActive ? "aeon-command-orb-listening" : ""
+          } ${speaking ? "aeon-command-orb-speaking" : ""}`}
+          aria-label={realtimeActive ? "Stop Aeonvera voice" : "Talk to Aeonvera"}
+        >
+          <span className="aeon-command-orb-core">
+            {realtimeActive ? (
+              speaking ? <Volume2 size={22} /> : <Mic size={22} />
+            ) : (
+              <Sparkles size={22} />
+            )}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
