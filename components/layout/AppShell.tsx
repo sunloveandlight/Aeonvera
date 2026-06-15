@@ -5,6 +5,7 @@ import Footer from "./Footer";
 import { useDesignAudit } from "@/lib/audit/useDesignAudit";
 import { useDesignOverlay } from "@/lib/design/useDesignOverlay";
 import DesignOverlayToggle from "./DesignOverlayToggle";
+import AeonCommandOrb from "./AeonCommandOrb";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -30,6 +31,8 @@ export default function AppShell({ children }: AppShellProps) {
       <div className="relative flex-1 w-full">{children}</div>
 
       <Footer />
+
+      <AeonCommandOrb />
 
       {/* DESIGN SYSTEM OVERLAY INDICATOR */}
       {enabled && (
