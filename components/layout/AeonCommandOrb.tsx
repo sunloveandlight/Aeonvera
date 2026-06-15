@@ -959,7 +959,7 @@ export default function AeonCommandOrb() {
 
   return (
     <div
-      className={`aeon-orb-system fixed inset-x-3 bottom-6 z-40 mx-auto flex max-w-[calc(100vw-1.5rem)] flex-col items-center sm:inset-x-6 sm:max-w-2xl ${
+      className={`aeon-orb-system fixed bottom-5 right-4 z-40 flex w-[min(42rem,calc(100vw-2rem))] flex-col items-end sm:right-6 ${
         idleDimmed ? "aeon-orb-system-idle" : ""
       }`}
       onFocusCapture={() => setIdleDimmed(false)}
@@ -1153,7 +1153,7 @@ export default function AeonCommandOrb() {
         </section>
       ) : null}
 
-      <div className="aeon-command-orb-dock flex items-center justify-center">
+      <div className="flex items-center justify-center">
         <button
           type="button"
           onClick={() => {
