@@ -3,14 +3,21 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+
+type NavItem = {
+  href: string;
+  label: string;
+  public?: boolean;
+};
 
 export default function Header() {
   const pathname = usePathname();
   const [authenticated, setAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -31,20 +38,48 @@ export default function Header() {
     window.location.href = "/";
   }
 
-  const navItems = [
+  const primaryNavItems: NavItem[] = authenticated
+    ? [
+        { href: "/dashboard", label: "Dashboard" },
+        { href: "/digital-twin", label: "Twin" },
+        { href: "/plan", label: "Plan" },
+      ]
+    : [
+        { href: "/pricing", label: "Pricing", public: true },
+        { href: "/optimization", label: "Optimize", public: true },
+      ];
+
+  const secondaryNavItems: NavItem[] = authenticated
+    ? [
+        { href: "/life-os", label: "Life OS" },
+        { href: "/network", label: "Care Network" },
+        { href: "/data-sources", label: "Data Sources" },
+        { href: "/memory", label: "Memory" },
+        { href: "/assessment", label: "Assessment" },
+        { href: "/report", label: "Report" },
+        { href: "/pricing", label: "Pricing", public: true },
+        { href: "/optimization", label: "Optimize", public: true },
+      ]
+    : [];
+
+  const mobileNavItems: NavItem[] = [
     { href: "/pricing", label: "Pricing", public: true },
     { href: "/optimization", label: "Optimize", public: true },
-    { href: "/companion", label: "Companion" },
+    { href: "/companion", label: "Ask Aeonvera" },
     { href: "/plan", label: "Your Plan" },
     { href: "/dashboard", label: "Dashboard" },
-    { href: "/data-sources", label: "Data" },
-    { href: "/memory", label: "Memory" },
     { href: "/digital-twin", label: "Digital Twin" },
-    { href: "/network", label: "Network" },
     { href: "/life-os", label: "Life OS" },
+    { href: "/network", label: "Care Network" },
+    { href: "/data-sources", label: "Data Sources" },
+    { href: "/memory", label: "Memory" },
     { href: "/assessment", label: "Assessment" },
     { href: "/report", label: "Report" },
   ];
+  const visibleSecondaryItems = secondaryNavItems.filter(
+    (item) => item.public || authenticated
+  );
+  const secondaryActive = visibleSecondaryItems.some((item) => isActive(pathname, item.href));
 
   return (
     <header className="premium-header sticky top-0 z-50">
@@ -60,12 +95,11 @@ export default function Header() {
         </Link>
 
         {/* NAV */}
-        <nav className="hidden items-center gap-4 md:flex">
-          {navItems
+        <nav className="hidden items-center gap-3 md:flex">
+          {primaryNavItems
             .filter((item) => item.public || authenticated)
             .map((item) => {
-              const active =
-                pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const active = isActive(pathname, item.href);
 
               return (
                 <Link
@@ -77,6 +111,43 @@ export default function Header() {
                 </Link>
               );
             })}
+          {visibleSecondaryItems.length ? (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setMoreOpen((open) => !open)}
+                className={`premium-nav-link inline-flex items-center gap-1.5 ${
+                  secondaryActive || moreOpen ? "premium-nav-link-active" : ""
+                }`}
+                aria-expanded={moreOpen}
+                aria-haspopup="menu"
+              >
+                More <ChevronDown size={14} />
+              </button>
+              {moreOpen ? (
+                <div
+                  className="absolute right-0 top-10 w-56 rounded-lg border border-white/[0.08] bg-black/90 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl"
+                  role="menu"
+                >
+                  {visibleSecondaryItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMoreOpen(false)}
+                      className={`block rounded-md px-3 py-2 text-sm transition ${
+                        isActive(pathname, item.href)
+                          ? "bg-[#dabc73]/[0.09] text-[#dabc73]"
+                          : "text-white/58 hover:bg-white/[0.05] hover:text-white/82"
+                      }`}
+                      role="menuitem"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </nav>
 
         {/* AUTH */}
@@ -93,12 +164,20 @@ export default function Header() {
           {!authChecked ? (
             <div className="hidden h-9 w-24 rounded-md border border-white/10 bg-white/[0.035] sm:block" />
           ) : authenticated ? (
-            <button
-              onClick={handleLogout}
-              className="hidden h-9 items-center text-xs font-medium leading-none text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
-            >
-              Sign Out
-            </button>
+            <>
+              <Link
+                href="/companion"
+                className="premium-nav-action hidden px-4 text-xs font-medium leading-none transition sm:inline-flex"
+              >
+                Ask Aeonvera
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="hidden h-9 items-center text-xs font-medium leading-none text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
+              >
+                Sign Out
+              </button>
+            </>
           ) : (
             <>
               <Link
@@ -122,7 +201,7 @@ export default function Header() {
       {mobileOpen && (
         <div className="border-t border-white/[0.08] bg-black/90 px-6 py-4 backdrop-blur-xl md:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col gap-2">
-            {navItems
+            {mobileNavItems
               .filter((item) => item.public || authenticated)
               .map((item) => (
                 <Link
@@ -158,4 +237,8 @@ export default function Header() {
       )}
     </header>
   );
+}
+
+function isActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
