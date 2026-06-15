@@ -50,14 +50,37 @@ type ConfirmationIntent = Extract<
   { type: "create_physician_share" | "manage_care_network" }
 >;
 type ControlIntent =
-  | { type: "create_physician_share" }
+  | {
+      type: "create_physician_share";
+      expiresInDays?: number;
+      includedSections?: string[];
+      recipientEmail?: string;
+      recipientLabel?: string;
+    }
   | { type: "generate_report" }
-  | { type: "manage_care_network"; email?: string; role?: CareRole }
+  | {
+      type: "manage_care_network";
+      email?: string;
+      expiresInDays?: number;
+      memberName?: string;
+      permissions?: string[];
+      role?: CareRole;
+    }
   | { type: "open_oura" }
   | { type: "prepare_today" }
   | { type: "simplify_plan" }
   | { type: "sync_oura" };
 type CareRole = "coach" | "family" | "physician";
+type PlannerAction =
+  | { intent: ControlIntent; kind: "control" }
+  | { intent: PlanIntent; kind: "plan" }
+  | { href: string; kind: "navigation"; label: string };
+type PlannerResult = {
+  action?: PlannerAction | null;
+  confidence?: number;
+  handled?: boolean;
+  message?: string;
+};
 type PendingRealtimeAction =
   | { intent: ControlIntent; type: "control" }
   | { intent: ControlIntent; type: "execute_control" }
@@ -313,6 +336,17 @@ export default function AeonCommandOrb() {
       }
     }
 
+    const plannedAction = await resolveServerPlannedAction(question);
+    if (plannedAction) {
+      setMessages((current) => [
+        ...current,
+        { role: "assistant", content: plannedAction.message },
+      ]);
+      await executePlannedAction(plannedAction.action);
+      setThinking(false);
+      return;
+    }
+
     const controlIntent = resolveControlIntent(question);
     if (controlIntent) {
       await handleControlIntent(controlIntent);
@@ -493,41 +527,7 @@ export default function AeonCommandOrb() {
       const transcript = event.transcript?.trim();
       if (transcript) {
         setMessages((current) => [...current, { role: "user", content: transcript }]);
-        if (pendingConfirmation) {
-          if (isConfirmationYes(transcript)) {
-            pendingRealtimeActionRef.current = {
-              intent: pendingConfirmation,
-              type: "execute_control",
-            };
-            setPendingConfirmation(null);
-            setRealtimeStatus("I will do that after I finish.");
-            return;
-          }
-
-          if (isConfirmationNo(transcript)) {
-            setPendingConfirmation(null);
-            setRealtimeStatus("Canceled.");
-            return;
-          }
-        }
-
-        const controlIntent = resolveControlIntent(transcript);
-        const planIntent = resolvePlanIntent(transcript);
-        const navigation = resolveNavigationIntent(transcript);
-        if (controlIntent) {
-          pendingRealtimeActionRef.current = { intent: controlIntent, type: "control" };
-          setRealtimeStatus("I will handle that after I finish.");
-        } else if (planIntent) {
-          pendingRealtimeActionRef.current = { intent: planIntent, type: "plan" };
-          setRealtimeStatus("I will open that after I finish.");
-        } else if (navigation) {
-          pendingRealtimeActionRef.current = {
-            href: navigation.href,
-            label: navigation.label,
-            type: "navigation",
-          };
-          setRealtimeStatus(`I will open ${navigation.label} after I finish.`);
-        }
+        void planRealtimeTranscript(transcript);
       }
       return;
     }
@@ -571,6 +571,51 @@ export default function AeonCommandOrb() {
     }
   }
 
+  async function planRealtimeTranscript(transcript: string) {
+    if (pendingConfirmation) {
+      if (isConfirmationYes(transcript)) {
+        pendingRealtimeActionRef.current = {
+          intent: pendingConfirmation,
+          type: "execute_control",
+        };
+        setPendingConfirmation(null);
+        setRealtimeStatus("I will do that after I finish.");
+        return;
+      }
+
+      if (isConfirmationNo(transcript)) {
+        setPendingConfirmation(null);
+        setRealtimeStatus("Canceled.");
+        return;
+      }
+    }
+
+    const plannedAction = await resolveServerPlannedAction(transcript);
+    if (plannedAction) {
+      setRealtimeStatus("I will handle that after I finish.");
+      pendingRealtimeActionRef.current = toPendingRealtimeAction(plannedAction.action);
+      return;
+    }
+
+    const controlIntent = resolveControlIntent(transcript);
+    const planIntent = resolvePlanIntent(transcript);
+    const navigation = resolveNavigationIntent(transcript);
+    if (controlIntent) {
+      pendingRealtimeActionRef.current = { intent: controlIntent, type: "control" };
+      setRealtimeStatus("I will handle that after I finish.");
+    } else if (planIntent) {
+      pendingRealtimeActionRef.current = { intent: planIntent, type: "plan" };
+      setRealtimeStatus("I will open that after I finish.");
+    } else if (navigation) {
+      pendingRealtimeActionRef.current = {
+        href: navigation.href,
+        label: navigation.label,
+        type: "navigation",
+      };
+      setRealtimeStatus(`I will open ${navigation.label} after I finish.`);
+    }
+  }
+
   function runPendingRealtimeAction() {
     const action = pendingRealtimeActionRef.current;
     if (!action) return;
@@ -606,6 +651,52 @@ export default function AeonCommandOrb() {
   function closeOrb() {
     stopRealtimeVoice();
     setOpen(false);
+  }
+
+  async function executePlannedAction(action: PlannerAction) {
+    if (action.kind === "control") {
+      await handleControlIntent(action.intent);
+      return;
+    }
+
+    if (action.kind === "plan") {
+      await handlePlanIntent(action.intent);
+      return;
+    }
+
+    pushActionReceipt({
+      actionType: "navigation",
+      detail: "Aeonvera moved you to the requested area.",
+      title: action.label,
+      tone: "info",
+    });
+    router.push(action.href);
+  }
+
+  async function resolveServerPlannedAction(command: string) {
+    try {
+      const response = await fetch("/api/agent/planner", {
+        body: JSON.stringify({
+          command,
+          currentPage: pathname || "/",
+        }),
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+
+      if (!response.ok) return null;
+
+      const data = (await response.json()) as PlannerResult;
+      if (!data.handled || !data.action || !isPlannerAction(data.action)) return null;
+
+      return {
+        action: data.action,
+        message: data.message || "I can handle that.",
+      };
+    } catch {
+      return null;
+    }
   }
 
   async function handlePlanIntent(intent: PlanIntent) {
@@ -838,7 +929,12 @@ export default function AeonCommandOrb() {
 
       if (intent.type === "create_physician_share") {
         const data = await fetchJson("/api/physician-share-links", {
-          body: JSON.stringify({ recipientLabel: "Physician", expiresInDays: 14 }),
+          body: JSON.stringify({
+            expiresInDays: intent.expiresInDays || 14,
+            includedSections: intent.includedSections,
+            recipientEmail: intent.recipientEmail,
+            recipientLabel: intent.recipientLabel || "Physician",
+          }),
           headers: { "Content-Type": "application/json" },
           method: "POST",
         });
@@ -868,8 +964,10 @@ export default function AeonCommandOrb() {
         if (intent.email) {
           const data = await fetchJson("/api/care-network/invitations", {
             body: JSON.stringify({
-              expiresInDays: 14,
+              expiresInDays: intent.expiresInDays || 14,
               memberEmail: intent.email,
+              memberName: intent.memberName,
+              permissions: intent.permissions,
               role: intent.role || "physician",
             }),
             headers: { "Content-Type": "application/json" },
@@ -1311,6 +1409,64 @@ function asReceiptTone(value: unknown): ActionReceipt["tone"] {
   return value === "success" || value === "caution" || value === "info" ? value : "info";
 }
 
+function isPlannerAction(value: unknown): value is PlannerAction {
+  if (!value || typeof value !== "object") return false;
+  const action = value as Partial<PlannerAction>;
+
+  if (action.kind === "control") {
+    return isControlIntent(action.intent);
+  }
+
+  if (action.kind === "plan") {
+    return isPlanIntent(action.intent);
+  }
+
+  if (action.kind === "navigation") {
+    return (
+      typeof action.href === "string" &&
+      action.href.startsWith("/") &&
+      typeof action.label === "string"
+    );
+  }
+
+  return false;
+}
+
+function isControlIntent(value: unknown): value is ControlIntent {
+  if (!value || typeof value !== "object") return false;
+  const type = (value as { type?: unknown }).type;
+  return (
+    type === "create_physician_share" ||
+    type === "generate_report" ||
+    type === "manage_care_network" ||
+    type === "open_oura" ||
+    type === "prepare_today" ||
+    type === "simplify_plan" ||
+    type === "sync_oura"
+  );
+}
+
+function isPlanIntent(value: unknown): value is PlanIntent {
+  if (!value || typeof value !== "object") return false;
+  const intent = value as { direction?: unknown; targetPlan?: unknown };
+  return (
+    (intent.direction === "change" ||
+      intent.direction === "downgrade" ||
+      intent.direction === "upgrade") &&
+    (intent.targetPlan === null || asPlanId(intent.targetPlan) !== null)
+  );
+}
+
+function toPendingRealtimeAction(action: PlannerAction): PendingRealtimeAction {
+  if (action.kind === "control") return { intent: action.intent, type: "control" };
+  if (action.kind === "plan") return { intent: action.intent, type: "plan" };
+  return {
+    href: action.href,
+    label: action.label,
+    type: "navigation",
+  };
+}
+
 type PlanIntent = {
   direction: "change" | "downgrade" | "upgrade";
   targetPlan: PlanId | null;
@@ -1383,11 +1539,22 @@ function requiresConfirmation(intent: ControlIntent): intent is ConfirmationInte
 
 function confirmationPromptForIntent(intent: ConfirmationIntent) {
   if (intent.type === "create_physician_share") {
-    return "I can create a secure physician share link that expires in 14 days and includes an access code. Should I create it?";
+    const sections = intent.includedSections?.length
+      ? ` with ${intent.includedSections.map((section) => section.replace(/_/g, " ")).join(", ")}`
+      : "";
+    const recipient = intent.recipientEmail
+      ? ` for ${intent.recipientEmail}`
+      : intent.recipientLabel
+        ? ` for ${intent.recipientLabel}`
+        : "";
+    return `I can create a secure physician share link${recipient}${sections}. It expires in ${intent.expiresInDays || 14} days and includes an access code. Should I create it?`;
   }
 
   if (intent.email) {
-    return `I can invite ${intent.email} as a ${intent.role || "physician"} with a secure 14-day access link. Should I create the invite?`;
+    const permissions = intent.permissions?.length
+      ? ` with ${intent.permissions.map((permission) => permission.replace(/_/g, " ")).join(", ")}`
+      : "";
+    return `I can invite ${intent.email} as a ${intent.role || "physician"}${permissions} using a secure ${intent.expiresInDays || 14}-day access link. Should I create the invite?`;
   }
 
   return "I can open Care Network now. If you want me to create an invite directly, include the person's email address.";
