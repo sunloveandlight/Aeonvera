@@ -11,7 +11,17 @@ type CommandMessage = {
 
 type VoiceId = (typeof VOICE_OPTIONS)[number]["id"];
 type PlanId = "core" | "elite" | "sovereign";
+type ControlIntent =
+  | { type: "create_physician_share" }
+  | { type: "generate_report" }
+  | { type: "manage_care_network"; email?: string; role?: CareRole }
+  | { type: "open_oura" }
+  | { type: "prepare_today" }
+  | { type: "simplify_plan" }
+  | { type: "sync_oura" };
+type CareRole = "coach" | "family" | "physician";
 type PendingRealtimeAction =
+  | { intent: ControlIntent; type: "control" }
   | { intent: PlanIntent; type: "plan" }
   | { href: string; label: string; type: "navigation" };
 
@@ -189,6 +199,13 @@ export default function AeonCommandOrb() {
     setThinking(true);
     setMessages((current) => [...current, { role: "user", content: question }]);
 
+    const controlIntent = resolveControlIntent(question);
+    if (controlIntent) {
+      await handleControlIntent(controlIntent);
+      setThinking(false);
+      return;
+    }
+
     const planIntent = resolvePlanIntent(question);
     if (planIntent) {
       await handlePlanIntent(planIntent);
@@ -355,9 +372,13 @@ export default function AeonCommandOrb() {
       const transcript = event.transcript?.trim();
       if (transcript) {
         setMessages((current) => [...current, { role: "user", content: transcript }]);
+        const controlIntent = resolveControlIntent(transcript);
         const planIntent = resolvePlanIntent(transcript);
         const navigation = resolveNavigationIntent(transcript);
-        if (planIntent) {
+        if (controlIntent) {
+          pendingRealtimeActionRef.current = { intent: controlIntent, type: "control" };
+          setRealtimeStatus("I will handle that after I finish.");
+        } else if (planIntent) {
           pendingRealtimeActionRef.current = { intent: planIntent, type: "plan" };
           setRealtimeStatus("I will open that after I finish.");
         } else if (navigation) {
@@ -417,6 +438,11 @@ export default function AeonCommandOrb() {
 
     pendingRealtimeActionRef.current = null;
     window.setTimeout(() => {
+      if (action.type === "control") {
+        void handleControlIntent(action.intent);
+        return;
+      }
+
       if (action.type === "plan") {
         void handlePlanIntent(action.intent);
         return;
@@ -506,6 +532,151 @@ export default function AeonCommandOrb() {
               : "I could not open the plan change flow right now.",
         },
       ]);
+    }
+  }
+
+  async function handleControlIntent(intent: ControlIntent) {
+    try {
+      if (intent.type === "prepare_today") {
+        setMessages((current) => [
+          ...current,
+          { role: "assistant", content: "Preparing today's plan now." },
+        ]);
+        const data = await fetchJson("/api/autopilot/daily-plan", { method: "GET" });
+        const summary =
+          typeof data?.plan?.summary === "string"
+            ? data.plan.summary
+            : "Today's plan is prepared.";
+        setMessages((current) => [...current, { role: "assistant", content: summary }]);
+        router.push("/companion?focus=autopilot");
+        return;
+      }
+
+      if (intent.type === "simplify_plan") {
+        const data = await fetchJson("/api/agent/chat", {
+          body: JSON.stringify({
+            history: messages.slice(-6),
+            question:
+              "Simplify today's plan to the two highest-leverage actions and explain why.",
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
+        setMessages((current) => [
+          ...current,
+          {
+            role: "assistant",
+            content:
+              typeof data.answer === "string"
+                ? data.answer
+                : "I simplified today's plan and kept the highest-leverage actions.",
+          },
+        ]);
+        router.push("/companion?focus=autopilot");
+        return;
+      }
+
+      if (intent.type === "sync_oura") {
+        const data = await fetchJson("/api/wearables/oura/sync", { method: "POST" });
+        setMessages((current) => [
+          ...current,
+          {
+            role: "assistant",
+            content: `Oura synced. I imported ${Number(data.inserted || 0)} new signal${Number(data.inserted || 0) === 1 ? "" : "s"} from ${data.startDate || "the sync window"} to ${data.endDate || "today"}.`,
+          },
+        ]);
+        router.push("/data-sources");
+        return;
+      }
+
+      if (intent.type === "open_oura") {
+        setMessages((current) => [
+          ...current,
+          {
+            role: "assistant",
+            content: "Opening Oura connection and source intelligence.",
+          },
+        ]);
+        router.push("/data-sources");
+        return;
+      }
+
+      if (intent.type === "generate_report") {
+        const data = await fetchJson("/api/longevity/report", { method: "POST" });
+        const primaryGoal =
+          typeof data?.report?.primary_goal === "string"
+            ? data.report.primary_goal
+            : "Your new longevity report is ready.";
+        setMessages((current) => [
+          ...current,
+          { role: "assistant", content: `Report generated. ${primaryGoal}` },
+        ]);
+        router.push("/report");
+        return;
+      }
+
+      if (intent.type === "create_physician_share") {
+        const data = await fetchJson("/api/physician-share-links", {
+          body: JSON.stringify({ recipientLabel: "Physician", expiresInDays: 14 }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
+        const link = data.link;
+        const url =
+          typeof link?.url === "string"
+            ? `${window.location.origin}${link.url}${link.accessCode ? `?code=${encodeURIComponent(link.accessCode)}` : ""}`
+            : "Open Physician Export to copy the share link.";
+        setMessages((current) => [
+          ...current,
+          {
+            role: "assistant",
+            content: `Secure physician link created. ${url}`,
+          },
+        ]);
+        router.push("/physician-export");
+        return;
+      }
+
+      if (intent.type === "manage_care_network") {
+        if (intent.email) {
+          const data = await fetchJson("/api/care-network/invitations", {
+            body: JSON.stringify({
+              expiresInDays: 14,
+              memberEmail: intent.email,
+              role: intent.role || "physician",
+            }),
+            headers: { "Content-Type": "application/json" },
+            method: "POST",
+          });
+          const invitation = data.invitation;
+          const url =
+            typeof invitation?.url === "string"
+              ? `${window.location.origin}${invitation.url}${invitation.accessCode ? `?code=${encodeURIComponent(invitation.accessCode)}` : ""}`
+              : "Open Care Network to copy the invite.";
+          setMessages((current) => [
+            ...current,
+            {
+              role: "assistant",
+              content: `Care network invite created for ${intent.email}. ${url}`,
+            },
+          ]);
+        } else {
+          setMessages((current) => [
+            ...current,
+            {
+              role: "assistant",
+              content:
+                "Opening Care Network. Tell me an email address next time and I can create the invite directly.",
+            },
+          ]);
+        }
+        router.push("/network");
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "I could not complete that action right now.";
+      setMessages((current) => [...current, { role: "assistant", content: message }]);
+      if (/unauthorized|sign in/i.test(message)) router.push("/login?mode=signin");
     }
   }
 
@@ -791,6 +962,44 @@ function resolvePlanIntent(question: string): PlanIntent | null {
   return null;
 }
 
+function resolveControlIntent(question: string): ControlIntent | null {
+  const text = question.toLowerCase();
+
+  if (/\b(prepare|build|create|make|refresh)\b.*\b(today|daily|day)\b.*\b(plan|schedule)\b/.test(text)) {
+    return { type: "prepare_today" };
+  }
+
+  if (/\b(simplify|lighter|less|too much|overwhelming|reduce)\b.*\b(plan|protocol|today|actions?)\b/.test(text)) {
+    return { type: "simplify_plan" };
+  }
+
+  if (/\b(oura)\b.*\b(sync|refresh|update|pull|import)\b/.test(text)) {
+    return { type: "sync_oura" };
+  }
+
+  if (/\b(oura)\b.*\b(connect|open|setup|set up)\b/.test(text)) {
+    return { type: "open_oura" };
+  }
+
+  if (/\b(generate|create|build|make|refresh)\b.*\b(report|longevity report|health report)\b/.test(text)) {
+    return { type: "generate_report" };
+  }
+
+  if (/\b(physician|doctor|clinician|medical)\b.*\b(share|link|export|send|create)\b/.test(text)) {
+    return { type: "create_physician_share" };
+  }
+
+  if (/\b(care network|invite|family|coach|physician|doctor)\b.*\b(invite|network|share|access)\b/.test(text)) {
+    return {
+      email: extractEmail(question),
+      role: extractCareRole(text),
+      type: "manage_care_network",
+    };
+  }
+
+  return null;
+}
+
 function extractPlanTarget(text: string): PlanId | null {
   if (/\bsovereign|soverign|soverigne|executive\b/.test(text)) return "sovereign";
   if (/\belite|optimization\b/.test(text)) return "elite";
@@ -839,6 +1048,34 @@ async function readMicrophonePermission() {
 
 function isActiveSubscription(value: unknown) {
   return value === "active" || value === "trialing" || value === "past_due";
+}
+
+function extractCareRole(text: string): CareRole | undefined {
+  if (/\b(coach|trainer|accountability)\b/.test(text)) return "coach";
+  if (/\b(family|partner|spouse|wife|husband|parent|sibling)\b/.test(text)) return "family";
+  if (/\b(doctor|physician|clinician|medical)\b/.test(text)) return "physician";
+  return undefined;
+}
+
+function extractEmail(text: string) {
+  return text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0]?.toLowerCase();
+}
+
+async function fetchJson(path: string, init: RequestInit = {}) {
+  const response = await fetch(path, { credentials: "include", ...init });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const message =
+      typeof data.error === "string"
+        ? data.error
+        : response.status === 401
+          ? "Sign in to continue."
+          : "Aeonvera could not complete that action.";
+    throw new Error(message);
+  }
+
+  return data;
 }
 
 function resolveNavigationIntent(question: string) {
