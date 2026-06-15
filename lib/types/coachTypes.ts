@@ -16,5 +16,5 @@ export type CoachTrigger = {
   shouldTrigger: boolean;
   intensity: CoachIntensity;
   mode: CoachMode;
-  selectedInterventions: any[];
+  selectedInterventions: unknown[];
 };

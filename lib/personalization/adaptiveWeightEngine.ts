@@ -14,7 +14,9 @@ export type BehaviorEvent = {
   userId: string;
   eventType: string;
   reference?: string;
-  outcome?: any;
+  outcome?: {
+    success?: boolean;
+  } | null;
   timestamp: string;
 };
 

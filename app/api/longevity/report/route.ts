@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import type { CookieOptions } from "@supabase/ssr";
 import OpenAI from "openai";
 import { cookies } from "next/headers";
 
@@ -14,6 +15,12 @@ import {
 } from "@/lib/usage/tierUsage";
 
 let openaiClient: OpenAI | null = null;
+
+type CookieToSet = {
+  name: string;
+  options?: CookieOptions;
+  value: string;
+};
 
 function getOpenAI() {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -40,8 +47,8 @@ async function getSupabase() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet: any) {
-          cookiesToSet.forEach(({ name, value, options }: any) => {
+        setAll(cookiesToSet: CookieToSet[]) {
+          cookiesToSet.forEach(({ name, value, options }) => {
             cookieStore.set(name, value, options);
           });
         },
@@ -332,9 +339,9 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
       adaptive_weights: adaptiveWeights,
       usage: serializeUsage(usage),
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || "Server error" },
+      { error: err instanceof Error ? err.message : "Server error" },
       { status: 500 }
     );
   }

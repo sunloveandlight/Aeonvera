@@ -32,6 +32,18 @@ export type Intervention = {
   priority: number;
 };
 
+type HealthStateLike = {
+  riskScores?: Partial<Record<"activity" | "recovery" | "sleep", number>>;
+};
+
+type PredictionLike = Record<string, unknown>;
+
+type AdaptiveWeightLike = Array<{
+  confidence?: number;
+  domain?: string;
+  weight?: number;
+}>;
+
 /**
  * =========================
  * SAFE PERSONALITY NORMALIZER
@@ -51,11 +63,13 @@ function normalizePersonality(personality?: PersonalityState | null) {
  * =========================
  */
 export function generateInterventions(
-  state: any,
-  predictions: any,
-  adaptiveWeights: any,
+  state: HealthStateLike | null | undefined,
+  predictions: PredictionLike | null | undefined,
+  adaptiveWeights: AdaptiveWeightLike | null | undefined,
   context?: InterventionContext
 ): Intervention[] {
+  void predictions;
+  void adaptiveWeights;
   const memory = context?.memory ?? null;
   const personality = normalizePersonality(context?.personality);
 

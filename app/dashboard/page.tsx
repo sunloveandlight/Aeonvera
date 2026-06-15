@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight, ChevronDown, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { isUserAllowed } from "@/lib/auth/permissions";
 import PageContainer from "@/components/ui/PageContainer";
@@ -256,6 +257,7 @@ export default function DashboardPage() {
     return new URLSearchParams(window.location.search).get("firstReport") === "1";
   });
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showAdvancedConsole, setShowAdvancedConsole] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -823,10 +825,41 @@ export default function DashboardPage() {
     optimizationProtocol?.summary ||
     activeProtocol?.summary ||
     "Build your first optimization protocol so Aeonvera can coach from your goals and constraints.";
+  const todayPrimaryAction = buildTodayPrimaryAction({
+    bioAge,
+    hasAssessment,
+    latestPriority,
+    optimizationProtocol,
+    report,
+    sourceScore: sourceIntelligence.score,
+  });
+  const todaySignals = [
+    {
+      label: "Biological age",
+      value: bioAge ? `${bioAge}` : "New",
+      detail: bioAge
+        ? ageDelta == null
+          ? "Baseline active"
+          : ageDelta <= 0
+            ? `${Math.abs(ageDelta)} years younger than chronological`
+            : `${ageDelta} years above chronological`
+        : "Complete assessment",
+    },
+    {
+      label: "Data readiness",
+      value: `${sourceIntelligence.score}%`,
+      detail: sourceIntelligence.headline,
+    },
+    {
+      label: "Plan",
+      value: optimizationProtocol ? "Active" : "Open",
+      detail: optimizationProtocol ? protocolFocus.slice(0, 2).join(" · ") : "Build first protocol",
+    },
+  ];
 
   return (
     <PageContainer>
-      <div className="py-16 space-y-10">
+      <div className="space-y-8 py-16">
 
         {/* ═══════════════════════════════════════
             HEADER
@@ -881,9 +914,22 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ═══════════════════════════════════════
-            HERO ROW — BIO AGE + RISK
-        ═══════════════════════════════════════ */}
+        <TodayBriefing
+          action={todayPrimaryAction}
+          firstInsight={healthState?.insights?.[0] || latestPriority || protocolSummary}
+          greeting={greeting}
+          name={profile?.display_name || "there"}
+          onAction={() => {
+            if (todayPrimaryAction.href === "/report" && hasAssessment && !report) {
+              void handleGenerateReport();
+              return;
+            }
+
+            router.push(todayPrimaryAction.href);
+          }}
+          signals={todaySignals}
+        />
+
         <div className="grid gap-6 lg:grid-cols-[1.18fr_0.82fr]">
 
           {/* BIOLOGICAL AGE CARD */}
@@ -1108,140 +1154,93 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <BioAgeSimulationPanel
-          simulations={bioAgeSimulations}
-          hasAssessment={hasAssessment}
-          onOpenOptimization={() => router.push("/optimization")}
-          onStartAssessment={() => router.push("/assessment")}
-        />
-
-        <ImprovementLoopPanel
-          loop={improvementLoop}
-          hasAssessment={hasAssessment}
-          onOpenOptimization={() => router.push("/optimization")}
-          onStartAssessment={() => router.push("/assessment")}
-        />
-
-        <DataFreshnessPanel
-          appleMetricCount={wearableRows.filter((row) => row.provider === "apple").length}
-          connectedProviderSet={connectedProviderSet}
-          healthStateAt={healthState?.updated_at || null}
-          intelligence={sourceIntelligence}
-          labCount={labRows.length}
-          latestLabAt={latestLabAt}
-          latestWearableAt={latestWearableAt}
-          onOpenDataSources={() => router.push("/data-sources")}
-        />
-
-        <LabImportPanel
-          labRows={labRows}
-          labTrends={labTrends}
-          labPayload={labPayload}
-          labImportFileName={labImportFile?.name || null}
-          labImporting={labImporting}
-          labMessage={labMessage}
-          onLabPayloadChange={setLabPayload}
-          onLabImportFileChange={setLabImportFile}
-          onLabImport={handleLabImport}
-        />
-
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label={optimizationProtocol ? "Open active optimization protocol" : "Build optimization protocol"}
-          onClick={() => router.push("/optimization")}
-          onKeyDown={(event) => {
-            if (isInteractiveTarget(event.target)) return;
-            if (event.key !== "Enter" && event.key !== " ") return;
-
-            event.preventDefault();
-            router.push("/optimization");
-          }}
-          className="executive-panel-soft quiet-lift cursor-pointer rounded-lg border border-white/[0.08] p-5 transition hover:border-white/[0.16]"
+        <button
+          type="button"
+          onClick={() => setShowAdvancedConsole((value) => !value)}
+          className="group flex w-full items-center justify-between gap-4 rounded-lg border border-white/[0.08] bg-white/[0.025] px-5 py-4 text-left transition hover:border-white/[0.14] hover:bg-white/[0.04]"
         >
-          <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
-            <div>
-              <div className="mb-3 flex items-center gap-3">
-                <p className="micro-label">Active Optimization Protocol</p>
-                <span className="rounded-md border border-white/[0.08] px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] text-white/32">
-                  {optimizationProtocol ? optimizationProtocol.status : "not built"}
-                </span>
-              </div>
-              <p className="max-w-2xl text-sm leading-7 text-white/55">
-                {protocolSummary}
-              </p>
-              <button
-                onClick={(event) => {
-                  event.stopPropagation();
-                  router.push("/optimization");
-                }}
-                className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
-              >
-                {optimizationProtocol ? "Open protocol" : "Build protocol"}
-              </button>
-            </div>
-
-            {optimizationProtocol ? (
-              <div className="grid gap-3 sm:grid-cols-3">
-                {protocolActions.slice(0, 3).map((action, index) => (
-                  <div
-                    key={`${action.domain || "protocol"}-${index}`}
-                    className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4"
-                  >
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <p className="text-sm text-white/68">
-                        {action.domain || protocolFocus[index] || "Focus"}
-                      </p>
-                      <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
-                        {action.impact || "active"}
-                      </span>
-                    </div>
-                    <p className="line-clamp-3 text-xs leading-5 text-white/38">
-                      {action.action || "Follow your active optimization protocol."}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-3">
-                {["Sleep", "Metabolic", "Movement"].map((domain) => (
-                  <div
-                    key={domain}
-                    className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4"
-                  >
-                    <p className="text-sm text-white/58">{domain}</p>
-                    <p className="mt-2 text-xs leading-5 text-white/32">
-                      Waiting for intake
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div>
+            <p className="text-sm font-light text-white/76">Advanced health console</p>
+            <p className="mt-1 text-xs leading-5 text-white/38">
+              Labs, wearables, simulations, notification delivery, and detailed protocol tools.
+            </p>
           </div>
-        </div>
+          <ChevronDown
+            size={18}
+            className={`shrink-0 text-white/34 transition group-hover:text-white/64 ${
+              showAdvancedConsole ? "rotate-180" : ""
+            }`}
+          />
+        </button>
 
-        {/* ═══════════════════════════════════════
-            PHASE 2 — WEARABLE DATA
-        ═══════════════════════════════════════ */}
-        <WearablesPanel
-          wearableMessage={wearableMessage}
-          connectedProvidersCount={connectedProviders.length}
-          wearableRowsCount={wearableRows.length}
-          latestWearableAt={latestWearableAt}
-          wearableSyncing={wearableSyncing}
-          connectedProviderSet={connectedProviderSet}
-          applePayload={applePayload}
-          appleImportFileName={appleImportFile?.name || null}
-          wearableRisk={wearableRisk}
-          wearableBaselines={wearableBaselines}
-          firstInsight={healthState?.insights?.[0]}
-          onApplePayloadChange={setApplePayload}
-          onAppleImportFileChange={setAppleImportFile}
-          onProviderAction={handleWearableProviderAction}
-          onWearableSync={handleWearableSync}
-        />
+        {showAdvancedConsole ? (
+          <div className="space-y-8">
+            <BioAgeSimulationPanel
+              simulations={bioAgeSimulations}
+              hasAssessment={hasAssessment}
+              onOpenOptimization={() => router.push("/optimization")}
+              onStartAssessment={() => router.push("/assessment")}
+            />
 
-        <NotificationPreferencesPanel />
+            <ImprovementLoopPanel
+              loop={improvementLoop}
+              hasAssessment={hasAssessment}
+              onOpenOptimization={() => router.push("/optimization")}
+              onStartAssessment={() => router.push("/assessment")}
+            />
+
+            <DataFreshnessPanel
+              appleMetricCount={wearableRows.filter((row) => row.provider === "apple").length}
+              connectedProviderSet={connectedProviderSet}
+              healthStateAt={healthState?.updated_at || null}
+              intelligence={sourceIntelligence}
+              labCount={labRows.length}
+              latestLabAt={latestLabAt}
+              latestWearableAt={latestWearableAt}
+              onOpenDataSources={() => router.push("/data-sources")}
+            />
+
+            <LabImportPanel
+              labRows={labRows}
+              labTrends={labTrends}
+              labPayload={labPayload}
+              labImportFileName={labImportFile?.name || null}
+              labImporting={labImporting}
+              labMessage={labMessage}
+              onLabPayloadChange={setLabPayload}
+              onLabImportFileChange={setLabImportFile}
+              onLabImport={handleLabImport}
+            />
+
+            <ProtocolPanel
+              optimizationProtocol={optimizationProtocol}
+              protocolActions={protocolActions}
+              protocolFocus={protocolFocus}
+              protocolSummary={protocolSummary}
+              onOpenOptimization={() => router.push("/optimization")}
+            />
+
+            <WearablesPanel
+              wearableMessage={wearableMessage}
+              connectedProvidersCount={connectedProviders.length}
+              wearableRowsCount={wearableRows.length}
+              latestWearableAt={latestWearableAt}
+              wearableSyncing={wearableSyncing}
+              connectedProviderSet={connectedProviderSet}
+              applePayload={applePayload}
+              appleImportFileName={appleImportFile?.name || null}
+              wearableRisk={wearableRisk}
+              wearableBaselines={wearableBaselines}
+              firstInsight={healthState?.insights?.[0]}
+              onApplePayloadChange={setApplePayload}
+              onAppleImportFileChange={setAppleImportFile}
+              onProviderAction={handleWearableProviderAction}
+              onWearableSync={handleWearableSync}
+            />
+
+            <NotificationPreferencesPanel />
+          </div>
+        ) : null}
 
         {/* ═══════════════════════════════════════
             COACH ALERTS
@@ -1333,6 +1332,244 @@ export default function DashboardPage() {
       </div>
     </PageContainer>
   );
+}
+
+type TodaySignal = {
+  detail: string;
+  label: string;
+  value: string;
+};
+
+type TodayPrimaryAction = {
+  body: string;
+  href: string;
+  label: string;
+  title: string;
+};
+
+function TodayBriefing({
+  action,
+  firstInsight,
+  greeting,
+  name,
+  onAction,
+  signals,
+}: {
+  action: TodayPrimaryAction;
+  firstInsight: string | null;
+  greeting: string;
+  name: string;
+  onAction: () => void;
+  signals: TodaySignal[];
+}) {
+  return (
+    <section className="executive-panel rounded-lg p-6 md:p-8">
+      <div className="grid gap-8 lg:grid-cols-[1fr_0.72fr] lg:items-stretch">
+        <div className="flex min-h-[19rem] flex-col justify-between">
+          <div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-3 py-1.5">
+              <Sparkles size={14} className="royal-text" />
+              <span className="text-[10px] uppercase tracking-[0.14em] text-white/38">
+                Today
+              </span>
+            </div>
+            <h2 className="max-w-3xl text-4xl font-light leading-tight text-white md:text-5xl">
+              {greeting}, {name}. Here is what matters now.
+            </h2>
+            <p className="mt-5 max-w-2xl text-sm leading-7 text-white/48">
+              {firstInsight ||
+                "Aeonvera is ready to build your daily health operating picture as soon as you add your first signal."}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onAction}
+            className="premium-action mt-8 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md px-5 text-sm font-medium sm:w-fit"
+          >
+            {action.label}
+            <ArrowRight size={16} />
+          </button>
+        </div>
+
+        <div className="grid gap-3">
+          <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
+            <p className="micro-label">Next best move</p>
+            <p className="mt-4 text-2xl font-light leading-tight text-white/86">
+              {action.title}
+            </p>
+            <p className="mt-3 text-sm leading-7 text-white/42">{action.body}</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            {signals.map((signal) => (
+              <div
+                key={signal.label}
+                className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4"
+              >
+                <p className="text-[9px] uppercase tracking-[0.14em] text-white/26">
+                  {signal.label}
+                </p>
+                <p className="mt-2 text-2xl font-light text-white/82">{signal.value}</p>
+                <p className="mt-2 line-clamp-2 text-xs leading-5 text-white/36">
+                  {signal.detail}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProtocolPanel({
+  optimizationProtocol,
+  protocolActions,
+  protocolFocus,
+  protocolSummary,
+  onOpenOptimization,
+}: {
+  optimizationProtocol: OptimizationProtocolRow | null;
+  protocolActions: NonNullable<OptimizationProtocol["primary_protocol"]>;
+  protocolFocus: string[];
+  protocolSummary: string;
+  onOpenOptimization: () => void;
+}) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label={optimizationProtocol ? "Open active optimization protocol" : "Build optimization protocol"}
+      onClick={onOpenOptimization}
+      onKeyDown={(event) => {
+        if (isInteractiveTarget(event.target)) return;
+        if (event.key !== "Enter" && event.key !== " ") return;
+
+        event.preventDefault();
+        onOpenOptimization();
+      }}
+      className="executive-panel-soft quiet-lift cursor-pointer rounded-lg border border-white/[0.08] p-5 transition hover:border-white/[0.16]"
+    >
+      <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+        <div>
+          <div className="mb-3 flex items-center gap-3">
+            <p className="micro-label">Active Optimization Protocol</p>
+            <span className="rounded-md border border-white/[0.08] px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] text-white/32">
+              {optimizationProtocol ? optimizationProtocol.status : "not built"}
+            </span>
+          </div>
+          <p className="max-w-2xl text-sm leading-7 text-white/55">
+            {protocolSummary}
+          </p>
+          <button
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenOptimization();
+            }}
+            className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+          >
+            {optimizationProtocol ? "Open protocol" : "Build protocol"}
+          </button>
+        </div>
+
+        {optimizationProtocol ? (
+          <div className="grid gap-3 sm:grid-cols-3">
+            {protocolActions.slice(0, 3).map((action, index) => (
+              <div
+                key={`${action.domain || "protocol"}-${index}`}
+                className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4"
+              >
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm text-white/68">
+                    {action.domain || protocolFocus[index] || "Focus"}
+                  </p>
+                  <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                    {action.impact || "active"}
+                  </span>
+                </div>
+                <p className="line-clamp-3 text-xs leading-5 text-white/38">
+                  {action.action || "Follow your active optimization protocol."}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-3">
+            {["Sleep", "Metabolic", "Movement"].map((domain) => (
+              <div
+                key={domain}
+                className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4"
+              >
+                <p className="text-sm text-white/58">{domain}</p>
+                <p className="mt-2 text-xs leading-5 text-white/32">
+                  Waiting for intake
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function buildTodayPrimaryAction({
+  bioAge,
+  hasAssessment,
+  latestPriority,
+  optimizationProtocol,
+  report,
+  sourceScore,
+}: {
+  bioAge: number | null;
+  hasAssessment: boolean;
+  latestPriority: string | null;
+  optimizationProtocol: OptimizationProtocolRow | null;
+  report: Report | null;
+  sourceScore: number;
+}): TodayPrimaryAction {
+  if (!hasAssessment) {
+    return {
+      body: "Start with the assessment so Aeonvera can calculate baseline risk, biological age, and first priorities.",
+      href: "/assessment",
+      label: "Start assessment",
+      title: "Create your baseline",
+    };
+  }
+
+  if (!bioAge || !report) {
+    return {
+      body: "Your assessment is ready. Generate the intelligence report to activate your biological age and first health plan.",
+      href: "/report",
+      label: "Generate report",
+      title: "Activate intelligence",
+    };
+  }
+
+  if (!optimizationProtocol) {
+    return {
+      body: latestPriority || "Turn your latest report into a short, executable protocol.",
+      href: "/optimization",
+      label: "Build protocol",
+      title: "Choose the next intervention",
+    };
+  }
+
+  if (sourceScore < 70) {
+    return {
+      body: "Your model will improve fastest if you refresh labs, wearables, or Apple Health data.",
+      href: "/data-sources",
+      label: "Refresh data",
+      title: "Strengthen the signal",
+    };
+  }
+
+  return {
+    body: latestPriority || "Your baseline and protocol are active. Review the plan and execute the next step.",
+    href: "/plan",
+    label: "Open plan",
+    title: "Execute today’s plan",
+  };
 }
 
 function BioAgeSimulationPanel({

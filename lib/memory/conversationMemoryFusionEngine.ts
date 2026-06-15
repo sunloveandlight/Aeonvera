@@ -9,11 +9,19 @@ export type ConversationEvent = {
   timestamp: string;
 };
 
+type CoachOutputRow = {
+  message?: string | null;
+};
+
+type HealthStateRow = {
+  risk_scores?: Partial<Record<"activity" | "sleep", number>> | null;
+} | null;
+
 export type UserMemorySnapshot = {
   userId: string;
   recentConversation: ConversationEvent[];
-  recentCoachOutputs: any[];
-  latestHealthState: any;
+  recentCoachOutputs: CoachOutputRow[];
+  latestHealthState: HealthStateRow;
   dominantEmotionalTone: string;
   recurringTopics: string[];
   summary: string;
@@ -82,7 +90,7 @@ async function getConversation(
 async function getCoachOutputs(
   supabase: ReturnType<typeof import("@/lib/supabase/admin").getSupabaseAdmin>,
   userId: string
-) {
+): Promise<CoachOutputRow[]> {
   const { data } = await supabase
     .from("coach_outputs")
     .select("*")
@@ -90,7 +98,7 @@ async function getCoachOutputs(
     .order("created_at", { ascending: false })
     .limit(20);
 
-  return data || [];
+  return (data || []) as CoachOutputRow[];
 }
 
 /**
@@ -99,7 +107,7 @@ async function getCoachOutputs(
 async function getLatestHealthState(
   supabase: ReturnType<typeof import("@/lib/supabase/admin").getSupabaseAdmin>,
   userId: string
-) {
+): Promise<HealthStateRow> {
   const { data } = await supabase
     .from("health_states")
     .select("*")
@@ -108,7 +116,7 @@ async function getLatestHealthState(
     .limit(1)
     .single();
 
-  return data || null;
+  return (data as HealthStateRow) || null;
 }
 
 /**
@@ -134,7 +142,7 @@ function computeDominantTone(conversation: ConversationEvent[]) {
  */
 function extractTopics(
   conversation: ConversationEvent[],
-  coachOutputs: any[]
+  coachOutputs: CoachOutputRow[]
 ) {
   const keywords = new Set<string>();
 
@@ -160,7 +168,7 @@ function extractTopics(
 function buildSummary(
   tone: string,
   topics: string[],
-  healthState: any
+  healthState: HealthStateRow
 ) {
   return `
 User shows a ${tone} emotional tone.

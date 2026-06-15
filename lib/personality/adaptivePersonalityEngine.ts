@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import type { UserMemorySnapshot } from "@/lib/memory/conversationMemoryFusionEngine";
 
 export type PersonalityState = {
   userId: string;
@@ -14,14 +15,26 @@ type LearningSignal = {
   totalSamples: number;
 };
 
+type HealthStateLike = {
+  riskScores?: Partial<Record<"activity" | "sleep", number>>;
+};
+
+type PersonalityInputs = {
+  engagementScore: number;
+  healthState?: HealthStateLike | null;
+  learning: LearningSignal;
+  memory?: Pick<UserMemorySnapshot, "dominantEmotionalTone" | "recurringTopics"> | null;
+  previous?: PersonalityState | null;
+};
+
 /**
  * MAIN ENTRY
  */
 export async function updatePersonalityState(params: {
   userId: string;
-  healthState: any;
-  memory: any;
-  recentCoachOutputs: any[];
+  healthState: HealthStateLike | null;
+  memory: Pick<UserMemorySnapshot, "dominantEmotionalTone" | "recurringTopics"> | null;
+  recentCoachOutputs: unknown[];
   engagementScore: number;
 }): Promise<PersonalityState> {
   const {
@@ -32,6 +45,7 @@ export async function updatePersonalityState(params: {
   } = params;
 
   const supabase = getSupabaseAdmin();
+  void params.recentCoachOutputs;
 
   const previous = await getPreviousState(supabase, userId);
   const learning = await getLearningSignal(supabase, userId);
@@ -80,7 +94,7 @@ export async function updatePersonalityState(params: {
 /**
  * STRICTNESS EVOLUTION
  */
-function computeStrictness({ healthState, engagementScore, learning }: any) {
+function computeStrictness({ healthState, engagementScore, learning }: PersonalityInputs) {
   const baseRisk =
     (healthState?.riskScores?.sleep ?? 0) +
     (healthState?.riskScores?.activity ?? 0);
@@ -97,7 +111,7 @@ function computeStrictness({ healthState, engagementScore, learning }: any) {
 /**
  * EMPATHY EVOLUTION
  */
-function computeEmpathy({ memory, healthState, engagementScore, learning }: any) {
+function computeEmpathy({ memory, healthState, engagementScore, learning }: PersonalityInputs) {
   let empathy = 50;
 
   if (memory?.dominantEmotionalTone === "negative") empathy += 20;
@@ -112,11 +126,11 @@ function computeEmpathy({ memory, healthState, engagementScore, learning }: any)
 /**
  * PROACTIVITY EVOLUTION
  */
-function computeProactivity({ engagementScore, memory, learning }: any) {
+function computeProactivity({ engagementScore, memory, learning }: PersonalityInputs) {
   let p = 50;
 
   if (engagementScore < 0.4) p += 20;
-  if (memory?.recurringTopics?.length > 2) p += 10;
+  if ((memory?.recurringTopics?.length ?? 0) > 2) p += 10;
   if (learning.successRate > 0.7) p += 15;
   if (learning.successRate < 0.4) p -= 10;
 

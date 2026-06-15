@@ -397,7 +397,7 @@ body::after {
   box-shadow:
     inset 0 0 16px rgba(255, 255, 255, 0.22),
     0 0 24px rgba(167, 199, 255, 0.16);
-  animation: aeon-orb-plasma 7.2s ease-in-out infinite;
+  animation: aeon-orb-plasma 4.4s ease-in-out infinite;
 }
 
 .aeon-command-orb-plasma::before {
@@ -414,8 +414,8 @@ body::after {
       rgba(255, 255, 255, 0.32),
       rgba(var(--gold), 0.55)
     );
-  opacity: 0.6;
-  animation: aeon-orb-aurora 9s linear infinite;
+  opacity: 0.72;
+  animation: aeon-orb-aurora 5.5s linear infinite;
 }
 
 .aeon-command-orb-listening .aeon-command-orb-plasma {
@@ -504,15 +504,15 @@ body::after {
   0%,
   100% {
     border-radius: 48% 52% 46% 54%;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
-  35% {
-    border-radius: 57% 43% 53% 47%;
-    transform: translate3d(0.05rem, -0.03rem, 0) scale(1.05);
+  33% {
+    border-radius: 62% 38% 56% 44%;
+    transform: translate3d(0.08rem, -0.06rem, 0) scale(1.1) rotate(6deg);
   }
-  70% {
-    border-radius: 42% 58% 45% 55%;
-    transform: translate3d(-0.04rem, 0.05rem, 0) scale(0.97);
+  66% {
+    border-radius: 38% 62% 42% 58%;
+    transform: translate3d(-0.07rem, 0.07rem, 0) scale(0.93) rotate(-5deg);
   }
 }
 
@@ -562,13 +562,10 @@ body::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Stop bouncing / positional / size motion (vestibular triggers)... */
   .aeon-command-orb,
   .aeon-command-orb-listening,
   .aeon-command-orb-speaking,
-  .aeon-command-orb-listening::before,
-  .aeon-command-orb-speaking::before,
-  .aeon-command-orb-plasma,
-  .aeon-command-orb-plasma::before,
   .aeon-command-orb-wave,
   .aeon-command-orb-wave span {
     animation: none !important;
@@ -576,6 +573,27 @@ body::after {
 
   .aeon-orb-system-idle .aeon-command-orb {
     transform: none;
+  }
+
+  /* ...but keep the orb gently alive with an in-place color + opacity drift. */
+  .aeon-command-orb-plasma {
+    animation: aeon-orb-plasma-soft 6s ease-in-out infinite !important;
+  }
+
+  .aeon-command-orb-plasma::before {
+    animation: aeon-orb-aurora 16s linear infinite !important;
+  }
+}
+
+@keyframes aeon-orb-plasma-soft {
+  0%,
+  100% {
+    opacity: 0.78;
+    filter: blur(0.2px) saturate(0.95);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(0.2px) saturate(1.12);
   }
 }
 
