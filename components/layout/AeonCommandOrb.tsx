@@ -44,6 +44,11 @@ const ASSISTANT_OPENINGS = [
   "Tell me what you need, and I will help you move through it.",
   "What should we make easier right now?",
   "I am listening. What matters most today?",
+  "Good to see you. Where should we place our attention?",
+  "I am with you. What are we solving first?",
+  "What would make today feel cleaner?",
+  "Where do you want Aeonvera to help?",
+  "What signal should we look at together?",
 ];
 
 const VOICE_OPTIONS = [
@@ -118,6 +123,7 @@ const NAVIGATION_INTENTS = [
 export default function AeonCommandOrb() {
   const pathname = usePathname();
   const router = useRouter();
+  const lastOpeningIndexRef = useRef<number | null>(null);
   const pendingRealtimeActionRef = useRef<PendingRealtimeAction | null>(null);
   const realtimePeerRef = useRef<RTCPeerConnection | null>(null);
   const realtimeStreamRef = useRef<MediaStream | null>(null);
@@ -254,7 +260,7 @@ export default function AeonCommandOrb() {
           ? "Your browser may ask for microphone access. Choose Allow once for this site."
           : "Opening the microphone."
       );
-      const opening = pickAssistantOpening();
+      const opening = pickAssistantOpening(lastOpeningIndexRef);
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -303,7 +309,7 @@ export default function AeonCommandOrb() {
             type: "response.create",
             response: {
               instructions: `Say this warmly and naturally, then pause for the user: "${opening}"`,
-              modalities: ["audio"],
+              output_modalities: ["audio"],
             },
           })
         );
@@ -805,8 +811,15 @@ function asPlanId(value: unknown): PlanId | null {
   return value === "core" || value === "elite" || value === "sovereign" ? value : null;
 }
 
-function pickAssistantOpening() {
-  return ASSISTANT_OPENINGS[Math.floor(Math.random() * ASSISTANT_OPENINGS.length)];
+function pickAssistantOpening(lastOpeningIndexRef: { current: number | null }) {
+  if (ASSISTANT_OPENINGS.length === 1) return ASSISTANT_OPENINGS[0];
+
+  let nextIndex = Math.floor(Math.random() * ASSISTANT_OPENINGS.length);
+  while (nextIndex === lastOpeningIndexRef.current) {
+    nextIndex = Math.floor(Math.random() * ASSISTANT_OPENINGS.length);
+  }
+  lastOpeningIndexRef.current = nextIndex;
+  return ASSISTANT_OPENINGS[nextIndex];
 }
 
 async function readMicrophonePermission() {
