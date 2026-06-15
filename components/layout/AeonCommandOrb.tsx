@@ -154,8 +154,6 @@ export default function AeonCommandOrb() {
       realtimeAudioRef.current.srcObject = null;
     }
 
-    window.speechSynthesis?.cancel();
-
     if (updateState) {
       setRealtimeActive(false);
       setRealtimeStatus(null);
@@ -246,16 +244,12 @@ export default function AeonCommandOrb() {
         );
       }
 
-      const opening = pickAssistantOpening();
-      setRealtimeStatus(opening);
-      setSpeaking(true);
-      await speakBrowserOpening(opening);
-      setSpeaking(false);
       setRealtimeStatus(
         microphonePermission === "prompt"
           ? "Your browser may ask for microphone access. Choose Allow once for this site."
           : "Opening the microphone."
       );
+      const opening = pickAssistantOpening();
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -296,7 +290,19 @@ export default function AeonCommandOrb() {
       };
 
       const channel = peer.createDataChannel("aeonvera-realtime-events");
-      channel.onopen = () => setRealtimeStatus("Speak naturally. Aeonvera is listening.");
+      channel.onopen = () => {
+        setRealtimeStatus(opening);
+        setSpeaking(true);
+        channel.send(
+          JSON.stringify({
+            type: "response.create",
+            response: {
+              instructions: `Say this warmly and naturally, then pause for the user: "${opening}"`,
+              modalities: ["audio"],
+            },
+          })
+        );
+      };
       channel.onmessage = (event) => handleRealtimeEvent(event.data);
 
       const offer = await peer.createOffer({ offerToReceiveAudio: true });
@@ -325,7 +331,8 @@ export default function AeonCommandOrb() {
       const answer =
         error instanceof Error ? error.message : "Realtime voice could not start.";
       setMessages((current) => [...current, { role: "assistant", content: answer }]);
-      setOpen(true);
+      setRealtimeStatus(answer);
+      setOpen(false);
     }
   }
 
@@ -532,7 +539,7 @@ export default function AeonCommandOrb() {
       ) : null}
 
       {open ? (
-        <section className="aeon-orb-panel mb-4 w-full max-w-2xl rounded-lg p-4 md:p-5">
+        <section className="aeon-orb-panel mb-4 max-h-[min(72vh,34rem)] w-full max-w-2xl overflow-y-auto rounded-lg p-4 md:p-5">
           <div className="mb-4 flex items-start justify-between gap-4 border-b border-white/[0.07] pb-4">
             <div>
               <p className="micro-label">Aeonvera Intelligence</p>
@@ -772,29 +779,6 @@ function asPlanId(value: unknown): PlanId | null {
 
 function pickAssistantOpening() {
   return ASSISTANT_OPENINGS[Math.floor(Math.random() * ASSISTANT_OPENINGS.length)];
-}
-
-function speakBrowserOpening(text: string) {
-  return new Promise<void>((resolve) => {
-    if (
-      typeof window === "undefined" ||
-      !window.speechSynthesis ||
-      !window.SpeechSynthesisUtterance
-    ) {
-      resolve();
-      return;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.pitch = 0.94;
-    utterance.rate = 0.88;
-    utterance.volume = 0.9;
-    utterance.onend = () => resolve();
-    utterance.onerror = () => resolve();
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  });
 }
 
 async function readMicrophonePermission() {
