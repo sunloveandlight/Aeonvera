@@ -223,8 +223,8 @@ body::after {
 .aeon-command-orb {
   position: relative;
   display: inline-flex;
-  width: 5.65rem;
-  height: 5.65rem;
+  width: 4.85rem;
+  height: 4.85rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
@@ -260,7 +260,7 @@ body::after {
 .aeon-command-orb::after {
   content: "";
   position: absolute;
-  inset: -0.8rem;
+  inset: -0.62rem;
   border-radius: inherit;
   border: 1px solid rgba(218, 188, 115, 0.1);
   opacity: 0.68;
@@ -276,14 +276,13 @@ body::after {
 }
 
 .aeon-command-orb::after {
-  inset: -1.55rem;
+  inset: -1.18rem;
   border-color: rgba(74, 228, 210, 0.08);
   opacity: 0.36;
   animation-delay: 1.15s;
 }
 
-.aeon-orb-live-pill,
-.aeon-orb-text-toggle {
+.aeon-orb-live-pill {
   border: 1px solid rgba(218, 188, 115, 0.14);
   background:
     linear-gradient(180deg, rgba(21, 23, 28, 0.78), rgba(8, 9, 11, 0.62)),
@@ -292,23 +291,6 @@ body::after {
     0 18px 46px rgba(0, 0, 0, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(18px) saturate(140%);
-}
-
-.aeon-orb-text-toggle {
-  color: rgba(255, 255, 255, 0.58);
-  opacity: 0.78;
-  transition:
-    border-color 180ms ease,
-    color 180ms ease,
-    opacity 180ms ease,
-    transform 180ms ease;
-}
-
-.aeon-orb-text-toggle:hover {
-  border-color: rgba(var(--gold), 0.32);
-  color: rgba(255, 255, 255, 0.88);
-  opacity: 1;
-  transform: translateY(-1px);
 }
 
 .aeon-command-orb:hover,
@@ -348,7 +330,7 @@ body::after {
 
 .aeon-command-orb-field {
   position: absolute;
-  inset: -1.15rem;
+  inset: -0.95rem;
   border-radius: inherit;
   pointer-events: none;
   transform-style: preserve-3d;
@@ -492,8 +474,8 @@ body::after {
 .aeon-command-orb-core {
   position: relative;
   display: inline-flex;
-  width: 3.9rem;
-  height: 3.9rem;
+  width: 3.18rem;
+  height: 3.18rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
@@ -528,7 +510,7 @@ body::after {
 
 .aeon-command-orb-plasma {
   position: absolute;
-  inset: 0.46rem;
+  inset: 0.38rem;
   border-radius: 48% 52% 46% 54%;
   background:
     radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.88), transparent 11%),
@@ -564,8 +546,8 @@ body::after {
   justify-content: center;
   gap: 0.18rem;
   z-index: 1;
-  width: 1.38rem;
-  height: 1.2rem;
+  width: 1.12rem;
+  height: 1rem;
   opacity: 0.64;
   animation: aeon-orb-wave-idle 1.8s ease-in-out infinite;
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Keyboard, Mic, PhoneOff, Send, X } from "lucide-react";
+import { Mic, PhoneOff, Send, X } from "lucide-react";
 
 type CommandMessage = {
   content: string;
@@ -620,20 +620,13 @@ export default function AeonCommandOrb() {
         </section>
       ) : null}
 
-      <div className="flex items-end gap-3">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="aeon-orb-text-toggle inline-flex size-11 items-center justify-center rounded-full"
-          aria-label="Open Aeonvera text and voice settings"
-        >
-          <Keyboard size={17} />
-        </button>
-
+      <div className="flex items-end justify-center">
         <button
           type="button"
           onClick={() => {
-            if (realtimeActive) {
+            if (open && !realtimeActive) {
+              closeOrb();
+            } else if (realtimeActive) {
               stopRealtimeVoice();
             } else {
               void startRealtimeVoice();
