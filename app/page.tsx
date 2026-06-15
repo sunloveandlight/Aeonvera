@@ -8,7 +8,6 @@ import {
   Check,
   Database,
   Dna,
-  ShieldCheck,
   Smartphone,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
@@ -399,39 +398,24 @@ export default function HomePage() {
       <section className="px-6 pt-24 pb-24 lg:px-8">
         <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-2 lg:items-stretch">
           <div className="flex flex-col justify-between">
-            <div className="premium-status mb-8 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm">
-              <ShieldCheck size={16} className="royal-text" />
-              Private health intelligence that acts
-            </div>
-
-            <h1 className="max-w-4xl text-5xl font-light leading-[1.04] text-white md:text-6xl xl:text-7xl">
-              Your body, understood in real time.
+            <h1 className="max-w-4xl text-6xl font-light leading-[0.98] text-white md:text-7xl xl:text-8xl">
+              Aeonvera.
             </h1>
 
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-white/60 md:text-xl">
-              Aeonvera turns labs, wearables, biological age, recovery, and
-              behavior into a private operating system for your health. It does
-              not just measure. It explains, plans, reminds, schedules, and adapts.
+            <p className="mt-7 max-w-2xl text-2xl font-light leading-tight text-white/78 md:text-3xl">
+              Private intelligence for your body.
             </p>
 
-            <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
-              {["Measure", "Understand", "Act"].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-lg border border-white/[0.08] bg-white/[0.035] px-4 py-3 text-sm text-white/62"
-                >
-                  <span className="royal-text mr-2">•</span>
-                  {item}
-                </div>
-              ))}
-            </div>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/56">
+              Labs, wearables, biological age, recovery, and behavior become one calm operating system that explains, plans, reminds, schedules, and adapts.
+            </p>
 
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <Link
                 href={authenticated ? "/dashboard" : "/login?mode=signup"}
                 className="premium-action inline-flex h-12 w-full items-center justify-center gap-2 rounded-md px-6 text-sm font-medium transition hover:opacity-95 sm:w-auto"
               >
-                {authenticated ? "Open dashboard" : "Start assessment"}
+                {authenticated ? "Open Today" : "Start assessment"}
                 <ArrowRight size={16} />
               </Link>
               <Link

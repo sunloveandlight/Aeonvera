@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Mic, PhoneOff, Send, X } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
 import {
   DEFAULT_VOICE,
   HIDDEN_ROUTES,
   PLAN_LABEL,
+  ROUTE_CONTEXTS,
   STARTER_PROMPTS,
   VOICE_OPTIONS,
   type ActionReceipt,
@@ -74,6 +76,18 @@ export default function AeonCommandOrb() {
     () => VOICE_OPTIONS.find((voice) => voice.id === selectedVoice) || VOICE_OPTIONS[0],
     [selectedVoice]
   );
+  const routeContext = useMemo(
+    () =>
+      ROUTE_CONTEXTS.find((context) =>
+        pathname === context.match || pathname.startsWith(`${context.match}/`)
+      ) || {
+        detail: "I can answer, guide, and move through Aeonvera with you.",
+        label: "Aeonvera",
+        prompts: STARTER_PROMPTS,
+      },
+    [pathname]
+  );
+  const contextualPrompts = routeContext.prompts.length ? routeContext.prompts : STARTER_PROMPTS;
   const latestReceipt = actionReceipts[0] || null;
 
   const stopRealtimeVoice = useCallback((updateState = true) => {
@@ -125,6 +139,9 @@ export default function AeonCommandOrb() {
 
     async function loadActivityHistory() {
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) return;
+
         const response = await fetch("/api/agent/activity", {
           credentials: "include",
           method: "GET",
@@ -942,7 +959,7 @@ export default function AeonCommandOrb() {
 
   return (
     <div
-      className={`aeon-orb-system fixed inset-x-0 bottom-6 z-40 mx-auto flex w-full max-w-2xl flex-col items-center px-3 ${
+      className={`aeon-orb-system fixed inset-x-3 bottom-6 z-40 mx-auto flex max-w-[calc(100vw-1.5rem)] flex-col items-center sm:inset-x-6 sm:max-w-2xl ${
         idleDimmed ? "aeon-orb-system-idle" : ""
       }`}
       onFocusCapture={() => setIdleDimmed(false)}
@@ -978,7 +995,10 @@ export default function AeonCommandOrb() {
           <div className="mb-4 flex items-start justify-between gap-4 border-b border-white/[0.07] pb-4">
             <div>
               <p className="micro-label">Aeonvera Intelligence</p>
-              <h2 className="mt-2 text-2xl font-light text-white">Ask or adjust.</h2>
+              <h2 className="mt-2 text-2xl font-light text-white">{routeContext.label}</h2>
+              <p className="mt-2 max-w-lg text-xs leading-5 text-white/42">
+                {routeContext.detail}
+              </p>
             </div>
             <button
               type="button"
@@ -1079,7 +1099,7 @@ export default function AeonCommandOrb() {
           ) : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {STARTER_PROMPTS.map((prompt) => (
+            {contextualPrompts.map((prompt) => (
               <button
                 key={prompt}
                 type="button"

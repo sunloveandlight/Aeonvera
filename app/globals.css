@@ -55,6 +55,7 @@
 html,
 body {
   height: 100%;
+  overflow-x: hidden;
   background: var(--background);
   color: var(--ink);
   font-family: var(--font-sans, system-ui), -apple-system, sans-serif;
@@ -378,6 +379,39 @@ body::after {
     inset 0 1px 0 rgba(255, 255, 255, 0.24),
     inset 0 -16px 26px rgba(0, 0, 0, 0.28),
     0 0 26px rgba(var(--gold), 0.22);
+  /* Slow living shimmer across the whole interior. */
+  animation: aeon-orb-hue 13s ease-in-out infinite;
+}
+
+/* Parallax back-blob — a softer, blurred color field drifting the opposite way
+   behind the crisp plasma, giving the orb real depth. */
+.aeon-command-orb-core::before {
+  content: "";
+  position: absolute;
+  inset: -12%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 62% 34%, rgba(167, 199, 255, 0.5), transparent 46%),
+    radial-gradient(circle at 36% 70%, rgba(214, 176, 255, 0.42), transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.4), transparent 62%);
+  filter: blur(2px);
+  opacity: 0.55;
+  animation: aeon-orb-aurora 8.5s linear infinite reverse;
+}
+
+/* Traveling specular glint — a bright highlight that slowly orbits the rim,
+   like light catching a glass sphere. */
+.aeon-command-orb-core::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: radial-gradient(circle at 50% 13%, rgba(255, 255, 255, 0.92), transparent 17%);
+  opacity: 0.7;
+  animation: aeon-orb-glint 9s linear infinite;
 }
 
 /* Living iridescent blob — the single hero element.
@@ -434,6 +468,33 @@ body::after {
 .aeon-command-orb-speaking .aeon-command-orb-plasma::before {
   animation-duration: 2.6s;
   opacity: 0.9;
+}
+
+.aeon-command-orb-listening .aeon-command-orb-core {
+  animation-duration: 9s;
+}
+
+.aeon-command-orb-listening .aeon-command-orb-core::before {
+  animation-duration: 6s;
+}
+
+.aeon-command-orb-listening .aeon-command-orb-core::after {
+  animation-duration: 5s;
+  opacity: 0.82;
+}
+
+.aeon-command-orb-speaking .aeon-command-orb-core {
+  animation-duration: 6s;
+}
+
+.aeon-command-orb-speaking .aeon-command-orb-core::before {
+  animation-duration: 3.6s;
+  opacity: 0.72;
+}
+
+.aeon-command-orb-speaking .aeon-command-orb-core::after {
+  animation-duration: 2.8s;
+  opacity: 0.95;
 }
 
 .aeon-command-orb-wave {
@@ -500,6 +561,22 @@ body::after {
   }
 }
 
+@keyframes aeon-orb-glint {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes aeon-orb-hue {
+  0%,
+  100% {
+    filter: hue-rotate(-10deg) saturate(1);
+  }
+  50% {
+    filter: hue-rotate(14deg) saturate(1.12);
+  }
+}
+
 @keyframes aeon-orb-plasma {
   0%,
   100% {
@@ -562,10 +639,13 @@ body::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Stop bouncing / positional / size motion (vestibular triggers)... */
+  /* Stop bouncing / positional / size / orbiting motion (vestibular triggers)... */
   .aeon-command-orb,
   .aeon-command-orb-listening,
   .aeon-command-orb-speaking,
+  .aeon-command-orb-core,
+  .aeon-command-orb-core::before,
+  .aeon-command-orb-core::after,
   .aeon-command-orb-wave,
   .aeon-command-orb-wave span {
     animation: none !important;

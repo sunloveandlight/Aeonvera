@@ -131,6 +131,89 @@ export const STARTER_PROMPTS = [
   "Help me upgrade or change my membership",
 ];
 
+export const ROUTE_CONTEXTS = [
+  {
+    match: "/dashboard",
+    label: "Today",
+    detail: "I can prepare your next step, simplify the day, or open the advanced health console.",
+    prompts: [
+      "What should I focus on today?",
+      "Simplify today’s plan",
+      "Refresh my latest health signal",
+    ],
+  },
+  {
+    match: "/digital-twin",
+    label: "Digital Twin",
+    detail: "I can explain recent signals, generate a report, or prepare a physician share.",
+    prompts: [
+      "Explain my newest model signal",
+      "Create a physician share link",
+      "Generate my latest report",
+    ],
+  },
+  {
+    match: "/pricing",
+    label: "Membership",
+    detail: "I can help compare plans, upgrade, downgrade, or open billing safely.",
+    prompts: [
+      "Help me choose the right plan",
+      "Upgrade me to Sovereign",
+      "Show me downgrade options",
+    ],
+  },
+  {
+    match: "/settings",
+    label: "Settings",
+    detail: "I can help with voice, privacy, connected data, notifications, and billing.",
+    prompts: [
+      "Change my voice",
+      "Open my data sources",
+      "Review privacy sharing",
+    ],
+  },
+  {
+    match: "/data-sources",
+    label: "Data Sources",
+    detail: "I can open Oura, sync wearables, or point out the highest-value missing source.",
+    prompts: [
+      "Sync my Oura data",
+      "Open data sources",
+      "What data is missing?",
+    ],
+  },
+  {
+    match: "/network",
+    label: "Care Network",
+    detail: "I can create care-network invites or explain who has access.",
+    prompts: [
+      "Invite my physician",
+      "Create a coach invite",
+      "Open care network",
+    ],
+  },
+  {
+    match: "/companion",
+    label: "Ask",
+    detail: "I can answer health questions, remember preferences, and move through Aeonvera.",
+    prompts: [
+      "What changed since last time?",
+      "Prepare my plan",
+      "Explain my next best move",
+    ],
+  },
+  {
+    match: "/plan",
+    label: "Plan",
+    detail: "I can simplify, explain, or move you to plan and billing controls.",
+    prompts: [
+      "Simplify my plan",
+      "What should I do first?",
+      "Change my membership",
+    ],
+  },
+];
+
 export const PLAN_ORDER: PlanId[] = ["core", "elite", "sovereign"];
 
 export const PLAN_LABEL: Record<PlanId, string> = {

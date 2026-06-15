@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Menu, UserCircle, X } from "lucide-react";
+import { Menu, UserCircle, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 type NavItem = {
@@ -17,12 +17,11 @@ export default function Header() {
   const [authenticated, setAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setAuthenticated(!!data.user);
+    supabase.auth.getSession().then(({ data }) => {
+      setAuthenticated(!!data.session);
       setAuthChecked(true);
     });
 
@@ -50,15 +49,16 @@ export default function Header() {
         { href: "/optimization", label: "Optimize", public: true },
       ];
 
-  const secondaryNavItems: NavItem[] = authenticated
+  const accountNavItems: NavItem[] = authenticated
     ? [
+        { href: "/settings", label: "Settings" },
+        { href: "/pricing", label: "Membership", public: true },
         { href: "/digital-twin", label: "Digital Twin" },
         { href: "/life-os", label: "Life OS" },
         { href: "/network", label: "Care Network" },
         { href: "/data-sources", label: "Data Sources" },
         { href: "/report", label: "Report" },
         { href: "/memory", label: "Memory" },
-        { href: "/pricing", label: "Pricing", public: true },
       ]
     : [];
 
@@ -73,10 +73,7 @@ export default function Header() {
         { href: "/pricing", label: "Pricing", public: true },
         { href: "/optimization", label: "Optimize", public: true },
       ];
-  const visibleSecondaryItems = secondaryNavItems.filter(
-    (item) => item.public || authenticated
-  );
-  const secondaryActive = visibleSecondaryItems.some((item) => isActive(pathname, item.href));
+  const visibleAccountItems = accountNavItems.filter((item) => item.public || authenticated);
 
   return (
     <header className="premium-header sticky top-0 z-50">
@@ -108,46 +105,6 @@ export default function Header() {
                 </Link>
               );
             })}
-          {visibleSecondaryItems.length ? (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  setAccountOpen(false);
-                  setMoreOpen((open) => !open);
-                }}
-                className={`premium-nav-link inline-flex items-center gap-1.5 ${
-                  secondaryActive || moreOpen ? "premium-nav-link-active" : ""
-                }`}
-                aria-expanded={moreOpen}
-                aria-haspopup="menu"
-              >
-                More <ChevronDown size={14} />
-              </button>
-              {moreOpen ? (
-                <div
-                  className="absolute right-0 top-10 w-56 rounded-lg border border-white/[0.08] bg-black/90 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl"
-                  role="menu"
-                >
-                  {visibleSecondaryItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMoreOpen(false)}
-                      className={`block rounded-md px-3 py-2 text-sm transition ${
-                        isActive(pathname, item.href)
-                          ? "bg-[rgba(var(--gold),0.09)] text-[rgb(var(--gold))]"
-                          : "text-white/58 hover:bg-white/[0.05] hover:text-white/82"
-                      }`}
-                      role="menuitem"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
         </nav>
 
         {/* AUTH */}
@@ -167,10 +124,7 @@ export default function Header() {
             <div className="relative hidden sm:block">
               <button
                 type="button"
-                onClick={() => {
-                  setMoreOpen(false);
-                  setAccountOpen((open) => !open);
-                }}
+                onClick={() => setAccountOpen((open) => !open)}
                 className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-medium leading-none transition ${
                   accountOpen
                     ? "border-white/[0.16] bg-white/[0.06] text-white/82"
@@ -187,22 +141,21 @@ export default function Header() {
                   className="absolute right-0 top-11 w-60 rounded-lg border border-white/[0.08] bg-black/90 p-2 shadow-2xl shadow-black/40 backdrop-blur-xl"
                   role="menu"
                 >
-                  <Link
-                    href="/settings"
-                    onClick={() => setAccountOpen(false)}
-                    className="block rounded-md px-3 py-2 text-sm text-white/64 transition hover:bg-white/[0.05] hover:text-white/86"
-                    role="menuitem"
-                  >
-                    Settings
-                  </Link>
-                  <Link
-                    href="/pricing"
-                    onClick={() => setAccountOpen(false)}
-                    className="block rounded-md px-3 py-2 text-sm text-white/64 transition hover:bg-white/[0.05] hover:text-white/86"
-                    role="menuitem"
-                  >
-                    Membership
-                  </Link>
+                  {visibleAccountItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setAccountOpen(false)}
+                      className={`block rounded-md px-3 py-2 text-sm transition ${
+                        isActive(pathname, item.href)
+                          ? "bg-[rgba(var(--gold),0.09)] text-[rgb(var(--gold))]"
+                          : "text-white/58 hover:bg-white/[0.05] hover:text-white/86"
+                      }`}
+                      role="menuitem"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
                   <button
                     onClick={() => {
                       setAccountOpen(false);
@@ -248,7 +201,6 @@ export default function Header() {
                   href={item.href}
                   onClick={() => {
                     setMobileOpen(false);
-                    setMoreOpen(false);
                   }}
                   className="rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/75"
                 >
