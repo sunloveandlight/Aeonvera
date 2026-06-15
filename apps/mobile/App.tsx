@@ -527,6 +527,8 @@ export default function App() {
   const [lastVoiceTranscript, setLastVoiceTranscript] = useState<string | null>(null);
   const [lastVoiceAnswer, setLastVoiceAnswer] = useState<string | null>(null);
   const [voiceSpeaking, setVoiceSpeaking] = useState(false);
+  const voiceIsActive =
+    Boolean(voiceRecording) || voiceSpeaking || voicePhase === "processing" || agentThinking;
 
   function pushActionReceipt(receipt: Omit<ActionReceipt, "createdAt" | "id">) {
     const nextReceipt: ActionReceipt = {
@@ -2817,6 +2819,37 @@ export default function App() {
           </>
         )}
       </ScrollView>
+      {session ? (
+        <MobileCommandOrb
+          voiceIsActive={voiceIsActive}
+          voicePhase={voicePhase}
+          voiceRecording={Boolean(voiceRecording)}
+          voiceSpeaking={voiceSpeaking}
+          voiceStatus={voiceStatus}
+          onOpenAgent={() => {
+            playSoftHaptic();
+            setActiveView("agent");
+          }}
+          onPress={() => {
+            if (voiceRecording) {
+              void stopAgentVoice();
+              return;
+            }
+
+            if (voiceSpeaking) {
+              void stopAgentSpeech();
+              return;
+            }
+
+            if (voicePhase === "processing" || agentThinking) {
+              setActiveView("agent");
+              return;
+            }
+
+            void startVoiceNote();
+          }}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -3258,6 +3291,177 @@ function CommandMetric({
       <Text style={styles.commandMetricDetail} numberOfLines={2}>
         {detail}
       </Text>
+    </View>
+  );
+}
+
+function MobileCommandOrb({
+  onOpenAgent,
+  onPress,
+  voiceIsActive,
+  voicePhase,
+  voiceRecording,
+  voiceSpeaking,
+  voiceStatus,
+}: {
+  onOpenAgent: () => void;
+  onPress: () => void;
+  voiceIsActive: boolean;
+  voicePhase: VoicePhase;
+  voiceRecording: boolean;
+  voiceSpeaking: boolean;
+  voiceStatus: string | null;
+}) {
+  const [pulse] = useState(() => new Animated.Value(0));
+  const [orbit] = useState(() => new Animated.Value(0));
+  const [breathe] = useState(() => new Animated.Value(0));
+
+  useEffect(() => {
+    const pulseLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          duration: voiceRecording ? 620 : voiceSpeaking ? 860 : 1450,
+          easing: Easing.inOut(Easing.quad),
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          duration: voiceRecording ? 620 : voiceSpeaking ? 860 : 1450,
+          easing: Easing.inOut(Easing.quad),
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    const orbitLoop = Animated.loop(
+      Animated.timing(orbit, {
+        duration: voiceIsActive ? 2600 : 5200,
+        easing: Easing.linear,
+        toValue: 1,
+        useNativeDriver: true,
+      })
+    );
+    const breatheLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathe, {
+          duration: 2100,
+          easing: Easing.inOut(Easing.sin),
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+        Animated.timing(breathe, {
+          duration: 2100,
+          easing: Easing.inOut(Easing.sin),
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    pulseLoop.start();
+    orbitLoop.start();
+    breatheLoop.start();
+
+    return () => {
+      pulseLoop.stop();
+      orbitLoop.stop();
+      breatheLoop.stop();
+    };
+  }, [breathe, orbit, pulse, voiceIsActive, voiceRecording, voiceSpeaking]);
+
+  const scale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, voiceRecording ? 1.12 : voiceIsActive ? 1.08 : 1.035],
+  });
+  const auraScale = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1.04, voiceRecording ? 1.34 : voiceIsActive ? 1.24 : 1.14],
+  });
+  const auraOpacity = pulse.interpolate({
+    inputRange: [0, 1],
+    outputRange: [voiceIsActive ? 0.2 : 0.08, voiceRecording ? 0.5 : 0.24],
+  });
+  const breatheOpacity = breathe.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.38, 0.74],
+  });
+  const rotate = orbit.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
+  const counterRotate = orbit.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["360deg", "0deg"],
+  });
+  const title = voicePhaseLabel(voicePhase, voiceSpeaking, voiceRecording);
+  const showStatus = voiceIsActive || voicePhase === "ready_follow_up";
+
+  return (
+    <View pointerEvents="box-none" style={styles.mobileAssistantDock}>
+      {showStatus ? (
+        <Pressable style={styles.mobileAssistantStatus} onPress={onOpenAgent}>
+          <Text style={styles.mobileAssistantStatusTitle}>{title}</Text>
+          {voiceStatus ? (
+            <Text style={styles.mobileAssistantStatusText} numberOfLines={1}>
+              {voiceStatus}
+            </Text>
+          ) : null}
+        </Pressable>
+      ) : null}
+      <Pressable
+        accessibilityHint="Starts or controls Aeonvera voice."
+        accessibilityLabel="Aeonvera assistant"
+        accessibilityRole="button"
+        hitSlop={14}
+        onLongPress={onOpenAgent}
+        onPress={onPress}
+        style={styles.mobileAssistantTouch}
+      >
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.mobileAssistantAura,
+            {
+              opacity: auraOpacity,
+              transform: [{ scale: auraScale }],
+            },
+          ]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.mobileAssistantOrbit,
+            {
+              opacity: breatheOpacity,
+              transform: [{ rotate }],
+            },
+          ]}
+        />
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.mobileAssistantOrbit,
+            styles.mobileAssistantOrbitAlt,
+            {
+              transform: [{ rotate: counterRotate }],
+            },
+          ]}
+        />
+        <Animated.View
+          style={[
+            styles.mobileAssistantCore,
+            voiceIsActive && styles.mobileAssistantCoreActive,
+            {
+              transform: [{ scale }],
+            },
+          ]}
+        >
+          <View style={[styles.mobileAssistantLobe, styles.mobileAssistantLobeOne]} />
+          <View style={[styles.mobileAssistantLobe, styles.mobileAssistantLobeTwo]} />
+          <View style={[styles.mobileAssistantLobe, styles.mobileAssistantLobeThree]} />
+          <View style={styles.mobileAssistantCenter} />
+        </Animated.View>
+      </Pressable>
     </View>
   );
 }
@@ -5423,6 +5627,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 22,
+    paddingBottom: 126,
     gap: 18,
   },
   hero: {
@@ -5502,6 +5707,130 @@ const styles = StyleSheet.create({
   },
   activeTabText: {
     color: "rgba(238,214,154,0.94)",
+  },
+  mobileAssistantDock: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: Platform.OS === "ios" ? 34 : 26,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  mobileAssistantStatus: {
+    maxWidth: 270,
+    minHeight: 38,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    borderRadius: 999,
+    backgroundColor: "rgba(5,5,5,0.78)",
+    marginBottom: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    shadowColor: "#000000",
+    shadowOpacity: 0.42,
+    shadowRadius: 18,
+  },
+  mobileAssistantStatusTitle: {
+    color: "rgba(255,255,255,0.88)",
+    fontSize: 11,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  mobileAssistantStatusText: {
+    color: "rgba(255,255,255,0.48)",
+    fontSize: 10,
+    marginTop: 2,
+    textAlign: "center",
+  },
+  mobileAssistantTouch: {
+    width: 56,
+    height: 56,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  mobileAssistantAura: {
+    position: "absolute",
+    width: 58,
+    height: 58,
+    borderWidth: 1,
+    borderColor: "rgba(238,214,154,0.54)",
+    borderRadius: 999,
+    backgroundColor: "rgba(218,188,115,0.2)",
+    shadowColor: "#dabc73",
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+  },
+  mobileAssistantOrbit: {
+    position: "absolute",
+    width: 52,
+    height: 52,
+    borderTopWidth: 1.5,
+    borderRightWidth: 1.5,
+    borderBottomWidth: 0,
+    borderLeftWidth: 0,
+    borderColor: "rgba(255,255,255,0.56)",
+    borderRadius: 999,
+  },
+  mobileAssistantOrbitAlt: {
+    width: 42,
+    height: 42,
+    borderTopWidth: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 1.5,
+    borderLeftWidth: 1.5,
+    borderColor: "rgba(95,179,255,0.6)",
+  },
+  mobileAssistantCore: {
+    width: 42,
+    height: 42,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.16)",
+    borderRadius: 999,
+    overflow: "hidden",
+    backgroundColor: "rgba(218,188,115,0.94)",
+    shadowColor: "#dabc73",
+    shadowOpacity: 0.26,
+    shadowRadius: 18,
+  },
+  mobileAssistantCoreActive: {
+    borderColor: "rgba(255,255,255,0.34)",
+    shadowOpacity: 0.48,
+    shadowRadius: 24,
+  },
+  mobileAssistantLobe: {
+    position: "absolute",
+    borderRadius: 999,
+    opacity: 0.82,
+  },
+  mobileAssistantLobeOne: {
+    width: 34,
+    height: 34,
+    left: -6,
+    top: -3,
+    backgroundColor: "rgba(255,255,255,0.72)",
+  },
+  mobileAssistantLobeTwo: {
+    width: 32,
+    height: 32,
+    right: -9,
+    top: 7,
+    backgroundColor: "rgba(95,179,255,0.76)",
+  },
+  mobileAssistantLobeThree: {
+    width: 34,
+    height: 34,
+    bottom: -12,
+    left: 9,
+    backgroundColor: "rgba(255,121,198,0.58)",
+  },
+  mobileAssistantCenter: {
+    position: "absolute",
+    left: 13,
+    top: 13,
+    width: 16,
+    height: 16,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.88)",
   },
   cardLabel: {
     color: "rgba(218,188,115,0.82)",
