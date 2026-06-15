@@ -10,6 +10,7 @@ type CommandMessage = {
 };
 
 type VoiceId = (typeof VOICE_OPTIONS)[number]["id"];
+type PlanId = "core" | "elite" | "sovereign";
 
 type RealtimeEvent = {
   error?: { message?: string };
@@ -41,6 +42,12 @@ const VOICE_OPTIONS = [
 ] as const;
 
 const DEFAULT_VOICE: VoiceId = "marin";
+const PLAN_ORDER: PlanId[] = ["core", "elite", "sovereign"];
+const PLAN_LABEL: Record<PlanId, string> = {
+  core: "Core",
+  elite: "Elite",
+  sovereign: "Sovereign",
+};
 
 const NAVIGATION_INTENTS = [
   {
@@ -160,6 +167,13 @@ export default function AeonCommandOrb() {
     setInput("");
     setThinking(true);
     setMessages((current) => [...current, { role: "user", content: question }]);
+
+    const planIntent = resolvePlanIntent(question);
+    if (planIntent) {
+      await handlePlanIntent(planIntent);
+      setThinking(false);
+      return;
+    }
 
     const navigation = resolveNavigationIntent(question);
     if (navigation) {
@@ -299,6 +313,13 @@ export default function AeonCommandOrb() {
       const transcript = event.transcript?.trim();
       if (transcript) {
         setMessages((current) => [...current, { role: "user", content: transcript }]);
+        const planIntent = resolvePlanIntent(transcript);
+        const navigation = resolveNavigationIntent(transcript);
+        if (planIntent) {
+          void handlePlanIntent(planIntent);
+        } else if (navigation) {
+          router.push(navigation.href);
+        }
       }
       return;
     }
@@ -344,6 +365,131 @@ export default function AeonCommandOrb() {
   function closeOrb() {
     stopRealtimeVoice();
     setOpen(false);
+  }
+
+  async function handlePlanIntent(intent: PlanIntent) {
+    try {
+      const usageResponse = await fetch("/api/usage/limits", {
+        credentials: "include",
+        method: "GET",
+      });
+
+      if (usageResponse.status === 401) {
+        setMessages((current) => [
+          ...current,
+          {
+            role: "assistant",
+            content: "I can do that after you sign in. Opening sign in now.",
+          },
+        ]);
+        router.push("/login?mode=signin");
+        return;
+      }
+
+      const usageData = await usageResponse.json().catch(() => ({}));
+      const currentPlan = asPlanId(usageData.plan);
+      const targetPlan = intent.targetPlan || inferPlanTarget(intent.direction, currentPlan);
+
+      if (!targetPlan) {
+        setMessages((current) => [
+          ...current,
+          {
+            role: "assistant",
+            content:
+              "Opening your membership options. Choose Core, Elite, or Sovereign and I can handle the next step.",
+          },
+        ]);
+        router.push("/pricing");
+        return;
+      }
+
+      if (currentPlan === targetPlan && isActiveSubscription(usageData.subscriptionStatus)) {
+        setMessages((current) => [
+          ...current,
+          {
+            role: "assistant",
+            content: `You are already on ${PLAN_LABEL[targetPlan]}. Opening billing so you can manage it.`,
+          },
+        ]);
+        await openBillingPortal(targetPlan);
+        return;
+      }
+
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: currentPlan
+            ? `Opening Stripe to move you from ${PLAN_LABEL[currentPlan]} to ${PLAN_LABEL[targetPlan]}. You will confirm the billing effect before anything changes.`
+            : `Opening checkout for ${PLAN_LABEL[targetPlan]}.`,
+        },
+      ]);
+
+      if (currentPlan && isActiveSubscription(usageData.subscriptionStatus)) {
+        await openBillingPortal(targetPlan);
+      } else {
+        await openCheckout(targetPlan);
+      }
+    } catch (error) {
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content:
+            error instanceof Error
+              ? error.message
+              : "I could not open the plan change flow right now.",
+        },
+      ]);
+    }
+  }
+
+  async function openBillingPortal(targetPlan: PlanId) {
+    const response = await fetch("/api/stripe/customer-portal", {
+      body: JSON.stringify({ plan: targetPlan }),
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (response.status === 404) {
+      await openCheckout(targetPlan);
+      return;
+    }
+
+    if (!response.ok || typeof data.url !== "string") {
+      throw new Error(
+        typeof data.error === "string" ? data.error : "Could not open billing management."
+      );
+    }
+
+    stopRealtimeVoice();
+    window.location.assign(data.url);
+  }
+
+  async function openCheckout(targetPlan: PlanId) {
+    const response = await fetch("/api/stripe/checkout", {
+      body: JSON.stringify({ plan: targetPlan }),
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (response.status === 401) {
+      router.push("/login?mode=signup");
+      return;
+    }
+
+    if (!response.ok || typeof data.url !== "string") {
+      throw new Error(
+        typeof data.error === "string" ? data.error : "Could not start checkout."
+      );
+    }
+
+    stopRealtimeVoice();
+    window.location.assign(data.url);
   }
 
   return (
@@ -513,6 +659,58 @@ function readRealtimeError(body: string) {
   } catch {
     return body || "OpenAI realtime voice session could not start.";
   }
+}
+
+type PlanIntent = {
+  direction: "change" | "downgrade" | "upgrade";
+  targetPlan: PlanId | null;
+};
+
+function resolvePlanIntent(question: string): PlanIntent | null {
+  const text = question.toLowerCase();
+  const targetPlan = extractPlanTarget(text);
+  const hasBillingIntent =
+    /\b(upgrade|downgrade|change|switch|move|subscribe|subscription|billing|membership|plan)\b/.test(text);
+
+  if (!hasBillingIntent && !targetPlan) return null;
+
+  if (/\b(downgrade|lower|cheaper|reduce)\b/.test(text)) {
+    return { direction: "downgrade", targetPlan };
+  }
+
+  if (/\b(upgrade|higher|sovereign|elite|executive|unlock)\b/.test(text)) {
+    return { direction: "upgrade", targetPlan };
+  }
+
+  if (targetPlan) {
+    return { direction: "change", targetPlan };
+  }
+
+  return null;
+}
+
+function extractPlanTarget(text: string): PlanId | null {
+  if (/\bsovereign|soverign|soverigne|executive\b/.test(text)) return "sovereign";
+  if (/\belite|optimization\b/.test(text)) return "elite";
+  if (/\bcore|basic|starter|baseline\b/.test(text)) return "core";
+  return null;
+}
+
+function inferPlanTarget(direction: PlanIntent["direction"], currentPlan: PlanId | null) {
+  if (!currentPlan) return direction === "downgrade" ? null : "core";
+
+  const index = PLAN_ORDER.indexOf(currentPlan);
+  if (direction === "downgrade") return PLAN_ORDER[Math.max(0, index - 1)] || null;
+  if (direction === "upgrade") return PLAN_ORDER[Math.min(PLAN_ORDER.length - 1, index + 1)] || null;
+  return null;
+}
+
+function asPlanId(value: unknown): PlanId | null {
+  return value === "core" || value === "elite" || value === "sovereign" ? value : null;
+}
+
+function isActiveSubscription(value: unknown) {
+  return value === "active" || value === "trialing" || value === "past_due";
 }
 
 function resolveNavigationIntent(question: string) {
