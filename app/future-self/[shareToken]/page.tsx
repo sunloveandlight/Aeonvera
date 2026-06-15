@@ -283,7 +283,7 @@ export default function SharedFutureSelfPage() {
                 <polyline
                   points={chart.optimized.join(" ")}
                   fill="none"
-                  stroke="rgba(218,188,115,0.9)"
+                  stroke="rgba(var(--gold),0.9)"
                   strokeWidth="2.6"
                   strokeLinecap="round"
                   strokeLinejoin="round"

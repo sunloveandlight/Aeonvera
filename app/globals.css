@@ -273,7 +273,7 @@ body::after {
 }
 
 .aeon-orb-live-pill {
-  border: 1px solid rgba(218, 188, 115, 0.14);
+  border: 1px solid rgba(var(--gold), 0.14);
   background:
     linear-gradient(180deg, rgba(21, 23, 28, 0.78), rgba(8, 9, 11, 0.62)),
     rgba(0, 0, 0, 0.52);
@@ -293,7 +293,7 @@ body::after {
     rgba(0, 0, 0, 0.56);
   box-shadow:
     0 18px 50px rgba(0, 0, 0, 0.34),
-    0 0 0 1px rgba(218, 188, 115, 0.035),
+    0 0 0 1px rgba(var(--gold), 0.035),
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(18px) saturate(150%);
   animation: aeon-receipt-rise 260ms ease-out both;
@@ -309,13 +309,13 @@ body::after {
 }
 
 .aeon-orb-receipt-success .aeon-orb-receipt-dot {
-  background: rgba(112, 245, 202, 0.86);
-  box-shadow: 0 0 18px rgba(112, 245, 202, 0.28);
+  background: rgba(var(--success), 0.9);
+  box-shadow: 0 0 18px rgba(var(--success), 0.3);
 }
 
 .aeon-orb-receipt-caution .aeon-orb-receipt-dot {
-  background: rgba(218, 188, 115, 0.9);
-  box-shadow: 0 0 18px rgba(218, 188, 115, 0.28);
+  background: rgba(var(--gold), 0.9);
+  box-shadow: 0 0 18px rgba(var(--gold), 0.28);
 }
 
 .aeon-command-orb:hover,
@@ -1066,6 +1066,22 @@ body::after {
 ::selection {
   background: rgba(var(--accent), 0.28);
   color: #ffffff;
+}
+
+/* =====================================================
+   GLOBAL KEYBOARD FOCUS RING
+   One consistent gold focus indicator for all interactive
+   elements that don't define their own (inputs keep theirs).
+===================================================== */
+
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="switch"]:focus-visible,
+[tabindex]:focus-visible,
+summary:focus-visible {
+  outline: 2px solid rgba(var(--gold), 0.55);
+  outline-offset: 2px;
 }
 
 /* =====================================================

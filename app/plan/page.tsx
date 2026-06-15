@@ -156,7 +156,7 @@ export default function PlanPage() {
                     and the next intelligence tier.
                   </p>
                   {message ? (
-                    <p className="mt-4 text-sm leading-6 text-[#dabc73]/80">{message}</p>
+                    <p className="mt-4 text-sm leading-6 text-[rgba(var(--gold),0.8)]">{message}</p>
                   ) : null}
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -177,7 +177,7 @@ export default function PlanPage() {
                       <ArrowRight size={15} />
                     </Link>
                   ) : (
-                    <span className="inline-flex h-11 items-center gap-2 rounded-md border border-[#dabc73]/25 bg-[#dabc73]/10 px-5 text-sm text-[#dabc73]/85">
+                    <span className="inline-flex h-11 items-center gap-2 rounded-md border border-[rgba(var(--gold),0.25)] bg-[rgba(var(--gold),0.1)] px-5 text-sm text-[rgba(var(--gold),0.85)]">
                       <Crown size={15} />
                       Highest tier
                     </span>
@@ -232,7 +232,7 @@ function FeatureGroup({
               <div
                 className={`mt-1 inline-flex size-6 shrink-0 items-center justify-center rounded-full border ${
                   tone === "included"
-                    ? "border-[#dabc73]/30 bg-[#dabc73]/10 text-[#dabc73]"
+                    ? "border-[rgba(var(--gold),0.3)] bg-[rgba(var(--gold),0.1)] text-[rgb(var(--gold))]"
                     : "border-white/10 bg-white/[0.03] text-white/38"
                 }`}
               >
@@ -247,7 +247,7 @@ function FeatureGroup({
                 {tone === "locked" ? (
                   <Link
                     href="/pricing"
-                    className="mt-2 inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-[#dabc73]/75 transition hover:text-[#f4df9b]"
+                    className="mt-2 inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.75)] transition hover:text-[rgb(var(--gold))]"
                   >
                     Unlock {item.minimumPlanLabel}
                     <ArrowRight size={12} />

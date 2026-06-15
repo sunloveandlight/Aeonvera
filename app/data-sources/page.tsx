@@ -193,7 +193,7 @@ export default function DataSourcesPage() {
 
     if (!connected) {
       if (provider === "whoop") {
-        setMessage("WHOOP is ready in Aeonvera, but official developer access can wait until your WHOOP account is active.");
+        setMessage("Direct WHOOP sync is coming soon.");
         return;
       }
 
@@ -387,7 +387,7 @@ export default function DataSourcesPage() {
                 Aeonvera is using to rebuild your health state.
               </p>
               {message ? (
-                <p className="mt-4 text-sm leading-6 text-[#dabc73]/82">{message}</p>
+                <p className="mt-4 text-sm leading-6 text-[rgba(var(--gold),0.82)]">{message}</p>
               ) : null}
             </div>
             <div className="flex flex-wrap gap-3">
@@ -445,11 +445,11 @@ export default function DataSourcesPage() {
           />
 
           <SourceCard
-            actionLabel={connectedProviders.has("whoop") ? "Sync WHOOP" : "Pending"}
+            actionLabel={connectedProviders.has("whoop") ? "Sync WHOOP" : "Coming soon"}
             detail={
               connectedProviders.has("whoop")
                 ? connectionDetail(connections.find((item) => item.provider === "whoop"))
-                : "Aeonvera support is built. Official WHOOP developer access can be enabled later without blocking launch."
+                : "Direct WHOOP sync is coming soon."
             }
             icon={<Activity size={18} />}
             status={connectedProviders.has("whoop") ? "connected" : "pending"}
@@ -467,7 +467,7 @@ export default function DataSourcesPage() {
             icon={<Upload size={18} />}
             label="Apple Health"
             payload={applePayload}
-            placeholder='{"records":[{"metricName":"sleep_hours","value":7.6,"timestamp":"2026-06-13"}]}'
+            placeholder="Paste your exported health data here"
             submitting={syncing === "apple"}
             submitLabel={syncing === "apple" ? "Importing" : "Import Apple Health"}
             onFileChange={setAppleFile}
@@ -482,7 +482,7 @@ export default function DataSourcesPage() {
             icon={<FileUp size={18} />}
             label="Clinical Labs"
             payload={labPayload}
-            placeholder='{"records":[{"canonicalKey":"hba1c","value":5.2,"unit":"%"},{"canonicalKey":"apob","value":82,"unit":"mg/dL"}]}'
+            placeholder="Paste your exported lab results here"
             submitting={labImporting}
             submitLabel={labImporting ? "Importing" : "Import Labs"}
             onFileChange={setLabFile}
@@ -594,7 +594,7 @@ function SourceIntelligencePanel({
                 <p className="line-clamp-3 text-xs leading-5 text-white/38">
                   {prompt.body}
                 </p>
-                <p className="mt-4 text-[9px] uppercase tracking-[0.14em] text-[#dabc73]/72">
+                <p className="mt-4 text-[9px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.72)]">
                   {prompt.actionLabel}
                 </p>
               </Link>
@@ -635,7 +635,7 @@ function SourceCard({
   const content = (
     <div className="quiet-lift executive-panel flex h-full flex-col rounded-lg p-5 transition hover:border-white/[0.14]">
       <div className="flex items-start justify-between gap-4">
-        <div className="inline-flex size-10 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.035] text-[#dabc73]/85">
+        <div className="inline-flex size-10 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.035] text-[rgba(var(--gold),0.85)]">
           {icon}
         </div>
         <span className={statusClassName(status)}>{statusLabel(status)}</span>
@@ -643,7 +643,7 @@ function SourceCard({
       <h2 className="mt-5 text-2xl font-light text-white">{title}</h2>
       <p className="mt-3 flex-1 text-sm leading-7 text-white/48">{detail}</p>
       {href ? (
-        <span className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[#dabc73]/78">
+        <span className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.78)]">
           {actionLabel}
           <ArrowRight size={13} />
         </span>
@@ -700,7 +700,7 @@ function ImportPanel({
           <p className="micro-label">{label}</p>
           <h2 className="mt-3 text-2xl font-light text-white">Upload or paste data.</h2>
         </div>
-        <div className="inline-flex size-10 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.035] text-[#dabc73]/85">
+        <div className="inline-flex size-10 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.035] text-[rgba(var(--gold),0.85)]">
           {icon}
         </div>
       </div>
@@ -810,7 +810,7 @@ function statusLabel(status: SourceStatus) {
 
 function statusClassName(status: SourceStatus) {
   const base = "rounded-full border px-3 py-1 text-[8px] uppercase tracking-[0.13em]";
-  if (status === "connected") return `${base} border-[#dabc73]/24 bg-[#dabc73]/10 text-[#dabc73]/88`;
+  if (status === "connected") return `${base} border-[rgba(var(--gold),0.24)] bg-[rgba(var(--gold),0.1)] text-[rgba(var(--gold),0.88)]`;
   if (status === "ready") return `${base} border-white/[0.1] bg-white/[0.04] text-white/55`;
   if (status === "locked") return `${base} border-white/[0.08] bg-white/[0.025] text-white/34`;
   if (status === "pending") return `${base} border-white/[0.08] bg-black/20 text-white/32`;

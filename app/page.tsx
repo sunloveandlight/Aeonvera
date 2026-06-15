@@ -169,7 +169,7 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
                   <linearGradient id="age-signal-gradient" x1="36" y1="28" x2="124" y2="132" gradientUnits="userSpaceOnUse">
                     <stop offset="0%" stopColor="rgba(248,250,252,0.94)" />
                     <stop offset="48%" stopColor="rgba(164, 195, 255, 0.82)" />
-                    <stop offset="74%" stopColor="rgba(218, 188, 115, 0.78)" />
+                    <stop offset="74%" stopColor="rgba(var(--gold),0.78)" />
                     <stop offset="100%" stopColor="rgba(248,250,252,0.9)" />
                   </linearGradient>
                 </defs>
@@ -536,7 +536,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
+      <section className="border-t border-white/[0.06] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
@@ -556,7 +556,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
+      <section className="border-t border-white/[0.06] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-3xl">
             <p className="text-eyebrow">Platform</p>
@@ -577,7 +577,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
+      <section className="border-t border-white/[0.06] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="mb-14 grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
             <div>
@@ -618,7 +618,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
+      <section className="border-t border-white/[0.06] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
@@ -675,7 +675,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-t border-[rgba(36,50,74,0.1)] px-6 py-24 lg:px-8">
+      <section className="border-t border-white/[0.06] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-4xl font-light leading-tight md:text-6xl">
             Start with the number. Build the operating system.

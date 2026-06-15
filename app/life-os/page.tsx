@@ -131,7 +131,7 @@ export default function LifeOsPage() {
           setPayload(data);
           if (data.migrationRequired) {
             setMessage(
-              "Apply supabase/migrations/20260613140000_life_os_domain_profiles.sql to enable saved Life OS domain profiles."
+              "Saved Life OS profiles aren't available yet. Check back soon."
             );
           }
         }
@@ -282,7 +282,7 @@ export default function LifeOsPage() {
             <section className="executive-panel rounded-lg p-6 md:p-8">
               <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
                 <div>
-                  <p className="micro-label">Phase 11 / Human Optimization Platform</p>
+                  <p className="micro-label">Life OS</p>
                   <h1 className="mt-4 text-4xl font-light leading-tight text-white md:text-6xl">
                     Your future self becomes operational.
                   </h1>
@@ -291,7 +291,7 @@ export default function LifeOsPage() {
                       "Aeonvera is extending beyond health into capability, cognition, productivity, relationships, purpose, and long-term freedom."}
                   </p>
                   {message ? (
-                    <p className="mt-4 text-sm leading-6 text-[#dabc73]/76">{message}</p>
+                    <p className="mt-4 text-sm leading-6 text-[rgba(var(--gold),0.76)]">{message}</p>
                   ) : null}
                 </div>
                 <div className="rounded-lg border border-white/[0.06] bg-black/20 p-5">
@@ -318,7 +318,7 @@ export default function LifeOsPage() {
                     <p className="mt-3 max-w-3xl text-sm leading-7 text-white/50">
                       {payload.nextBestMove.detail}
                     </p>
-                    <p className="mt-3 text-xs leading-6 text-[#dabc73]/72">
+                    <p className="mt-3 text-xs leading-6 text-[rgba(var(--gold),0.72)]">
                       Why Aeonvera recommends this: {payload.nextBestMove.reason}
                     </p>
                   </div>
@@ -355,7 +355,7 @@ export default function LifeOsPage() {
                     Life OS priorities are the bridge between future-self intelligence and daily behavior.
                   </p>
                   {priorityMessage ? (
-                    <p className="mt-3 text-sm leading-6 text-[#dabc73]/76">{priorityMessage}</p>
+                    <p className="mt-3 text-sm leading-6 text-[rgba(var(--gold),0.76)]">{priorityMessage}</p>
                   ) : null}
                 </div>
                 {weakestDomain ? (
@@ -427,7 +427,7 @@ function DomainCard({ domain }: { domain: LifeDomain }) {
 
       <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.06]">
         <div
-          className="h-full rounded-full bg-[#dabc73]"
+          className="h-full rounded-full bg-[rgb(var(--gold))]"
           style={{ width: `${Math.max(4, Math.min(100, domain.score))}%` }}
         />
       </div>
@@ -474,7 +474,7 @@ function PriorityCard({
             {priority.domain.replace(/_/g, " ")} / {priority.status} / {priority.horizonDays} days
           </p>
         </div>
-        <span className="rounded-full border border-[#dabc73]/20 bg-[#dabc73]/[0.07] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-[#dabc73]/72">
+        <span className="rounded-full border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.07)] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-[rgba(var(--gold),0.72)]">
           P{priority.priority}
         </span>
       </div>
@@ -483,7 +483,7 @@ function PriorityCard({
         <p className="mt-3 text-xs leading-6 text-white/46">{priority.desiredOutcome}</p>
       ) : null}
       {priority.nextAction ? (
-        <p className="mt-3 text-xs leading-6 text-[#dabc73]/72">
+        <p className="mt-3 text-xs leading-6 text-[rgba(var(--gold),0.72)]">
           Next action: {priority.nextAction}
         </p>
       ) : null}

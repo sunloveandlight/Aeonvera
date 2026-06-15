@@ -22,7 +22,7 @@ export default function Checkbox({
         checked={checked}
         disabled={disabled}
         onChange={(e) => onChange?.(e.target.checked)}
-        className="w-4 h-4 rounded border border-white/[0.08] bg-white/[0.03] accent-[#8b5cf6] cursor-pointer"
+        className="w-4 h-4 rounded border border-white/[0.08] bg-white/[0.03] accent-[rgb(var(--gold))] cursor-pointer"
       />
       {label}
     </label>

@@ -85,12 +85,12 @@ export default function SuccessPage() {
 
         if (attempts < 20) {
           if (requestedPlan && profile?.plan && profile.plan !== requestedPlan) {
-            setStatus(`Confirming your ${requestedPlan} membership with Stripe...`);
+            setStatus(`Confirming your ${requestedPlan} membership...`);
           }
           timeoutRef.current = setTimeout(checkStatus, 1500);
         } else {
           setStatus(
-            "We're still waiting for Stripe confirmation. Please refresh this page in a few moments."
+            "We're still confirming your payment. Please refresh this page in a few moments."
           );
         }
       } catch (err) {
@@ -126,7 +126,7 @@ export default function SuccessPage() {
         <h1 className="mb-6 text-5xl font-light tracking-tight">Subscription Activated</h1>
 
         <div className="mb-8 flex justify-center">
-          <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-[#c4a969]" />
+          <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-[rgb(var(--gold))]" />
         </div>
 
         <p className="text-white/55">{status}</p>

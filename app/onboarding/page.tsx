@@ -114,7 +114,7 @@ export default function OnboardingPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        Loading...
+        <p className="text-sm text-white/50">Loading…</p>
       </div>
     );
   }
@@ -125,7 +125,7 @@ export default function OnboardingPage() {
         <PageContainer>
           <div className="mx-auto max-w-4xl text-center">
             <p className="mb-8 text-eyebrow">
-              Initialization
+              Welcome
             </p>
             <h1 className="text-5xl font-light leading-[1.04] tracking-tight md:text-6xl">
               Create your

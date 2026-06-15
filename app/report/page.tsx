@@ -758,7 +758,7 @@ function BioAgeHistoryCard({
             <polyline
               points={biologicalLine.join(" ")}
               fill="none"
-              stroke="rgba(218,188,115,0.9)"
+              stroke="rgba(var(--gold),0.9)"
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth="2.8"

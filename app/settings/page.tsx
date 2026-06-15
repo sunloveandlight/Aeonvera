@@ -18,7 +18,7 @@ const SETTINGS_SECTIONS = [
   {
     icon: CreditCard,
     title: "Membership",
-    body: "Change plan, review billing, or open Stripe account management.",
+    body: "Change plan, review billing, or manage your subscription.",
     href: "/pricing",
     action: "Manage plan",
   },

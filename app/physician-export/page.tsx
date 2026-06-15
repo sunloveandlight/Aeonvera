@@ -391,7 +391,7 @@ function ShareLinkManager({
   onToggleSection: (section: string) => void;
 }) {
   return (
-    <div className="mb-8 rounded-lg border border-[#dabc73]/18 bg-[#dabc73]/[0.045] p-6 print:hidden">
+    <div className="mb-8 rounded-lg border border-[rgba(var(--gold),0.18)] bg-[rgba(var(--gold),0.045)] p-6 print:hidden">
       <div className="mb-5 flex flex-col gap-3 border-b border-white/[0.06] pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="micro-label">Secure Clinical Sharing</p>
@@ -408,6 +408,7 @@ function ShareLinkManager({
             value={recipientLabel}
             onChange={(event) => onRecipientChange(event.target.value)}
             className="h-11 w-full rounded-md border border-white/[0.08] bg-black/20 px-3 text-sm text-white/70 outline-none placeholder:text-white/24"
+            aria-label="Recipient label"
             placeholder="Recipient label, e.g. Dr. Smith or Coach"
           />
           <div>
@@ -448,7 +449,7 @@ function ShareLinkManager({
                 onClick={() => onToggleSection(key)}
                 className={`rounded-md border px-3 py-2 text-left text-xs transition ${
                   includedSections.includes(key)
-                    ? "border-[#dabc73]/28 bg-[#dabc73]/[0.08] royal-text"
+                    ? "border-[rgba(var(--gold),0.28)] bg-[rgba(var(--gold),0.08)] royal-text"
                     : "border-white/[0.07] bg-black/20 text-white/38 hover:text-white/60"
                 }`}
               >
@@ -523,11 +524,11 @@ function ShareAccessHint({ link }: { link: ShareLink }) {
   if (link.accessCode) {
     return (
       <div className="mt-2 space-y-2">
-        <p className="inline-flex rounded-md border border-[#dabc73]/20 bg-[#dabc73]/[0.06] px-2 py-1 text-xs text-[#dabc73]/80">
+        <p className="inline-flex rounded-md border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.06)] px-2 py-1 text-xs text-[rgba(var(--gold),0.8)]">
           Access code: {link.accessCode}
         </p>
         <p className="text-xs leading-5 text-white/34">
-          Send the message to your clinician. For testing, copy the link and code separately.
+          Send the message to your clinician.
         </p>
       </div>
     );
@@ -686,7 +687,7 @@ function DataTable({
           <tr>
             {columns.map((column) => (
               <th key={column} className="border-b border-white/[0.08] px-2 py-2 font-medium print:border-black/15">
-                {column.replace(/_/g, " ")}
+                {columnLabel(column)}
               </th>
             ))}
           </tr>
@@ -707,6 +708,26 @@ function DataTable({
   );
 }
 
+const COLUMN_LABELS: Record<string, string> = {
+  created_at: "Date",
+  biological_age: "Biological age",
+  chronological_age: "Chronological age",
+  age_delta: "Age delta",
+  canonical_key: "Marker",
+  reference_range: "Reference range",
+  metric_name: "Metric",
+  metric_value: "Value",
+  concern_status: "Status",
+  answer_summary: "Summary",
+};
+
+function columnLabel(column: string) {
+  if (COLUMN_LABELS[column]) return COLUMN_LABELS[column];
+  return column
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function formatCell(value: unknown) {
   if (value == null || value === "") return "--";
   if (typeof value === "boolean") return value ? "yes" : "no";
@@ -714,7 +735,7 @@ function formatCell(value: unknown) {
   if (typeof value === "string") {
     return value.includes("T") ? formatDate(value) : value;
   }
-  return JSON.stringify(value);
+  return "—";
 }
 
 function formatDate(value?: string) {

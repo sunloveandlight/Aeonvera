@@ -438,7 +438,7 @@ export default function PricingPage() {
                     </div>
                     <p className="mt-5 text-sm leading-7 text-white/55">
                       {isDowngrade
-                        ? `Move to ${planOption.name} if you want a simpler monthly membership. Stripe will show the billing effect before anything changes.`
+                        ? `Move to ${planOption.name} if you want a simpler monthly membership. You'll see the billing effect before anything changes.`
                         : planOption.id === "sovereign"
                           ? "Move directly into the full executive digital-twin path."
                           : ownedCopy.upgradeIntro}

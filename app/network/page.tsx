@@ -347,6 +347,7 @@ export default function NetworkPage() {
                     setForm((current) => ({ ...current, memberEmail: event.target.value }))
                   }
                   className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/70 outline-none placeholder:text-white/24"
+                  aria-label="Member email"
                   placeholder="Member email"
                 />
                 <input
@@ -355,6 +356,7 @@ export default function NetworkPage() {
                     setForm((current) => ({ ...current, memberName: event.target.value }))
                   }
                   className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/70 outline-none placeholder:text-white/24"
+                  aria-label="Name or label"
                   placeholder="Name or label"
                 />
 
@@ -366,7 +368,7 @@ export default function NetworkPage() {
                       onClick={() => setRole(role)}
                       className={`rounded-lg border p-3 text-left transition ${
                         form.role === role
-                          ? "border-[#dabc73]/28 bg-[#dabc73]/[0.08]"
+                          ? "border-[rgba(var(--gold),0.28)] bg-[rgba(var(--gold),0.08)]"
                           : "border-white/[0.07] bg-white/[0.025]"
                       }`}
                     >
@@ -408,7 +410,7 @@ export default function NetworkPage() {
                         onClick={() => togglePermission(key)}
                         className={`rounded-md border px-3 py-2 text-left text-xs transition ${
                           form.permissions.includes(key)
-                            ? "border-[#dabc73]/28 bg-[#dabc73]/[0.08] royal-text"
+                            ? "border-[rgba(var(--gold),0.28)] bg-[rgba(var(--gold),0.08)] royal-text"
                             : "border-white/[0.07] bg-black/20 text-white/38 hover:text-white/60"
                         }`}
                       >
@@ -554,11 +556,11 @@ function InvitationAccessHint({ invitation }: { invitation: CareInvitation }) {
   if (invitation.accessCode) {
     return (
       <div className="mt-2 space-y-2">
-        <p className="inline-flex rounded-md border border-[#dabc73]/20 bg-[#dabc73]/[0.06] px-2 py-1 text-xs text-[#dabc73]/80">
+        <p className="inline-flex rounded-md border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.06)] px-2 py-1 text-xs text-[rgba(var(--gold),0.8)]">
           Access code: {invitation.accessCode}
         </p>
         <p className="text-xs leading-5 text-white/34">
-          Send the message to this person. For testing, copy the link and code separately.
+          Send the message to this person.
         </p>
       </div>
     );
@@ -646,7 +648,7 @@ function NetworkIntelligencePanel({
               key={`${recommendation.role}-${recommendation.title}`}
               type="button"
               onClick={() => onSelectRole(recommendation.role)}
-              className="w-full rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 text-left transition hover:border-[#dabc73]/24 hover:bg-[#dabc73]/[0.05]"
+              className="w-full rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 text-left transition hover:border-[rgba(var(--gold),0.24)] hover:bg-[rgba(var(--gold),0.05)]"
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-white/76">{recommendation.title}</p>
@@ -657,7 +659,7 @@ function NetworkIntelligencePanel({
               <p className="mt-2 text-xs leading-5 text-white/42">
                 {recommendation.detail}
               </p>
-              <p className="mt-3 text-[11px] leading-5 text-[#dabc73]/70">
+              <p className="mt-3 text-[11px] leading-5 text-[rgba(var(--gold),0.7)]">
                 Why Aeonvera recommends this: {recommendation.reason}
               </p>
             </button>

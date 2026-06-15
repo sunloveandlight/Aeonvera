@@ -40,7 +40,7 @@ export default function ClinicalPacketSummary({
 
   return (
     <section className="mb-8 break-inside-avoid">
-      <div className="rounded-lg border border-[#dabc73]/18 bg-[#dabc73]/[0.045] p-5 print:border-black/15 print:bg-white">
+      <div className="rounded-lg border border-[rgba(var(--gold),0.18)] bg-[rgba(var(--gold),0.045)] p-5 print:border-black/15 print:bg-white">
         <div className="mb-5 border-b border-white/[0.07] pb-4 print:border-black/15">
           <p className="micro-label print:text-black/50">Clinical Packet</p>
           <h2 className="mt-3 text-2xl font-light text-white print:text-black">
@@ -141,7 +141,7 @@ export default function ClinicalPacketSummary({
                       {packet.activeProtocol.domains.map((domain) => (
                         <span
                           key={domain}
-                          className="rounded-md border border-[#dabc73]/20 bg-[#dabc73]/[0.06] px-2 py-1 text-[9px] uppercase tracking-[0.12em] royal-text print:border-black/15 print:text-black/60"
+                          className="rounded-md border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.06)] px-2 py-1 text-[9px] uppercase tracking-[0.12em] royal-text print:border-black/15 print:text-black/60"
                         >
                           {domain}
                         </span>
@@ -194,14 +194,14 @@ function severityClassName(severity: ClinicalPacket["riskFlags"][number]["severi
   const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
 
   if (severity === "high") return `${base} bg-rose-400/[0.1] text-rose-200/78 print:bg-black/5 print:text-black/70`;
-  if (severity === "medium") return `${base} bg-[#dabc73]/[0.08] royal-text print:bg-black/5 print:text-black/70`;
+  if (severity === "medium") return `${base} bg-[rgba(var(--gold),0.08)] royal-text print:bg-black/5 print:text-black/70`;
   return `${base} bg-white/[0.04] text-white/40 print:bg-black/5 print:text-black/55`;
 }
 
 function toneClassName(tone: ClinicalPacket["recentChanges"][number]["tone"]) {
   const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
 
-  if (tone === "positive") return `${base} bg-[#dabc73]/[0.08] royal-text print:bg-black/5 print:text-black/70`;
+  if (tone === "positive") return `${base} bg-[rgba(var(--gold),0.08)] royal-text print:bg-black/5 print:text-black/70`;
   if (tone === "caution") return `${base} bg-rose-400/[0.1] text-rose-200/78 print:bg-black/5 print:text-black/70`;
   return `${base} bg-white/[0.04] text-white/40 print:bg-black/5 print:text-black/55`;
 }

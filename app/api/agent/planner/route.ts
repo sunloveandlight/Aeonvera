@@ -514,7 +514,7 @@ function buildPlanMessage(
   const directionLabel =
     direction === "downgrade" ? "downgrade" : direction === "upgrade" ? "upgrade" : "move";
   const from = currentPlan ? ` from ${titleCase(currentPlan)}` : "";
-  return `I can ${directionLabel}${from} to ${titleCase(targetPlan)} and let Stripe show the billing impact before anything changes.`;
+  return `I can ${directionLabel}${from} to ${titleCase(targetPlan)} and show the billing impact before anything changes.`;
 }
 
 function resolveNavigationIntent(text: string, currentPage: string) {

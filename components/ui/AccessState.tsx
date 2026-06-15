@@ -24,7 +24,7 @@ export default function AccessState({
     <div className="executive-panel rounded-lg p-6 md:p-8">
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
         <div className="max-w-2xl">
-          <div className="inline-flex size-11 items-center justify-center rounded-full border border-[#dabc73]/25 bg-[#dabc73]/10 text-[#dabc73]">
+          <div className="inline-flex size-11 items-center justify-center rounded-full border border-[rgba(var(--gold),0.25)] bg-[rgba(var(--gold),0.1)] text-[rgb(var(--gold))]">
             <LockKeyhole size={18} />
           </div>
           <p className="micro-label mt-5">{eyebrow}</p>
@@ -36,13 +36,13 @@ export default function AccessState({
 
         {points.length ? (
           <div className="w-full rounded-lg border border-white/[0.07] bg-black/20 p-4 md:w-80">
-            <p className="text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/75">
+            <p className="text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.75)]">
               What unlocks
             </p>
             <div className="mt-4 space-y-3">
               {points.map((point) => (
                 <div key={point} className="flex gap-3 text-sm leading-6 text-white/62">
-                  <Sparkles className="mt-1 shrink-0 text-[#dabc73]/70" size={13} />
+                  <Sparkles className="mt-1 shrink-0 text-[rgba(var(--gold),0.7)]" size={13} />
                   <span>{point}</span>
                 </div>
               ))}
@@ -90,7 +90,7 @@ export function EmptyState({
       {action ? (
         <Link
           href={action.href}
-          className="mt-5 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[#dabc73]/80 transition hover:text-[#f4df9b]"
+          className="mt-5 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)] transition hover:text-[rgb(var(--gold))]"
         >
           {action.label}
           <ArrowRight size={13} />

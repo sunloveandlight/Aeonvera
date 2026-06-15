@@ -16,7 +16,9 @@ export default function Toggle({ enabled, onChange, label }: ToggleProps) {
       <button
         type="button"
         onClick={() => onChange(!enabled)}
-        aria-pressed={enabled}
+        role="switch"
+        aria-checked={enabled}
+        aria-label={label}
         className={`
           w-10 h-6 flex items-center rounded-full p-1 transition-all duration-300
           ${enabled

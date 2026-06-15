@@ -1001,7 +1001,7 @@ function ProtocolActionsCalendarPanel({
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <span className="rounded-md bg-white/[0.035] px-2 py-1 text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/80">
+                    <span className="rounded-md bg-white/[0.035] px-2 py-1 text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)]">
                       {scopeLabel(scope)}
                     </span>
                     {action.cadence && (
@@ -1026,7 +1026,7 @@ function ProtocolActionsCalendarPanel({
                       onRecordOutcome(action, index, "success");
                     }}
                     disabled={Boolean(savingOutcomeKey)}
-                    className="inline-flex h-10 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.04] px-3 text-[10px] uppercase tracking-[0.14em] text-white/68 transition hover:border-[#dabc73]/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+                    className="inline-flex h-10 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.04] px-3 text-[10px] uppercase tracking-[0.14em] text-white/68 transition hover:border-[rgba(var(--gold),0.4)] hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     {savingDone ? "Saving" : "Done"}
                   </button>
@@ -1101,7 +1101,7 @@ function ExecutionScorePanel({ execution }: { execution: ExecutionSummary | null
               score
             </p>
           </div>
-          <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[#dabc73]/80">
+          <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[rgba(var(--gold),0.8)]">
             {label}
           </p>
         </div>
@@ -1176,7 +1176,7 @@ function PersonalHealthAgentPanel({
                 type="button"
                 onClick={() => onSend(suggestion)}
                 disabled={thinking}
-                className="inline-flex min-h-9 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-left text-[10px] uppercase tracking-[0.12em] text-white/48 transition hover:border-[#dabc73]/35 hover:text-white/78 disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex min-h-9 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-left text-[10px] uppercase tracking-[0.12em] text-white/48 transition hover:border-[rgba(var(--gold),0.35)] hover:text-white/78 disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {suggestion}
               </button>
@@ -1187,9 +1187,9 @@ function PersonalHealthAgentPanel({
               {appliedActions.map((action) => (
                 <div
                   key={`${action.type}-${action.label}`}
-                  className="rounded-lg border border-[#dabc73]/20 bg-[#dabc73]/[0.045] p-3"
+                  className="rounded-lg border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.045)] p-3"
                 >
-                  <p className="text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/80">
+                  <p className="text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)]">
                     {action.label}
                   </p>
                   <p className="mt-2 text-xs leading-5 text-white/48">{action.detail}</p>
@@ -1207,10 +1207,10 @@ function PersonalHealthAgentPanel({
                 className={`rounded-lg border p-4 ${
                   message.role === "assistant"
                     ? "border-white/[0.07] bg-white/[0.025]"
-                    : "border-[#dabc73]/20 bg-[#dabc73]/[0.045]"
+                    : "border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.045)]"
                 }`}
               >
-                <p className="mb-2 text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/75">
+                <p className="mb-2 text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.75)]">
                   {message.role === "assistant" ? "Aeonvera" : "You"}
                 </p>
                 <p className="text-sm leading-7 text-white/58">{message.content}</p>
@@ -1236,7 +1236,8 @@ function PersonalHealthAgentPanel({
               value={prompt}
               onChange={(event) => onPromptChange(event.target.value)}
               placeholder="Ask what to do, why it matters, or what should change..."
-              className="min-h-12 flex-1 rounded-md border border-white/[0.08] bg-black/25 px-4 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[#dabc73]/35"
+              aria-label="Ask or command Aeonvera"
+              className="min-h-12 flex-1 rounded-md border border-white/[0.08] bg-black/25 px-4 text-sm text-white outline-none transition placeholder:text-white/24 focus:border-[rgba(var(--gold),0.35)]"
             />
             <button
               type="submit"
@@ -1281,7 +1282,7 @@ function TierUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | nul
         </div>
         <Link
           href="/pricing"
-          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[#dabc73]/80 transition hover:text-[#f4df9b]"
+          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)] transition hover:text-[rgb(var(--gold))]"
         >
           Manage access
           <ArrowRight size={13} />
@@ -1294,7 +1295,7 @@ function TierUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | nul
             key={item.meter}
             className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4"
           >
-            <p className="text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/70">
+            <p className="text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.7)]">
               {usageMeterLabel(item.meter)}
             </p>
             <p className="mt-3 text-xl font-light leading-none text-white/90">
@@ -1342,7 +1343,7 @@ function TierEntitlementGroup({
     <div className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
       <p
         className={`text-[8px] uppercase tracking-[0.14em] ${
-          tone === "included" ? "text-[#dabc73]/75" : "text-white/38"
+          tone === "included" ? "text-[rgba(var(--gold),0.75)]" : "text-white/38"
         }`}
       >
         {label}
@@ -1358,7 +1359,7 @@ function TierEntitlementGroup({
             {tone === "locked" ? (
               <Link
                 href="/plan"
-                className="mt-2 inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-[#dabc73]/75 transition hover:text-[#f4df9b]"
+                className="mt-2 inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.75)] transition hover:text-[rgb(var(--gold))]"
               >
                 Unlock {item.minimumPlanLabel}
                 <ArrowRight size={12} />
@@ -1396,7 +1397,7 @@ function AdvancedModalitiesPanel({
         </div>
         <Link
           href="/pricing"
-          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[#dabc73]/80 transition hover:text-[#f4df9b]"
+          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)] transition hover:text-[rgb(var(--gold))]"
         >
           Compare tiers
           <ArrowRight size={13} />
@@ -1417,13 +1418,13 @@ function AdvancedModalitiesPanel({
             }}
             className={`group rounded-lg border p-5 text-left transition ${
               modality.access === "included"
-                ? "border-[#dabc73]/24 bg-[#dabc73]/[0.05] hover:border-[#dabc73]/42"
+                ? "border-[rgba(var(--gold),0.24)] bg-[rgba(var(--gold),0.05)] hover:border-[rgba(var(--gold),0.42)]"
                 : "border-white/[0.075] bg-white/[0.022] hover:border-white/[0.14]"
             }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/70">
+                <p className="text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.7)]">
                   {titleCase(modality.category)} / {titleCase(modality.evidenceGrade)}
                 </p>
                 <h3 className="mt-3 text-xl font-light leading-tight text-white/88">
@@ -1433,7 +1434,7 @@ function AdvancedModalitiesPanel({
               <span
                 className={`rounded-full border px-2.5 py-1 text-[8px] uppercase tracking-[0.12em] ${
                   modality.access === "included"
-                    ? "border-[#dabc73]/24 text-[#f0d68d]/85"
+                    ? "border-[rgba(var(--gold),0.24)] text-[rgba(var(--gold),0.85)]"
                     : "border-white/[0.08] text-white/36"
                 }`}
               >
@@ -1484,7 +1485,7 @@ function ModalitySignal({ label, value }: { label: string; value: string }) {
 function DailyBriefSignal({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-3">
-      <p className="text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/70">
+      <p className="text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.7)]">
         {label}
       </p>
       <p className="mt-2 line-clamp-3 text-xs leading-5 text-white/44">{value}</p>
@@ -1519,7 +1520,7 @@ function PersonalAgentMemoryPanel({ memory }: { memory: CoachMemory | null }) {
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-md bg-white/[0.035] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/80">
+            <span className="rounded-md bg-white/[0.035] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)]">
               {styleLabel}
             </span>
             <span className="rounded-md bg-white/[0.025] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-white/30">
@@ -1608,7 +1609,7 @@ function ClinicalIntelligenceMemoryPanel({
         <div className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-md bg-white/[0.035] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-[#dabc73]/80">
+              <span className="rounded-md bg-white/[0.035] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)]">
                 {clinicalStatusLabel(status)}
               </span>
               <span className="rounded-md bg-white/[0.025] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-white/30">
@@ -1623,7 +1624,7 @@ function ClinicalIntelligenceMemoryPanel({
               <p className="mt-4 text-sm leading-7 text-white/42">{followUp}</p>
             ) : null}
             {followUp ? (
-              <div className="mt-5 rounded-lg border border-[#dabc73]/15 bg-[#dabc73]/[0.035] p-4">
+              <div className="mt-5 rounded-lg border border-[rgba(var(--gold),0.15)] bg-[rgba(var(--gold),0.035)] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="micro-label">Answer follow-up</p>
                   {safetyLevel ? (
@@ -1636,7 +1637,7 @@ function ClinicalIntelligenceMemoryPanel({
                   value={answer}
                   onChange={(event) => onAnswerChange(event.target.value)}
                   placeholder="Tell Aeonvera what changed, what stayed the same, or what you want adjusted..."
-                  className="mt-3 min-h-24 w-full resize-none rounded-md border border-white/[0.08] bg-black/25 p-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/24 focus:border-[#dabc73]/35"
+                  className="mt-3 min-h-24 w-full resize-none rounded-md border border-white/[0.08] bg-black/25 p-3 text-sm leading-6 text-white outline-none transition placeholder:text-white/24 focus:border-[rgba(var(--gold),0.35)]"
                 />
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-xs leading-5 text-white/36">
@@ -2070,7 +2071,7 @@ function CalendarAutomationCard({
           : "Connect Google Calendar to let Aeonvera schedule workouts, walks, check-ins, and protocol blocks."}
       </p>
       {message && (
-        <p className="mt-4 text-xs leading-5 text-[#dabc73]/80">{message}</p>
+        <p className="mt-4 text-xs leading-5 text-[rgba(var(--gold),0.8)]">{message}</p>
       )}
       <button
         type="button"

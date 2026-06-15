@@ -1804,7 +1804,7 @@ function LabImportPanel({
             value={labPayload}
             onChange={(event) => onLabPayloadChange(event.target.value)}
             onClick={(event) => event.stopPropagation()}
-            placeholder='{"records":[{"canonicalKey":"albumin","value":4.6,"unit":"g/dL"},{"canonicalKey":"creatinine","value":0.9,"unit":"mg/dL"}]}'
+            placeholder="Paste your exported lab results here"
             className="executive-input mt-5 h-32 w-full resize-none rounded-lg p-4 text-xs leading-5 placeholder:text-white/16"
           />
 
@@ -2087,7 +2087,7 @@ function BioAgeTrend({
         <polyline
           points={chartPoints.join(" ")}
           fill="none"
-          stroke="rgba(218,188,115,0.86)"
+          stroke="rgba(var(--gold),0.86)"
           strokeWidth="2.4"
           strokeLinecap="round"
           strokeLinejoin="round"

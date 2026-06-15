@@ -136,7 +136,7 @@ export default function Header() {
                       onClick={() => setMoreOpen(false)}
                       className={`block rounded-md px-3 py-2 text-sm transition ${
                         isActive(pathname, item.href)
-                          ? "bg-[#dabc73]/[0.09] text-[#dabc73]"
+                          ? "bg-[rgba(var(--gold),0.09)] text-[rgb(var(--gold))]"
                           : "text-white/58 hover:bg-white/[0.05] hover:text-white/82"
                       }`}
                       role="menuitem"

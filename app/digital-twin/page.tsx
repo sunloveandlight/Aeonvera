@@ -638,41 +638,45 @@ export default function DigitalTwinPage() {
                   <p className="micro-label mb-5">Outcome Tracking</p>
                   <div className="space-y-3">
                     <select
+                      aria-label="Outcome domain"
                       value={outcomeForm.domain}
                       onChange={(event) =>
                         setOutcomeForm((current) => ({ ...current, domain: event.target.value }))
                       }
-                      className="h-11 w-full rounded-md border border-white/[0.08] bg-black/40 px-3 text-sm text-white/70 outline-none"
+                      className="h-11 w-full rounded-md border border-white/[0.08] bg-black/40 px-3 text-sm text-white/70 focus:border-[rgba(var(--gold),0.6)] focus:outline-none"
                     >
                       {["Recovery", "Movement", "Nutrition", "Metabolic", "Stress", "Sleep"].map((domain) => (
                         <option key={domain}>{domain}</option>
                       ))}
                     </select>
                     <input
+                      aria-label="Action tested"
                       value={outcomeForm.action}
                       onChange={(event) =>
                         setOutcomeForm((current) => ({ ...current, action: event.target.value }))
                       }
-                      className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/70 outline-none"
+                      className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/70 focus:border-[rgba(var(--gold),0.6)] focus:outline-none"
                       placeholder="Action tested"
                     />
                     <select
+                      aria-label="Outcome result"
                       value={outcomeForm.outcome}
                       onChange={(event) =>
                         setOutcomeForm((current) => ({ ...current, outcome: event.target.value }))
                       }
-                      className="h-11 w-full rounded-md border border-white/[0.08] bg-black/40 px-3 text-sm text-white/70 outline-none"
+                      className="h-11 w-full rounded-md border border-white/[0.08] bg-black/40 px-3 text-sm text-white/70 focus:border-[rgba(var(--gold),0.6)] focus:outline-none"
                     >
                       <option value="success">Improved</option>
                       <option value="failure">Did not improve</option>
                       <option value="unknown">Still learning</option>
                     </select>
                     <textarea
+                      aria-label="Outcome notes"
                       value={outcomeForm.notes}
                       onChange={(event) =>
                         setOutcomeForm((current) => ({ ...current, notes: event.target.value }))
                       }
-                      className="min-h-24 w-full resize-none rounded-md border border-white/[0.08] bg-white/[0.025] p-3 text-sm leading-6 text-white/70 outline-none"
+                      className="min-h-24 w-full resize-none rounded-md border border-white/[0.08] bg-white/[0.025] p-3 text-sm leading-6 text-white/70 focus:border-[rgba(var(--gold),0.6)] focus:outline-none"
                       placeholder="Before / after notes, symptom changes, adherence, or metric shift"
                     />
                     <button
@@ -725,7 +729,7 @@ export default function DigitalTwinPage() {
                 <div
                   className={`space-y-3 pr-1 ${
                     timelineExpanded
-                      ? "max-h-[22rem] overflow-y-auto rounded-lg [scrollbar-color:rgba(218,188,115,0.28)_transparent]"
+                      ? "max-h-[22rem] overflow-y-auto rounded-lg [scrollbar-color:rgba(var(--gold),0.28)_transparent]"
                       : ""
                   }`}
                 >
@@ -746,7 +750,7 @@ export default function DigitalTwinPage() {
                     <button
                       type="button"
                       onClick={() => setTimelineExpanded((expanded) => !expanded)}
-                      className="inline-flex h-10 w-full items-center justify-center rounded-md border border-white/[0.07] bg-white/[0.025] px-4 text-sm text-white/58 transition hover:border-[#dabc73]/24 hover:bg-white/[0.04] hover:text-white/82"
+                      className="inline-flex h-10 w-full items-center justify-center rounded-md border border-white/[0.07] bg-white/[0.025] px-4 text-sm text-white/58 transition hover:border-[rgba(var(--gold),0.24)] hover:bg-white/[0.04] hover:text-white/82"
                     >
                       {timelineExpanded
                         ? "Show recent signals only"
@@ -986,7 +990,7 @@ function LivingTwinModelPanel({
           </h2>
         </div>
 
-        <div className="mb-5 rounded-lg border border-[#dabc73]/18 bg-[#dabc73]/[0.045] p-4">
+        <div className="mb-5 rounded-lg border border-[rgba(var(--gold),0.18)] bg-[rgba(var(--gold),0.045)] p-4">
           <label htmlFor="digital-twin-what-if" className="micro-label">
             Ask What If
           </label>
@@ -1047,7 +1051,7 @@ function LivingTwinModelPanel({
         </div>
 
         {(projectionMessage || projectionResult) && (
-          <div className="mt-5 rounded-lg border border-[#dabc73]/20 bg-[#dabc73]/[0.055] p-5">
+          <div className="mt-5 rounded-lg border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.055)] p-5">
             <p className="micro-label">Projection Result</p>
             {projectionMessage && (
               <p className="mt-3 text-sm leading-6 text-white/52">{projectionMessage}</p>
@@ -1391,7 +1395,7 @@ function ProjectionRealityPanel({
                   {comparison.confidence}% confidence
                 </span>
                 {comparison.projected && (
-                  <span className="rounded-md border border-[#dabc73]/18 bg-[#dabc73]/[0.055] px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] royal-text">
+                  <span className="rounded-md border border-[rgba(var(--gold),0.18)] bg-[rgba(var(--gold),0.055)] px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] royal-text">
                     {comparison.projected}
                   </span>
                 )}
@@ -1463,7 +1467,7 @@ function ProjectionRealityPanel({
 function projectionStatusClassName(status: TwinProjectionComparison["status"]) {
   const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
 
-  if (status === "on_track") return `${base} royal-text bg-[#dabc73]/[0.08]`;
+  if (status === "on_track") return `${base} royal-text bg-[rgba(var(--gold),0.08)]`;
   if (status === "off_track") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
   if (status === "tracking") return `${base} text-white/50 bg-white/[0.045]`;
   return `${base} text-white/28 bg-white/[0.025]`;
@@ -1535,7 +1539,7 @@ function changeStatusClassName(direction: TwinChange["direction"]) {
 function freshnessClassName(status: TwinAudit["freshness"]["status"]) {
   const base = "rounded-md px-3 py-2 text-[10px] uppercase tracking-[0.14em]";
 
-  if (status === "current") return `${base} royal-text bg-[#dabc73]/[0.08]`;
+  if (status === "current") return `${base} royal-text bg-[rgba(var(--gold),0.08)]`;
   if (status === "warming") return `${base} text-white/52 bg-white/[0.045]`;
   return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
 }

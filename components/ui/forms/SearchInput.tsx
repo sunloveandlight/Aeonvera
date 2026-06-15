@@ -28,8 +28,8 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             transition
             focus:outline-none
             focus:ring-1
-            focus:ring-[#8b5cf6]/25
-            focus:border-[#d6b765]
+            focus:ring-[rgba(var(--gold),0.25)]
+            focus:border-[rgba(var(--gold),0.62)]
             ${error ? "border-red-500/50" : "border-white/[0.08]"}
             ${className}
           `}

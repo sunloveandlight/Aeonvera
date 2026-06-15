@@ -633,7 +633,7 @@ export default function AeonCommandOrb() {
         {
           role: "assistant",
           content: currentPlan
-            ? `Opening Stripe to move you from ${PLAN_LABEL[currentPlan]} to ${PLAN_LABEL[targetPlan]}. You will confirm the billing effect before anything changes.`
+            ? `Opening secure checkout to move you from ${PLAN_LABEL[currentPlan]} to ${PLAN_LABEL[targetPlan]}. You will confirm the billing effect before anything changes.`
             : `Opening checkout for ${PLAN_LABEL[targetPlan]}.`,
         },
       ]);
@@ -641,7 +641,7 @@ export default function AeonCommandOrb() {
       if (currentPlan && isActiveSubscription(usageData.subscriptionStatus)) {
         pushActionReceipt({
           actionType: "plan_change",
-          detail: `Stripe is opening to review the move to ${PLAN_LABEL[targetPlan]}.`,
+          detail: `Secure checkout is opening to review the move to ${PLAN_LABEL[targetPlan]}.`,
           title: "Plan change",
           tone: "info",
         });
@@ -964,7 +964,7 @@ export default function AeonCommandOrb() {
         <div className="aeon-orb-live-pill mb-4 inline-flex max-w-[min(92vw,28rem)] items-center gap-3 rounded-full px-4 py-2 text-sm text-white/72">
           <span
             className={`size-2 rounded-full ${
-              speaking ? "bg-[rgb(var(--gold))]" : realtimeActive ? "bg-emerald-300" : "bg-white/35"
+              speaking ? "bg-[rgb(var(--gold))]" : realtimeActive ? "bg-[rgb(var(--success))]" : "bg-white/35"
             }`}
           />
           <span className="truncate">
@@ -1031,7 +1031,7 @@ export default function AeonCommandOrb() {
               </div>
             ) : null}
             {realtimeStatus ? (
-              <div className="inline-flex rounded-lg border border-emerald-300/14 bg-emerald-300/[0.06] px-3 py-2 text-sm text-emerald-100/68">
+              <div className="inline-flex rounded-lg border border-[rgba(var(--success),0.14)] bg-[rgba(var(--success),0.06)] px-3 py-2 text-sm text-[rgba(var(--success),0.85)]">
                 {realtimeStatus}
               </div>
             ) : null}
@@ -1054,7 +1054,7 @@ export default function AeonCommandOrb() {
                     <span
                       className={`mt-1 size-1.5 rounded-full ${
                         receipt.tone === "success"
-                          ? "bg-emerald-300"
+                          ? "bg-[rgb(var(--success))]"
                           : receipt.tone === "caution"
                             ? "bg-[rgb(var(--gold))]"
                             : "bg-white/36"

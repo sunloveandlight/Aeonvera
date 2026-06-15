@@ -582,7 +582,7 @@ export default function OptimizationPage() {
               <div className="mt-auto grid gap-3 pt-7 sm:grid-cols-3">
                 {[
                   ["Questions", `${answeredCount}/${QUESTIONS.length}`],
-                  ["Domains", "12"],
+                  ["Domains", "8"],
                   ["Mode", complete ? "Map" : "Intake"],
                 ].map(([label, value]) => (
                   <div key={label} className="flex min-h-[5.75rem] flex-col justify-between rounded-lg border border-white/[0.06] bg-white/[0.035] p-4">
@@ -706,7 +706,7 @@ export default function OptimizationPage() {
                         </span>
                       </div>
                       <p className="mb-3 text-xs leading-5 text-white/42">{item.action}</p>
-                      <p className="mb-3 text-[11px] leading-5 text-[#dabc73]/70">
+                      <p className="mb-3 text-[11px] leading-5 text-[rgba(var(--gold),0.7)]">
                         Why Aeonvera recommends this: {item.why}
                       </p>
                       <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
@@ -889,7 +889,7 @@ export default function OptimizationPage() {
                       onChange={(event) =>
                         updateSimulatorControl(field.key, Number(event.target.value))
                       }
-                      className="w-full accent-[#dabc73]"
+                      className="w-full accent-[rgb(var(--gold))]"
                     />
                   </div>
                 ))}
@@ -967,7 +967,7 @@ function VitalSignalClock() {
           <linearGradient id="optimization-age-signal-gradient" x1="36" y1="28" x2="124" y2="132" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="rgba(248,250,252,0.94)" />
             <stop offset="48%" stopColor="rgba(164, 195, 255, 0.82)" />
-            <stop offset="74%" stopColor="rgba(218, 188, 115, 0.78)" />
+            <stop offset="74%" stopColor="rgba(var(--gold), 0.78)" />
             <stop offset="100%" stopColor="rgba(248,250,252,0.9)" />
           </linearGradient>
         </defs>
@@ -1045,7 +1045,7 @@ function FutureSelfComparisonPanel({
             <polyline
               points={chart.optimized.join(" ")}
               fill="none"
-              stroke="rgba(218,188,115,0.9)"
+              stroke="rgba(var(--gold),0.9)"
               strokeWidth="2.6"
               strokeLinecap="round"
               strokeLinejoin="round"

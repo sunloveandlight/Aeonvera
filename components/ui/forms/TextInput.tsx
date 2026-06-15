@@ -24,8 +24,8 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
           transition
           focus:outline-none
           focus:ring-1
-          focus:ring-[#8b5cf6]/25
-          focus:border-[#d6b765]
+          focus:ring-[rgba(var(--gold),0.25)]
+          focus:border-[rgba(var(--gold),0.62)]
           active:scale-[0.99]
           disabled:opacity-50
           disabled:cursor-not-allowed
