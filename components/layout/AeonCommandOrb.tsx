@@ -959,7 +959,7 @@ export default function AeonCommandOrb() {
 
   return (
     <div
-      className={`aeon-orb-system fixed bottom-5 right-4 z-40 flex w-[min(42rem,calc(100vw-2rem))] flex-col items-end sm:right-6 ${
+      className={`aeon-orb-system fixed inset-x-0 bottom-6 z-40 mx-auto flex w-full max-w-2xl flex-col items-center px-3 ${
         idleDimmed ? "aeon-orb-system-idle" : ""
       }`}
       onFocusCapture={() => setIdleDimmed(false)}

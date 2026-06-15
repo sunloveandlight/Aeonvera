@@ -224,8 +224,8 @@ body::after {
 }
 
 .aeon-orb-system-idle .aeon-command-orb {
-  opacity: 0.34;
-  transform: translateY(0.3rem) scale(0.9);
+  opacity: 0.52;
+  transform: translateY(0.2rem) scale(0.94);
 }
 
 .aeon-orb-system-idle:hover .aeon-command-orb,
@@ -237,42 +237,24 @@ body::after {
 .aeon-command-orb {
   position: relative;
   display: inline-flex;
-  width: 3.05rem;
-  height: 3.05rem;
+  width: 3.9rem;
+  height: 3.9rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background:
-    radial-gradient(circle at 36% 28%, rgba(255, 255, 255, 0.5), transparent 24%),
-    radial-gradient(circle at 60% 64%, rgba(var(--gold), 0.3), transparent 60%),
-    linear-gradient(150deg, rgba(20, 21, 24, 0.86), rgba(4, 5, 7, 0.92));
   color: rgba(255, 255, 255, 0.92);
   box-shadow:
-    0 14px 40px rgba(0, 0, 0, 0.46),
-    0 0 26px rgba(var(--gold), 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(20px) saturate(130%);
+    0 18px 52px rgba(0, 0, 0, 0.5),
+    0 0 34px rgba(var(--gold), 0.2),
+    0 0 64px rgba(167, 199, 255, 0.1);
   cursor: pointer;
   isolation: isolate;
   overflow: visible;
-  animation: aeon-orb-breathe 6.5s ease-in-out infinite;
+  animation: aeon-orb-breathe 6s ease-in-out infinite;
   transition:
-    border-color 240ms ease,
     opacity 260ms ease,
-    box-shadow 240ms ease,
-    transform 240ms ease;
-}
-
-.aeon-command-orb::before {
-  content: "";
-  position: absolute;
-  inset: -0.4rem;
-  border-radius: inherit;
-  background: radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.16), transparent 62%);
-  opacity: 0.5;
-  z-index: -1;
-  transition: opacity 240ms ease;
+    box-shadow 260ms ease,
+    transform 260ms ease;
 }
 
 .aeon-orb-live-pill {
@@ -323,45 +305,27 @@ body::after {
 
 .aeon-command-orb:hover,
 .aeon-command-orb-open {
-  border-color: rgba(var(--gold), 0.34);
-  transform: translateY(-2px) scale(1.01);
+  transform: translateY(-2px) scale(1.02);
   box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.5),
-    0 0 34px rgba(var(--gold), 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
-}
-
-.aeon-command-orb:hover::before,
-.aeon-command-orb-open::before {
-  opacity: 0.8;
+    0 22px 56px rgba(0, 0, 0, 0.52),
+    0 0 44px rgba(var(--gold), 0.28),
+    0 0 72px rgba(167, 199, 255, 0.14);
 }
 
 .aeon-command-orb-listening {
   animation: aeon-orb-breathe 2.6s ease-in-out infinite;
-  border-color: rgba(var(--gold), 0.42);
   box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.5),
-    0 0 40px rgba(var(--gold), 0.26),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
-}
-
-.aeon-command-orb-listening::before {
-  opacity: 0.95;
-  animation: aeon-orb-ring 2.6s ease-in-out infinite;
+    0 20px 54px rgba(0, 0, 0, 0.52),
+    0 0 48px rgba(var(--gold), 0.3),
+    0 0 80px rgba(167, 199, 255, 0.18);
 }
 
 .aeon-command-orb-speaking {
-  animation: aeon-orb-breathe 1.5s ease-in-out infinite;
-  border-color: rgba(var(--gold), 0.5);
+  animation: aeon-orb-breathe 1.6s ease-in-out infinite;
   box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.5),
-    0 0 46px rgba(var(--gold), 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-.aeon-command-orb-speaking::before {
-  opacity: 1;
-  animation: aeon-orb-ring 1.5s ease-in-out infinite;
+    0 20px 54px rgba(0, 0, 0, 0.52),
+    0 0 58px rgba(var(--gold), 0.36),
+    0 0 92px rgba(167, 199, 255, 0.2);
 }
 
 .aeon-command-orb-speaking .aeon-command-orb-wave {
@@ -371,16 +335,17 @@ body::after {
 .aeon-command-orb-core {
   position: relative;
   display: inline-flex;
-  width: 1.92rem;
-  height: 1.92rem;
+  width: 100%;
+  height: 100%;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   overflow: hidden;
+  background: radial-gradient(circle at 50% 38%, rgba(20, 22, 27, 0.55), rgba(3, 4, 6, 0.92) 80%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 -16px 26px rgba(0, 0, 0, 0.28),
-    0 0 26px rgba(var(--gold), 0.22);
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -20px 34px rgba(0, 0, 0, 0.36),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
   /* Slow living shimmer across the whole interior. */
   animation: aeon-orb-hue 13s ease-in-out infinite;
 }
@@ -410,9 +375,8 @@ body::after {
   border-radius: inherit;
   z-index: 2;
   pointer-events: none;
-  mix-blend-mode: screen;
-  background: radial-gradient(circle at 50% 13%, rgba(255, 255, 255, 0.92), transparent 17%);
-  opacity: 0.7;
+  background: radial-gradient(circle at 50% 11%, rgba(255, 255, 255, 0.85), transparent 15%);
+  opacity: 0.62;
   animation: aeon-orb-glint 9s linear infinite;
 }
 
@@ -420,21 +384,21 @@ body::after {
    Shape morphs (aeon-orb-plasma); color flows via the rotating ::before (aeon-orb-aurora). */
 .aeon-command-orb-plasma {
   position: absolute;
-  inset: 0.2rem;
+  inset: 13%;
   border-radius: 48% 52% 46% 54%;
   background:
-    radial-gradient(circle at 33% 27%, rgba(255, 255, 255, 0.92), transparent 13%),
-    radial-gradient(circle at 66% 62%, rgba(167, 199, 255, 0.6), transparent 34%),
-    radial-gradient(circle at 44% 66%, rgba(var(--gold), 0.82), transparent 38%),
-    radial-gradient(circle at 50% 50%, rgba(214, 176, 255, 0.42), rgba(5, 7, 11, 0.28) 70%);
-  filter: blur(0.2px);
-  opacity: 0.9;
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.95), transparent 14%),
+    radial-gradient(circle at 68% 60%, rgba(167, 199, 255, 0.7), transparent 36%),
+    radial-gradient(circle at 42% 68%, rgba(var(--gold), 0.85), transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(214, 176, 255, 0.5), rgba(5, 7, 11, 0.2) 72%);
+  filter: blur(0.3px);
+  opacity: 0.95;
   isolation: isolate;
   overflow: hidden;
   box-shadow:
-    inset 0 0 16px rgba(255, 255, 255, 0.22),
-    0 0 24px rgba(167, 199, 255, 0.16);
-  animation: aeon-orb-plasma 4.4s ease-in-out infinite;
+    inset 0 0 20px rgba(255, 255, 255, 0.24),
+    0 0 30px rgba(167, 199, 255, 0.2);
+  animation: aeon-orb-plasma 4s ease-in-out infinite;
 }
 
 .aeon-command-orb-plasma::before {
@@ -508,8 +472,8 @@ body::after {
   justify-content: center;
   gap: 0.18rem;
   z-index: 1;
-  width: 0.72rem;
-  height: 0.66rem;
+  width: 0.95rem;
+  height: 0.85rem;
   opacity: 0.64;
   animation: aeon-orb-wave-idle 1.8s ease-in-out infinite;
 }
@@ -588,12 +552,12 @@ body::after {
     transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
   }
   33% {
-    border-radius: 62% 38% 56% 44%;
-    transform: translate3d(0.08rem, -0.06rem, 0) scale(1.1) rotate(6deg);
+    border-radius: 66% 34% 60% 40%;
+    transform: translate3d(0.12rem, -0.1rem, 0) scale(1.14) rotate(9deg);
   }
   66% {
-    border-radius: 38% 62% 42% 58%;
-    transform: translate3d(-0.07rem, 0.07rem, 0) scale(0.93) rotate(-5deg);
+    border-radius: 34% 66% 38% 62%;
+    transform: translate3d(-0.11rem, 0.11rem, 0) scale(0.88) rotate(-7deg);
   }
 }
 
