@@ -10,11 +10,37 @@ type CommandMessage = {
 };
 
 type ActionReceipt = {
+  actionType: ActionType;
   createdAt: number;
   detail: string;
   id: string;
   title: string;
   tone: "caution" | "info" | "success";
+};
+
+type ActionType =
+  | "action_error"
+  | "billing"
+  | "checkout"
+  | "create_care_invite"
+  | "create_physician_share"
+  | "generate_report"
+  | "navigation"
+  | "open_care_network"
+  | "open_oura"
+  | "plan_change"
+  | "plan_options"
+  | "prepare_today"
+  | "simplify_plan"
+  | "sync_oura";
+
+type ActivityEventRow = {
+  action_type?: string;
+  created_at?: string;
+  detail?: string;
+  id?: string;
+  title?: string;
+  tone?: string;
 };
 
 type VoiceId = (typeof VOICE_OPTIONS)[number]["id"];
@@ -60,18 +86,14 @@ const STARTER_PROMPTS = [
 ];
 
 const ASSISTANT_OPENINGS = [
-  "How may I serve you today?",
-  "What would you like to focus on today?",
-  "I am here. What can I help you with?",
-  "How can I be of service?",
-  "Tell me what you need, and I will help you move through it.",
-  "What should we make easier right now?",
-  "I am listening. What matters most today?",
-  "Good to see you. Where should we place our attention?",
-  "I am with you. What are we solving first?",
-  "What would make today feel cleaner?",
-  "Where do you want Aeonvera to help?",
-  "What signal should we look at together?",
+  "I can review today, sync Oura, create a physician link, change your plan, or answer a health question. What should I handle first?",
+  "Tell me the task: prepare today, simplify your plan, generate a report, manage billing, or open any area of Aeonvera.",
+  "I am ready. Say something like sync Oura, create a physician share link, upgrade to Sovereign, or explain my plan.",
+  "What should I do for you: review your signals, open your plan, invite your care team, generate a report, or answer a question?",
+  "Give me a direct command or question. I can move through the site, prepare your day, manage sharing, or help interpret your health data.",
+  "What do you want done now: update data, review today, change membership, create a secure share, or ask Aeonvera?",
+  "I can take action or think with you. Try: prepare my day, sync my wearable, make a doctor link, or show my Digital Twin.",
+  "Name the outcome. I can open the right page, adjust your plan flow, create sharing links, or explain what your signals mean.",
 ];
 
 const VOICE_OPTIONS = [
@@ -225,6 +247,37 @@ export default function AeonCommandOrb() {
     return () => window.clearTimeout(timeout);
   }, [latestReceipt?.id, receiptVisible]);
 
+  useEffect(() => {
+    if (hidden) return;
+
+    let ignore = false;
+
+    async function loadActivityHistory() {
+      try {
+        const response = await fetch("/api/agent/activity", {
+          credentials: "include",
+          method: "GET",
+        });
+
+        if (!response.ok) return;
+
+        const data = (await response.json()) as { events?: ActivityEventRow[] };
+        if (ignore || !Array.isArray(data.events)) return;
+
+        const receipts = data.events.flatMap(mapActivityEventToReceipt);
+        setActionReceipts(receipts.slice(0, 6));
+      } catch {
+        // Activity history is helpful, not required for the command orb to work.
+      }
+    }
+
+    void loadActivityHistory();
+
+    return () => {
+      ignore = true;
+    };
+  }, [hidden]);
+
   if (hidden) return null;
 
   function pushActionReceipt(receipt: Omit<ActionReceipt, "createdAt" | "id">) {
@@ -240,6 +293,7 @@ export default function AeonCommandOrb() {
     setActionReceipts((current) => [nextReceipt, ...current].slice(0, 6));
     setReceiptVisible(true);
     setIdleDimmed(false);
+    void persistActionReceipt(nextReceipt);
   }
 
   async function submitCommand(command: string) {
@@ -290,6 +344,7 @@ export default function AeonCommandOrb() {
       const answer = `Opening ${navigation.label}. I will stay here if you want to keep talking.`;
       setMessages((current) => [...current, { role: "assistant", content: answer }]);
       pushActionReceipt({
+        actionType: "navigation",
         detail: "Aeonvera moved you to the requested area.",
         title: navigation.label,
         tone: "info",
@@ -550,6 +605,7 @@ export default function AeonCommandOrb() {
 
       setRealtimeStatus(`Opening ${action.label}.`);
       pushActionReceipt({
+        actionType: "navigation",
         detail: "Aeonvera moved you to the requested area.",
         title: action.label,
         tone: "info",
@@ -596,6 +652,7 @@ export default function AeonCommandOrb() {
           },
         ]);
         pushActionReceipt({
+          actionType: "plan_options",
           detail: "Membership options opened for review.",
           title: "Plan options",
           tone: "info",
@@ -613,6 +670,7 @@ export default function AeonCommandOrb() {
           },
         ]);
         pushActionReceipt({
+          actionType: "billing",
           detail: "Billing opened so you can manage the active membership.",
           title: `${PLAN_LABEL[targetPlan]} billing`,
           tone: "info",
@@ -633,6 +691,7 @@ export default function AeonCommandOrb() {
 
       if (currentPlan && isActiveSubscription(usageData.subscriptionStatus)) {
         pushActionReceipt({
+          actionType: "plan_change",
           detail: `Stripe is opening to review the move to ${PLAN_LABEL[targetPlan]}.`,
           title: "Plan change",
           tone: "info",
@@ -640,6 +699,7 @@ export default function AeonCommandOrb() {
         await openBillingPortal(targetPlan);
       } else {
         pushActionReceipt({
+          actionType: "checkout",
           detail: `Checkout is opening for ${PLAN_LABEL[targetPlan]}.`,
           title: "Checkout",
           tone: "info",
@@ -691,6 +751,7 @@ export default function AeonCommandOrb() {
             : "Today's plan is prepared.";
         setMessages((current) => [...current, { role: "assistant", content: summary }]);
         pushActionReceipt({
+          actionType: "prepare_today",
           detail: "Daily plan refreshed and opened.",
           title: "Today prepared",
           tone: "success",
@@ -720,6 +781,7 @@ export default function AeonCommandOrb() {
           },
         ]);
         pushActionReceipt({
+          actionType: "simplify_plan",
           detail: "Your plan was reduced to the highest-leverage actions.",
           title: "Plan simplified",
           tone: "success",
@@ -738,6 +800,7 @@ export default function AeonCommandOrb() {
           },
         ]);
         pushActionReceipt({
+          actionType: "sync_oura",
           detail: `${Number(data.inserted || 0)} signal${Number(data.inserted || 0) === 1 ? "" : "s"} imported from Oura.`,
           title: "Oura synced",
           tone: "success",
@@ -755,6 +818,7 @@ export default function AeonCommandOrb() {
           },
         ]);
         pushActionReceipt({
+          actionType: "open_oura",
           detail: "Wearable sources opened.",
           title: "Oura source",
           tone: "info",
@@ -774,6 +838,7 @@ export default function AeonCommandOrb() {
           { role: "assistant", content: `Report generated. ${primaryGoal}` },
         ]);
         pushActionReceipt({
+          actionType: "generate_report",
           detail: "Longevity report generated and opened.",
           title: "Report ready",
           tone: "success",
@@ -801,6 +866,7 @@ export default function AeonCommandOrb() {
           },
         ]);
         pushActionReceipt({
+          actionType: "create_physician_share",
           detail: "A 14-day physician share link was created.",
           title: "Secure link created",
           tone: "success",
@@ -833,6 +899,7 @@ export default function AeonCommandOrb() {
             },
           ]);
           pushActionReceipt({
+            actionType: "create_care_invite",
             detail: `${intent.email} was invited as ${intent.role || "physician"}.`,
             title: "Invite created",
             tone: "success",
@@ -847,6 +914,7 @@ export default function AeonCommandOrb() {
             },
           ]);
           pushActionReceipt({
+            actionType: "open_care_network",
             detail: "Care Network opened for invites and permissions.",
             title: "Care Network",
             tone: "info",
@@ -859,6 +927,7 @@ export default function AeonCommandOrb() {
         error instanceof Error ? error.message : "I could not complete that action right now.";
       setMessages((current) => [...current, { role: "assistant", content: message }]);
       pushActionReceipt({
+        actionType: "action_error",
         detail: message,
         title: "Action paused",
         tone: "caution",
@@ -1187,6 +1256,70 @@ function formatReceiptTime(createdAt: number) {
 
   const minutesAgo = Math.floor(secondsAgo / 60);
   return minutesAgo < 60 ? `${minutesAgo}m` : "earlier";
+}
+
+async function persistActionReceipt(receipt: ActionReceipt) {
+  await fetch("/api/agent/activity", {
+    body: JSON.stringify({
+      actionType: receipt.actionType,
+      detail: receipt.detail,
+      title: receipt.title,
+      tone: receipt.tone,
+    }),
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  }).catch(() => undefined);
+}
+
+function mapActivityEventToReceipt(event: ActivityEventRow): ActionReceipt[] {
+  const actionType = asActionType(event.action_type);
+  const tone = asReceiptTone(event.tone);
+  const title = typeof event.title === "string" ? event.title : "";
+  const detail = typeof event.detail === "string" ? event.detail : "";
+  const id = typeof event.id === "string" ? event.id : "";
+  const createdAt =
+    typeof event.created_at === "string" ? Date.parse(event.created_at) : Number.NaN;
+
+  if (!actionType || !title || !detail || !id || Number.isNaN(createdAt)) return [];
+
+  return [
+    {
+      actionType,
+      createdAt,
+      detail,
+      id,
+      title,
+      tone,
+    },
+  ];
+}
+
+function asActionType(value: unknown): ActionType | null {
+  const actionTypes: ActionType[] = [
+    "action_error",
+    "billing",
+    "checkout",
+    "create_care_invite",
+    "create_physician_share",
+    "generate_report",
+    "navigation",
+    "open_care_network",
+    "open_oura",
+    "plan_change",
+    "plan_options",
+    "prepare_today",
+    "simplify_plan",
+    "sync_oura",
+  ];
+
+  return typeof value === "string" && actionTypes.includes(value as ActionType)
+    ? (value as ActionType)
+    : null;
+}
+
+function asReceiptTone(value: unknown): ActionReceipt["tone"] {
+  return value === "success" || value === "caution" || value === "info" ? value : "info";
 }
 
 type PlanIntent = {
