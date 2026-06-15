@@ -11,6 +11,10 @@ type CommandMessage = {
 
 type VoiceId = (typeof VOICE_OPTIONS)[number]["id"];
 type PlanId = "core" | "elite" | "sovereign";
+type ConfirmationIntent = Extract<
+  ControlIntent,
+  { type: "create_physician_share" | "manage_care_network" }
+>;
 type ControlIntent =
   | { type: "create_physician_share" }
   | { type: "generate_report" }
@@ -22,6 +26,7 @@ type ControlIntent =
 type CareRole = "coach" | "family" | "physician";
 type PendingRealtimeAction =
   | { intent: ControlIntent; type: "control" }
+  | { intent: ControlIntent; type: "execute_control" }
   | { intent: PlanIntent; type: "plan" }
   | { href: string; label: string; type: "navigation" };
 
@@ -152,6 +157,10 @@ export default function AeonCommandOrb() {
   const [realtimeActive, setRealtimeActive] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
+  const [idleDimmed, setIdleDimmed] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState<ConfirmationIntent | null>(
+    null
+  );
 
   const hidden = useMemo(
     () => HIDDEN_ROUTES.some((route) => pathname === route || pathname.startsWith(route)),
@@ -188,6 +197,16 @@ export default function AeonCommandOrb() {
     };
   }, [stopRealtimeVoice]);
 
+  useEffect(() => {
+    if (open || realtimeActive || realtimeStatus || speaking || thinking) {
+      setIdleDimmed(false);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => setIdleDimmed(true), 9000);
+    return () => window.clearTimeout(timeout);
+  }, [open, realtimeActive, realtimeStatus, speaking, thinking]);
+
   if (hidden) return null;
 
   async function submitCommand(command: string) {
@@ -198,6 +217,26 @@ export default function AeonCommandOrb() {
     setInput("");
     setThinking(true);
     setMessages((current) => [...current, { role: "user", content: question }]);
+
+    if (pendingConfirmation) {
+      if (isConfirmationYes(question)) {
+        const confirmed = pendingConfirmation;
+        setPendingConfirmation(null);
+        await executeControlIntent(confirmed);
+        setThinking(false);
+        return;
+      }
+
+      if (isConfirmationNo(question)) {
+        setPendingConfirmation(null);
+        setMessages((current) => [
+          ...current,
+          { role: "assistant", content: "Canceled. I did not create anything." },
+        ]);
+        setThinking(false);
+        return;
+      }
+    }
 
     const controlIntent = resolveControlIntent(question);
     if (controlIntent) {
@@ -372,6 +411,24 @@ export default function AeonCommandOrb() {
       const transcript = event.transcript?.trim();
       if (transcript) {
         setMessages((current) => [...current, { role: "user", content: transcript }]);
+        if (pendingConfirmation) {
+          if (isConfirmationYes(transcript)) {
+            pendingRealtimeActionRef.current = {
+              intent: pendingConfirmation,
+              type: "execute_control",
+            };
+            setPendingConfirmation(null);
+            setRealtimeStatus("I will do that after I finish.");
+            return;
+          }
+
+          if (isConfirmationNo(transcript)) {
+            setPendingConfirmation(null);
+            setRealtimeStatus("Canceled.");
+            return;
+          }
+        }
+
         const controlIntent = resolveControlIntent(transcript);
         const planIntent = resolvePlanIntent(transcript);
         const navigation = resolveNavigationIntent(transcript);
@@ -440,6 +497,11 @@ export default function AeonCommandOrb() {
     window.setTimeout(() => {
       if (action.type === "control") {
         void handleControlIntent(action.intent);
+        return;
+      }
+
+      if (action.type === "execute_control") {
+        void executeControlIntent(action.intent);
         return;
       }
 
@@ -536,6 +598,23 @@ export default function AeonCommandOrb() {
   }
 
   async function handleControlIntent(intent: ControlIntent) {
+    if (requiresConfirmation(intent)) {
+      setPendingConfirmation(intent);
+      setOpen(true);
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: confirmationPromptForIntent(intent),
+        },
+      ]);
+      return;
+    }
+
+    await executeControlIntent(intent);
+  }
+
+  async function executeControlIntent(intent: ControlIntent) {
     try {
       if (intent.type === "prepare_today") {
         setMessages((current) => [
@@ -729,7 +808,13 @@ export default function AeonCommandOrb() {
   }
 
   return (
-    <div className="aeon-orb-system fixed inset-x-0 bottom-6 z-40 mx-auto flex w-full max-w-2xl flex-col items-center px-3">
+    <div
+      className={`aeon-orb-system fixed inset-x-0 bottom-6 z-40 mx-auto flex w-full max-w-2xl flex-col items-center px-3 ${
+        idleDimmed ? "aeon-orb-system-idle" : ""
+      }`}
+      onFocusCapture={() => setIdleDimmed(false)}
+      onPointerEnter={() => setIdleDimmed(false)}
+    >
       {!open && (realtimeStatus || realtimeActive || speaking) ? (
         <div className="aeon-orb-live-pill mb-4 inline-flex max-w-[min(92vw,28rem)] items-center gap-3 rounded-full px-4 py-2 text-sm text-white/72">
           <span
@@ -998,6 +1083,30 @@ function resolveControlIntent(question: string): ControlIntent | null {
   }
 
   return null;
+}
+
+function requiresConfirmation(intent: ControlIntent): intent is ConfirmationIntent {
+  return intent.type === "create_physician_share" || (intent.type === "manage_care_network" && Boolean(intent.email));
+}
+
+function confirmationPromptForIntent(intent: ConfirmationIntent) {
+  if (intent.type === "create_physician_share") {
+    return "I can create a secure physician share link that expires in 14 days and includes an access code. Should I create it?";
+  }
+
+  if (intent.email) {
+    return `I can invite ${intent.email} as a ${intent.role || "physician"} with a secure 14-day access link. Should I create the invite?`;
+  }
+
+  return "I can open Care Network now. If you want me to create an invite directly, include the person's email address.";
+}
+
+function isConfirmationYes(value: string) {
+  return /\b(yes|yeah|yep|confirm|approve|do it|go ahead|create it|send it)\b/i.test(value);
+}
+
+function isConfirmationNo(value: string) {
+  return /\b(no|nope|cancel|stop|don't|do not|not now)\b/i.test(value);
 }
 
 function extractPlanTarget(text: string): PlanId | null {

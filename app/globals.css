@@ -220,6 +220,17 @@ body::after {
   pointer-events: auto;
 }
 
+.aeon-orb-system-idle .aeon-command-orb {
+  opacity: 0.34;
+  transform: translateY(0.3rem) scale(0.9);
+}
+
+.aeon-orb-system-idle:hover .aeon-command-orb,
+.aeon-orb-system-idle:focus-within .aeon-command-orb {
+  opacity: 1;
+  transform: translateY(-3px) scale(1.015);
+}
+
 .aeon-command-orb {
   position: relative;
   display: inline-flex;
@@ -252,6 +263,7 @@ body::after {
     aeon-orb-float-path 11s ease-in-out infinite;
   transition:
     border-color 220ms ease,
+    opacity 260ms ease,
     box-shadow 220ms ease,
     transform 220ms ease;
 }
