@@ -305,6 +305,41 @@ body::after {
   backdrop-filter: blur(18px) saturate(140%);
 }
 
+.aeon-orb-receipt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background:
+    linear-gradient(180deg, rgba(18, 20, 24, 0.82), rgba(7, 8, 10, 0.68)),
+    rgba(0, 0, 0, 0.56);
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(218, 188, 115, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(18px) saturate(150%);
+  animation: aeon-receipt-rise 260ms ease-out both;
+}
+
+.aeon-orb-receipt-dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.42);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.18);
+}
+
+.aeon-orb-receipt-success .aeon-orb-receipt-dot {
+  background: rgba(112, 245, 202, 0.86);
+  box-shadow: 0 0 18px rgba(112, 245, 202, 0.28);
+}
+
+.aeon-orb-receipt-caution .aeon-orb-receipt-dot {
+  background: rgba(218, 188, 115, 0.9);
+  box-shadow: 0 0 18px rgba(218, 188, 115, 0.28);
+}
+
 .aeon-command-orb:hover,
 .aeon-command-orb-open {
   border-color: rgba(218, 188, 115, 0.36);
@@ -638,6 +673,17 @@ body::after {
 @keyframes aeon-orb-aurora {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes aeon-receipt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

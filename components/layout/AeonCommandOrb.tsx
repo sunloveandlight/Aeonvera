@@ -9,6 +9,14 @@ type CommandMessage = {
   role: "assistant" | "user";
 };
 
+type ActionReceipt = {
+  createdAt: number;
+  detail: string;
+  id: string;
+  title: string;
+  tone: "caution" | "info" | "success";
+};
+
 type VoiceId = (typeof VOICE_OPTIONS)[number]["id"];
 type PlanId = "core" | "elite" | "sovereign";
 type ConfirmationIntent = Extract<
@@ -158,6 +166,8 @@ export default function AeonCommandOrb() {
   const [realtimeStatus, setRealtimeStatus] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const [idleDimmed, setIdleDimmed] = useState(false);
+  const [actionReceipts, setActionReceipts] = useState<ActionReceipt[]>([]);
+  const [receiptVisible, setReceiptVisible] = useState(false);
   const [pendingConfirmation, setPendingConfirmation] = useState<ConfirmationIntent | null>(
     null
   );
@@ -171,6 +181,7 @@ export default function AeonCommandOrb() {
     () => VOICE_OPTIONS.find((voice) => voice.id === selectedVoice) || VOICE_OPTIONS[0],
     [selectedVoice]
   );
+  const latestReceipt = actionReceipts[0] || null;
 
   const stopRealtimeVoice = useCallback((updateState = true) => {
     realtimePeerRef.current?.close();
@@ -207,7 +218,29 @@ export default function AeonCommandOrb() {
     return () => window.clearTimeout(timeout);
   }, [open, realtimeActive, realtimeStatus, speaking, thinking]);
 
+  useEffect(() => {
+    if (!receiptVisible) return;
+
+    const timeout = window.setTimeout(() => setReceiptVisible(false), 7000);
+    return () => window.clearTimeout(timeout);
+  }, [latestReceipt?.id, receiptVisible]);
+
   if (hidden) return null;
+
+  function pushActionReceipt(receipt: Omit<ActionReceipt, "createdAt" | "id">) {
+    const nextReceipt: ActionReceipt = {
+      ...receipt,
+      createdAt: Date.now(),
+      id:
+        typeof window.crypto?.randomUUID === "function"
+          ? window.crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    };
+
+    setActionReceipts((current) => [nextReceipt, ...current].slice(0, 6));
+    setReceiptVisible(true);
+    setIdleDimmed(false);
+  }
 
   async function submitCommand(command: string) {
     const question = command.trim();
@@ -256,6 +289,11 @@ export default function AeonCommandOrb() {
     if (navigation) {
       const answer = `Opening ${navigation.label}. I will stay here if you want to keep talking.`;
       setMessages((current) => [...current, { role: "assistant", content: answer }]);
+      pushActionReceipt({
+        detail: "Aeonvera moved you to the requested area.",
+        title: navigation.label,
+        tone: "info",
+      });
       router.push(navigation.href);
       setThinking(false);
       return;
@@ -511,6 +549,11 @@ export default function AeonCommandOrb() {
       }
 
       setRealtimeStatus(`Opening ${action.label}.`);
+      pushActionReceipt({
+        detail: "Aeonvera moved you to the requested area.",
+        title: action.label,
+        tone: "info",
+      });
       router.push(action.href);
     }, 650);
   }
@@ -552,6 +595,11 @@ export default function AeonCommandOrb() {
               "Opening your membership options. Choose Core, Elite, or Sovereign and I can handle the next step.",
           },
         ]);
+        pushActionReceipt({
+          detail: "Membership options opened for review.",
+          title: "Plan options",
+          tone: "info",
+        });
         router.push("/pricing");
         return;
       }
@@ -564,6 +612,11 @@ export default function AeonCommandOrb() {
             content: `You are already on ${PLAN_LABEL[targetPlan]}. Opening billing so you can manage it.`,
           },
         ]);
+        pushActionReceipt({
+          detail: "Billing opened so you can manage the active membership.",
+          title: `${PLAN_LABEL[targetPlan]} billing`,
+          tone: "info",
+        });
         await openBillingPortal(targetPlan);
         return;
       }
@@ -579,8 +632,18 @@ export default function AeonCommandOrb() {
       ]);
 
       if (currentPlan && isActiveSubscription(usageData.subscriptionStatus)) {
+        pushActionReceipt({
+          detail: `Stripe is opening to review the move to ${PLAN_LABEL[targetPlan]}.`,
+          title: "Plan change",
+          tone: "info",
+        });
         await openBillingPortal(targetPlan);
       } else {
+        pushActionReceipt({
+          detail: `Checkout is opening for ${PLAN_LABEL[targetPlan]}.`,
+          title: "Checkout",
+          tone: "info",
+        });
         await openCheckout(targetPlan);
       }
     } catch (error) {
@@ -627,6 +690,11 @@ export default function AeonCommandOrb() {
             ? data.plan.summary
             : "Today's plan is prepared.";
         setMessages((current) => [...current, { role: "assistant", content: summary }]);
+        pushActionReceipt({
+          detail: "Daily plan refreshed and opened.",
+          title: "Today prepared",
+          tone: "success",
+        });
         router.push("/companion?focus=autopilot");
         return;
       }
@@ -651,6 +719,11 @@ export default function AeonCommandOrb() {
                 : "I simplified today's plan and kept the highest-leverage actions.",
           },
         ]);
+        pushActionReceipt({
+          detail: "Your plan was reduced to the highest-leverage actions.",
+          title: "Plan simplified",
+          tone: "success",
+        });
         router.push("/companion?focus=autopilot");
         return;
       }
@@ -664,6 +737,11 @@ export default function AeonCommandOrb() {
             content: `Oura synced. I imported ${Number(data.inserted || 0)} new signal${Number(data.inserted || 0) === 1 ? "" : "s"} from ${data.startDate || "the sync window"} to ${data.endDate || "today"}.`,
           },
         ]);
+        pushActionReceipt({
+          detail: `${Number(data.inserted || 0)} signal${Number(data.inserted || 0) === 1 ? "" : "s"} imported from Oura.`,
+          title: "Oura synced",
+          tone: "success",
+        });
         router.push("/data-sources");
         return;
       }
@@ -676,6 +754,11 @@ export default function AeonCommandOrb() {
             content: "Opening Oura connection and source intelligence.",
           },
         ]);
+        pushActionReceipt({
+          detail: "Wearable sources opened.",
+          title: "Oura source",
+          tone: "info",
+        });
         router.push("/data-sources");
         return;
       }
@@ -690,6 +773,11 @@ export default function AeonCommandOrb() {
           ...current,
           { role: "assistant", content: `Report generated. ${primaryGoal}` },
         ]);
+        pushActionReceipt({
+          detail: "Longevity report generated and opened.",
+          title: "Report ready",
+          tone: "success",
+        });
         router.push("/report");
         return;
       }
@@ -712,6 +800,11 @@ export default function AeonCommandOrb() {
             content: `Secure physician link created. ${url}`,
           },
         ]);
+        pushActionReceipt({
+          detail: "A 14-day physician share link was created.",
+          title: "Secure link created",
+          tone: "success",
+        });
         router.push("/physician-export");
         return;
       }
@@ -739,6 +832,11 @@ export default function AeonCommandOrb() {
               content: `Care network invite created for ${intent.email}. ${url}`,
             },
           ]);
+          pushActionReceipt({
+            detail: `${intent.email} was invited as ${intent.role || "physician"}.`,
+            title: "Invite created",
+            tone: "success",
+          });
         } else {
           setMessages((current) => [
             ...current,
@@ -748,6 +846,11 @@ export default function AeonCommandOrb() {
                 "Opening Care Network. Tell me an email address next time and I can create the invite directly.",
             },
           ]);
+          pushActionReceipt({
+            detail: "Care Network opened for invites and permissions.",
+            title: "Care Network",
+            tone: "info",
+          });
         }
         router.push("/network");
       }
@@ -755,6 +858,11 @@ export default function AeonCommandOrb() {
       const message =
         error instanceof Error ? error.message : "I could not complete that action right now.";
       setMessages((current) => [...current, { role: "assistant", content: message }]);
+      pushActionReceipt({
+        detail: message,
+        title: "Action paused",
+        tone: "caution",
+      });
       if (/unauthorized|sign in/i.test(message)) router.push("/login?mode=signin");
     }
   }
@@ -815,6 +923,18 @@ export default function AeonCommandOrb() {
       onFocusCapture={() => setIdleDimmed(false)}
       onPointerEnter={() => setIdleDimmed(false)}
     >
+      {!open && !realtimeActive && !realtimeStatus && !speaking && receiptVisible && latestReceipt ? (
+        <div
+          className={`aeon-orb-receipt aeon-orb-receipt-${latestReceipt.tone} mb-4 max-w-[min(92vw,26rem)] rounded-full px-4 py-2`}
+        >
+          <span className="aeon-orb-receipt-dot" aria-hidden="true" />
+          <span className="min-w-0">
+            <span className="block truncate text-sm text-white/78">{latestReceipt.title}</span>
+            <span className="block truncate text-xs text-white/42">{latestReceipt.detail}</span>
+          </span>
+        </div>
+      ) : null}
+
       {!open && (realtimeStatus || realtimeActive || speaking) ? (
         <div className="aeon-orb-live-pill mb-4 inline-flex max-w-[min(92vw,28rem)] items-center gap-3 rounded-full px-4 py-2 text-sm text-white/72">
           <span
@@ -891,6 +1011,47 @@ export default function AeonCommandOrb() {
               </div>
             ) : null}
           </div>
+
+          {actionReceipts.length ? (
+            <div className="mt-4 rounded-lg border border-white/[0.08] bg-white/[0.028] p-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs uppercase tracking-[0.18em] text-white/36">
+                  Recent actions
+                </p>
+                <span className="text-xs text-white/30">This session</span>
+              </div>
+              <div className="mt-3 grid gap-2">
+                {actionReceipts.slice(0, 4).map((receipt) => (
+                  <div
+                    key={receipt.id}
+                    className="grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-md border border-white/[0.06] bg-black/20 px-3 py-2"
+                  >
+                    <span
+                      className={`mt-1 size-1.5 rounded-full ${
+                        receipt.tone === "success"
+                          ? "bg-emerald-300"
+                          : receipt.tone === "caution"
+                            ? "bg-[#dabc73]"
+                            : "bg-white/36"
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm text-white/70">
+                        {receipt.title}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs text-white/38">
+                        {receipt.detail}
+                      </span>
+                    </span>
+                    <span className="pt-0.5 text-xs text-white/24">
+                      {formatReceiptTime(receipt.createdAt)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
             {STARTER_PROMPTS.map((prompt) => (
@@ -1017,6 +1178,15 @@ function readRealtimeError(body: string) {
   } catch {
     return body || "OpenAI realtime voice session could not start.";
   }
+}
+
+function formatReceiptTime(createdAt: number) {
+  const secondsAgo = Math.max(0, Math.floor((Date.now() - createdAt) / 1000));
+  if (secondsAgo < 10) return "now";
+  if (secondsAgo < 60) return `${secondsAgo}s`;
+
+  const minutesAgo = Math.floor(secondsAgo / 60);
+  return minutesAgo < 60 ? `${minutesAgo}m` : "earlier";
 }
 
 type PlanIntent = {
