@@ -233,19 +233,27 @@ export default function PhysicianExportPage() {
     }
   }
 
-  async function copyShareLink(link: ShareLink) {
+  async function copyShareMessage(link: ShareLink) {
     const absoluteUrl = `${window.location.origin}${link.url}`;
-    const copyText = link.accessCode
-      ? `${absoluteUrl}\nAccess code: ${link.accessCode}`
-      : absoluteUrl;
-    await navigator.clipboard.writeText(copyText);
+    await navigator.clipboard.writeText(buildClinicalShareMessage(link, absoluteUrl));
     setShareMessage(
       link.accessCode
-        ? "Secure link and access code copied."
+        ? "Ready to send. The link and access code were copied as one message."
         : link.requiresAccessCode
           ? "Secure link copied. Use the access code shown when this link was created."
           : "Secure share link copied."
     );
+  }
+
+  async function copyShareUrl(link: ShareLink) {
+    await navigator.clipboard.writeText(`${window.location.origin}${link.url}`);
+    setShareMessage("Secure link copied.");
+  }
+
+  async function copyShareCode(link: ShareLink) {
+    if (!link.accessCode) return;
+    await navigator.clipboard.writeText(link.accessCode);
+    setShareMessage("Access code copied.");
   }
 
   function toggleSection(section: string) {
@@ -334,7 +342,9 @@ export default function PhysicianExportPage() {
               links={shareLinks}
               message={shareMessage}
               recipientLabel={recipientLabel}
-              onCopy={copyShareLink}
+              onCopyCode={copyShareCode}
+              onCopyLink={copyShareUrl}
+              onCopyMessage={copyShareMessage}
               onCreate={() => void createShareLink()}
               onExpiresChange={setExpiresInDays}
               onRecipientChange={setRecipientLabel}
@@ -356,7 +366,9 @@ function ShareLinkManager({
   links,
   message,
   recipientLabel,
-  onCopy,
+  onCopyCode,
+  onCopyLink,
+  onCopyMessage,
   onCreate,
   onExpiresChange,
   onRecipientChange,
@@ -369,7 +381,9 @@ function ShareLinkManager({
   links: ShareLink[];
   message: string | null;
   recipientLabel: string;
-  onCopy: (link: ShareLink) => Promise<void>;
+  onCopyCode: (link: ShareLink) => Promise<void>;
+  onCopyLink: (link: ShareLink) => Promise<void>;
+  onCopyMessage: (link: ShareLink) => Promise<void>;
   onCreate: () => void;
   onExpiresChange: (value: number) => void;
   onRecipientChange: (value: string) => void;
@@ -459,25 +473,35 @@ function ShareLinkManager({
                 <p className="mt-1 text-xs text-white/36">
                   {link.status} / expires {formatDate(link.expiresAt)} / opened {link.accessCount} time{link.accessCount === 1 ? "" : "s"}
                 </p>
-                {link.accessCode ? (
-                  <p className="mt-2 inline-flex rounded-md border border-[#dabc73]/20 bg-[#dabc73]/[0.06] px-2 py-1 text-xs text-[#dabc73]/80">
-                    Access code: {link.accessCode}
-                  </p>
-                ) : link.requiresAccessCode ? (
-                  <p className="mt-2 text-xs text-white/34">
-                    Protected by an access code shown when this link was created.
-                  </p>
-                ) : null}
+                <ShareAccessHint link={link} />
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => void onCopy(link)}
+                  onClick={() => void onCopyMessage(link)}
                   disabled={link.status !== "active"}
-                  className="premium-action-secondary inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-45"
+                  className="premium-action inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-45"
                 >
-                  <Copy size={14} /> Copy
+                  <Copy size={14} /> {link.accessCode ? "Copy message" : "Copy link"}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => void onCopyLink(link)}
+                  disabled={link.status !== "active"}
+                  className="premium-action-secondary inline-flex h-9 items-center justify-center rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Link
+                </button>
+                {link.accessCode ? (
+                  <button
+                    type="button"
+                    onClick={() => void onCopyCode(link)}
+                    disabled={link.status !== "active"}
+                    className="premium-action-secondary inline-flex h-9 items-center justify-center rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    Code
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => onRevoke(link.id)}
@@ -493,6 +517,42 @@ function ShareLinkManager({
       </div>
     </div>
   );
+}
+
+function ShareAccessHint({ link }: { link: ShareLink }) {
+  if (link.accessCode) {
+    return (
+      <div className="mt-2 space-y-2">
+        <p className="inline-flex rounded-md border border-[#dabc73]/20 bg-[#dabc73]/[0.06] px-2 py-1 text-xs text-[#dabc73]/80">
+          Access code: {link.accessCode}
+        </p>
+        <p className="text-xs leading-5 text-white/34">
+          Send the message to your clinician. For testing, copy the link and code separately.
+        </p>
+      </div>
+    );
+  }
+
+  if (link.requiresAccessCode) {
+    return (
+      <p className="mt-2 text-xs text-white/34">
+        Protected by an access code shown when this link was created.
+      </p>
+    );
+  }
+
+  return null;
+}
+
+function buildClinicalShareMessage(link: ShareLink, absoluteUrl: string) {
+  if (!link.accessCode) return absoluteUrl;
+  const recipient = link.recipientLabel ? ` for ${link.recipientLabel}` : "";
+  return [
+    `Aeonvera secure clinical export${recipient}`,
+    absoluteUrl,
+    `Access code: ${link.accessCode}`,
+    `Expires: ${formatDate(link.expiresAt)}`,
+  ].join("\n");
 }
 
 function ExportDocument({ bundle }: { bundle: ExportBundle }) {

@@ -224,19 +224,27 @@ export default function NetworkPage() {
     }
   }
 
-  async function copyInvitation(invitation: CareInvitation) {
+  async function copyInvitationMessage(invitation: CareInvitation) {
     const absoluteUrl = `${window.location.origin}${invitation.url}`;
-    const copyText = invitation.accessCode
-      ? `${absoluteUrl}\nAccess code: ${invitation.accessCode}`
-      : absoluteUrl;
-    await navigator.clipboard.writeText(copyText);
+    await navigator.clipboard.writeText(buildInvitationMessage(invitation, absoluteUrl));
     setMessage(
       invitation.accessCode
-        ? "Invitation link and access code copied."
+        ? "Ready to send. The invite and access code were copied as one message."
         : invitation.requiresAccessCode
           ? "Invitation link copied. Use the access code shown when this invite was created."
           : "Invitation link copied."
     );
+  }
+
+  async function copyInvitationLink(invitation: CareInvitation) {
+    await navigator.clipboard.writeText(`${window.location.origin}${invitation.url}`);
+    setMessage("Invitation link copied.");
+  }
+
+  async function copyInvitationCode(invitation: CareInvitation) {
+    if (!invitation.accessCode) return;
+    await navigator.clipboard.writeText(invitation.accessCode);
+    setMessage("Access code copied.");
   }
 
   function setRole(role: CareRole) {
@@ -454,25 +462,35 @@ export default function NetworkPage() {
                         <p className="mt-1 text-xs text-white/32">
                           Last opened {formatDateTime(invitation.lastAccessedAt)}
                         </p>
-                        {invitation.accessCode ? (
-                          <p className="mt-2 inline-flex rounded-md border border-[#dabc73]/20 bg-[#dabc73]/[0.06] px-2 py-1 text-xs text-[#dabc73]/80">
-                            Access code: {invitation.accessCode}
-                          </p>
-                        ) : invitation.requiresAccessCode ? (
-                          <p className="mt-2 text-xs text-white/34">
-                            Protected by an access code shown when this invite was created.
-                          </p>
-                        ) : null}
+                        <InvitationAccessHint invitation={invitation} />
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
-                          onClick={() => void copyInvitation(invitation)}
+                          onClick={() => void copyInvitationMessage(invitation)}
                           disabled={invitation.status === "revoked" || invitation.status === "expired"}
-                          className="premium-action-secondary inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-45"
+                          className="premium-action inline-flex h-9 items-center justify-center gap-2 rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-45"
                         >
-                          <Copy size={14} /> Copy
+                          <Copy size={14} /> {invitation.accessCode ? "Copy message" : "Copy link"}
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => void copyInvitationLink(invitation)}
+                          disabled={invitation.status === "revoked" || invitation.status === "expired"}
+                          className="premium-action-secondary inline-flex h-9 items-center justify-center rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-45"
+                        >
+                          Link
+                        </button>
+                        {invitation.accessCode ? (
+                          <button
+                            type="button"
+                            onClick={() => void copyInvitationCode(invitation)}
+                            disabled={invitation.status === "revoked" || invitation.status === "expired"}
+                            className="premium-action-secondary inline-flex h-9 items-center justify-center rounded-md px-3 text-xs disabled:cursor-not-allowed disabled:opacity-45"
+                          >
+                            Code
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => void revokeInvitation(invitation.id)}
@@ -530,6 +548,42 @@ export default function NetworkPage() {
       </div>
     </PageContainer>
   );
+}
+
+function InvitationAccessHint({ invitation }: { invitation: CareInvitation }) {
+  if (invitation.accessCode) {
+    return (
+      <div className="mt-2 space-y-2">
+        <p className="inline-flex rounded-md border border-[#dabc73]/20 bg-[#dabc73]/[0.06] px-2 py-1 text-xs text-[#dabc73]/80">
+          Access code: {invitation.accessCode}
+        </p>
+        <p className="text-xs leading-5 text-white/34">
+          Send the message to this person. For testing, copy the link and code separately.
+        </p>
+      </div>
+    );
+  }
+
+  if (invitation.requiresAccessCode) {
+    return (
+      <p className="mt-2 text-xs text-white/34">
+        Protected by an access code shown when this invite was created.
+      </p>
+    );
+  }
+
+  return null;
+}
+
+function buildInvitationMessage(invitation: CareInvitation, absoluteUrl: string) {
+  if (!invitation.accessCode) return absoluteUrl;
+  const role = ROLE_COPY[invitation.role].title.toLowerCase();
+  return [
+    `Aeonvera secure ${role} view`,
+    absoluteUrl,
+    `Access code: ${invitation.accessCode}`,
+    `Expires: ${formatDate(invitation.expiresAt)}`,
+  ].join("\n");
 }
 
 function NetworkIntelligencePanel({
