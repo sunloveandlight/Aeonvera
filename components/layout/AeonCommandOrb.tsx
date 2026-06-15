@@ -11,6 +11,9 @@ type CommandMessage = {
 
 type VoiceId = (typeof VOICE_OPTIONS)[number]["id"];
 type PlanId = "core" | "elite" | "sovereign";
+type PendingRealtimeAction =
+  | { intent: PlanIntent; type: "plan" }
+  | { href: string; label: string; type: "navigation" };
 
 type RealtimeEvent = {
   error?: { message?: string };
@@ -115,6 +118,7 @@ const NAVIGATION_INTENTS = [
 export default function AeonCommandOrb() {
   const pathname = usePathname();
   const router = useRouter();
+  const pendingRealtimeActionRef = useRef<PendingRealtimeAction | null>(null);
   const realtimePeerRef = useRef<RTCPeerConnection | null>(null);
   const realtimeStreamRef = useRef<MediaStream | null>(null);
   const realtimeAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -146,6 +150,7 @@ export default function AeonCommandOrb() {
   const stopRealtimeVoice = useCallback((updateState = true) => {
     realtimePeerRef.current?.close();
     realtimePeerRef.current = null;
+    pendingRealtimeActionRef.current = null;
 
     realtimeStreamRef.current?.getTracks().forEach((track) => track.stop());
     realtimeStreamRef.current = null;
@@ -347,9 +352,15 @@ export default function AeonCommandOrb() {
         const planIntent = resolvePlanIntent(transcript);
         const navigation = resolveNavigationIntent(transcript);
         if (planIntent) {
-          void handlePlanIntent(planIntent);
+          pendingRealtimeActionRef.current = { intent: planIntent, type: "plan" };
+          setRealtimeStatus("I will open that after I finish.");
         } else if (navigation) {
-          router.push(navigation.href);
+          pendingRealtimeActionRef.current = {
+            href: navigation.href,
+            label: navigation.label,
+            type: "navigation",
+          };
+          setRealtimeStatus(`I will open ${navigation.label} after I finish.`);
         }
       }
       return;
@@ -374,6 +385,7 @@ export default function AeonCommandOrb() {
     if (event.type === "response.done") {
       setSpeaking(false);
       setRealtimeStatus("Listening.");
+      runPendingRealtimeAction();
       return;
     }
 
@@ -391,6 +403,22 @@ export default function AeonCommandOrb() {
       stopRealtimeVoice();
       setRealtimeStatus("Voice changed. Start the live line again.");
     }
+  }
+
+  function runPendingRealtimeAction() {
+    const action = pendingRealtimeActionRef.current;
+    if (!action) return;
+
+    pendingRealtimeActionRef.current = null;
+    window.setTimeout(() => {
+      if (action.type === "plan") {
+        void handlePlanIntent(action.intent);
+        return;
+      }
+
+      setRealtimeStatus(`Opening ${action.label}.`);
+      router.push(action.href);
+    }, 650);
   }
 
   function closeOrb() {
