@@ -1153,7 +1153,7 @@ export default function AeonCommandOrb() {
         </section>
       ) : null}
 
-      <div className="flex items-end justify-center">
+      <div className="aeon-command-orb-dock flex items-center justify-center">
         <button
           type="button"
           onClick={() => {
