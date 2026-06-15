@@ -41,6 +41,11 @@ Expo dashboard project settings.
 - Native coach inbox
 - Native notification delivery preferences
 - Deep links into the live web app
+- Native shortcut deep links:
+  - `aeonvera://ask`
+  - `aeonvera://today`
+  - `aeonvera://plan`
+  - `aeonvera://settings`
 - Native Supabase email/password sign-in
 - Native iOS/Android notification token registration
 - Backend bridge into Aeonvera's existing coach notification system

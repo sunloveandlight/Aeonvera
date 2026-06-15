@@ -45,6 +45,7 @@ type VoicePhase =
   | "processing"
   | "speaking"
   | "ready_follow_up";
+type MobileShortcutTarget = "ask" | "plan" | "settings" | "today";
 
 type CoachMessage = {
   id: string;
@@ -936,6 +937,41 @@ export default function App() {
     },
     [loadCompanionData, openPath, session]
   );
+
+  const handleMobileShortcut = useCallback(
+    (url: string | null) => {
+      const target = parseMobileShortcutTarget(url);
+      if (!target) return;
+
+      if (target === "ask") {
+        setActiveView("agent");
+        setActionNotice("Aeonvera is ready. Tap the orb and speak naturally.");
+      } else if (target === "plan") {
+        setActiveView("inbox");
+        setInboxNotice("Opened from shortcut.");
+      } else if (target === "settings") {
+        setActiveView("settings");
+        setActionNotice("Settings opened from shortcut.");
+      } else {
+        setActiveView("today");
+        setActionNotice("Today opened from shortcut.");
+      }
+
+      playSoftHaptic();
+      void loadCompanionData(session);
+    },
+    [loadCompanionData, session]
+  );
+
+  useEffect(() => {
+    void Linking.getInitialURL().then((url) => handleMobileShortcut(url));
+
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      handleMobileShortcut(url);
+    });
+
+    return () => subscription.remove();
+  }, [handleMobileShortcut]);
 
   const recordNotificationResponse = useCallback(
     async (action: "done" | "later", data?: NotificationTapData) => {
@@ -5601,6 +5637,19 @@ function tabLabelForView(view: ActiveView) {
   if (view === "inbox" || view === "message") return "Plan";
   if (view === "settings") return "Settings";
   return "Today";
+}
+
+function parseMobileShortcutTarget(url: string | null): MobileShortcutTarget | null {
+  if (!url) return null;
+
+  const normalized = url.toLowerCase();
+  if (!normalized.startsWith("aeonvera://")) return null;
+
+  if (/\b(ask|voice|agent|companion)\b/.test(normalized)) return "ask";
+  if (/\b(plan|inbox|coach)\b/.test(normalized)) return "plan";
+  if (/\b(settings|preferences|notifications)\b/.test(normalized)) return "settings";
+  if (/\b(today|home|daily)\b/.test(normalized)) return "today";
+  return "today";
 }
 
 function formatDate(value?: string | null) {

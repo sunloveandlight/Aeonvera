@@ -239,12 +239,23 @@ export default function AeonCommandOrb() {
         throw new Error("Realtime voice needs a browser with microphone and WebRTC support.");
       }
 
+      const microphonePermission = await readMicrophonePermission();
+      if (microphonePermission === "denied") {
+        throw new Error(
+          "Microphone access is blocked in this browser. Open site settings for Aeonvera and allow microphone access."
+        );
+      }
+
       const opening = pickAssistantOpening();
       setRealtimeStatus(opening);
       setSpeaking(true);
       await speakBrowserOpening(opening);
       setSpeaking(false);
-      setRealtimeStatus("Opening the microphone.");
+      setRealtimeStatus(
+        microphonePermission === "prompt"
+          ? "Your browser may ask for microphone access. Choose Allow once for this site."
+          : "Opening the microphone."
+      );
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -784,6 +795,21 @@ function speakBrowserOpening(text: string) {
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   });
+}
+
+async function readMicrophonePermission() {
+  if (typeof navigator === "undefined" || !navigator.permissions?.query) {
+    return "unknown";
+  }
+
+  try {
+    const permission = await navigator.permissions.query({
+      name: "microphone" as PermissionName,
+    });
+    return permission.state;
+  } catch {
+    return "unknown";
+  }
 }
 
 function isActiveSubscription(value: unknown) {
