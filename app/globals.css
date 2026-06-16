@@ -242,31 +242,41 @@ body:has(.aeon-orb-system) main {
   transform: translateY(-0.08rem) scale(1);
 }
 
+.aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb {
+  opacity: 0.46;
+  transform: translateY(0.42rem) scale(0.78);
+  filter: saturate(0.86);
+}
+
+.aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb::before {
+  opacity: 0.08;
+}
+
 .aeon-command-orb {
   position: relative;
   display: inline-flex;
-  width: 3.25rem;
-  height: 3.25rem;
+  width: 3.08rem;
+  height: 3.08rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   border: 1px solid rgba(255, 232, 174, 0.16);
   color: rgba(255, 255, 255, 0.92);
   background:
-    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.22), transparent 17%),
-    radial-gradient(circle at 54% 58%, rgba(var(--gold), 0.16), transparent 48%),
-    radial-gradient(circle at 66% 72%, rgba(0, 0, 0, 0.5), transparent 54%),
-    linear-gradient(150deg, rgba(23, 19, 12, 0.54), rgba(2, 3, 5, 0.8));
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.2), transparent 17%),
+    radial-gradient(circle at 54% 58%, rgba(var(--gold), 0.14), transparent 48%),
+    radial-gradient(circle at 70% 72%, rgba(108, 144, 255, 0.05), transparent 52%),
+    radial-gradient(circle at 66% 72%, rgba(0, 0, 0, 0.52), transparent 54%),
+    linear-gradient(150deg, rgba(24, 20, 13, 0.5), rgba(2, 3, 5, 0.82));
   box-shadow:
-    0 13px 32px rgba(0, 0, 0, 0.4),
-    0 0 14px rgba(var(--gold), 0.14),
-    0 0 34px rgba(var(--gold), 0.045),
+    0 12px 28px rgba(0, 0, 0, 0.38),
+    0 0 13px rgba(var(--gold), 0.12),
+    0 0 28px rgba(116, 156, 255, 0.035),
     inset 0 1px 0 rgba(255, 255, 255, 0.13);
   backdrop-filter: blur(16px) saturate(110%);
   cursor: pointer;
   isolation: isolate;
   overflow: visible;
-  animation: aeon-orb-breathe 4.8s ease-in-out infinite;
   transition:
     border-color 240ms ease,
     opacity 260ms ease,
@@ -327,7 +337,7 @@ body:has(.aeon-orb-system) main {
   box-shadow:
     0 14px 34px rgba(0, 0, 0, 0.42),
     0 0 18px rgba(var(--gold), 0.18),
-    0 0 42px rgba(var(--gold), 0.07),
+    0 0 38px rgba(116, 156, 255, 0.055),
     inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
@@ -338,7 +348,6 @@ body:has(.aeon-orb-system) main {
 
 .aeon-command-orb-listening {
   border-color: rgba(var(--gold), 0.26);
-  animation: aeon-orb-breathe 3.2s ease-in-out infinite;
   box-shadow:
     0 15px 36px rgba(0, 0, 0, 0.44),
     0 0 24px rgba(var(--gold), 0.2),
@@ -348,7 +357,6 @@ body:has(.aeon-orb-system) main {
 
 .aeon-command-orb-speaking {
   border-color: rgba(255, 236, 185, 0.3);
-  animation: aeon-orb-breathe 2.1s ease-in-out infinite;
   box-shadow:
     0 16px 40px rgba(0, 0, 0, 0.46),
     0 0 28px rgba(var(--gold), 0.24),
@@ -387,19 +395,21 @@ body:has(.aeon-orb-system) main {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.95rem;
-  height: 2.95rem;
+  width: 2.78rem;
+  height: 2.78rem;
   border-radius: 999px;
   overflow: hidden;
   border: 0;
   background:
-    radial-gradient(circle at 38% 30%, rgba(255, 248, 224, 0.16), transparent 18%),
-    radial-gradient(circle at 46% 54%, rgba(255, 221, 145, 0.28), transparent 42%),
-    radial-gradient(circle at 68% 70%, rgba(72, 54, 24, 0.32), transparent 58%),
+    radial-gradient(circle at 35% 28%, rgba(255, 248, 224, 0.15), transparent 18%),
+    radial-gradient(circle at 44% 53%, rgba(255, 220, 144, 0.24), transparent 40%),
+    radial-gradient(circle at 70% 64%, rgba(116, 156, 255, 0.07), transparent 46%),
+    radial-gradient(circle at 42% 78%, rgba(114, 229, 210, 0.045), transparent 42%),
+    radial-gradient(circle at 68% 70%, rgba(72, 54, 24, 0.28), transparent 58%),
     radial-gradient(circle at 50% 50%, rgba(4, 4, 6, 0.08), transparent 68%);
   box-shadow: none;
   mask-image: radial-gradient(circle, #000 0 54%, rgba(0, 0, 0, 0.78) 72%, transparent 100%);
-  animation: aeon-orb-liquid 6.6s ease-in-out infinite;
+  animation: aeon-orb-liquid 5.8s ease-in-out infinite;
 }
 
 .aeon-orb-bloom {
@@ -407,12 +417,13 @@ body:has(.aeon-orb-system) main {
   inset: -20%;
   border-radius: inherit;
   background:
-    radial-gradient(circle at 34% 38%, rgba(255, 232, 171, 0.34), transparent 28%),
-    radial-gradient(circle at 70% 66%, rgba(var(--gold), 0.16), transparent 48%),
-    radial-gradient(circle at 44% 74%, rgba(105, 195, 255, 0.035), transparent 42%);
+    radial-gradient(circle at 34% 38%, rgba(255, 232, 171, 0.28), transparent 28%),
+    radial-gradient(circle at 70% 66%, rgba(var(--gold), 0.14), transparent 48%),
+    radial-gradient(circle at 44% 74%, rgba(105, 195, 255, 0.06), transparent 42%),
+    radial-gradient(circle at 58% 34%, rgba(158, 122, 255, 0.035), transparent 36%);
   filter: blur(4px);
-  opacity: 0.78;
-  animation: aeon-orb-bloom 5.8s ease-in-out infinite;
+  opacity: 0.72;
+  animation: aeon-orb-bloom 4.9s ease-in-out infinite;
 }
 
 .aeon-orb-sheen {
@@ -521,6 +532,10 @@ body:has(.aeon-orb-system) main {
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.012));
+}
+
+.aeon-orb-actions summary::-webkit-details-marker {
+  display: none;
 }
 
 .aeon-orb-select,
@@ -812,8 +827,6 @@ body:has(.aeon-orb-system) main {
 @media (prefers-reduced-motion: reduce) {
   /* Freeze drifting/bouncing motion — the static iridescent sphere still looks intentional. */
   .aeon-command-orb,
-  .aeon-command-orb-listening,
-  .aeon-command-orb-speaking,
   .aeon-command-orb::before,
   .aeon-orb-bloom,
   .aeon-orb-sheen,
@@ -1691,12 +1704,12 @@ a.royal-gradient {
 
 .pricing-card-features {
   flex: 1;
-  min-height: 11.25rem;
+  min-height: 7.6rem;
   margin-top: 0.2rem;
 }
 
 .pricing-card-features > * + * {
-  margin-top: 0.68rem;
+  margin-top: 0.62rem;
 }
 
 .pricing-plan-card-current {

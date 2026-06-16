@@ -34,7 +34,7 @@ export default function PricingPlanCard({
   const [expanded, setExpanded] = useState(false);
   const showPrice = mode === "purchase" || mode === "upgrade";
   const isCurrent = mode === "current";
-  const visibleFeatures = expanded ? plan.features : plan.features.slice(0, 5);
+  const visibleFeatures = expanded ? plan.features : plan.features.slice(0, 3);
   const hiddenFeatureCount = Math.max(plan.features.length - visibleFeatures.length, 0);
   const ctaLabel =
     loadingPlan === plan.id

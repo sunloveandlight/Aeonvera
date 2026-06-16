@@ -89,6 +89,7 @@ export default function AeonCommandOrb() {
   );
   const contextualPrompts = routeContext.prompts.length ? routeContext.prompts : STARTER_PROMPTS;
   const latestReceipt = actionReceipts[0] || null;
+  const contentAwareOrb = pathname === "/" || pathname === "/pricing";
 
   const stopRealtimeVoice = useCallback((updateState = true) => {
     realtimePeerRef.current?.close();
@@ -966,7 +967,7 @@ export default function AeonCommandOrb() {
     <div
       className={`aeon-orb-system fixed z-40 flex flex-col items-center ${
         idleDimmed ? "aeon-orb-system-idle" : ""
-      }`}
+      } ${contentAwareOrb ? "aeon-orb-system-content-aware" : ""}`}
       onFocusCapture={() => setIdleDimmed(false)}
       onPointerEnter={() => setIdleDimmed(false)}
     >
@@ -1063,13 +1064,13 @@ export default function AeonCommandOrb() {
           </div>
 
           {actionReceipts.length ? (
-            <div className="aeon-orb-actions mt-4 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs uppercase tracking-[0.18em] text-white/36">
+            <details className="aeon-orb-actions mt-4 p-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+                <span className="text-xs uppercase tracking-[0.18em] text-white/36">
                   Recent actions
-                </p>
-                <span className="text-xs text-white/30">This session</span>
-              </div>
+                </span>
+                <span className="text-xs text-white/30">Show</span>
+              </summary>
               <div className="mt-3 grid gap-2">
                 {actionReceipts.slice(0, 4).map((receipt) => (
                   <div
@@ -1100,7 +1101,7 @@ export default function AeonCommandOrb() {
                   </div>
                 ))}
               </div>
-            </div>
+            </details>
           ) : null}
 
           <div className="aeon-orb-prompt-rail mt-4 flex flex-wrap gap-2">

@@ -107,6 +107,10 @@ export default function Header() {
         {/* BRAND */}
         <Link
           href="/"
+          onClick={() => {
+            setAccountOpen(false);
+            setMobileOpen(false);
+          }}
           className="group inline-flex items-center gap-3 text-sm font-medium tracking-[0.2em] text-white/85 transition-colors duration-300 hover:text-white"
         >
           <span className="brand-mark" aria-hidden />
@@ -124,6 +128,7 @@ export default function Header() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => setAccountOpen(false)}
                   className={`premium-nav-link ${active ? "premium-nav-link-active" : ""}`}
                 >
                   {item.label}
@@ -199,12 +204,14 @@ export default function Header() {
             <>
               <Link
                 href="/login?mode=signin"
+                onClick={() => setAccountOpen(false)}
                 className="hidden h-9 items-center text-xs font-medium leading-none text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
               >
                 Sign In
               </Link>
               <Link
                 href="/login?mode=signup"
+                onClick={() => setAccountOpen(false)}
                 className="premium-nav-action px-4 text-xs font-medium leading-none transition"
               >
                 Begin
