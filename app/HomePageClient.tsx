@@ -261,39 +261,59 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="aeon-apple-pricing">
-        <div className="aeon-apple-copy aeon-apple-copy-center">
-          <h2>Choose how much of your biological future Aeonvera runs.</h2>
-          <p>Start with biological age. Scale into digital twin modeling, proactive coaching, and concierge-level health intelligence.</p>
-        </div>
+      {activePlan ? (
+        <section className="aeon-apple-member">
+          <div className="aeon-member-system">
+            <span className="aeon-member-kicker">{activePlan} is active</span>
+            <h2>Your biological future is already online.</h2>
+            <p>
+              Continue where Aeonvera is learning: today&apos;s signal, your next protocol,
+              and the model that keeps updating as your data changes.
+            </p>
+            <div className="aeon-member-actions">
+              <Link href="/dashboard" className="apple-cta-primary">
+                Open Today
+              </Link>
+              <Link href="/optimization" className="apple-cta-link aeon-member-secondary">
+                Continue optimization <ArrowRight size={15} />
+              </Link>
+              <Link href="/pricing" className="apple-cta-link aeon-member-secondary">
+                Manage membership <ArrowRight size={15} />
+              </Link>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="aeon-apple-pricing">
+          <div className="aeon-apple-copy aeon-apple-copy-center">
+            <h2>Choose how much of your biological future Aeonvera runs.</h2>
+            <p>Start with biological age. Scale into digital twin modeling, proactive coaching, and concierge-level health intelligence.</p>
+          </div>
 
-        <div className="aeon-apple-plan-grid">
-          {PLANS.map((plan) => (
-            <button
-              key={plan.id}
-              type="button"
-              onClick={() => handleCheckout(plan.id)}
-              disabled={loadingPlan !== null}
-              className={`aeon-apple-plan ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`}
-            >
-              <span className="aeon-apple-plan-name">{plan.name}</span>
-              {activePlan && plan.id === activePlan ? (
-                <span className="aeon-apple-plan-price">Active</span>
-              ) : (
+          <div className="aeon-apple-plan-grid">
+            {PLANS.map((plan) => (
+              <button
+                key={plan.id}
+                type="button"
+                onClick={() => handleCheckout(plan.id)}
+                disabled={loadingPlan !== null}
+                className={`aeon-apple-plan ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`}
+              >
+                <span className="aeon-apple-plan-name">{plan.name}</span>
                 <span className="aeon-apple-plan-price">{plan.price}</span>
-              )}
-              <span className="aeon-apple-plan-body">{plan.body}</span>
-              <span className="aeon-apple-plan-check">
-                <Check size={15} /> Monthly membership
-              </span>
-              <span className="aeon-apple-plan-action">
-                {loadingPlan === plan.id ? "Opening" : getPlanActionLabel(plan.id)}
-                {loadingPlan !== plan.id ? <ArrowRight size={15} /> : null}
-              </span>
-            </button>
-          ))}
-        </div>
-      </section>
+                <span className="aeon-apple-plan-body">{plan.body}</span>
+                <span className="aeon-apple-plan-check">
+                  <Check size={15} /> Monthly membership
+                </span>
+                <span className="aeon-apple-plan-action">
+                  {loadingPlan === plan.id ? "Opening" : getPlanActionLabel(plan.id)}
+                  {loadingPlan !== plan.id ? <ArrowRight size={15} /> : null}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
