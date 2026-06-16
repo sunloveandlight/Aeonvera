@@ -108,7 +108,7 @@ export default function Header() {
   const visibleAccountItems = accountNavItems.filter((item) => item.public || authenticated);
 
   return (
-    <header className="premium-header sticky top-0 z-50">
+    <header className="premium-header fixed inset-x-0 top-0 z-50">
       <div className="mx-auto flex h-11 max-w-7xl items-center justify-between px-6 lg:px-8">
 
         {/* BRAND */}

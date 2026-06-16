@@ -29,7 +29,7 @@ export default function AppShell({ children }: AppShellProps) {
 
       <Header />
 
-      <div className="relative flex-1 w-full">{children}</div>
+      <div className="relative flex-1 w-full pt-11">{children}</div>
 
       <Footer />
 
