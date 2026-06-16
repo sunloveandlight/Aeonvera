@@ -1354,6 +1354,12 @@ body:has(.aeon-orb-system) main {
   71% { stroke-dasharray: 0.06 0.18; stroke-dashoffset: -0.54; transform: translate3d(var(--aeon-look-x-inverse, 0px), var(--aeon-look-y-subtle, 0px), 0) scaleX(1.02) scaleY(0.98); }
 }
 
+/* Orb visuals are intentionally removed while the next direction is reset. */
+.aeon-orb-showcase,
+.aeon-orb-system {
+  display: none !important;
+}
+
 .aeon-orb-panel {
   border: 1px solid var(--panel-border);
   background:
