@@ -350,7 +350,7 @@ body:has(.aeon-orb-system) main {
 .hero-product-lens {
   position: absolute;
   pointer-events: none;
-  border-radius: 999px;
+  border-radius: 46% 54% 50% 50%;
 }
 
 .hero-product-aura {
@@ -396,7 +396,7 @@ body:has(.aeon-orb-system) main {
   content: "";
   position: absolute;
   inset: 13% 6%;
-  border-radius: 999px;
+  border-radius: 42% 58% 50% 50%;
   background: rgba(var(--gold), 0.12);
   filter: blur(42px);
   opacity: 0.5;
@@ -809,43 +809,38 @@ body:has(.aeon-orb-system) main {
   cursor: pointer;
   pointer-events: auto;
   border: 0;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04), transparent 63%),
-    radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.045), transparent 75%);
-  filter: hue-rotate(var(--orb-hue, 0deg)) saturate(1.08);
+  background: transparent;
+  filter: hue-rotate(var(--orb-hue, 0deg)) saturate(1.18);
   box-shadow:
-    0 0 54px rgba(var(--gold), 0.12),
-    0 0 118px rgba(41, 151, 255, 0.08);
+    0 0 52px rgba(var(--gold), 0.12),
+    0 0 128px rgba(41, 151, 255, 0.08);
 }
 
 .aeon-orb-showcase-orb::before {
-  inset: -3.6rem;
-  opacity: 0.28;
-  filter: blur(30px);
+  inset: -4.4rem;
+  opacity: 0.42;
+  filter: blur(36px);
 }
 
 .aeon-orb-showcase-orb .aeon-command-orb-core {
-  width: min(12.25rem, 31.6vw) !important;
-  height: min(12.25rem, 31.6vw) !important;
-  box-shadow:
-    0 0 54px rgba(255, 232, 174, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -20px 48px rgba(0, 0, 0, 0.12);
+  width: min(13rem, 34vw) !important;
+  height: min(13rem, 34vw) !important;
+  box-shadow: none;
 }
 
 .aeon-orb-showcase-orb .aeon-orb-bloom {
-  filter: blur(20px);
-  opacity: 0.68;
+  filter: blur(26px);
+  opacity: 0.86;
 }
 
 .aeon-orb-showcase-orb .aeon-command-orb-core::before {
-  filter: blur(16px);
-  opacity: 0.64;
+  filter: blur(24px);
+  opacity: 0.72;
 }
 
 .aeon-orb-showcase-orb .aeon-orb-sheen {
   inset: min(1.1rem, 2.8vw);
-  opacity: 0.28;
+  opacity: 0.2;
 }
 
 .aeon-apple-pricing {
@@ -1049,16 +1044,14 @@ body:has(.aeon-orb-system) main {
   height: 3.02rem;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: 46% 54% 50% 50%;
   border: 1px solid transparent;
   color: rgba(255, 255, 255, 0.92);
-  background:
-    radial-gradient(circle at 34% 22%, rgba(255, 255, 255, 0.055), transparent 24%),
-    radial-gradient(circle at 50% 55%, rgba(var(--gold), 0.025), transparent 58%),
-    var(--orb-shell);
+  background: transparent;
   box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.18),
-    0 0 24px rgba(var(--gold), 0.1);
+    0 12px 28px rgba(0, 0, 0, 0.08),
+    0 0 28px rgba(var(--gold), 0.12),
+    0 0 42px rgba(41, 151, 255, 0.055);
   backdrop-filter: blur(16px) saturate(110%);
   cursor: pointer;
   isolation: isolate;
@@ -1113,9 +1106,9 @@ body:has(.aeon-orb-system) main {
 .aeon-command-orb-open {
   transform: translateY(-0.08rem) scale(1.04);
   box-shadow:
-    0 16px 38px rgba(0, 0, 0, 0.36),
-    0 0 30px rgba(var(--gold), 0.18),
-    0 0 52px rgba(41, 151, 255, 0.09);
+    0 16px 38px rgba(0, 0, 0, 0.18),
+    0 0 38px rgba(var(--gold), 0.26),
+    0 0 62px rgba(41, 151, 255, 0.14);
 }
 
 .aeon-command-orb:hover::before,
@@ -1140,18 +1133,18 @@ body:has(.aeon-orb-system) main {
 .aeon-command-orb::before {
   position: absolute;
   content: "";
-  border-radius: 999px;
+  border-radius: 42% 58% 50% 50%;
   pointer-events: none;
-  inset: -0.48rem;
+  inset: -0.82rem;
   z-index: -1;
   background:
-    radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.13), transparent 48%),
-    radial-gradient(circle at 50% 50%, rgba(41, 151, 255, 0.09), transparent 68%),
-    radial-gradient(circle at 50% 50%, rgba(114, 229, 210, 0.055), transparent 82%);
-  filter: blur(8px);
-  opacity: 0.32;
+    radial-gradient(ellipse at 38% 44%, rgba(var(--gold), 0.24), transparent 40%),
+    radial-gradient(ellipse at 64% 58%, rgba(41, 151, 255, 0.2), transparent 52%),
+    radial-gradient(ellipse at 50% 54%, rgba(114, 229, 210, 0.14), transparent 72%);
+  filter: blur(16px);
+  opacity: 0.58;
   transition: opacity 240ms ease;
-  animation: aeon-orb-halo 4.8s ease-in-out infinite;
+  animation: aeon-orb-halo 3.8s ease-in-out infinite;
 }
 
 .aeon-command-orb-listening::before,
@@ -1172,117 +1165,99 @@ body:has(.aeon-orb-system) main {
   justify-content: center;
   width: 2.62rem;
   height: 2.62rem;
-  border-radius: 999px;
-  overflow: hidden;
-  clip-path: circle(50% at 50% 50%);
+  border-radius: 41% 59% 48% 52%;
+  overflow: visible;
+  clip-path: none;
   -webkit-mask-image: none;
   mask-image: none;
   border: 0;
-  background:
-    radial-gradient(circle at calc(28% + var(--orb-look-x, 0%) + var(--orb-aware-x, 0%) + var(--orb-drift-x, 0%) + var(--orb-live-a-x, 0%)) calc(22% + var(--orb-look-y, 0%) + var(--orb-aware-y, 0%) + var(--orb-drift-y, 0%) + var(--orb-live-a-y, 0%)), rgba(255, 255, 250, 0.2), transparent 15%),
-    radial-gradient(circle at calc(42% + var(--orb-look-x-neg, 0%) + var(--orb-aware-x-neg, 0%) + var(--orb-live-b-x, 0%)) calc(48% + var(--orb-look-y-neg, 0%) + var(--orb-aware-y-neg, 0%) + var(--orb-live-b-y, 0%)), rgba(255, 215, 142, 0.17), transparent 34%),
-    radial-gradient(circle at calc(72% + var(--orb-look-x, 0%) + var(--orb-aware-x, 0%) + var(--orb-live-c-x, 0%)) calc(62% + var(--orb-look-y, 0%) + var(--orb-aware-y, 0%) + var(--orb-live-c-y, 0%)), rgba(41, 151, 255, 0.22), transparent 42%),
-    radial-gradient(circle at calc(42% + var(--orb-drift-x-neg, 0%) + var(--orb-live-d-x, 0%)) calc(80% + var(--orb-drift-y-neg, 0%) + var(--orb-live-d-y, 0%)), rgba(114, 229, 210, 0.16), transparent 38%),
-    radial-gradient(ellipse at calc(58% + var(--orb-live-b-x, 0%)) calc(44% + var(--orb-live-b-y, 0%)), rgba(191, 90, 242, 0.1), transparent 42%),
-    radial-gradient(circle at 52% 55%, rgba(0, 0, 0, 0.045), transparent 66%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(8, 10, 13, 0.16));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.055),
-    inset 0 -10px 22px rgba(0, 0, 0, 0.1);
-  animation: aeon-orb-liquid var(--orb-tempo, 3.2s) ease-in-out infinite;
+  background: transparent;
+  box-shadow: none;
+  animation: aeon-orb-liquid var(--orb-tempo, 3s) ease-in-out infinite;
   filter: hue-rotate(var(--orb-hue, 0deg));
   transition: filter 700ms ease;
 }
 
 .aeon-orb-bloom {
   position: absolute;
-  inset: -18%;
+  inset: -12%;
   z-index: 0;
   border-radius: inherit;
   background:
-    radial-gradient(circle at calc(34% + var(--orb-look-x, 0%) + var(--orb-aware-x, 0%) + var(--orb-live-a-x, 0%)) calc(38% + var(--orb-look-y, 0%) + var(--orb-aware-y, 0%) + var(--orb-live-a-y, 0%)), rgba(255, 232, 171, 0.22), transparent 28%),
-    radial-gradient(circle at calc(70% + var(--orb-look-x-neg, 0%) + var(--orb-aware-x-neg, 0%) + var(--orb-live-b-x, 0%)) calc(66% + var(--orb-look-y-neg, 0%) + var(--orb-aware-y-neg, 0%) + var(--orb-live-b-y, 0%)), rgba(var(--gold), 0.11), transparent 48%),
-    radial-gradient(circle at calc(44% + var(--orb-drift-x, 0%) + var(--orb-live-c-x, 0%)) calc(74% + var(--orb-drift-y, 0%) + var(--orb-live-c-y, 0%)), rgba(105, 195, 255, 0.095), transparent 42%),
-    radial-gradient(circle at 58% 34%, rgba(158, 122, 255, 0.045), transparent 36%);
-  filter: blur(4.5px);
-  opacity: 0.72;
-  animation: aeon-orb-bloom var(--orb-bloom-tempo, 2.9s) ease-in-out infinite;
+    radial-gradient(ellipse at calc(34% + var(--orb-look-x, 0%) + var(--orb-aware-x, 0%) + var(--orb-live-a-x, 0%)) calc(38% + var(--orb-look-y, 0%) + var(--orb-aware-y, 0%) + var(--orb-live-a-y, 0%)), rgba(255, 232, 171, 0.36), transparent 38%),
+    radial-gradient(ellipse at calc(70% + var(--orb-look-x-neg, 0%) + var(--orb-aware-x-neg, 0%) + var(--orb-live-b-x, 0%)) calc(66% + var(--orb-look-y-neg, 0%) + var(--orb-aware-y-neg, 0%) + var(--orb-live-b-y, 0%)), rgba(41, 151, 255, 0.25), transparent 46%),
+    radial-gradient(ellipse at calc(44% + var(--orb-drift-x, 0%) + var(--orb-live-c-x, 0%)) calc(74% + var(--orb-drift-y, 0%) + var(--orb-live-c-y, 0%)), rgba(114, 229, 210, 0.22), transparent 44%);
+  filter: blur(7px) saturate(1.18);
+  opacity: 0.92;
+  animation: aeon-orb-bloom var(--orb-bloom-tempo, 2.4s) ease-in-out infinite;
 }
 
 .aeon-orb-flow {
   position: absolute;
-  inset: -26%;
+  inset: -8%;
   z-index: 2;
   border-radius: 42% 58% 48% 52%;
   pointer-events: none;
   mix-blend-mode: screen;
-  opacity: 0.72;
-  filter: blur(0.35px) saturate(1.18);
+  opacity: 0.84;
+  filter: blur(5px) saturate(1.34);
   transform-origin: center;
 }
 
 .aeon-orb-flow-one {
   background:
-    linear-gradient(calc(18deg + var(--orb-flow-a, 0deg)), transparent 10%, rgba(255, 218, 145, 0.38) 32%, rgba(114, 229, 210, 0.2) 44%, transparent 64%),
-    linear-gradient(calc(-42deg + var(--orb-flow-b, 0deg)), transparent 22%, rgba(41, 151, 255, 0.28) 43%, transparent 68%);
-  animation: aeon-orb-flow-one 4.7s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+    linear-gradient(calc(18deg + var(--orb-flow-a, 0deg)), transparent 8%, rgba(255, 236, 174, 0.52) 31%, rgba(114, 229, 210, 0.32) 47%, transparent 68%),
+    linear-gradient(calc(-42deg + var(--orb-flow-b, 0deg)), transparent 18%, rgba(41, 151, 255, 0.42) 45%, transparent 72%);
+  animation: aeon-orb-flow-one 3.9s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
 .aeon-orb-flow-two {
-  inset: -18%;
+  inset: -2%;
   background:
-    radial-gradient(90% 30% at calc(42% + var(--orb-live-a-x, 0%)) calc(36% + var(--orb-live-a-y, 0%)), rgba(255, 244, 218, 0.32), transparent 58%),
-    radial-gradient(78% 34% at calc(64% + var(--orb-live-c-x, 0%)) calc(62% + var(--orb-live-c-y, 0%)), rgba(41, 151, 255, 0.28), transparent 62%),
-    linear-gradient(calc(142deg - var(--orb-flow-c, 0deg)), transparent 14%, rgba(114, 229, 210, 0.22) 42%, transparent 73%);
-  opacity: 0.68;
-  filter: blur(1.05px) saturate(1.22);
-  animation: aeon-orb-flow-two 5.9s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+    radial-gradient(90% 30% at calc(42% + var(--orb-live-a-x, 0%)) calc(36% + var(--orb-live-a-y, 0%)), rgba(255, 244, 218, 0.42), transparent 58%),
+    radial-gradient(78% 34% at calc(64% + var(--orb-live-c-x, 0%)) calc(62% + var(--orb-live-c-y, 0%)), rgba(41, 151, 255, 0.4), transparent 62%),
+    linear-gradient(calc(142deg - var(--orb-flow-c, 0deg)), transparent 12%, rgba(114, 229, 210, 0.32) 42%, transparent 76%);
+  opacity: 0.78;
+  filter: blur(7px) saturate(1.38);
+  animation: aeon-orb-flow-two 4.8s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
 .aeon-orb-flow-three {
-  inset: -34%;
+  inset: -16%;
   background:
-    radial-gradient(ellipse at calc(38% + var(--orb-live-c-x, 0%)) calc(34% + var(--orb-live-c-y, 0%)), rgba(191, 90, 242, 0.2), transparent 34%),
-    radial-gradient(ellipse at calc(68% + var(--orb-live-d-x, 0%)) calc(72% + var(--orb-live-d-y, 0%)), rgba(41, 151, 255, 0.24), transparent 40%);
-  opacity: 0.58;
-  filter: blur(2.2px) saturate(1.18);
-  animation: aeon-orb-flow-three 6.8s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+    radial-gradient(ellipse at calc(38% + var(--orb-live-c-x, 0%)) calc(34% + var(--orb-live-c-y, 0%)), rgba(191, 90, 242, 0.28), transparent 38%),
+    radial-gradient(ellipse at calc(68% + var(--orb-live-d-x, 0%)) calc(72% + var(--orb-live-d-y, 0%)), rgba(41, 151, 255, 0.34), transparent 42%);
+  opacity: 0.68;
+  filter: blur(11px) saturate(1.28);
+  animation: aeon-orb-flow-three 5.6s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
 .aeon-command-orb-core::before {
   content: "";
   position: absolute;
-  inset: -28%;
+  inset: -10%;
   z-index: 1;
-  border-radius: inherit;
-  clip-path: circle(50% at 50% 50%);
+  border-radius: 44% 56% 50% 50%;
+  clip-path: none;
   pointer-events: none;
   background:
-    conic-gradient(
-      from 0deg at 50% 50%,
-      transparent 0deg,
-      rgba(255, 224, 153, 0.22) 42deg,
-      transparent 96deg,
-      rgba(41, 151, 255, 0.2) 154deg,
-      transparent 214deg,
-      rgba(114, 229, 210, 0.12) 278deg,
-      transparent 360deg
-    );
-  filter: blur(4px);
-  opacity: 0.54;
+    radial-gradient(ellipse at calc(42% + var(--orb-live-d-x, 0%)) calc(50% + var(--orb-live-d-y, 0%)), rgba(255, 255, 255, 0.36), transparent 24%),
+    linear-gradient(calc(95deg + var(--orb-flow-c, 0deg)), transparent 14%, rgba(255, 232, 171, 0.22) 43%, rgba(41, 151, 255, 0.2) 57%, transparent 78%);
+  filter: blur(10px) saturate(1.25);
+  opacity: 0.72;
   mix-blend-mode: screen;
   animation: aeon-orb-conscious var(--orb-conscious-tempo, 5.2s) ease-in-out infinite;
 }
 
 .aeon-orb-sheen {
   position: absolute;
-  inset: 0.22rem;
+  inset: 8%;
   z-index: 3;
-  border-radius: 999px;
+  border-radius: 44% 56% 52% 48%;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 34% 23%, rgba(255, 255, 255, 0.16), transparent 24%);
-  opacity: 0.3;
+    radial-gradient(ellipse at 34% 23%, rgba(255, 255, 255, 0.18), transparent 32%);
+  opacity: 0.24;
   transform: translate3d(var(--orb-tilt-x, 0rem), var(--orb-tilt-y, 0rem), 0);
   animation: aeon-orb-sheen 6.4s ease-in-out infinite;
 }
@@ -1291,13 +1266,14 @@ body:has(.aeon-orb-system) main {
 .aeon-command-orb-core::after {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -6%;
   z-index: 3;
-  border-radius: inherit;
+  border-radius: 48% 52% 46% 54%;
   pointer-events: none;
   background:
-    radial-gradient(54% 42% at 35% 18%, rgba(255, 252, 244, 0.045), transparent 58%),
-    radial-gradient(80% 70% at 70% 82%, rgba(0, 0, 0, 0.08), transparent 70%);
+    radial-gradient(54% 42% at 35% 18%, rgba(255, 252, 244, 0.08), transparent 58%),
+    radial-gradient(80% 70% at 70% 82%, rgba(0, 0, 0, 0.035), transparent 74%);
+  filter: blur(3px);
 }
 
 .aeon-command-orb-listening .aeon-command-orb-core {
@@ -1501,10 +1477,12 @@ body:has(.aeon-orb-system) main {
 @keyframes aeon-orb-halo {
   0%,
   100% {
-    transform: scale(0.96);
+    border-radius: 42% 58% 50% 50%;
+    transform: scale(0.96) translate3d(-1%, 1%, 0);
   }
   50% {
-    transform: scale(1.06);
+    border-radius: 61% 39% 54% 46%;
+    transform: scale(1.1) translate3d(2%, -2%, 0);
   }
 }
 
@@ -1527,15 +1505,19 @@ body:has(.aeon-orb-system) main {
 @keyframes aeon-orb-liquid {
   0%,
   100% {
+    border-radius: 41% 59% 48% 52%;
     transform: translate3d(0, 0, 0) scale(0.982) rotate(-1deg);
   }
   24% {
+    border-radius: 58% 42% 55% 45%;
     transform: translate3d(0.025rem, -0.02rem, 0) scale(1.018) rotate(2deg);
   }
   52% {
+    border-radius: 45% 55% 39% 61%;
     transform: translate3d(-0.03rem, 0.025rem, 0) scale(1.006) rotate(-1.6deg);
   }
   76% {
+    border-radius: 52% 48% 58% 42%;
     transform: translate3d(0.018rem, 0.02rem, 0) scale(1.02) rotate(1.3deg);
   }
 }
