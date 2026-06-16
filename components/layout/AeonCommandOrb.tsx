@@ -996,8 +996,8 @@ export default function AeonCommandOrb() {
       ) : null}
 
       {open ? (
-        <section className="aeon-orb-panel mb-3 max-h-[min(72vh,34rem)] w-[min(26rem,calc(100vw-2rem))] overflow-y-auto rounded-lg p-4 md:p-5">
-          <div className="mb-4 flex items-start justify-between gap-4 border-b border-white/[0.07] pb-4">
+        <section className="aeon-orb-panel mb-3 max-h-[min(74vh,35rem)] w-[min(27rem,calc(100vw-2rem))] overflow-y-auto rounded-lg p-4 md:p-5">
+          <div className="aeon-orb-panel-header mb-4 flex items-start justify-between gap-4 pb-4">
             <div>
               <p className="micro-label">Aeonvera Intelligence</p>
               <h2 className="mt-2 text-2xl font-light text-white">{routeContext.label}</h2>
@@ -1008,14 +1008,14 @@ export default function AeonCommandOrb() {
             <button
               type="button"
               onClick={closeOrb}
-              className="inline-flex size-9 items-center justify-center rounded-md border border-white/[0.08] text-white/52 transition hover:text-white"
+              className="aeon-orb-close inline-flex size-9 items-center justify-center rounded-md text-white/52 transition hover:text-white"
               aria-label="Close Aeonvera command"
             >
               <X size={16} />
             </button>
           </div>
 
-          <div className="mb-4 grid gap-3 rounded-lg border border-white/[0.08] bg-white/[0.035] p-3 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="aeon-orb-voice-row mb-4 grid gap-3 p-3 md:grid-cols-[1fr_auto] md:items-center">
             <div>
               <p className="text-sm text-white/72">Live voice: {selectedVoiceOption.label}</p>
               <p className="mt-1 text-xs leading-5 text-white/42">{selectedVoiceOption.tone}</p>
@@ -1025,7 +1025,7 @@ export default function AeonCommandOrb() {
               <select
                 value={selectedVoice}
                 onChange={(event) => handleVoiceChange(event.target.value)}
-                className="h-9 rounded-md border border-white/[0.1] bg-black/45 px-3 text-sm text-white/72 outline-none transition focus:border-[rgba(var(--gold),0.45)]"
+                className="aeon-orb-select h-9 rounded-md px-3 text-sm text-white/72 outline-none transition"
                 aria-label="Choose Aeonvera voice"
               >
                 {VOICE_OPTIONS.map((voice) => (
@@ -1037,33 +1037,33 @@ export default function AeonCommandOrb() {
             </label>
           </div>
 
-          <div className="max-h-44 space-y-3 overflow-y-auto pr-1">
+          <div className="aeon-orb-message-stream max-h-44 space-y-3 overflow-y-auto pr-1">
             {messages.slice(-3).map((message, index) => (
               <div
                 key={`${message.role}-${index}-${message.content.slice(0, 12)}`}
-                className={`rounded-lg border px-3 py-2 text-sm leading-6 ${
+                className={`aeon-orb-message rounded-lg px-3 py-2 text-sm leading-6 ${
                   message.role === "assistant"
-                    ? "border-[rgba(var(--gold),0.16)] bg-[rgba(var(--gold),0.045)] text-white/68"
-                    : "ml-auto max-w-[86%] border-white/[0.08] bg-white/[0.045] text-white/76"
+                    ? "aeon-orb-message-assistant text-white/68"
+                    : "aeon-orb-message-user ml-auto max-w-[86%] text-white/76"
                 }`}
               >
                 {message.content}
               </div>
             ))}
             {thinking ? (
-              <div className="inline-flex rounded-lg border border-[rgba(var(--gold),0.16)] bg-[rgba(var(--gold),0.045)] px-3 py-2 text-sm text-[rgba(var(--gold),0.72)]">
+              <div className="aeon-orb-status inline-flex rounded-lg px-3 py-2 text-sm text-[rgba(var(--gold),0.72)]">
                 Aeonvera is reading the signal.
               </div>
             ) : null}
             {realtimeStatus ? (
-              <div className="inline-flex rounded-lg border border-[rgba(var(--success),0.14)] bg-[rgba(var(--success),0.06)] px-3 py-2 text-sm text-[rgba(var(--success),0.85)]">
+              <div className="aeon-orb-status aeon-orb-status-live inline-flex rounded-lg px-3 py-2 text-sm text-[rgba(var(--success),0.85)]">
                 {realtimeStatus}
               </div>
             ) : null}
           </div>
 
           {actionReceipts.length ? (
-            <div className="mt-4 rounded-lg border border-white/[0.08] bg-white/[0.028] p-3">
+            <div className="aeon-orb-actions mt-4 p-3">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs uppercase tracking-[0.18em] text-white/36">
                   Recent actions
@@ -1074,7 +1074,7 @@ export default function AeonCommandOrb() {
                 {actionReceipts.slice(0, 4).map((receipt) => (
                   <div
                     key={receipt.id}
-                    className="grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-md border border-white/[0.06] bg-black/20 px-3 py-2"
+                    className="aeon-orb-action-row grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-md px-3 py-2"
                   >
                     <span
                       className={`mt-1 size-1.5 rounded-full ${
@@ -1103,13 +1103,13 @@ export default function AeonCommandOrb() {
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="aeon-orb-prompt-rail mt-4 flex flex-wrap gap-2">
             {contextualPrompts.map((prompt) => (
               <button
                 key={prompt}
                 type="button"
                 onClick={() => void submitCommand(prompt)}
-                className="rounded-md border border-white/[0.08] bg-white/[0.035] px-3 py-2 text-xs text-white/52 transition hover:border-[rgba(var(--gold),0.22)] hover:text-white/78"
+                className="aeon-orb-prompt rounded-md px-3 py-2 text-xs text-white/52 transition hover:text-white/78"
               >
                 {prompt}
               </button>
@@ -1117,7 +1117,7 @@ export default function AeonCommandOrb() {
           </div>
 
           <form
-            className="mt-4 flex gap-2"
+            className="aeon-orb-command-bar mt-4 flex gap-2"
             onSubmit={(event) => {
               event.preventDefault();
               void submitCommand(input);
@@ -1126,7 +1126,7 @@ export default function AeonCommandOrb() {
             <input
               value={input}
               onChange={(event) => setInput(event.target.value)}
-              className="h-11 min-w-0 flex-1 rounded-md border border-white/[0.08] bg-black/25 px-3 text-sm text-white/76 outline-none placeholder:text-white/24 focus:border-[rgba(var(--gold),0.45)]"
+              className="aeon-orb-input h-11 min-w-0 flex-1 rounded-md px-3 text-sm text-white/76 outline-none placeholder:text-white/24"
               placeholder={
                 realtimeActive ? "Live voice is open..." : "Ask or command Aeonvera..."
               }
@@ -1138,8 +1138,8 @@ export default function AeonCommandOrb() {
               }
               className={`inline-flex size-11 items-center justify-center rounded-md border transition ${
                 realtimeActive
-                  ? "border-[rgba(var(--gold),0.45)] bg-[rgba(var(--gold),0.12)] text-[rgb(var(--gold))]"
-                  : "border-white/[0.08] bg-white/[0.035] text-white/60 hover:text-white"
+                  ? "aeon-orb-icon-button-active text-[rgb(var(--gold))]"
+                  : "aeon-orb-icon-button text-white/60 hover:text-white"
               }`}
               aria-label={realtimeActive ? "End live voice" : "Start live voice"}
               disabled={thinking}
@@ -1148,7 +1148,7 @@ export default function AeonCommandOrb() {
             </button>
             <button
               type="submit"
-              className="premium-action inline-flex size-11 items-center justify-center rounded-md"
+              className="aeon-orb-send inline-flex size-11 items-center justify-center rounded-md"
               disabled={thinking}
               aria-label="Send command"
             >

@@ -163,6 +163,10 @@ body::after {
   content: none;
 }
 
+body:has(.aeon-orb-system) main {
+  padding-bottom: max(7.5rem, calc(env(safe-area-inset-bottom) + 7rem));
+}
+
 .hero-stage {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
@@ -262,7 +266,7 @@ body::after {
   cursor: pointer;
   isolation: isolate;
   overflow: visible;
-  animation: aeon-orb-breathe 5.6s ease-in-out infinite;
+  animation: aeon-orb-breathe 4.8s ease-in-out infinite;
   transition:
     border-color 240ms ease,
     opacity 260ms ease,
@@ -395,7 +399,7 @@ body::after {
     radial-gradient(circle at 50% 50%, rgba(4, 4, 6, 0.08), transparent 68%);
   box-shadow: none;
   mask-image: radial-gradient(circle, #000 0 54%, rgba(0, 0, 0, 0.78) 72%, transparent 100%);
-  animation: aeon-orb-liquid 8s ease-in-out infinite;
+  animation: aeon-orb-liquid 6.6s ease-in-out infinite;
 }
 
 .aeon-orb-bloom {
@@ -407,8 +411,8 @@ body::after {
     radial-gradient(circle at 70% 66%, rgba(var(--gold), 0.16), transparent 48%),
     radial-gradient(circle at 44% 74%, rgba(105, 195, 255, 0.035), transparent 42%);
   filter: blur(4px);
-  opacity: 0.72;
-  animation: aeon-orb-bloom 6.8s ease-in-out infinite;
+  opacity: 0.78;
+  animation: aeon-orb-bloom 5.8s ease-in-out infinite;
 }
 
 .aeon-orb-sheen {
@@ -419,9 +423,9 @@ body::after {
   pointer-events: none;
   background:
     radial-gradient(ellipse at 34% 23%, rgba(255, 255, 255, 0.14), transparent 24%);
-  opacity: 0.36;
+  opacity: 0.4;
   transform: translate3d(0, 0, 0);
-  animation: aeon-orb-sheen 7.4s ease-in-out infinite;
+  animation: aeon-orb-sheen 6.4s ease-in-out infinite;
 }
 
 /* Static glass specular for premium depth. */
@@ -481,16 +485,111 @@ body::after {
 }
 
 .aeon-orb-panel {
-  border: 1px solid rgba(218, 220, 224, 0.085);
+  border: 1px solid rgba(218, 220, 224, 0.075);
   background:
-    radial-gradient(circle at 50% 0%, rgba(var(--gold), 0.08), transparent 32%),
-    linear-gradient(180deg, rgba(16, 17, 20, 0.9), rgba(8, 9, 11, 0.86)),
-    rgba(0, 0, 0, 0.68);
+    radial-gradient(circle at 50% -8%, rgba(var(--gold), 0.065), transparent 30%),
+    linear-gradient(180deg, rgba(14, 15, 18, 0.86), rgba(7, 8, 10, 0.82)),
+    rgba(0, 0, 0, 0.62);
   box-shadow:
-    0 24px 74px rgba(0, 0, 0, 0.42),
-    0 0 0 1px rgba(var(--gold), 0.026),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(22px) saturate(140%);
+    0 24px 72px rgba(0, 0, 0, 0.42),
+    0 0 34px rgba(var(--gold), 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(24px) saturate(128%);
+}
+
+.aeon-orb-panel-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.aeon-orb-close,
+.aeon-orb-select,
+.aeon-orb-icon-button,
+.aeon-orb-icon-button-active,
+.aeon-orb-send {
+  border: 1px solid rgba(255, 255, 255, 0.065);
+  background: rgba(255, 255, 255, 0.026);
+}
+
+.aeon-orb-close:hover,
+.aeon-orb-icon-button:hover {
+  border-color: rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.aeon-orb-voice-row,
+.aeon-orb-actions {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0.012));
+}
+
+.aeon-orb-select,
+.aeon-orb-input {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.aeon-orb-select:focus,
+.aeon-orb-input:focus {
+  border-color: rgba(var(--gold), 0.34);
+}
+
+.aeon-orb-message {
+  border: 1px solid transparent;
+}
+
+.aeon-orb-message-assistant {
+  background: rgba(var(--gold), 0.032);
+}
+
+.aeon-orb-message-user {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.055);
+}
+
+.aeon-orb-status {
+  border: 1px solid rgba(var(--gold), 0.12);
+  background: rgba(var(--gold), 0.035);
+}
+
+.aeon-orb-status-live {
+  border-color: rgba(var(--success), 0.12);
+  background: rgba(var(--success), 0.05);
+}
+
+.aeon-orb-action-row {
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.aeon-orb-prompt {
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  background: rgba(255, 255, 255, 0.022);
+}
+
+.aeon-orb-prompt:hover {
+  border-color: rgba(var(--gold), 0.18);
+  background: rgba(var(--gold), 0.035);
+}
+
+.aeon-orb-command-bar {
+  border-top: 1px solid rgba(255, 255, 255, 0.055);
+  padding-top: 1rem;
+}
+
+.aeon-orb-input {
+  border: 1px solid rgba(255, 255, 255, 0.065);
+}
+
+.aeon-orb-icon-button-active {
+  border-color: rgba(var(--gold), 0.32);
+  background: rgba(var(--gold), 0.09);
+}
+
+.aeon-orb-send {
+  color: rgba(255, 255, 255, 0.92);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025)),
+    rgba(var(--gold), 0.08);
+  border-color: rgba(255, 236, 185, 0.18);
 }
 
 @keyframes aeon-orb-breathe {
