@@ -142,25 +142,32 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
     <Link
       href="/optimization"
       aria-label="Open optimization"
-      className="hero-stage group relative flex h-full w-full cursor-pointer overflow-hidden rounded-xl border border-white/10 p-6 transition hover:border-white/[0.18] md:p-7"
+      className="hero-stage hero-product-stage group relative flex h-full w-full cursor-pointer overflow-hidden rounded-xl border border-white/10 p-6 transition hover:border-white/[0.18] md:p-8"
     >
-      <div className="relative z-10 flex h-full w-full flex-col">
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-white">Healthspan overview</p>
-            <p className="mt-1 text-sm text-white/50">Updated from your latest assessment</p>
-          </div>
-          <span className="premium-action inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium transition group-hover:opacity-95">
-            Optimize
-            <ArrowRight size={14} />
+      <div className="hero-product-aura" aria-hidden="true" />
+      <div className="hero-product-lens" aria-hidden="true" />
+
+      <div className="relative z-10 grid h-full w-full gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <div className="hero-product-copy">
+          <p className="text-sm font-medium text-white/72">Health intelligence</p>
+          <h2 className="mt-4 max-w-md text-3xl font-light leading-tight text-white md:text-5xl">
+            A private model of what your body is asking for next.
+          </h2>
+          <p className="mt-5 max-w-md text-sm leading-7 text-white/52">
+            Aeonvera turns fragmented labs, recovery, sleep, and behavior into one calm signal.
+          </p>
+          <span className="mt-7 inline-flex items-center gap-2 text-sm font-medium royal-text">
+            Open optimization
+            <ArrowRight size={15} />
           </span>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[0.88fr_1.12fr] lg:items-stretch">
-          <div
-            className="hero-age-block"
-            style={{ "--biometric-duration": biometricDuration } as CSSProperties}
-          >
+        <div className="hero-product-device">
+          <div className="hero-product-device-glass">
+            <div
+              className="hero-age-block"
+              style={{ "--biometric-duration": biometricDuration } as CSSProperties}
+            >
             <div className="age-signal" aria-hidden="true">
               <div className="age-signal__halo" />
               <svg viewBox="20 20 120 120">
@@ -194,42 +201,28 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
             </div>
           </div>
 
-          <div className="hero-domain-panel">
-            {[
-              ["Cardiovascular", "86%"],
-              ["Metabolic", "78%"],
-              ["Recovery", "72%"],
-              ["Movement", "91%"],
-              ["VO2 Max", "82%"],
-            ].map(([label, width]) => (
-              <div key={label} className="hero-domain-row">
-                <div className="hero-domain-labels mb-2 flex items-center justify-between gap-4">
-                  <span>{label}</span>
-                  <span>{width}</span>
+            <div className="hero-domain-panel">
+              {[
+                ["Cardiovascular", "86%"],
+                ["Metabolic", "78%"],
+                ["Recovery", "72%"],
+                ["Movement", "91%"],
+              ].map(([label, width]) => (
+                <div key={label} className="hero-domain-row">
+                  <div className="hero-domain-labels mb-2 flex items-center justify-between gap-4">
+                    <span>{label}</span>
+                    <span>{width}</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="hero-pulse living-bar h-full origin-left rounded-full"
+                      style={{ width }}
+                    />
+                  </div>
                 </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="hero-pulse living-bar h-full origin-left rounded-full"
-                    style={{ width }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="hero-mini-metrics mt-auto hidden gap-3 pt-5">
-          {[
-            ["Demo risk score", "24", "low"],
-            ["Model confidence", "84%", "example"],
-            ["Example priority", "Sleep", "next"],
-          ].map(([label, value, note]) => (
-            <div key={label} className="rounded-lg border border-white/[0.06] bg-white/[0.035] p-4">
-              <p className="text-sm text-white/40">{label}</p>
-              <p className="mt-2 text-2xl font-light text-white">{value}</p>
-              <p className="mt-1 text-sm text-white/40">{note}</p>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </Link>
@@ -395,7 +388,7 @@ export default function HomePage() {
 
   return (
     <div className="text-white">
-      <section className="aeon-home-hero px-6 pt-24 pb-24 lg:px-8">
+      <section className="aeon-home-hero px-6 pt-24 pb-20 lg:px-8">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center text-center">
           <div className="mx-auto max-w-4xl">
             <h1 className="text-6xl font-light leading-[0.98] text-white md:text-7xl xl:text-8xl">
@@ -427,17 +420,16 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="aeon-home-hero-visual mx-auto mt-16 w-full max-w-5xl">
+          <div className="aeon-home-hero-visual mx-auto mt-14 w-full max-w-6xl">
             <HeroVisual restingHeartRate={restingHeartRate} />
           </div>
         </div>
       </section>
 
-      <section className="px-6 pb-24 lg:px-8">
+      <section className="apple-section-band px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <p className="text-eyebrow">Ecosystem</p>
               <h2 className="mt-4 max-w-3xl text-3xl font-light leading-tight md:text-5xl">
                 Every signal becomes part of the same intelligence layer.
               </h2>
@@ -448,11 +440,11 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             {ECOSYSTEM.map((item) => {
               const Icon = item.icon;
               return (
-                <div key={item.title} className="premium-surface rounded-lg p-6">
+                <div key={item.title} className="apple-feature-tile rounded-lg p-6">
                   <Icon size={20} className="royal-text" />
                   <h3 className="mt-8 text-lg font-light text-white">{item.title}</h3>
                   <p className="mt-3 text-sm leading-6 text-white/52">{item.body}</p>
@@ -463,8 +455,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="px-6 pb-24 lg:px-8">
-        <div className="premium-surface mx-auto max-w-6xl rounded-lg p-6 md:p-8">
+      <section className="px-6 py-24 lg:px-8">
+        <div className="apple-showcase-panel mx-auto max-w-6xl rounded-lg p-6 md:p-10">
           <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
             <div>
               <div

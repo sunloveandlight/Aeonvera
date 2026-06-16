@@ -165,6 +165,47 @@ export default function AeonCommandOrb() {
   }, []);
 
   useEffect(() => {
+    if (hidden) return;
+
+    let frame = 0;
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    function updateOrbAwareness() {
+      frame = 0;
+      currentX += (targetX - currentX) * 0.12;
+      currentY += (targetY - currentY) * 0.12;
+
+      const button = orbButtonRef.current;
+      if (!button) return;
+
+      button.style.setProperty("--orb-aware-x", `${currentX.toFixed(2)}%`);
+      button.style.setProperty("--orb-aware-y", `${currentY.toFixed(2)}%`);
+      button.style.setProperty("--orb-aware-x-neg", `${(-currentX).toFixed(2)}%`);
+      button.style.setProperty("--orb-aware-y-neg", `${(-currentY).toFixed(2)}%`);
+
+      if (Math.abs(targetX - currentX) > 0.05 || Math.abs(targetY - currentY) > 0.05) {
+        frame = window.requestAnimationFrame(updateOrbAwareness);
+      }
+    }
+
+    function handleWindowPointerMove(event: globalThis.PointerEvent) {
+      targetX = ((event.clientX / window.innerWidth) - 0.5) * 10;
+      targetY = ((event.clientY / window.innerHeight) - 0.5) * 10;
+
+      if (!frame) frame = window.requestAnimationFrame(updateOrbAwareness);
+    }
+
+    window.addEventListener("pointermove", handleWindowPointerMove, { passive: true });
+    return () => {
+      window.removeEventListener("pointermove", handleWindowPointerMove);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [hidden]);
+
+  useEffect(() => {
     if (!receiptVisible) return;
 
     const timeout = window.setTimeout(() => setReceiptVisible(false), 7000);
@@ -1006,10 +1047,10 @@ export default function AeonCommandOrb() {
     const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
     const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
 
-    event.currentTarget.style.setProperty("--orb-look-x", `${Math.max(-10, Math.min(10, x * 10))}%`);
-    event.currentTarget.style.setProperty("--orb-look-y", `${Math.max(-10, Math.min(10, y * 10))}%`);
-    event.currentTarget.style.setProperty("--orb-look-x-neg", `${Math.max(-10, Math.min(10, x * -10))}%`);
-    event.currentTarget.style.setProperty("--orb-look-y-neg", `${Math.max(-10, Math.min(10, y * -10))}%`);
+    event.currentTarget.style.setProperty("--orb-look-x", `${Math.max(-8, Math.min(8, x * 8))}%`);
+    event.currentTarget.style.setProperty("--orb-look-y", `${Math.max(-8, Math.min(8, y * 8))}%`);
+    event.currentTarget.style.setProperty("--orb-look-x-neg", `${Math.max(-8, Math.min(8, x * -8))}%`);
+    event.currentTarget.style.setProperty("--orb-look-y-neg", `${Math.max(-8, Math.min(8, y * -8))}%`);
     event.currentTarget.style.setProperty("--orb-tilt-x", `${Math.max(-0.08, Math.min(0.08, x * 0.08))}rem`);
     event.currentTarget.style.setProperty("--orb-tilt-y", `${Math.max(-0.08, Math.min(0.08, y * 0.08))}rem`);
   }

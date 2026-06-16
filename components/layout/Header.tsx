@@ -72,7 +72,7 @@ export default function Header() {
         { href: "/network", label: "Network" },
       ]
     : [
-        { href: "/assessment", label: "Assessment", public: true },
+        { href: "/assessment", label: "Start", public: true },
         { href: "/pricing", label: "Pricing", public: true },
         { href: "/optimization", label: "Optimize", public: true },
       ];
@@ -101,7 +101,7 @@ export default function Header() {
         { href: "/settings", label: "Settings" },
       ]
     : [
-        { href: "/assessment", label: "Assessment", public: true },
+        { href: "/assessment", label: "Start", public: true },
         { href: "/pricing", label: "Pricing", public: true },
         { href: "/optimization", label: "Optimize", public: true },
       ];
@@ -118,7 +118,7 @@ export default function Header() {
             setAccountOpen(false);
             setMobileOpen(false);
           }}
-          className="group inline-flex items-center gap-3 text-xs font-medium tracking-[0.2em] text-white/85 transition-colors duration-300 hover:text-white"
+          className="group inline-flex items-center gap-2.5 text-[0.69rem] font-medium tracking-[0.18em] text-white/82 transition-colors duration-300 hover:text-white"
         >
           <span className="brand-mark" aria-hidden />
           <span>AEONVERA</span>

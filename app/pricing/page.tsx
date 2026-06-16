@@ -5,7 +5,6 @@ import { ArrowRight, Check, Crown, Settings, ShieldCheck, Sparkles } from "lucid
 import PageContainer from "@/components/ui/PageContainer";
 import Page from "@/components/ui/Page";
 import Section from "@/components/ui/Section";
-import SectionTitle from "@/components/ui/SectionTitle";
 import Text from "@/components/ui/Text";
 import Motion from "@/components/motion/Motion";
 import PricingPlanCard, { type PricingPlan } from "@/components/pricing/PricingPlanCard";
@@ -340,20 +339,21 @@ export default function PricingPage() {
               </Text>
             </div>
           ) : (
-            <>
-              <SectionTitle
-                eyebrow="Pricing"
-                title="Choose the right level of longevity intelligence."
-                align="center"
-              />
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-white/25 mb-6">
+                Pricing
+              </p>
+              <h1 className="pricing-hero-title font-light tracking-tight text-white/90">
+                Choose the right level of longevity intelligence.
+              </h1>
               <Text
                 variant="secondary"
                 className="mx-auto mt-6 block max-w-2xl text-center text-lg leading-8"
               >
-              Start with a reliable baseline. Move into deeper support as your
-              data, goals, and decision-making needs grow.
+                Start with a reliable baseline. Move into deeper support as your
+                data, goals, and decision-making needs grow.
               </Text>
-            </>
+            </div>
           )}
           {checkoutMessage && (
             <div className="mx-auto mt-6 max-w-xl rounded-lg border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-sm leading-6 text-red-200/80">
