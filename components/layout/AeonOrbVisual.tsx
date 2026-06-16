@@ -89,6 +89,14 @@ export default function AeonOrbVisual({ className = "", energy = "idle" }: AeonO
             className="aeon-wave-line aeon-wave-line-curl"
             d="M62 60 C90 48 104 48 128 60 C150 72 166 72 180 60 C194 48 210 48 232 60 C210 72 194 72 180 60 C166 48 150 48 128 60 C104 72 90 72 62 60"
           />
+          <path
+            className="aeon-wave-line aeon-wave-ripple aeon-wave-ripple-primary"
+            d="M8 60 C34 52 48 74 73 75 C105 76 119 31 149 32 C180 33 183 90 217 91 C249 92 256 47 286 46 C315 45 327 66 352 60"
+          />
+          <path
+            className="aeon-wave-line aeon-wave-ripple aeon-wave-ripple-secondary"
+            d="M8 58 C38 43 58 41 88 58 C115 73 128 77 156 61 C180 47 192 44 220 61 C248 78 272 76 300 58 C320 45 337 51 352 58"
+          />
         </g>
       </svg>
     </span>
