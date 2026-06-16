@@ -237,8 +237,8 @@ body::after {
 .aeon-command-orb {
   position: relative;
   display: inline-flex;
-  width: 4rem;
-  height: 4rem;
+  width: 3.5rem;
+  height: 3.5rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
@@ -352,70 +352,97 @@ body::after {
     inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
-.aeon-orb-blob {
+/* Flowing light rays — bright colored beams separated by dark gaps. The
+   conic loops seamlessly (same color at 0deg/360deg) and only oscillates
+   back-and-forth with easing, so the light sloshes like liquid, never spins. */
+.aeon-orb-flow {
   position: absolute;
-  width: 96%;
-  height: 96%;
+  inset: -28%;
   border-radius: 50%;
-  opacity: 0.85;
-  filter: blur(8px);
+  filter: blur(5px);
   will-change: transform;
 }
 
-.aeon-orb-blob-1 {
-  left: -8%;
-  top: -6%;
-  background: radial-gradient(circle at 50% 50%, rgba(116, 226, 232, 0.92), transparent 62%);
-  animation: aeon-orb-drift-1 7.5s ease-in-out infinite;
+.aeon-orb-flow-a {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(116, 226, 232, 0.95) 24deg,
+    transparent 66deg,
+    rgba(130, 158, 255, 0.9) 150deg,
+    transparent 198deg,
+    rgba(116, 226, 232, 0.6) 300deg,
+    transparent 348deg
+  );
+  opacity: 0.92;
+  animation: aeon-orb-flow-a 7s ease-in-out infinite;
 }
 
-.aeon-orb-blob-2 {
-  right: -10%;
-  top: 0%;
-  background: radial-gradient(circle at 50% 50%, rgba(130, 158, 255, 0.92), transparent 62%);
-  animation: aeon-orb-drift-2 9s ease-in-out infinite;
+.aeon-orb-flow-b {
+  background: conic-gradient(
+    from 140deg,
+    transparent 0deg,
+    rgba(198, 138, 255, 0.92) 30deg,
+    transparent 82deg,
+    rgba(255, 150, 208, 0.82) 160deg,
+    transparent 212deg,
+    rgba(150, 120, 255, 0.6) 300deg,
+    transparent 344deg
+  );
+  opacity: 0.82;
+  animation: aeon-orb-flow-b 9s ease-in-out infinite;
 }
 
-.aeon-orb-blob-3 {
-  left: 0%;
-  bottom: -10%;
-  background: radial-gradient(circle at 50% 50%, rgba(198, 138, 255, 0.88), transparent 62%);
-  animation: aeon-orb-drift-3 8.2s ease-in-out infinite;
+/* Bright thin filaments that tilt and slide across — the "lights" in the liquid. */
+.aeon-orb-streak {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 156%;
+  height: 14%;
+  border-radius: 999px;
+  filter: blur(2.5px);
+  will-change: transform;
 }
 
-.aeon-orb-blob-4 {
-  right: -6%;
-  bottom: -4%;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 150, 208, 0.82), transparent 62%);
-  animation: aeon-orb-drift-4 10s ease-in-out infinite;
+.aeon-orb-streak-1 {
+  background: linear-gradient(90deg, transparent, rgba(224, 248, 255, 0.92), transparent);
+  animation: aeon-orb-streak-1 6s ease-in-out infinite;
 }
 
-/* Glassy sphere read: soft top highlight + grounded base shadow. */
+.aeon-orb-streak-2 {
+  background: linear-gradient(90deg, transparent, rgba(214, 184, 255, 0.85), transparent);
+  animation: aeon-orb-streak-2 8s ease-in-out infinite;
+}
+
+.aeon-orb-streak-3 {
+  background: linear-gradient(90deg, transparent, rgba(170, 240, 245, 0.7), transparent);
+  animation: aeon-orb-streak-3 7.4s ease-in-out infinite;
+}
+
+/* Glassy sphere read: crisp off-center specular + grounded base shadow. */
 .aeon-orb-sheen {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: 2;
   border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(120% 78% at 50% -10%, rgba(255, 255, 255, 0.5), transparent 44%),
-    radial-gradient(86% 64% at 50% 118%, rgba(0, 0, 0, 0.42), transparent 52%);
+    radial-gradient(54% 38% at 36% 16%, rgba(255, 255, 255, 0.6), transparent 52%),
+    radial-gradient(120% 80% at 50% 122%, rgba(0, 0, 0, 0.46), transparent 56%);
 }
 
-.aeon-command-orb-listening .aeon-orb-blob,
-.aeon-command-orb-speaking .aeon-orb-blob {
-  opacity: 0.96;
-}
+.aeon-command-orb-listening .aeon-orb-flow-a { animation-duration: 4.6s; }
+.aeon-command-orb-listening .aeon-orb-flow-b { animation-duration: 5.8s; }
+.aeon-command-orb-listening .aeon-orb-streak-1 { animation-duration: 3.8s; }
+.aeon-command-orb-listening .aeon-orb-streak-2 { animation-duration: 5s; }
+.aeon-command-orb-listening .aeon-orb-streak-3 { animation-duration: 4.4s; }
 
-.aeon-command-orb-listening .aeon-orb-blob-1 { animation-duration: 4.8s; }
-.aeon-command-orb-listening .aeon-orb-blob-2 { animation-duration: 5.6s; }
-.aeon-command-orb-listening .aeon-orb-blob-3 { animation-duration: 5.1s; }
-.aeon-command-orb-listening .aeon-orb-blob-4 { animation-duration: 6.2s; }
-
-.aeon-command-orb-speaking .aeon-orb-blob-1 { animation-duration: 2.6s; }
-.aeon-command-orb-speaking .aeon-orb-blob-2 { animation-duration: 3.1s; }
-.aeon-command-orb-speaking .aeon-orb-blob-3 { animation-duration: 2.8s; }
-.aeon-command-orb-speaking .aeon-orb-blob-4 { animation-duration: 3.4s; }
+.aeon-command-orb-speaking .aeon-orb-flow-a { animation-duration: 2.6s; }
+.aeon-command-orb-speaking .aeon-orb-flow-b { animation-duration: 3.2s; }
+.aeon-command-orb-speaking .aeon-orb-streak-1 { animation-duration: 2.1s; }
+.aeon-command-orb-speaking .aeon-orb-streak-2 { animation-duration: 2.7s; }
+.aeon-command-orb-speaking .aeon-orb-streak-3 { animation-duration: 2.4s; }
 
 .aeon-command-orb-wave {
   position: relative;
@@ -475,43 +502,59 @@ body::after {
   }
 }
 
-@keyframes aeon-orb-drift-1 {
+@keyframes aeon-orb-flow-a {
   0%,
   100% {
-    transform: translate(0%, 0%) scale(1);
+    transform: rotate(-34deg) scale(1);
   }
   50% {
-    transform: translate(16%, 14%) scale(1.18);
+    transform: rotate(30deg) scale(1.14);
   }
 }
 
-@keyframes aeon-orb-drift-2 {
+@keyframes aeon-orb-flow-b {
   0%,
   100% {
-    transform: translate(0%, 0%) scale(1.05);
+    transform: rotate(32deg) scale(1.1);
   }
   50% {
-    transform: translate(-14%, 12%) scale(0.9);
+    transform: rotate(-28deg) scale(0.96);
   }
 }
 
-@keyframes aeon-orb-drift-3 {
+@keyframes aeon-orb-streak-1 {
   0%,
   100% {
-    transform: translate(0%, 0%) scale(0.95);
+    transform: translate(-50%, -50%) rotate(-20deg) translateY(-16%);
+    opacity: 0.7;
   }
   50% {
-    transform: translate(13%, -16%) scale(1.2);
+    transform: translate(-50%, -50%) rotate(16deg) translateY(18%);
+    opacity: 1;
   }
 }
 
-@keyframes aeon-orb-drift-4 {
+@keyframes aeon-orb-streak-2 {
   0%,
   100% {
-    transform: translate(0%, 0%) scale(1);
+    transform: translate(-50%, -50%) rotate(24deg) translateY(20%);
+    opacity: 0.55;
   }
   50% {
-    transform: translate(-12%, -10%) scale(1.12);
+    transform: translate(-50%, -50%) rotate(-18deg) translateY(-14%);
+    opacity: 0.9;
+  }
+}
+
+@keyframes aeon-orb-streak-3 {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(6deg) translateY(6%);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(-10deg) translateY(-20%);
+    opacity: 0.8;
   }
 }
 
@@ -565,7 +608,8 @@ body::after {
   .aeon-command-orb,
   .aeon-command-orb-listening,
   .aeon-command-orb-speaking,
-  .aeon-orb-blob,
+  .aeon-orb-flow,
+  .aeon-orb-streak,
   .aeon-command-orb-wave,
   .aeon-command-orb-wave span {
     animation: none !important;

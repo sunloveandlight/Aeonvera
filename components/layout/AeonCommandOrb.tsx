@@ -1171,10 +1171,11 @@ export default function AeonCommandOrb() {
           aria-label={realtimeActive ? "Stop Aeonvera voice" : "Talk to Aeonvera"}
         >
           <span className="aeon-orb-fluid" aria-hidden="true">
-            <span className="aeon-orb-blob aeon-orb-blob-1" />
-            <span className="aeon-orb-blob aeon-orb-blob-2" />
-            <span className="aeon-orb-blob aeon-orb-blob-3" />
-            <span className="aeon-orb-blob aeon-orb-blob-4" />
+            <span className="aeon-orb-flow aeon-orb-flow-a" />
+            <span className="aeon-orb-flow aeon-orb-flow-b" />
+            <span className="aeon-orb-streak aeon-orb-streak-1" />
+            <span className="aeon-orb-streak aeon-orb-streak-2" />
+            <span className="aeon-orb-streak aeon-orb-streak-3" />
             <span className="aeon-orb-sheen" />
           </span>
           {realtimeActive || speaking ? (
