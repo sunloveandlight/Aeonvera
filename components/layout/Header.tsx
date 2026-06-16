@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, UserCircle, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import ThemeToggle from "./ThemeToggle";
 
 type NavItem = {
   href: string;
@@ -146,6 +147,7 @@ export default function Header() {
 
         {/* AUTH */}
         <div className="flex h-8 items-center gap-3">
+          <ThemeToggle />
           <button
             onClick={() => setMobileOpen((open) => !open)}
             className="inline-flex size-9 items-center justify-center rounded-md border border-white/10 text-white/60 md:hidden"
