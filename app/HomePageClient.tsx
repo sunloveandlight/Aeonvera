@@ -173,7 +173,7 @@ export default function HomePage() {
       <section className="aeon-apple-hero">
         <div className="aeon-apple-hero-media" aria-hidden="true">
           <Image
-            src="/marketing/rejuvenation-woman.png"
+            src="/marketing/rejuvenation-woman-top-extended.png"
             alt=""
             fill
             priority
@@ -183,20 +183,24 @@ export default function HomePage() {
         </div>
         <div className="aeon-apple-hero-shade" aria-hidden="true" />
         <div className="aeon-apple-hero-content">
-          <h1>Aeonvera</h1>
-          <p className="aeon-apple-hero-subtitle">
-            The operating system for your biological future.
-          </p>
-          <div className="aeon-apple-cta-row">
-            <Link
-              href={authenticated ? "/dashboard" : "/login?mode=signup"}
-              className="apple-cta-primary"
-            >
-              {authenticated ? "Open Today" : "Start assessment"}
-            </Link>
-            <Link href="/pricing" className="apple-cta-link">
-              View plans <ArrowRight size={15} />
-            </Link>
+          <div className="aeon-apple-hero-brand">
+            <h1>Aeonvera</h1>
+          </div>
+          <div className="aeon-apple-hero-copy">
+            <p className="aeon-apple-hero-subtitle">
+              The operating system for your biological future.
+            </p>
+            <div className="aeon-apple-cta-row">
+              <Link
+                href={authenticated ? "/dashboard" : "/login?mode=signup"}
+                className="apple-cta-primary"
+              >
+                Open Today
+              </Link>
+              <Link href="/pricing" className="apple-cta-link">
+                View plans <ArrowRight size={15} />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
