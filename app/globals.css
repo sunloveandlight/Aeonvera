@@ -214,9 +214,10 @@ body::after {
 }
 
 .aeon-orb-system {
-  right: max(1.15rem, env(safe-area-inset-right));
-  bottom: max(1.15rem, env(safe-area-inset-bottom));
-  width: min(26rem, calc(100vw - 2rem));
+  left: 50%;
+  bottom: max(1.05rem, env(safe-area-inset-bottom));
+  width: min(32rem, calc(100vw - 2rem));
+  transform: translateX(-50%);
   pointer-events: none;
 }
 
@@ -227,29 +228,30 @@ body::after {
 }
 
 .aeon-orb-system-idle .aeon-command-orb {
-  opacity: 0.42;
-  transform: translateY(0.12rem) scale(0.9);
+  opacity: 0.5;
+  transform: translateY(0.3rem) scale(0.92);
 }
 
 .aeon-orb-system-idle:hover .aeon-command-orb,
 .aeon-orb-system-idle:focus-within .aeon-command-orb {
-  opacity: 0.96;
-  transform: translateY(-2px) scale(1);
+  opacity: 1;
+  transform: translateY(-0.08rem) scale(1);
 }
 
 .aeon-command-orb {
   position: relative;
   display: inline-flex;
-  width: 3.05rem;
-  height: 3.05rem;
+  width: 4.35rem;
+  height: 4.35rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.92);
   box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.38),
-    0 0 18px rgba(130, 158, 255, 0.15),
-    0 0 34px rgba(198, 138, 255, 0.1);
+    0 18px 48px rgba(0, 0, 0, 0.48),
+    0 0 34px rgba(var(--gold), 0.3),
+    0 0 74px rgba(232, 200, 142, 0.18),
+    0 0 120px rgba(var(--gold), 0.08);
   cursor: pointer;
   isolation: isolate;
   overflow: visible;
@@ -307,25 +309,43 @@ body::after {
 
 .aeon-command-orb:hover,
 .aeon-command-orb-open {
-  transform: translateY(-2px) scale(1.03);
+  transform: translateY(-0.18rem) scale(1.025);
   box-shadow:
-    0 14px 34px rgba(0, 0, 0, 0.42),
-    0 0 24px rgba(130, 158, 255, 0.2),
-    0 0 44px rgba(198, 138, 255, 0.14);
+    0 22px 58px rgba(0, 0, 0, 0.5),
+    0 0 46px rgba(var(--gold), 0.4),
+    0 0 96px rgba(232, 200, 142, 0.24),
+    0 0 136px rgba(var(--gold), 0.12);
 }
 
 .aeon-command-orb-listening {
   box-shadow:
-    0 14px 36px rgba(0, 0, 0, 0.44),
-    0 0 30px rgba(130, 158, 255, 0.26),
-    0 0 58px rgba(198, 138, 255, 0.18);
+    0 24px 62px rgba(0, 0, 0, 0.52),
+    0 0 56px rgba(var(--gold), 0.46),
+    0 0 112px rgba(232, 200, 142, 0.28),
+    0 0 164px rgba(var(--gold), 0.14);
 }
 
 .aeon-command-orb-speaking {
   box-shadow:
-    0 14px 36px rgba(0, 0, 0, 0.44),
-    0 0 34px rgba(116, 226, 232, 0.28),
-    0 0 62px rgba(198, 138, 255, 0.2);
+    0 24px 62px rgba(0, 0, 0, 0.52),
+    0 0 68px rgba(var(--gold), 0.54),
+    0 0 128px rgba(232, 200, 142, 0.32),
+    0 0 184px rgba(var(--gold), 0.18);
+}
+
+.aeon-command-orb::before {
+  position: absolute;
+  content: "";
+  border-radius: 999px;
+  pointer-events: none;
+  inset: -0.78rem;
+  z-index: -2;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.26), transparent 56%),
+    radial-gradient(circle at 48% 52%, rgba(232, 200, 142, 0.16), transparent 68%);
+  filter: blur(8px);
+  opacity: 0.82;
+  animation: aeon-orb-aura 5.8s ease-in-out infinite;
 }
 
 .aeon-command-orb-speaking .aeon-command-orb-wave {
@@ -341,9 +361,8 @@ body::after {
 }
 
 /* ============================================================
-   LIQUID-LIGHT CORE — Siri-style fluid color fields that drift
-   and merge. No rotation, no hard edges: soft heavily-blurred
-   blobs overlapping inside a clipped, shaded glass sphere.
+   LIQUID GOLD CORE — a molten morphing gold blob with a flowing
+   golden aurora behind it. Warm, premium, alive; no hard shapes.
 ============================================================ */
 .aeon-orb-fluid {
   position: absolute;
@@ -352,83 +371,60 @@ body::after {
   border-radius: 999px;
   overflow: hidden;
   isolation: isolate;
-  background: radial-gradient(circle at 50% 36%, rgba(24, 26, 32, 0.5), rgba(2, 3, 5, 0.94) 82%);
+  background:
+    radial-gradient(circle at 44% 28%, rgba(255, 248, 230, 0.42), transparent 18%),
+    radial-gradient(circle at 50% 38%, rgba(34, 28, 18, 0.5), rgba(6, 5, 3, 0.95) 82%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    inset 0 -22px 40px rgba(0, 0, 0, 0.42),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-  animation: aeon-orb-breathe 6s ease-in-out infinite;
+    inset 0 1px 0 rgba(255, 244, 214, 0.4),
+    inset 0 -30px 46px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1px rgba(255, 230, 180, 0.07);
+  animation:
+    aeon-orb-breathe 6s ease-in-out infinite,
+    aeon-orb-hue 14s ease-in-out infinite;
 }
 
-/* Flowing light rays — bright colored beams separated by dark gaps. The
-   conic loops seamlessly (same color at 0deg/360deg) and only oscillates
-   back-and-forth with easing, so the light sloshes like liquid, never spins. */
-.aeon-orb-flow {
+/* Molten morphing gold blob — the hero. */
+.aeon-orb-plasma {
   position: absolute;
-  inset: -28%;
-  border-radius: 50%;
-  filter: blur(5px);
-  will-change: transform;
+  inset: 12%;
+  border-radius: 48% 52% 46% 54%;
+  background:
+    radial-gradient(circle at 33% 26%, rgba(255, 250, 236, 0.96), transparent 15%),
+    radial-gradient(circle at 66% 60%, rgba(236, 206, 150, 0.82), transparent 40%),
+    radial-gradient(circle at 42% 68%, rgba(var(--gold), 0.95), transparent 44%),
+    radial-gradient(circle at 52% 48%, rgba(214, 176, 255, 0.28), transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(150, 108, 56, 0.4), rgba(8, 6, 3, 0.22) 72%);
+  filter: blur(0.4px);
+  opacity: 0.96;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow:
+    inset 0 0 20px rgba(255, 244, 214, 0.26),
+    0 0 30px rgba(var(--gold), 0.32);
+  animation: aeon-orb-plasma 4.6s ease-in-out infinite;
 }
 
-.aeon-orb-flow-a {
+/* Flowing golden aurora rotating behind the blob (seamless gold→gold loop). */
+.aeon-orb-plasma::before {
+  content: "";
+  position: absolute;
+  inset: -55%;
+  z-index: -1;
+  border-radius: inherit;
   background: conic-gradient(
     from 0deg,
-    transparent 0deg,
-    rgba(116, 226, 232, 0.95) 24deg,
-    transparent 66deg,
-    rgba(130, 158, 255, 0.9) 150deg,
-    transparent 198deg,
-    rgba(116, 226, 232, 0.6) 300deg,
-    transparent 348deg
+    rgba(var(--gold), 0.6),
+    rgba(236, 206, 150, 0.6),
+    rgba(255, 244, 214, 0.45),
+    rgba(180, 138, 80, 0.55),
+    rgba(214, 176, 255, 0.3),
+    rgba(var(--gold), 0.6)
   );
-  opacity: 0.92;
-  animation: aeon-orb-flow-a 7s ease-in-out infinite;
+  opacity: 0.75;
+  animation: aeon-orb-aurora 6.5s linear infinite;
 }
 
-.aeon-orb-flow-b {
-  background: conic-gradient(
-    from 140deg,
-    transparent 0deg,
-    rgba(198, 138, 255, 0.92) 30deg,
-    transparent 82deg,
-    rgba(255, 150, 208, 0.82) 160deg,
-    transparent 212deg,
-    rgba(150, 120, 255, 0.6) 300deg,
-    transparent 344deg
-  );
-  opacity: 0.82;
-  animation: aeon-orb-flow-b 9s ease-in-out infinite;
-}
-
-/* Bright thin filaments that tilt and slide across — the "lights" in the liquid. */
-.aeon-orb-streak {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 156%;
-  height: 14%;
-  border-radius: 999px;
-  filter: blur(2.5px);
-  will-change: transform;
-}
-
-.aeon-orb-streak-1 {
-  background: linear-gradient(90deg, transparent, rgba(224, 248, 255, 0.92), transparent);
-  animation: aeon-orb-streak-1 6s ease-in-out infinite;
-}
-
-.aeon-orb-streak-2 {
-  background: linear-gradient(90deg, transparent, rgba(214, 184, 255, 0.85), transparent);
-  animation: aeon-orb-streak-2 8s ease-in-out infinite;
-}
-
-.aeon-orb-streak-3 {
-  background: linear-gradient(90deg, transparent, rgba(170, 240, 245, 0.7), transparent);
-  animation: aeon-orb-streak-3 7.4s ease-in-out infinite;
-}
-
-/* Glassy sphere read: crisp off-center specular + grounded base shadow. */
+/* Glassy sphere read: warm off-center specular + grounded base shadow. */
 .aeon-orb-sheen {
   position: absolute;
   inset: 0;
@@ -436,21 +432,15 @@ body::after {
   border-radius: inherit;
   pointer-events: none;
   background:
-    radial-gradient(54% 38% at 36% 16%, rgba(255, 255, 255, 0.6), transparent 52%),
+    radial-gradient(54% 38% at 36% 16%, rgba(255, 250, 236, 0.6), transparent 52%),
     radial-gradient(120% 80% at 50% 122%, rgba(0, 0, 0, 0.46), transparent 56%);
 }
 
-.aeon-command-orb-listening .aeon-orb-flow-a { animation-duration: 4.6s; }
-.aeon-command-orb-listening .aeon-orb-flow-b { animation-duration: 5.8s; }
-.aeon-command-orb-listening .aeon-orb-streak-1 { animation-duration: 3.8s; }
-.aeon-command-orb-listening .aeon-orb-streak-2 { animation-duration: 5s; }
-.aeon-command-orb-listening .aeon-orb-streak-3 { animation-duration: 4.4s; }
+.aeon-command-orb-listening .aeon-orb-plasma { animation-duration: 3.2s; }
+.aeon-command-orb-listening .aeon-orb-plasma::before { animation-duration: 4.4s; }
 
-.aeon-command-orb-speaking .aeon-orb-flow-a { animation-duration: 2.6s; }
-.aeon-command-orb-speaking .aeon-orb-flow-b { animation-duration: 3.2s; }
-.aeon-command-orb-speaking .aeon-orb-streak-1 { animation-duration: 2.1s; }
-.aeon-command-orb-speaking .aeon-orb-streak-2 { animation-duration: 2.7s; }
-.aeon-command-orb-speaking .aeon-orb-streak-3 { animation-duration: 2.4s; }
+.aeon-command-orb-speaking .aeon-orb-plasma { animation-duration: 1.7s; }
+.aeon-command-orb-speaking .aeon-orb-plasma::before { animation-duration: 2.6s; }
 
 .aeon-command-orb-wave {
   position: relative;
@@ -506,63 +496,57 @@ body::after {
     transform: translateY(0) scale(1);
   }
   50% {
-    transform: translateY(-2px) scale(1.016);
+    transform: translateY(-0.08rem) scale(1.028);
   }
 }
 
-@keyframes aeon-orb-flow-a {
+@keyframes aeon-orb-aura {
   0%,
   100% {
-    transform: rotate(-34deg) scale(1);
+    opacity: 0.54;
+    transform: scale(0.92);
   }
   50% {
-    transform: rotate(30deg) scale(1.14);
-  }
-}
-
-@keyframes aeon-orb-flow-b {
-  0%,
-  100% {
-    transform: rotate(32deg) scale(1.1);
-  }
-  50% {
-    transform: rotate(-28deg) scale(0.96);
-  }
-}
-
-@keyframes aeon-orb-streak-1 {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) rotate(-20deg) translateY(-16%);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translate(-50%, -50%) rotate(16deg) translateY(18%);
-    opacity: 1;
-  }
-}
-
-@keyframes aeon-orb-streak-2 {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) rotate(24deg) translateY(20%);
-    opacity: 0.55;
-  }
-  50% {
-    transform: translate(-50%, -50%) rotate(-18deg) translateY(-14%);
     opacity: 0.9;
+    transform: scale(1.08);
   }
 }
 
-@keyframes aeon-orb-streak-3 {
+@keyframes aeon-orb-ring-sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes aeon-orb-aurora {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes aeon-orb-plasma {
   0%,
   100% {
-    transform: translate(-50%, -50%) rotate(6deg) translateY(6%);
-    opacity: 0.4;
+    border-radius: 48% 52% 46% 54%;
+    transform: scale(1) rotate(0deg);
+  }
+  33% {
+    border-radius: 62% 38% 56% 44%;
+    transform: scale(1.08) rotate(5deg);
+  }
+  66% {
+    border-radius: 38% 62% 42% 58%;
+    transform: scale(0.93) rotate(-4deg);
+  }
+}
+
+@keyframes aeon-orb-hue {
+  0%,
+  100% {
+    filter: hue-rotate(-8deg) saturate(1);
   }
   50% {
-    transform: translate(-50%, -50%) rotate(-10deg) translateY(-20%);
-    opacity: 0.8;
+    filter: hue-rotate(10deg) saturate(1.12);
   }
 }
 
@@ -616,8 +600,10 @@ body::after {
   .aeon-command-orb,
   .aeon-command-orb-listening,
   .aeon-command-orb-speaking,
-  .aeon-orb-flow,
-  .aeon-orb-streak,
+  .aeon-command-orb::before,
+  .aeon-orb-fluid,
+  .aeon-orb-plasma,
+  .aeon-orb-plasma::before,
   .aeon-command-orb-wave,
   .aeon-command-orb-wave span {
     animation: none !important;

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, UserCircle, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
@@ -18,6 +18,7 @@ export default function Header() {
   const [authChecked, setAuthChecked] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -37,6 +38,30 @@ export default function Header() {
     await supabase.auth.signOut();
     window.location.href = "/";
   }
+
+  useEffect(() => {
+    if (!accountOpen) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target as Node)
+      ) {
+        setAccountOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setAccountOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [accountOpen]);
 
   const primaryNavItems: NavItem[] = authenticated
     ? [
@@ -121,7 +146,7 @@ export default function Header() {
           {!authChecked ? (
             <div className="hidden h-9 w-24 rounded-md border border-white/10 bg-white/[0.035] sm:block" />
           ) : authenticated ? (
-            <div className="relative hidden sm:block">
+            <div className="relative hidden sm:block" ref={accountMenuRef}>
               <button
                 type="button"
                 onClick={() => setAccountOpen((open) => !open)}

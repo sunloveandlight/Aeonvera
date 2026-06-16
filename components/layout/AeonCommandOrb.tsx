@@ -964,7 +964,7 @@ export default function AeonCommandOrb() {
 
   return (
     <div
-      className={`aeon-orb-system fixed z-40 flex flex-col items-end ${
+      className={`aeon-orb-system fixed z-40 flex flex-col items-center ${
         idleDimmed ? "aeon-orb-system-idle" : ""
       }`}
       onFocusCapture={() => setIdleDimmed(false)}
@@ -972,7 +972,7 @@ export default function AeonCommandOrb() {
     >
       {!open && !realtimeActive && !realtimeStatus && !speaking && receiptVisible && latestReceipt ? (
         <div
-          className={`aeon-orb-receipt aeon-orb-receipt-${latestReceipt.tone} mb-3 max-w-[min(80vw,24rem)] rounded-full px-4 py-2`}
+          className={`aeon-orb-receipt aeon-orb-receipt-${latestReceipt.tone} mb-3 max-w-[min(88vw,26rem)] rounded-full px-4 py-2`}
         >
           <span className="aeon-orb-receipt-dot" aria-hidden="true" />
           <span className="min-w-0">
@@ -983,7 +983,7 @@ export default function AeonCommandOrb() {
       ) : null}
 
       {!open && (realtimeStatus || realtimeActive || speaking) ? (
-        <div className="aeon-orb-live-pill mb-3 inline-flex max-w-[min(80vw,24rem)] items-center gap-3 rounded-full px-4 py-2 text-sm text-white/72">
+        <div className="aeon-orb-live-pill mb-3 inline-flex max-w-[min(88vw,28rem)] items-center gap-3 rounded-full px-4 py-2 text-sm text-white/72">
           <span
             className={`size-2 rounded-full ${
               speaking ? "bg-[rgb(var(--gold))]" : realtimeActive ? "bg-[rgb(var(--success))]" : "bg-white/35"
@@ -1158,7 +1158,7 @@ export default function AeonCommandOrb() {
         </section>
       ) : null}
 
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-center">
         <button
           type="button"
           onClick={() => {
@@ -1176,11 +1176,7 @@ export default function AeonCommandOrb() {
           aria-label={realtimeActive ? "Stop Aeonvera voice" : "Talk to Aeonvera"}
         >
           <span className="aeon-orb-fluid" aria-hidden="true">
-            <span className="aeon-orb-flow aeon-orb-flow-a" />
-            <span className="aeon-orb-flow aeon-orb-flow-b" />
-            <span className="aeon-orb-streak aeon-orb-streak-1" />
-            <span className="aeon-orb-streak aeon-orb-streak-2" />
-            <span className="aeon-orb-streak aeon-orb-streak-3" />
+            <span className="aeon-orb-plasma" />
             <span className="aeon-orb-sheen" />
           </span>
           {realtimeActive || speaking ? (
