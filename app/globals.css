@@ -569,6 +569,20 @@ body:has(.aeon-orb-system) main {
 .aeon-apple-hero-media {
   inset: clamp(3.1rem, 5.15svh, 3.95rem) 0 0;
   z-index: -3;
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    rgba(0, 0, 0, 0.08) clamp(0.4rem, 0.8svh, 0.65rem),
+    rgba(0, 0, 0, 0.42) clamp(1.35rem, 2.05svh, 1.8rem),
+    #000 clamp(3rem, 4.5svh, 3.65rem)
+  );
+  mask-image: linear-gradient(
+    180deg,
+    transparent 0,
+    rgba(0, 0, 0, 0.08) clamp(0.4rem, 0.8svh, 0.65rem),
+    rgba(0, 0, 0, 0.42) clamp(1.35rem, 2.05svh, 1.8rem),
+    #000 clamp(3rem, 4.5svh, 3.65rem)
+  );
 }
 
 .aeon-apple-hero-media img {
@@ -662,6 +676,20 @@ body:has(.aeon-orb-system) main {
 
   .aeon-apple-hero-media {
     inset: clamp(2.55rem, 5.25svh, 3.1rem) 0 0;
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      transparent 0,
+      rgba(0, 0, 0, 0.08) clamp(0.35rem, 0.9svh, 0.55rem),
+      rgba(0, 0, 0, 0.42) clamp(1.1rem, 2.5svh, 1.5rem),
+      #000 clamp(2.55rem, 5.1svh, 3rem)
+    );
+    mask-image: linear-gradient(
+      180deg,
+      transparent 0,
+      rgba(0, 0, 0, 0.08) clamp(0.35rem, 0.9svh, 0.55rem),
+      rgba(0, 0, 0, 0.42) clamp(1.1rem, 2.5svh, 1.5rem),
+      #000 clamp(2.55rem, 5.1svh, 3rem)
+    );
   }
 
   .aeon-apple-hero-media img {
