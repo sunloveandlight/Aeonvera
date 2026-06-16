@@ -39,85 +39,84 @@ function drawOrb(ctx: CanvasRenderingContext2D, width: number, height: number, t
   const cx = width / 2;
   const cy = height / 2;
   const unit = Math.min(width, height) * 0.5;
-  const core = unit * 0.7 * state.scale;
+  const core = unit * 0.78 * state.scale;
   const t = time * state.speed;
+  const waveWidth = Math.min(width * 0.92, core * 2.75);
+  const waveHeight = Math.min(height * 0.58, core * 1.18);
+  const startX = cx - waveWidth / 2;
+  const centerY = cy + Math.sin(t * 0.32) * core * 0.025;
 
   ctx.clearRect(0, 0, width, height);
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
 
-  const sun = ctx.createRadialGradient(cx - core * 0.08, cy - core * 0.05, 0, cx, cy, core * 0.95);
-  sun.addColorStop(0, `rgba(255, 250, 227, ${0.62 * state.alpha})`);
-  sun.addColorStop(0.18, `rgba(255, 220, 136, ${0.28 * state.alpha})`);
-  sun.addColorStop(0.44, `rgba(83, 214, 204, ${0.15 * state.alpha})`);
+  const sun = ctx.createRadialGradient(cx, centerY, 0, cx, centerY, core * 0.96);
+  sun.addColorStop(0, `rgba(255, 252, 232, ${0.52 * state.alpha})`);
+  sun.addColorStop(0.16, `rgba(255, 220, 136, ${0.26 * state.alpha})`);
+  sun.addColorStop(0.42, `rgba(83, 214, 204, ${0.14 * state.alpha})`);
   sun.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.filter = `blur(${Math.max(7, core * 0.12 * state.blur)}px)`;
+  ctx.filter = `blur(${Math.max(7, core * 0.11 * state.blur)}px)`;
   ctx.fillStyle = sun;
   ctx.beginPath();
-  ctx.arc(cx, cy, core, 0, Math.PI * 2);
+  ctx.arc(cx, centerY, core, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.filter = `blur(${Math.max(5, core * 0.075 * state.blur)}px)`;
-  for (let i = 0; i < 14; i += 1) {
-    const rayAngle = t * 0.16 + (i / 14) * Math.PI * 2 + Math.sin(t * 0.29 + i) * 0.28;
-    const innerRadius = core * (0.18 + Math.sin(t * 0.41 + i) * 0.035);
-    const outerRadius = core * (0.9 + Math.cos(t * 0.33 + i) * 0.12);
+  for (let pass = 0; pass < 2; pass += 1) {
+    ctx.filter = pass === 0 ? `blur(${Math.max(2, core * 0.035 * state.blur)}px)` : "none";
 
-    ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(rayAngle) * innerRadius, cy + Math.sin(rayAngle) * innerRadius);
-    ctx.lineTo(cx + Math.cos(rayAngle) * outerRadius, cy + Math.sin(rayAngle) * outerRadius);
-    ctx.lineCap = "round";
-    ctx.lineWidth = Math.max(1, core * (0.018 + (i % 3) * 0.004));
-    ctx.strokeStyle = color(i, 0.05 * state.alpha);
-    ctx.shadowBlur = core * 0.12;
-    ctx.shadowColor = color(i + 1, 0.18 * state.alpha);
-    ctx.stroke();
-  }
+    for (let wave = 0; wave < 7; wave += 1) {
+      const progress = (wave + 1) / 7;
+      const direction = wave % 2 === 0 ? 1 : -1;
+      const phase = t * (2.25 + wave * 0.11) * direction + wave * 0.9;
+      const amplitude =
+        waveHeight *
+        (0.1 + progress * 0.26) *
+        (0.68 + Math.sin(t * 0.42 + wave) * 0.12) *
+        state.turbulence;
+      const frequency = 1.42 + progress * 1.08;
+      const verticalDrift = Math.sin(t * (0.33 + wave * 0.03) + wave) * core * 0.045;
 
-  ctx.filter = `blur(${Math.max(0.6, core * 0.008 * state.blur)}px)`;
-  for (let loop = 0; loop < 5; loop += 1) {
-    const phase = t * (0.42 + loop * 0.018) + loop * 0.77;
-    const isPrimary = loop < 2;
-    const rotation = isPrimary
-      ? Math.sin(t * 0.17 + loop) * 0.12
-      : Math.sin(t * 0.19 + loop) * 0.5 + Math.sin(t * 0.07 + loop * 2.1) * 0.34;
-    const stretchX = core * (isPrimary ? 1.18 : 1.02) * (1 + Math.sin(t * 0.23 + loop) * 0.045);
-    const stretchY = core * (isPrimary ? 0.36 : 0.42) * (1 + Math.cos(t * 0.31 + loop) * 0.08);
-    const lift = Math.sin(t * 0.37 + loop * 1.4) * core * 0.04;
+      ctx.beginPath();
+      for (let xStep = 0; xStep <= waveWidth; xStep += 2) {
+        const normalizedX = xStep / waveWidth;
+        const envelope = Math.max(0, 1 - (2 * normalizedX - 1) ** 2);
+        const fine =
+          Math.sin(normalizedX * Math.PI * (frequency * 1.8) - phase * 0.42) *
+          amplitude *
+          0.14 *
+          envelope;
+        const sine = Math.sin(normalizedX * frequency * Math.PI * 2 + phase);
+        const y =
+          centerY +
+          verticalDrift +
+          sine * amplitude * envelope +
+          fine +
+          Math.sin(t * 0.8 + normalizedX * Math.PI * 2 + wave) * core * 0.01;
+        const x = startX + xStep;
 
-    ctx.beginPath();
-    for (let step = 0; step <= 260; step += 1) {
-      const p = (step / 260) * Math.PI * 2 + phase;
-      const living =
-        Math.sin(p * 3 + t * 0.9 + loop) * 0.045 +
-        Math.sin(p * 5 - t * 0.54 + loop * 1.8) * 0.022 * state.turbulence;
-      const rawX = Math.sin(p) * stretchX * (1 + living);
-      const rawY = Math.sin(p) * Math.cos(p) * stretchY * (1 - living * 0.6);
-      const x = cx + rawX * Math.cos(rotation) - rawY * Math.sin(rotation);
-      const y = cy + rawX * Math.sin(rotation) + rawY * Math.cos(rotation) + lift;
+        if (xStep === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
 
-      if (step === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = Math.max(1, core * (pass === 0 ? 0.032 + progress * 0.026 : 0.01 + progress * 0.011));
+      ctx.strokeStyle = color(wave, (pass === 0 ? 0.16 + progress * 0.12 : 0.2 + progress * 0.18) * state.alpha);
+      ctx.shadowBlur = core * (pass === 0 ? 0.22 : 0.14);
+      ctx.shadowColor = color(wave + 1, (0.34 + progress * 0.16) * state.alpha);
+      ctx.stroke();
     }
-
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.lineWidth = Math.max(1.2, core * (isPrimary ? 0.088 - loop * 0.022 : 0.018));
-    ctx.strokeStyle = color(loop + 1, (isPrimary ? 0.46 - loop * 0.12 : 0.055) * state.alpha);
-    ctx.shadowBlur = core * (isPrimary ? 0.24 : 0.1);
-    ctx.shadowColor = color(loop + 2, (isPrimary ? 0.52 : 0.12) * state.alpha);
-    ctx.stroke();
   }
 
-  ctx.filter = `blur(${Math.max(1.2, core * 0.018)}px)`;
-  const crossing = ctx.createRadialGradient(cx - core * 0.03, cy - core * 0.02, 0, cx, cy, core * 0.36);
-  crossing.addColorStop(0, `rgba(255, 253, 238, ${0.56 * state.alpha})`);
-  crossing.addColorStop(0.22, `rgba(255, 222, 145, ${0.26 * state.alpha})`);
-  crossing.addColorStop(0.62, `rgba(81, 214, 203, ${0.12 * state.alpha})`);
+  ctx.filter = `blur(${Math.max(1, core * 0.012)}px)`;
+  const crossing = ctx.createRadialGradient(cx, centerY, 0, cx, centerY, core * 0.3);
+  crossing.addColorStop(0, `rgba(255, 253, 238, ${0.66 * state.alpha})`);
+  crossing.addColorStop(0.18, `rgba(255, 222, 145, ${0.32 * state.alpha})`);
+  crossing.addColorStop(0.58, `rgba(81, 214, 203, ${0.12 * state.alpha})`);
   crossing.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = crossing;
   ctx.beginPath();
-  ctx.arc(cx, cy, core * 0.42, 0, Math.PI * 2);
+  ctx.arc(cx, centerY, core * 0.38, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
