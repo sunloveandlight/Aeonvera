@@ -1176,7 +1176,9 @@ export default function AeonCommandOrb() {
           aria-label={realtimeActive ? "Stop Aeonvera voice" : "Talk to Aeonvera"}
         >
           <span className="aeon-command-orb-core" aria-hidden="true">
-            <span className="aeon-orb-core-aurora" />
+            <span className="aeon-orb-light aeon-orb-light-1" />
+            <span className="aeon-orb-light aeon-orb-light-2" />
+            <span className="aeon-orb-light aeon-orb-light-3" />
             {realtimeActive || speaking ? (
               <span className="aeon-command-orb-wave">
                 <span />

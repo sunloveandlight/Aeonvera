@@ -380,83 +380,77 @@ body::after {
   height: 1.92rem;
   border-radius: 999px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.18), transparent 44%),
-    radial-gradient(circle at 54% 60%, rgba(var(--gold), 0.2), transparent 64%),
-    rgba(6, 6, 8, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: radial-gradient(circle at 50% 46%, rgba(22, 17, 9, 0.5), rgba(4, 4, 6, 0.8) 82%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -10px 18px rgba(0, 0, 0, 0.34),
-    0 0 20px rgba(var(--gold), 0.16);
-  animation: aeon-orb-hue 14s ease-in-out infinite;
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.4),
+    0 0 22px rgba(var(--gold), 0.18);
 }
 
-/* Counter-rotating depth field behind the aurora — gives the core dimension. */
-.aeon-command-orb-core::before {
-  content: "";
+/* Organic gold light pools — each drifts + pulses on its own rhythm and never
+   syncs, so the light shifts like reflections on molten gold. No rotation. */
+.aeon-orb-light {
   position: absolute;
-  inset: -22%;
+  width: 80%;
+  height: 80%;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 60% 38%, rgba(236, 206, 150, 0.45), transparent 50%),
-    radial-gradient(circle at 38% 66%, rgba(var(--gold), 0.4), transparent 56%);
-  filter: blur(3px);
-  opacity: 0.6;
-  animation: aeon-orb-aurora 11s linear infinite reverse;
+  filter: blur(6px);
+  will-change: transform, opacity;
 }
 
-/* Flowing gold aurora — rich rotating light inside the core (seamless gold loop). */
-.aeon-orb-core-aurora {
-  position: absolute;
-  inset: -30%;
-  border-radius: 50%;
-  background: conic-gradient(
-    from 0deg,
-    rgba(var(--gold), 0.62),
-    rgba(236, 206, 150, 0.6),
-    rgba(255, 246, 220, 0.5),
-    rgba(180, 138, 80, 0.55),
-    rgba(var(--gold), 0.62)
-  );
-  filter: blur(2.5px);
-  opacity: 0.7;
-  animation: aeon-orb-aurora 7.5s linear infinite;
+.aeon-orb-light-1 {
+  left: 6%;
+  top: 4%;
+  background: radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.95), transparent 60%);
+  animation: aeon-orb-drift-1 5.3s ease-in-out infinite;
 }
 
-/* Traveling glint — a warm highlight orbiting the rim (no blend → no square). */
+.aeon-orb-light-2 {
+  right: 2%;
+  top: 18%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 244, 214, 0.82), transparent 58%);
+  animation: aeon-orb-drift-2 6.7s ease-in-out infinite;
+}
+
+.aeon-orb-light-3 {
+  left: 16%;
+  bottom: 0%;
+  background: radial-gradient(circle at 50% 50%, rgba(236, 196, 128, 0.88), transparent 60%);
+  animation: aeon-orb-drift-3 4.3s ease-in-out infinite;
+}
+
+/* Static glass specular for premium depth. */
 .aeon-command-orb-core::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: radial-gradient(circle at 50% 13%, rgba(255, 250, 235, 0.78), transparent 17%);
-  opacity: 0.6;
-  animation: aeon-orb-glint 9s linear infinite;
+  background: radial-gradient(46% 32% at 36% 18%, rgba(255, 252, 244, 0.5), transparent 56%);
 }
 
-.aeon-command-orb-listening .aeon-orb-core-aurora { animation-duration: 5s; opacity: 0.82; }
-.aeon-command-orb-listening .aeon-command-orb-core::before { animation-duration: 8s; }
-.aeon-command-orb-listening .aeon-command-orb-core::after { animation-duration: 5.5s; opacity: 0.74; }
+.aeon-command-orb-listening .aeon-orb-light-1 { animation-duration: 3.4s; }
+.aeon-command-orb-listening .aeon-orb-light-2 { animation-duration: 4.2s; }
+.aeon-command-orb-listening .aeon-orb-light-3 { animation-duration: 2.8s; }
 
-.aeon-command-orb-speaking .aeon-orb-core-aurora { animation-duration: 2.8s; opacity: 0.92; }
-.aeon-command-orb-speaking .aeon-command-orb-core::before { animation-duration: 4.6s; }
-.aeon-command-orb-speaking .aeon-command-orb-core::after { animation-duration: 3.2s; opacity: 0.9; }
+.aeon-command-orb-speaking .aeon-orb-light-1 { animation-duration: 1.9s; }
+.aeon-command-orb-speaking .aeon-orb-light-2 { animation-duration: 2.4s; }
+.aeon-command-orb-speaking .aeon-orb-light-3 { animation-duration: 1.6s; }
 
 .aeon-command-orb-listening .aeon-command-orb-core {
   border-color: rgba(var(--gold), 0.3);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -10px 18px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.4),
     0 0 28px rgba(var(--gold), 0.26);
 }
 
 .aeon-command-orb-speaking .aeon-command-orb-core {
   border-color: rgba(var(--gold), 0.4);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 -10px 18px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.4),
     0 0 34px rgba(var(--gold), 0.32);
 }
 
@@ -518,10 +512,25 @@ body::after {
   }
 }
 
-@keyframes aeon-orb-core-spin {
-  to {
-    transform: rotate(360deg);
-  }
+@keyframes aeon-orb-drift-1 {
+  0% { transform: translate(0%, 0%) scale(1); opacity: 0.78; }
+  30% { transform: translate(22%, 16%) scale(1.25); opacity: 1; }
+  60% { transform: translate(-12%, 24%) scale(0.92); opacity: 0.8; }
+  100% { transform: translate(0%, 0%) scale(1); opacity: 0.78; }
+}
+
+@keyframes aeon-orb-drift-2 {
+  0% { transform: translate(0%, 0%) scale(1.1); opacity: 0.62; }
+  35% { transform: translate(-20%, 18%) scale(0.85); opacity: 0.92; }
+  70% { transform: translate(14%, -16%) scale(1.2); opacity: 0.7; }
+  100% { transform: translate(0%, 0%) scale(1.1); opacity: 0.62; }
+}
+
+@keyframes aeon-orb-drift-3 {
+  0% { transform: translate(0%, 0%) scale(0.95); opacity: 0.7; }
+  40% { transform: translate(18%, -20%) scale(1.22); opacity: 1; }
+  75% { transform: translate(-16%, -8%) scale(0.9); opacity: 0.76; }
+  100% { transform: translate(0%, 0%) scale(0.95); opacity: 0.7; }
 }
 
 @keyframes aeon-orb-halo {
@@ -641,10 +650,7 @@ body::after {
   .aeon-command-orb-listening,
   .aeon-command-orb-speaking,
   .aeon-command-orb::before,
-  .aeon-command-orb-core,
-  .aeon-command-orb-core::before,
-  .aeon-command-orb-core::after,
-  .aeon-orb-core-aurora,
+  .aeon-orb-light,
   .aeon-command-orb-wave,
   .aeon-command-orb-wave span {
     animation: none !important;
