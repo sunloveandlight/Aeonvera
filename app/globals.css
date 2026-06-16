@@ -249,14 +249,15 @@ body::after {
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: rgba(255, 255, 255, 0.92);
   background:
-    radial-gradient(circle at 34% 22%, rgba(255, 255, 255, 0.7), transparent 18%),
-    radial-gradient(circle at 66% 74%, rgba(6, 8, 16, 0.76), transparent 54%),
-    linear-gradient(150deg, rgba(22, 24, 32, 0.9), rgba(3, 4, 8, 0.94));
+    radial-gradient(circle at 34% 22%, rgba(255, 255, 255, 0.74), transparent 18%),
+    radial-gradient(circle at 62% 70%, rgba(var(--gold), 0.18), transparent 42%),
+    radial-gradient(circle at 66% 74%, rgba(6, 8, 16, 0.62), transparent 54%),
+    linear-gradient(150deg, rgba(32, 27, 18, 0.78), rgba(3, 4, 8, 0.82));
   box-shadow:
     0 18px 52px rgba(0, 0, 0, 0.5),
-    0 0 30px rgba(105, 195, 255, 0.2),
-    0 0 74px rgba(191, 126, 255, 0.16),
-    0 0 116px rgba(255, 168, 212, 0.08),
+    0 0 34px rgba(var(--gold), 0.24),
+    0 0 62px rgba(105, 195, 255, 0.12),
+    0 0 86px rgba(191, 126, 255, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(22px) saturate(150%);
   cursor: pointer;
@@ -322,9 +323,9 @@ body::after {
   transform: translateY(-0.14rem) scale(1.018);
   box-shadow:
     0 22px 58px rgba(0, 0, 0, 0.52),
-    0 0 42px rgba(105, 195, 255, 0.28),
-    0 0 92px rgba(191, 126, 255, 0.24),
-    0 0 148px rgba(255, 168, 212, 0.12),
+    0 0 48px rgba(var(--gold), 0.32),
+    0 0 78px rgba(105, 195, 255, 0.16),
+    0 0 108px rgba(191, 126, 255, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.34);
 }
 
@@ -334,24 +335,24 @@ body::after {
 }
 
 .aeon-command-orb-listening {
-  border-color: rgba(184, 222, 255, 0.36);
+  border-color: rgba(var(--gold), 0.42);
   animation: aeon-orb-breathe 2.8s ease-in-out infinite;
   box-shadow:
     0 22px 60px rgba(0, 0, 0, 0.52),
-    0 0 54px rgba(105, 195, 255, 0.34),
-    0 0 106px rgba(191, 126, 255, 0.28),
-    0 0 158px rgba(255, 168, 212, 0.16),
+    0 0 58px rgba(var(--gold), 0.34),
+    0 0 92px rgba(105, 195, 255, 0.2),
+    0 0 126px rgba(191, 126, 255, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.34);
 }
 
 .aeon-command-orb-speaking {
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 236, 185, 0.48);
   animation: aeon-orb-breathe 1.7s ease-in-out infinite;
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.54),
-    0 0 64px rgba(105, 195, 255, 0.42),
-    0 0 122px rgba(191, 126, 255, 0.34),
-    0 0 174px rgba(255, 168, 212, 0.2),
+    0 0 64px rgba(var(--gold), 0.4),
+    0 0 106px rgba(105, 195, 255, 0.24),
+    0 0 138px rgba(191, 126, 255, 0.16),
     inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
@@ -364,9 +365,9 @@ body::after {
   inset: -0.72rem;
   z-index: -1;
   background:
-    radial-gradient(circle at 50% 50%, rgba(105, 195, 255, 0.18), transparent 54%),
-    radial-gradient(circle at 52% 48%, rgba(191, 126, 255, 0.18), transparent 64%),
-    radial-gradient(circle at 48% 54%, rgba(255, 168, 212, 0.1), transparent 72%);
+    radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.22), transparent 54%),
+    radial-gradient(circle at 50% 50%, rgba(105, 195, 255, 0.1), transparent 64%),
+    radial-gradient(circle at 48% 54%, rgba(191, 126, 255, 0.08), transparent 72%);
   filter: blur(4px);
   opacity: 0.68;
   transition: opacity 240ms ease;
@@ -391,14 +392,14 @@ body::after {
   background:
     conic-gradient(
       from 12deg,
-      rgba(105, 195, 255, 0.9),
-      rgba(191, 126, 255, 0.86),
-      rgba(255, 168, 212, 0.82),
-      rgba(255, 221, 145, 0.42),
-      rgba(105, 195, 255, 0.9)
+      rgba(255, 226, 151, 0.78),
+      rgba(105, 195, 255, 0.52),
+      rgba(191, 126, 255, 0.46),
+      rgba(255, 168, 212, 0.36),
+      rgba(255, 226, 151, 0.78)
     );
   filter: blur(5px) saturate(135%);
-  opacity: 0.78;
+  opacity: 0.62;
   animation: aeon-orb-aurora 7.4s ease-in-out infinite;
 }
 
@@ -410,40 +411,47 @@ body::after {
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, 0.035),
-    0 0 18px rgba(105, 195, 255, 0.08);
+    0 0 18px rgba(var(--gold), 0.08);
   animation: aeon-orb-ring 5.8s ease-in-out infinite;
 }
 
 .aeon-orb-intelligence-ring span {
   position: absolute;
-  width: 0.24rem;
-  height: 0.24rem;
+  left: 50%;
+  top: 50%;
+  width: 0.2rem;
+  height: 0.2rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 236, 184, 0.86);
   box-shadow:
-    0 0 8px rgba(255, 255, 255, 0.36),
-    0 0 18px rgba(105, 195, 255, 0.28);
+    0 0 8px rgba(255, 236, 184, 0.38),
+    0 0 18px rgba(var(--gold), 0.24);
+  transform: translate(-50%, -50%) rotate(var(--satellite-start, 0deg)) translateX(var(--satellite-radius, 1.72rem));
+  will-change: transform, opacity;
 }
 
 .aeon-orb-intelligence-ring span:nth-child(1) {
-  left: 50%;
-  top: -0.12rem;
-  transform: translateX(-50%);
+  --satellite-start: 8deg;
+  --satellite-radius: 1.86rem;
+  animation: aeon-orb-satellite-1 6.8s ease-in-out infinite;
 }
 
 .aeon-orb-intelligence-ring span:nth-child(2) {
-  right: 0.15rem;
-  top: 54%;
+  --satellite-start: 122deg;
+  --satellite-radius: 1.62rem;
+  animation: aeon-orb-satellite-2 8.4s ease-in-out infinite;
 }
 
 .aeon-orb-intelligence-ring span:nth-child(3) {
-  bottom: 0.08rem;
-  left: 32%;
+  --satellite-start: 224deg;
+  --satellite-radius: 1.74rem;
+  animation: aeon-orb-satellite-3 7.6s ease-in-out infinite;
 }
 
 .aeon-orb-intelligence-ring span:nth-child(4) {
-  left: 0.12rem;
-  top: 36%;
+  --satellite-start: 305deg;
+  --satellite-radius: 1.5rem;
+  animation: aeon-orb-satellite-4 9.2s ease-in-out infinite;
 }
 
 /* Inner intelligence core: layered color fields inside a glass aperture. */
@@ -458,13 +466,14 @@ body::after {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background:
-    radial-gradient(circle at 42% 24%, rgba(255, 255, 255, 0.48), transparent 20%),
-    radial-gradient(circle at 50% 46%, rgba(28, 30, 40, 0.54), rgba(4, 4, 8, 0.9) 82%);
+    radial-gradient(circle at 42% 24%, rgba(255, 255, 255, 0.5), transparent 20%),
+    radial-gradient(circle at 56% 60%, rgba(var(--gold), 0.22), transparent 52%),
+    radial-gradient(circle at 50% 46%, rgba(28, 30, 40, 0.38), rgba(4, 4, 8, 0.82) 82%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.32),
     inset 0 -18px 28px rgba(0, 0, 0, 0.46),
-    0 0 22px rgba(105, 195, 255, 0.18),
-    0 0 42px rgba(191, 126, 255, 0.12);
+    0 0 24px rgba(var(--gold), 0.2),
+    0 0 38px rgba(105, 195, 255, 0.1);
 }
 
 .aeon-orb-depth {
@@ -475,9 +484,9 @@ body::after {
     conic-gradient(
       from 220deg,
       rgba(3, 5, 11, 0.1),
-      rgba(105, 195, 255, 0.36),
-      rgba(191, 126, 255, 0.46),
-      rgba(255, 168, 212, 0.36),
+      rgba(var(--gold), 0.48),
+      rgba(105, 195, 255, 0.22),
+      rgba(191, 126, 255, 0.26),
       rgba(8, 10, 18, 0.12)
     );
   filter: blur(4px);
@@ -497,28 +506,28 @@ body::after {
 .aeon-orb-light-1 {
   left: -8%;
   top: -10%;
-  background: radial-gradient(circle at 50% 50%, rgba(105, 195, 255, 0.95), transparent 62%);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 226, 151, 0.82), transparent 62%);
   animation: aeon-orb-drift-1 5.3s ease-in-out infinite;
 }
 
 .aeon-orb-light-2 {
   right: -10%;
   top: 8%;
-  background: radial-gradient(circle at 50% 50%, rgba(191, 126, 255, 0.92), transparent 60%);
+  background: radial-gradient(circle at 50% 50%, rgba(105, 195, 255, 0.54), transparent 60%);
   animation: aeon-orb-drift-2 6.7s ease-in-out infinite;
 }
 
 .aeon-orb-light-3 {
   left: 12%;
   bottom: -18%;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 168, 212, 0.88), transparent 62%);
+  background: radial-gradient(circle at 50% 50%, rgba(191, 126, 255, 0.46), transparent 62%);
   animation: aeon-orb-drift-3 4.3s ease-in-out infinite;
 }
 
 .aeon-orb-light-4 {
   right: 8%;
   bottom: -8%;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 221, 145, 0.5), transparent 64%);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 221, 145, 0.42), transparent 64%);
   animation: aeon-orb-drift-4 7.1s ease-in-out infinite;
 }
 
@@ -597,13 +606,14 @@ body::after {
 }
 
 .aeon-orb-panel {
-  border: 1px solid rgba(218, 220, 224, 0.1);
+  border: 1px solid rgba(218, 220, 224, 0.085);
   background:
-    linear-gradient(180deg, rgba(16, 17, 20, 0.94), rgba(8, 9, 11, 0.92)),
-    rgba(0, 0, 0, 0.78);
+    radial-gradient(circle at 50% 0%, rgba(var(--gold), 0.08), transparent 32%),
+    linear-gradient(180deg, rgba(16, 17, 20, 0.9), rgba(8, 9, 11, 0.86)),
+    rgba(0, 0, 0, 0.68);
   box-shadow:
-    0 28px 90px rgba(0, 0, 0, 0.48),
-    0 0 0 1px rgba(var(--gold), 0.035),
+    0 24px 74px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(var(--gold), 0.026),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(22px) saturate(140%);
 }
@@ -757,6 +767,34 @@ body::after {
   }
 }
 
+@keyframes aeon-orb-satellite-1 {
+  0% { opacity: 0.34; transform: translate(-50%, -50%) rotate(8deg) translateX(1.86rem) scale(0.82); }
+  34% { opacity: 0.92; transform: translate(-50%, -50%) rotate(156deg) translateX(1.58rem) scale(1.1); }
+  67% { opacity: 0.52; transform: translate(-50%, -50%) rotate(252deg) translateX(1.96rem) scale(0.9); }
+  100% { opacity: 0.34; transform: translate(-50%, -50%) rotate(368deg) translateX(1.86rem) scale(0.82); }
+}
+
+@keyframes aeon-orb-satellite-2 {
+  0% { opacity: 0.28; transform: translate(-50%, -50%) rotate(122deg) translateX(1.62rem) scale(0.72); }
+  38% { opacity: 0.72; transform: translate(-50%, -50%) rotate(-36deg) translateX(1.88rem) scale(1); }
+  72% { opacity: 0.44; transform: translate(-50%, -50%) rotate(-184deg) translateX(1.44rem) scale(0.86); }
+  100% { opacity: 0.28; transform: translate(-50%, -50%) rotate(-238deg) translateX(1.62rem) scale(0.72); }
+}
+
+@keyframes aeon-orb-satellite-3 {
+  0% { opacity: 0.4; transform: translate(-50%, -50%) rotate(224deg) translateX(1.74rem) scale(0.88); }
+  42% { opacity: 0.86; transform: translate(-50%, -50%) rotate(322deg) translateX(1.46rem) scale(1.08); }
+  74% { opacity: 0.48; transform: translate(-50%, -50%) rotate(72deg) translateX(1.92rem) scale(0.82); }
+  100% { opacity: 0.4; transform: translate(-50%, -50%) rotate(584deg) translateX(1.74rem) scale(0.88); }
+}
+
+@keyframes aeon-orb-satellite-4 {
+  0% { opacity: 0.3; transform: translate(-50%, -50%) rotate(305deg) translateX(1.5rem) scale(0.72); }
+  31% { opacity: 0.8; transform: translate(-50%, -50%) rotate(438deg) translateX(1.84rem) scale(1.02); }
+  66% { opacity: 0.42; transform: translate(-50%, -50%) rotate(196deg) translateX(1.36rem) scale(0.78); }
+  100% { opacity: 0.3; transform: translate(-50%, -50%) rotate(-55deg) translateX(1.5rem) scale(0.72); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* Freeze drifting/bouncing motion — the static iridescent sphere still looks intentional. */
   .aeon-command-orb,
@@ -765,6 +803,7 @@ body::after {
   .aeon-command-orb::before,
   .aeon-orb-aurora,
   .aeon-orb-intelligence-ring,
+  .aeon-orb-intelligence-ring span,
   .aeon-orb-depth,
   .aeon-orb-light,
   .aeon-command-orb-wave,
@@ -1318,9 +1357,44 @@ summary:focus-visible {
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(218, 220, 224, 0.095);
-  background: linear-gradient(180deg, rgba(24, 25, 28, 0.94), rgba(13, 14, 16, 0.94));
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.36);
+  background:
+    linear-gradient(180deg, rgba(24, 25, 28, 0.88), rgba(13, 14, 16, 0.9));
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.32);
   backdrop-filter: blur(18px);
+}
+
+.auth-stage {
+  background:
+    radial-gradient(circle at 50% 18%, rgba(var(--gold), 0.075), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 26%);
+}
+
+.auth-surface {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(218, 220, 224, 0.085);
+  background:
+    linear-gradient(180deg, rgba(22, 23, 26, 0.78), rgba(7, 8, 10, 0.72)),
+    rgba(0, 0, 0, 0.58);
+  box-shadow:
+    0 28px 84px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px) saturate(135%);
+}
+
+.auth-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(var(--gold), 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 46%);
+}
+
+.auth-surface > * {
+  position: relative;
+  z-index: 1;
 }
 
 .premium-surface::before {
@@ -1524,30 +1598,40 @@ a.royal-gradient {
     box-shadow 320ms ease;
 }
 
-.pricing-plan-card-featured {
-  border-color: rgba(232, 234, 238, 0.34);
+.pricing-plan-card.border-white\/10 {
+  border-color: rgba(218, 220, 224, 0.085);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.115), rgba(232, 234, 238, 0.032)),
-    linear-gradient(135deg, rgba(232, 234, 238, 0.105), transparent 48%),
-    rgba(17, 18, 20, 0.96);
+    linear-gradient(180deg, rgba(21, 22, 25, 0.82), rgba(10, 11, 13, 0.82)),
+    rgba(0, 0, 0, 0.54);
   box-shadow:
-    0 24px 70px rgba(0, 0, 0, 0.42),
-    0 0 0 1px rgba(232, 234, 238, 0.075),
-    0 0 32px rgba(232, 234, 238, 0.11),
+    0 18px 54px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.pricing-plan-card-featured {
+  border-color: rgba(232, 234, 238, 0.25);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(232, 234, 238, 0.026)),
+    linear-gradient(135deg, rgba(232, 234, 238, 0.07), transparent 48%),
+    rgba(17, 18, 20, 0.9);
+  box-shadow:
+    0 22px 64px rgba(0, 0, 0, 0.36),
+    0 0 0 1px rgba(232, 234, 238, 0.05),
+    0 0 26px rgba(232, 234, 238, 0.075),
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .pricing-plan-card-sovereign {
-  border-color: rgba(var(--gold), 0.36);
+  border-color: rgba(var(--gold), 0.3);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.095), rgba(var(--gold), 0.03)),
-    radial-gradient(circle at 82% 10%, rgba(var(--gold), 0.14), transparent 32%),
-    linear-gradient(135deg, rgba(var(--gold), 0.085), transparent 46%),
-    rgba(3, 3, 4, 0.985);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.082), rgba(var(--gold), 0.026)),
+    radial-gradient(circle at 82% 10%, rgba(var(--gold), 0.11), transparent 32%),
+    linear-gradient(135deg, rgba(var(--gold), 0.07), transparent 46%),
+    rgba(6, 5, 4, 0.92);
   box-shadow:
-    0 30px 86px rgba(0, 0, 0, 0.54),
-    0 0 0 1px rgba(var(--gold), 0.1),
-    0 0 36px rgba(var(--gold), 0.13),
+    0 26px 78px rgba(0, 0, 0, 0.44),
+    0 0 0 1px rgba(var(--gold), 0.075),
+    0 0 30px rgba(var(--gold), 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.105);
 }
 
@@ -1572,8 +1656,8 @@ a.royal-gradient {
 }
 
 .pricing-card-intro {
-  height: 10rem;
-  min-height: 10rem;
+  height: 10.75rem;
+  min-height: 10.75rem;
 }
 
 .pricing-card-depth {
@@ -1586,7 +1670,7 @@ a.royal-gradient {
   height: 3.65rem;
   min-height: 3.65rem;
   align-items: flex-start;
-  margin-top: 1.65rem;
+  margin-top: 1.1rem;
 }
 
 .pricing-card-price p {
@@ -1595,12 +1679,12 @@ a.royal-gradient {
 
 .pricing-card-features {
   flex: 1;
-  min-height: 13.5rem;
-  margin-top: 0.35rem;
+  min-height: 11.25rem;
+  margin-top: 0.2rem;
 }
 
 .pricing-card-features > * + * {
-  margin-top: 0.85rem;
+  margin-top: 0.68rem;
 }
 
 .pricing-plan-card-current {
@@ -1623,10 +1707,10 @@ a.royal-gradient {
   overflow: hidden;
   border: 1px solid rgba(218, 220, 224, 0.1);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.022)),
-    rgba(15, 16, 18, 0.94);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.058), rgba(255, 255, 255, 0.018)),
+    rgba(15, 16, 18, 0.88);
   box-shadow:
-    0 28px 88px rgba(0, 0, 0, 0.34),
+    0 24px 76px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
   transition:
     transform 320ms ease,
@@ -1664,7 +1748,7 @@ button.membership-upgrade-card {
 }
 
 .membership-current-card {
-  min-height: 34rem;
+  min-height: 32rem;
 }
 
 .membership-current-card::before {
@@ -1679,12 +1763,12 @@ button.membership-upgrade-card {
 }
 
 .membership-upgrade-card {
-  min-height: 34rem;
+  min-height: 32rem;
   border-color: rgba(var(--gold), 0.24);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.086), rgba(var(--gold), 0.03)),
-    linear-gradient(135deg, rgba(var(--gold), 0.09), transparent 46%),
-    rgba(17, 18, 20, 0.96);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(var(--gold), 0.024)),
+    linear-gradient(135deg, rgba(var(--gold), 0.068), transparent 46%),
+    rgba(17, 18, 20, 0.9);
 }
 
 .membership-upgrade-card::before {
@@ -1706,7 +1790,7 @@ button.membership-upgrade-card {
 
 .membership-current-card:hover,
 .membership-upgrade-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   border-color: rgba(232, 234, 238, 0.22);
   box-shadow:
     0 34px 100px rgba(0, 0, 0, 0.44),
@@ -1719,7 +1803,7 @@ button.membership-upgrade-card {
 }
 
 .pricing-plan-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: rgba(218, 220, 224, 0.2);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.022)),
@@ -1731,7 +1815,7 @@ button.membership-upgrade-card {
 }
 
 .pricing-plan-card-featured:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.42);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(232, 234, 238, 0.048)),
@@ -1746,7 +1830,7 @@ button.membership-upgrade-card {
 }
 
 .pricing-plan-card-sovereign:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: rgba(var(--gold), 0.58);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.125), rgba(var(--gold), 0.045)),

@@ -34,6 +34,8 @@ export default function PricingPlanCard({
   const [expanded, setExpanded] = useState(false);
   const showPrice = mode === "purchase" || mode === "upgrade";
   const isCurrent = mode === "current";
+  const visibleFeatures = expanded ? plan.features : plan.features.slice(0, 5);
+  const hiddenFeatureCount = Math.max(plan.features.length - visibleFeatures.length, 0);
   const ctaLabel =
     loadingPlan === plan.id
       ? "Opening..."
@@ -60,7 +62,7 @@ export default function PricingPlanCard({
           onSelect(plan.id);
         }
       }}
-      className={`pricing-plan-card flex h-full min-h-[34rem] cursor-pointer flex-col rounded-lg border p-7 ${
+      className={`pricing-plan-card flex h-full min-h-[31rem] cursor-pointer flex-col rounded-lg border p-7 ${
         disabled ? "pointer-events-none opacity-60" : ""
       } ${
         isCurrent
@@ -103,7 +105,7 @@ export default function PricingPlanCard({
           }}
           className="mt-4 text-left text-[10px] uppercase tracking-[0.14em] text-white/30 transition hover:text-white/62"
         >
-          {expanded ? "Hide details" : "View details"}
+          {expanded ? "Show less" : "Explore details"}
         </button>
       </div>
 
@@ -126,12 +128,17 @@ export default function PricingPlanCard({
       </div>
 
       <div className="pricing-card-features">
-        {plan.features.map((feature) => (
+        {visibleFeatures.map((feature) => (
           <div key={feature} className="flex gap-3 text-sm leading-6 text-white/70">
             <Check size={17} className="mt-1 shrink-0 royal-text" />
             <span>{feature}</span>
           </div>
         ))}
+        {!expanded && hiddenFeatureCount > 0 ? (
+          <p className="pt-1 text-xs leading-5 text-white/36">
+            {hiddenFeatureCount} more capabilities inside.
+          </p>
+        ) : null}
       </div>
 
       {expanded && (

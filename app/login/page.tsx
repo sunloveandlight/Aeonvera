@@ -89,8 +89,8 @@ function LoginInner() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-16 text-white">
-      <div className="premium-surface w-full max-w-md rounded-lg p-8">
+    <main className="auth-stage flex min-h-screen items-center justify-center px-6 py-16 text-white">
+      <div className="auth-surface w-full max-w-md rounded-lg p-8">
         <div className="mb-10 text-center">
           <p className="text-eyebrow">Aeonvera</p>
           <h1 className="mt-4 text-4xl font-light leading-tight">
