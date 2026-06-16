@@ -51,7 +51,7 @@ const CAPABILITIES = [
 ];
 
 export default function HomePage() {
-  const showcaseOrbRef = useRef<HTMLDivElement | null>(null);
+  const showcaseOrbRef = useRef<HTMLButtonElement | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -119,6 +119,9 @@ export default function HomePage() {
         const cY = Math.cos(t * 0.52 + 2.8) * 6.5 + Math.sin(t * 1.49) * 1.9;
         const dX = Math.sin(t * 0.31 + 5.2) * 4.8 + Math.cos(t * 1.73) * 2.6;
         const dY = Math.cos(t * 0.69 + 4.6) * 4.8 + Math.sin(t * 1.07) * 2.5;
+        const flowA = Math.sin(t * 0.43 + 0.6) * 18 + Math.cos(t * 1.07) * 7;
+        const flowB = Math.cos(t * 0.37 + 2.3) * 16 + Math.sin(t * 0.91) * 8;
+        const flowC = Math.sin(t * 0.51 + 4.1) * 20 + Math.cos(t * 0.73) * 5;
 
         orb.style.setProperty("--orb-live-a-x", `${aX.toFixed(2)}%`);
         orb.style.setProperty("--orb-live-a-y", `${aY.toFixed(2)}%`);
@@ -128,6 +131,10 @@ export default function HomePage() {
         orb.style.setProperty("--orb-live-c-y", `${cY.toFixed(2)}%`);
         orb.style.setProperty("--orb-live-d-x", `${dX.toFixed(2)}%`);
         orb.style.setProperty("--orb-live-d-y", `${dY.toFixed(2)}%`);
+        orb.style.setProperty("--orb-flow-a", `${flowA.toFixed(2)}deg`);
+        orb.style.setProperty("--orb-flow-b", `${flowB.toFixed(2)}deg`);
+        orb.style.setProperty("--orb-flow-c", `${flowC.toFixed(2)}deg`);
+        orb.style.setProperty("--orb-rotation", `${((t * 18) % 360).toFixed(2)}deg`);
         orb.style.setProperty("--orb-hue", `${(Math.sin(t * 0.19) * 9).toFixed(2)}deg`);
       }
 
@@ -196,6 +203,11 @@ export default function HomePage() {
     } finally {
       setLoadingPlan(null);
     }
+  }
+
+  function activateVoiceOrb() {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new CustomEvent("aeonvera:activate-voice-orb"));
   }
 
   return (
@@ -269,13 +281,22 @@ export default function HomePage() {
       </section>
 
       <section className="aeon-apple-section aeon-apple-section-dark">
-        <div className="aeon-orb-showcase" aria-hidden="true">
-          <div ref={showcaseOrbRef} className="aeon-command-orb aeon-orb-showcase-orb">
+        <div className="aeon-orb-showcase">
+          <button
+            ref={showcaseOrbRef}
+            type="button"
+            className="aeon-command-orb aeon-orb-showcase-orb"
+            onClick={activateVoiceOrb}
+            aria-label="Start Aeonvera voice"
+          >
             <span className="aeon-command-orb-core">
               <span className="aeon-orb-bloom" />
+              <span className="aeon-orb-flow aeon-orb-flow-one" />
+              <span className="aeon-orb-flow aeon-orb-flow-two" />
+              <span className="aeon-orb-flow aeon-orb-flow-three" />
             </span>
             <span className="aeon-orb-sheen" aria-hidden="true" />
-          </div>
+          </button>
         </div>
         <div className="aeon-apple-copy aeon-apple-copy-center">
           <h2>Your longevity coach should reach you first.</h2>

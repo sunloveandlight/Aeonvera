@@ -55,6 +55,8 @@ export default function AeonCommandOrb() {
   const realtimeStreamRef = useRef<MediaStream | null>(null);
   const realtimeAudioRef = useRef<HTMLAudioElement | null>(null);
   const orbButtonRef = useRef<HTMLButtonElement | null>(null);
+  const startRealtimeVoiceRef = useRef<(() => Promise<void>) | null>(null);
+  const summonTimeoutRef = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<CommandMessage[]>([
@@ -70,6 +72,7 @@ export default function AeonCommandOrb() {
   const [realtimeStatus, setRealtimeStatus] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const [idleDimmed, setIdleDimmed] = useState(false);
+  const [orbSummoned, setOrbSummoned] = useState(false);
   const [actionReceipts, setActionReceipts] = useState<ActionReceipt[]>([]);
   const [receiptVisible, setReceiptVisible] = useState(false);
   const [orbMood, setOrbMood] = useState(INITIAL_ORB_MOOD);
@@ -182,6 +185,9 @@ export default function AeonCommandOrb() {
         const cY = Math.cos(t * 0.52 + 2.8) * 6.5 + Math.sin(t * 1.49) * 1.9;
         const dX = Math.sin(t * 0.31 + 5.2) * 4.8 + Math.cos(t * 1.73) * 2.6;
         const dY = Math.cos(t * 0.69 + 4.6) * 4.8 + Math.sin(t * 1.07) * 2.5;
+        const flowA = Math.sin(t * 0.43 + 0.6) * 18 + Math.cos(t * 1.07) * 7;
+        const flowB = Math.cos(t * 0.37 + 2.3) * 16 + Math.sin(t * 0.91) * 8;
+        const flowC = Math.sin(t * 0.51 + 4.1) * 20 + Math.cos(t * 0.73) * 5;
 
         button.style.setProperty("--orb-live-a-x", `${aX.toFixed(2)}%`);
         button.style.setProperty("--orb-live-a-y", `${aY.toFixed(2)}%`);
@@ -191,6 +197,10 @@ export default function AeonCommandOrb() {
         button.style.setProperty("--orb-live-c-y", `${cY.toFixed(2)}%`);
         button.style.setProperty("--orb-live-d-x", `${dX.toFixed(2)}%`);
         button.style.setProperty("--orb-live-d-y", `${dY.toFixed(2)}%`);
+        button.style.setProperty("--orb-flow-a", `${flowA.toFixed(2)}deg`);
+        button.style.setProperty("--orb-flow-b", `${flowB.toFixed(2)}deg`);
+        button.style.setProperty("--orb-flow-c", `${flowC.toFixed(2)}deg`);
+        button.style.setProperty("--orb-rotation", `${((t * 18) % 360).toFixed(2)}deg`);
       }
 
       animationFrame = window.requestAnimationFrame(animateOrbLife);
@@ -281,8 +291,6 @@ export default function AeonCommandOrb() {
       ignore = true;
     };
   }, [hidden]);
-
-  if (hidden) return null;
 
   function pushActionReceipt(receipt: Omit<ActionReceipt, "createdAt" | "id">) {
     const nextReceipt: ActionReceipt = {
@@ -516,6 +524,37 @@ export default function AeonCommandOrb() {
       setOpen(false);
     }
   }
+
+  useEffect(() => {
+    startRealtimeVoiceRef.current = startRealtimeVoice;
+  });
+
+  useEffect(() => {
+    if (hidden) return undefined;
+
+    function handleShowcaseActivation() {
+      setIdleDimmed(false);
+      setOrbSummoned(true);
+      orbButtonRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      orbButtonRef.current?.focus({ preventScroll: true });
+
+      if (summonTimeoutRef.current) {
+        window.clearTimeout(summonTimeoutRef.current);
+      }
+      summonTimeoutRef.current = window.setTimeout(() => setOrbSummoned(false), 1800);
+
+      void startRealtimeVoiceRef.current?.();
+    }
+
+    window.addEventListener("aeonvera:activate-voice-orb", handleShowcaseActivation);
+    return () => {
+      window.removeEventListener("aeonvera:activate-voice-orb", handleShowcaseActivation);
+      if (summonTimeoutRef.current) {
+        window.clearTimeout(summonTimeoutRef.current);
+        summonTimeoutRef.current = null;
+      }
+    };
+  }, [hidden]);
 
   function handleRealtimeEvent(rawEvent: string) {
     const event = parseRealtimeEvent(rawEvent);
@@ -1103,6 +1142,8 @@ export default function AeonCommandOrb() {
     button.style.setProperty("--orb-tilt-y", "0rem");
   }
 
+  if (hidden) return null;
+
   return (
     <div
       className={`aeon-orb-system fixed z-40 flex flex-col items-center ${
@@ -1314,7 +1355,9 @@ export default function AeonCommandOrb() {
           }}
           className={`aeon-command-orb ${open ? "aeon-command-orb-open" : ""} ${
             realtimeActive ? "aeon-command-orb-listening" : ""
-          } ${speaking ? "aeon-command-orb-speaking" : ""}`}
+          } ${speaking ? "aeon-command-orb-speaking" : ""} ${
+            orbSummoned ? "aeon-command-orb-summoned" : ""
+          }`}
           style={orbStyle}
           onPointerMove={handleOrbPointerMove}
           onPointerLeave={handleOrbPointerLeave}
@@ -1322,14 +1365,9 @@ export default function AeonCommandOrb() {
         >
           <span className="aeon-command-orb-core" aria-hidden="true">
             <span className="aeon-orb-bloom" />
-            {realtimeActive || speaking ? (
-              <span className="aeon-command-orb-wave">
-                <span />
-                <span />
-                <span />
-                <span />
-              </span>
-            ) : null}
+            <span className="aeon-orb-flow aeon-orb-flow-one" />
+            <span className="aeon-orb-flow aeon-orb-flow-two" />
+            <span className="aeon-orb-flow aeon-orb-flow-three" />
           </span>
           <span className="aeon-orb-sheen" aria-hidden="true" />
           <span className="sr-only">
