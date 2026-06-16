@@ -1175,19 +1175,9 @@ export default function AeonCommandOrb() {
           } ${speaking ? "aeon-command-orb-speaking" : ""}`}
           aria-label={realtimeActive ? "Stop Aeonvera voice" : "Talk to Aeonvera"}
         >
-          <span className="aeon-orb-aurora" aria-hidden="true" />
-          <span className="aeon-orb-intelligence-ring" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-          </span>
+          <span className="aeon-orb-glass" aria-hidden="true" />
           <span className="aeon-command-orb-core" aria-hidden="true">
-            <span className="aeon-orb-depth" />
-            <span className="aeon-orb-light aeon-orb-light-1" />
-            <span className="aeon-orb-light aeon-orb-light-2" />
-            <span className="aeon-orb-light aeon-orb-light-3" />
-            <span className="aeon-orb-light aeon-orb-light-4" />
+            <span className="aeon-orb-bloom" />
             {realtimeActive || speaking ? (
               <span className="aeon-command-orb-wave">
                 <span />
@@ -1197,6 +1187,7 @@ export default function AeonCommandOrb() {
               </span>
             ) : null}
           </span>
+          <span className="aeon-orb-sheen" aria-hidden="true" />
           <span className="sr-only">
             {realtimeActive ? "Aeonvera voice is active" : "Aeonvera voice is ready"}
           </span>
