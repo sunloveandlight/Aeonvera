@@ -253,10 +253,11 @@ body:has(.aeon-orb-system) main {
 }
 
 .premium-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(0, 0, 0, 0.48);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  backdrop-filter: blur(22px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+  background: rgba(5, 5, 7, 0.86);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(24px) saturate(190%);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
@@ -461,6 +462,19 @@ body:has(.aeon-orb-system) main {
   box-shadow:
     0 0 18px rgba(var(--gold), 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+.premium-header [data-premium-brand] {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.premium-header [data-premium-brand]:hover {
+  color: #fff !important;
+}
+
+.premium-header a:not(.premium-nav-action),
+.premium-header button:not(.premium-nav-action) {
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .aeon-apple-page {
@@ -1588,6 +1602,7 @@ body:has(.aeon-orb-system) main {
   font-size: 0.74rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.68);
+  outline: none;
   transition:
     color 220ms ease,
     background-color 220ms ease,
@@ -1611,6 +1626,130 @@ body:has(.aeon-orb-system) main {
 .premium-nav-link-active {
   color: rgba(255, 255, 255, 0.94);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.premium-icon-link,
+.premium-theme-toggle {
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.66) !important;
+}
+
+.premium-icon-link:hover,
+.premium-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.premium-mega-menu {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.075);
+  background:
+    linear-gradient(180deg, rgba(18, 18, 20, 0.98), rgba(8, 8, 10, 0.96));
+  box-shadow: 0 34px 72px rgba(0, 0, 0, 0.46);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+  animation: premium-menu-in 160ms ease-out both;
+}
+
+.premium-mega-label {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.premium-mega-primary,
+.premium-mega-secondary,
+.premium-menu-link {
+  display: block;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.premium-mega-primary {
+  color: rgba(255, 255, 255, 0.94) !important;
+}
+
+.premium-mega-primary span {
+  display: block;
+  font-size: 1.62rem;
+  font-weight: 650;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+
+.premium-mega-primary small {
+  display: block;
+  max-width: 25rem;
+  margin-top: 0.34rem;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 0.86rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.premium-mega-primary:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(2px);
+}
+
+.premium-mega-secondary,
+.premium-menu-link {
+  color: rgba(255, 255, 255, 0.68) !important;
+  font-size: 0.94rem;
+  font-weight: 600;
+}
+
+.premium-mega-secondary:hover,
+.premium-menu-link:hover {
+  color: rgba(255, 255, 255, 0.94) !important;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.premium-account-menu {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(10, 10, 12, 0.96);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  backdrop-filter: blur(24px) saturate(170%);
+}
+
+.premium-mobile-menu {
+  background: rgba(5, 5, 7, 0.985);
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.44);
+}
+
+.premium-header .premium-mobile-menu p {
+  color: rgba(255, 255, 255, 0.46) !important;
+}
+
+.premium-header .premium-mobile-menu a,
+.premium-header .premium-mobile-menu button {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.premium-header .premium-mobile-menu a:hover,
+.premium-header .premium-mobile-menu button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff !important;
+}
+
+@keyframes premium-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-pulse {
