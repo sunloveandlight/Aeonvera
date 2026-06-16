@@ -153,7 +153,7 @@ export default function AeonCommandOrb() {
       timeout = window.setTimeout(() => {
         setOrbMood(createOrbMood());
         scheduleNextMood();
-      }, 3200 + Math.random() * 3400);
+      }, 2400 + Math.random() * 3600);
     }
 
     timeout = window.setTimeout(() => {
@@ -1434,12 +1434,12 @@ const INITIAL_ORB_MOOD = {
 
 function createOrbMood() {
   return {
-    bloomTempo: 2.9 + Math.random() * 1.8,
-    consciousTempo: 3.4 + Math.random() * 2.2,
-    driftX: Math.round((Math.random() * 22 - 11) * 10) / 10,
-    driftY: Math.round((Math.random() * 22 - 11) * 10) / 10,
-    hue: Math.round(Math.random() * 24 - 9),
-    tempo: 3.3 + Math.random() * 1.9,
+    bloomTempo: 2.6 + Math.random() * 2.2,
+    consciousTempo: 3.0 + Math.random() * 2.8,
+    driftX: Math.round((Math.random() * 28 - 14) * 10) / 10,
+    driftY: Math.round((Math.random() * 28 - 14) * 10) / 10,
+    hue: Math.round(Math.random() * 34 - 13),
+    tempo: 3.0 + Math.random() * 2.1,
   };
 }
 

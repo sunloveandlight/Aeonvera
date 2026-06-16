@@ -17,7 +17,7 @@ export default function PageContainer({
   variant = "page",
 }: Props) {
   return (
-    <div className={`${containerVariants[variant]} ${className}`}>
+    <div data-aeonvera-content className={`${containerVariants[variant]} ${className}`}>
       {children}
     </div>
   );
