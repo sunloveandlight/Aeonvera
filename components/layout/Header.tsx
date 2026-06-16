@@ -31,9 +31,9 @@ const PUBLIC_NAV_GROUPS: NavGroup[] = [
         description: "Private longevity intelligence, explained simply.",
       },
       {
-        href: "/optimization",
-        label: "Optimization",
-        description: "Turn your signals into a daily protocol.",
+        href: "/companion",
+        label: "Assistant",
+        description: "Voice and text help across Aeonvera.",
       },
       {
         href: "/digital-twin",
@@ -42,17 +42,17 @@ const PUBLIC_NAV_GROUPS: NavGroup[] = [
       },
     ],
     secondary: [
-      { href: "/report", label: "Reports" },
-      { href: "/network", label: "Care Network" },
+      { href: "/optimization", label: "Optimization" },
+      { href: "/data-sources", label: "Data Sources" },
     ],
   },
   {
-    label: "Assessment",
+    label: "Assess",
     href: "/assessment",
     primary: [
       {
         href: "/assessment",
-        label: "Start your assessment",
+        label: "Start assessment",
         description: "Begin with your biological-age baseline.",
       },
       {
@@ -64,6 +64,66 @@ const PUBLIC_NAV_GROUPS: NavGroup[] = [
     secondary: [{ href: "/login?mode=signin", label: "Sign in" }],
   },
   {
+    label: "Twin",
+    href: "/digital-twin",
+    primary: [
+      {
+        href: "/digital-twin",
+        label: "Digital Twin",
+        description: "Signals, protocols, outcomes, and timeline.",
+      },
+      {
+        href: "/life-os",
+        label: "Life OS",
+        description: "Priorities, trajectory, and life domains.",
+      },
+    ],
+    secondary: [
+      { href: "/memory", label: "Memory" },
+      { href: "/report", label: "Report" },
+    ],
+  },
+  {
+    label: "Optimize",
+    href: "/optimization",
+    primary: [
+      {
+        href: "/optimization",
+        label: "Optimization",
+        description: "Turn your signals into a daily protocol.",
+      },
+      {
+        href: "/plan",
+        label: "Daily plan",
+        description: "Make insight executable.",
+      },
+    ],
+    secondary: [
+      { href: "/data-sources", label: "Connect data" },
+      { href: "/companion", label: "Ask Aeonvera" },
+    ],
+  },
+  {
+    label: "Reports",
+    href: "/report",
+    primary: [
+      {
+        href: "/report",
+        label: "Longevity report",
+        description: "Readable summaries for progress and decisions.",
+      },
+      {
+        href: "/physician-export",
+        label: "Physician export",
+        description: "Clinical packets and share links.",
+      },
+    ],
+    secondary: [
+      { href: "/network", label: "Care Network" },
+      { href: "/privacy", label: "Privacy" },
+    ],
+  },
+  {
     label: "Pricing",
     href: "/pricing",
     primary: [
@@ -72,10 +132,35 @@ const PUBLIC_NAV_GROUPS: NavGroup[] = [
         label: "Compare plans",
         description: "Core, Elite, and Sovereign.",
       },
+      {
+        href: "/login?mode=signup",
+        label: "Begin",
+        description: "Create an account and choose your level.",
+      },
     ],
     secondary: [
       { href: "/privacy", label: "Privacy" },
       { href: "/terms", label: "Terms" },
+    ],
+  },
+  {
+    label: "Privacy",
+    href: "/privacy",
+    primary: [
+      {
+        href: "/privacy",
+        label: "Privacy",
+        description: "How sensitive health data is handled.",
+      },
+      {
+        href: "/terms",
+        label: "Terms",
+        description: "Membership, account, and platform terms.",
+      },
+    ],
+    secondary: [
+      { href: "/login?mode=signin", label: "Sign in" },
+      { href: "/login?mode=signup", label: "Create account" },
     ],
   },
 ];
@@ -91,18 +176,18 @@ const AUTH_NAV_GROUPS: NavGroup[] = [
         description: "Your most important signal and next action.",
       },
       {
-        href: "/plan",
-        label: "Plan",
-        description: "Protocols, reminders, and execution.",
-      },
-      {
         href: "/companion",
         label: "Ask Aeonvera",
         description: "Voice and text help across the app.",
       },
+      {
+        href: "/optimization",
+        label: "Optimization",
+        description: "Refine the protocol from your latest state.",
+      },
     ],
     secondary: [
-      { href: "/optimization", label: "Optimization" },
+      { href: "/plan", label: "Plan" },
       { href: "/report", label: "Report" },
     ],
   },
@@ -129,6 +214,31 @@ const AUTH_NAV_GROUPS: NavGroup[] = [
     secondary: [{ href: "/assessment", label: "Assessment" }],
   },
   {
+    label: "Plan",
+    href: "/plan",
+    primary: [
+      {
+        href: "/plan",
+        label: "Plan",
+        description: "Protocols, reminders, and next actions.",
+      },
+      {
+        href: "/optimization",
+        label: "Optimization",
+        description: "Generate or refine your protocol.",
+      },
+      {
+        href: "/companion",
+        label: "Simplify with Aeonvera",
+        description: "Adjust the plan by voice or text.",
+      },
+    ],
+    secondary: [
+      { href: "/dashboard", label: "Today" },
+      { href: "/life-os", label: "Life OS" },
+    ],
+  },
+  {
     label: "Data",
     href: "/data-sources",
     primary: [
@@ -149,6 +259,71 @@ const AUTH_NAV_GROUPS: NavGroup[] = [
       },
     ],
     secondary: [{ href: "/network", label: "Care Network" }],
+  },
+  {
+    label: "Reports",
+    href: "/report",
+    primary: [
+      {
+        href: "/report",
+        label: "Report",
+        description: "Your current healthspan summary.",
+      },
+      {
+        href: "/physician-export",
+        label: "Physician Export",
+        description: "Clinical packets and share links.",
+      },
+      {
+        href: "/future-self/demo",
+        label: "Future Self",
+        description: "Scenario views and shareable projections.",
+      },
+    ],
+    secondary: [
+      { href: "/digital-twin", label: "Digital Twin" },
+      { href: "/data-sources", label: "Data Sources" },
+    ],
+  },
+  {
+    label: "Network",
+    href: "/network",
+    primary: [
+      {
+        href: "/network",
+        label: "Care Network",
+        description: "Invite family, clinicians, and support partners.",
+      },
+      {
+        href: "/physician-export",
+        label: "Physician Share",
+        description: "Create clinical context without exposing the whole account.",
+      },
+    ],
+    secondary: [
+      { href: "/settings", label: "Settings" },
+      { href: "/privacy", label: "Privacy" },
+    ],
+  },
+  {
+    label: "Pricing",
+    href: "/pricing",
+    primary: [
+      {
+        href: "/pricing",
+        label: "Membership",
+        description: "Upgrade, downgrade, or compare plan levels.",
+      },
+      {
+        href: "/settings",
+        label: "Account Settings",
+        description: "Manage profile, preferences, and billing context.",
+      },
+    ],
+    secondary: [
+      { href: "/terms", label: "Terms" },
+      { href: "/privacy", label: "Privacy" },
+    ],
   },
 ];
 
@@ -235,7 +410,7 @@ export default function Header() {
       className="premium-header fixed inset-x-0 top-0 z-50"
       onMouseLeave={() => setActiveMenu(null)}
     >
-      <div className="mx-auto flex h-11 max-w-6xl items-center justify-between px-5 lg:px-8">
+      <div className="mx-auto flex h-11 max-w-7xl items-center justify-between px-5 lg:px-8">
         <Link
           href="/"
           onClick={() => {
@@ -359,7 +534,7 @@ export default function Header() {
 
       {activeGroup ? (
         <div className="premium-mega-menu hidden md:block">
-          <div className="mx-auto grid max-w-6xl grid-cols-[1.3fr_1fr] gap-10 px-8 py-8">
+          <div className="mx-auto grid max-w-7xl grid-cols-[1.3fr_1fr] gap-10 px-8 py-8">
             <div>
               <p className="premium-mega-label">Explore {activeGroup.label}</p>
               <div className="mt-4 grid gap-1">
@@ -397,7 +572,7 @@ export default function Header() {
 
       {mobileOpen ? (
         <div className="premium-mobile-menu border-t px-6 py-5 md:hidden">
-          <nav className="mx-auto flex max-w-6xl flex-col gap-5">
+          <nav className="mx-auto flex max-w-7xl flex-col gap-5">
             {navGroups.map((group) => (
               <div key={group.label}>
                 <p className="premium-mega-label mb-2">{group.label}</p>
