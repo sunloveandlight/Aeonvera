@@ -2,7 +2,6 @@
 
 import {
   type CSSProperties,
-  type PointerEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -216,47 +215,6 @@ export default function AeonCommandOrb() {
 
     animationFrame = window.requestAnimationFrame(animateOrbLife);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [hidden]);
-
-  useEffect(() => {
-    if (hidden) return;
-
-    let frame = 0;
-    let targetX = 0;
-    let targetY = 0;
-    let currentX = 0;
-    let currentY = 0;
-
-    function updateOrbAwareness() {
-      frame = 0;
-      currentX += (targetX - currentX) * 0.12;
-      currentY += (targetY - currentY) * 0.12;
-
-      const button = orbButtonRef.current;
-      if (!button) return;
-
-      button.style.setProperty("--orb-aware-x", `${currentX.toFixed(2)}%`);
-      button.style.setProperty("--orb-aware-y", `${currentY.toFixed(2)}%`);
-      button.style.setProperty("--orb-aware-x-neg", `${(-currentX).toFixed(2)}%`);
-      button.style.setProperty("--orb-aware-y-neg", `${(-currentY).toFixed(2)}%`);
-
-      if (Math.abs(targetX - currentX) > 0.05 || Math.abs(targetY - currentY) > 0.05) {
-        frame = window.requestAnimationFrame(updateOrbAwareness);
-      }
-    }
-
-    function handleWindowPointerMove(event: globalThis.PointerEvent) {
-      targetX = ((event.clientX / window.innerWidth) - 0.5) * 10;
-      targetY = ((event.clientY / window.innerHeight) - 0.5) * 10;
-
-      if (!frame) frame = window.requestAnimationFrame(updateOrbAwareness);
-    }
-
-    window.addEventListener("pointermove", handleWindowPointerMove, { passive: true });
-    return () => {
-      window.removeEventListener("pointermove", handleWindowPointerMove);
-      if (frame) window.cancelAnimationFrame(frame);
-    };
   }, [hidden]);
 
   useEffect(() => {
@@ -1125,31 +1083,6 @@ export default function AeonCommandOrb() {
     window.location.assign(data.url);
   }
 
-  function handleOrbPointerMove(event: PointerEvent<HTMLButtonElement>) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-    const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
-
-    event.currentTarget.style.setProperty("--orb-look-x", `${Math.max(-8, Math.min(8, x * 8))}%`);
-    event.currentTarget.style.setProperty("--orb-look-y", `${Math.max(-8, Math.min(8, y * 8))}%`);
-    event.currentTarget.style.setProperty("--orb-look-x-neg", `${Math.max(-8, Math.min(8, x * -8))}%`);
-    event.currentTarget.style.setProperty("--orb-look-y-neg", `${Math.max(-8, Math.min(8, y * -8))}%`);
-    event.currentTarget.style.setProperty("--orb-tilt-x", `${Math.max(-0.08, Math.min(0.08, x * 0.08))}rem`);
-    event.currentTarget.style.setProperty("--orb-tilt-y", `${Math.max(-0.08, Math.min(0.08, y * 0.08))}rem`);
-  }
-
-  function handleOrbPointerLeave() {
-    const button = orbButtonRef.current;
-    if (!button) return;
-
-    button.style.setProperty("--orb-look-x", "0%");
-    button.style.setProperty("--orb-look-y", "0%");
-    button.style.setProperty("--orb-look-x-neg", "0%");
-    button.style.setProperty("--orb-look-y-neg", "0%");
-    button.style.setProperty("--orb-tilt-x", "0rem");
-    button.style.setProperty("--orb-tilt-y", "0rem");
-  }
-
   if (hidden) return null;
 
   return (
@@ -1367,8 +1300,6 @@ export default function AeonCommandOrb() {
             orbSummoned ? "aeon-command-orb-summoned" : ""
           }`}
           style={orbStyle}
-          onPointerMove={handleOrbPointerMove}
-          onPointerLeave={handleOrbPointerLeave}
           aria-label={realtimeActive ? "Stop Aeonvera voice" : "Talk to Aeonvera"}
         >
           <AeonOrbVisual energy={orbEnergy} />
