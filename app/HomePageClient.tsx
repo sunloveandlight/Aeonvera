@@ -183,7 +183,7 @@ export default function HomePage() {
         </div>
         <div className="aeon-apple-hero-shade" aria-hidden="true" />
         <div className="aeon-apple-hero-content">
-          <h1>Aeonvera.</h1>
+          <h1>Aeonvera</h1>
           <p className="aeon-apple-hero-subtitle">
             The operating system for your biological future.
           </p>

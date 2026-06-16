@@ -552,9 +552,9 @@ body:has(.aeon-orb-system) main {
 
 .aeon-apple-hero {
   position: relative;
-  min-height: max(46rem, calc(112svh - 2.75rem));
+  min-height: max(54rem, calc(124svh - 2.75rem));
   display: grid;
-  place-items: end center;
+  place-items: start center;
   overflow: hidden;
   isolation: isolate;
 }
@@ -566,6 +566,7 @@ body:has(.aeon-orb-system) main {
 }
 
 .aeon-apple-hero-media {
+  inset: clamp(18.5rem, 34svh, 22.5rem) 0 0;
   z-index: -3;
 }
 
@@ -577,52 +578,64 @@ body:has(.aeon-orb-system) main {
 .aeon-apple-hero-shade {
   z-index: -2;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.26), rgba(0, 0, 0, 0.04) 34%, rgba(0, 0, 0, 0.58) 72%, rgba(0, 0, 0, 0.88) 100%),
-    radial-gradient(circle at 50% 18%, transparent 0 30%, rgba(0, 0, 0, 0.24) 66%, rgba(0, 0, 0, 0.72) 100%);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.08) 28%, rgba(0, 0, 0, 0.24) 62%, rgba(0, 0, 0, 0.78) 100%),
+    radial-gradient(circle at 50% 16%, rgba(0, 0, 0, 0.18), transparent 18rem),
+    radial-gradient(circle at 50% 22%, transparent 0 30%, rgba(0, 0, 0, 0.2) 66%, rgba(0, 0, 0, 0.7) 100%);
 }
 
 .aeon-apple-hero-content {
   width: min(100%, 76rem);
   margin: 0 auto;
-  padding: 0 clamp(1.5rem, 5vw, 4rem) clamp(8rem, 15svh, 12rem);
+  padding: clamp(5rem, 8.4svh, 6.6rem) clamp(1.5rem, 5vw, 4rem) 0;
   text-align: center;
 }
 
 .aeon-apple-hero h1 {
   color: #fff;
-  font-size: clamp(3.7rem, 7.2vw, 6.7rem);
+  font-size: clamp(3.25rem, 5.8vw, 5.35rem);
   line-height: 0.94;
   letter-spacing: -0.052em;
   text-wrap: balance;
 }
 
 .aeon-apple-hero-subtitle {
-  max-width: 38rem;
-  margin: 1.15rem auto 0;
+  max-width: 34rem;
+  margin: 0.9rem auto 0;
   color: rgba(255, 255, 255, 0.84);
-  font-size: clamp(1.35rem, 2.35vw, 2.15rem);
+  font-size: clamp(1.18rem, 1.9vw, 1.72rem);
   font-weight: 600;
-  line-height: 1.12;
-  letter-spacing: -0.025em;
+  line-height: 1.16;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
 @media (max-width: 700px) {
   .aeon-apple-hero {
-    min-height: calc(100svh - 2.75rem);
+    min-height: max(48rem, calc(108svh - 2.75rem));
+  }
+
+  .aeon-apple-hero-media {
+    inset: clamp(14.9rem, 29svh, 16.25rem) 0 0;
   }
 
   .aeon-apple-hero-content {
-    padding-bottom: clamp(3.25rem, 6svh, 4.5rem);
+    padding-top: clamp(4.4rem, 8svh, 5.6rem);
+    padding-bottom: 0;
   }
 
   .aeon-apple-hero h1 {
-    font-size: clamp(3.45rem, 15vw, 4.2rem);
+    font-size: clamp(2.85rem, 12vw, 3.3rem);
+    letter-spacing: -0.05em;
   }
 
   .aeon-apple-hero-subtitle {
-    margin-top: 0.8rem;
-    font-size: clamp(1.25rem, 5.4vw, 1.55rem);
+    margin-top: 0.7rem;
+    font-size: clamp(1.08rem, 4.8vw, 1.32rem);
+  }
+
+  .aeon-apple-cta-row {
+    gap: 0.85rem;
+    margin-top: 1.25rem;
   }
 }
 
@@ -632,7 +645,7 @@ body:has(.aeon-orb-system) main {
   align-items: center;
   flex-wrap: wrap;
   gap: 1.1rem;
-  margin-top: 2rem;
+  margin-top: 1.45rem;
 }
 
 .apple-cta-primary,
