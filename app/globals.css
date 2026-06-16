@@ -79,13 +79,13 @@ h4 {
 h1 {
   font-size: var(--text-6xl);
   line-height: 1.05;
-  letter-spacing: -0.012em;
+  letter-spacing: 0;
 }
 
 h2 {
   font-size: var(--text-4xl);
   line-height: 1.1;
-  letter-spacing: -0.008em;
+  letter-spacing: 0;
 }
 
 h3 {
@@ -196,12 +196,52 @@ body:has(.aeon-orb-system) main {
 }
 
 .premium-header {
-  border-bottom: 1px solid rgba(218, 220, 224, 0.09);
+  border-bottom: 1px solid rgba(218, 220, 224, 0.055);
   background:
-    linear-gradient(180deg, rgba(8, 9, 11, 0.88), rgba(0, 0, 0, 0.72)),
-    rgba(0, 0, 0, 0.64);
-  backdrop-filter: blur(22px) saturate(140%);
-  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.22);
+    linear-gradient(180deg, rgba(10, 10, 11, 0.72), rgba(0, 0, 0, 0.56)),
+    rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(28px) saturate(160%);
+  box-shadow: none;
+}
+
+.aeon-home-hero {
+  min-height: calc(100svh - 2.75rem);
+  display: flex;
+  align-items: center;
+}
+
+.aeon-home-hero-visual .hero-stage {
+  min-height: 25rem;
+  border-radius: 1.7rem;
+}
+
+@media (max-width: 767px) {
+  .aeon-home-hero {
+    align-items: flex-start;
+    min-height: auto;
+  }
+
+  .aeon-home-hero-visual {
+    margin-top: 3rem;
+  }
+
+  .aeon-home-hero-visual .hero-stage {
+    min-height: 0;
+    border-radius: 1.15rem;
+  }
+
+  .aeon-home-hero-visual .hero-domain-panel {
+    display: none;
+  }
+
+  .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb {
+    opacity: 0.24;
+    transform: translateY(0.55rem) scale(0.62);
+  }
+
+  .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb::before {
+    opacity: 0.03;
+  }
 }
 
 .brand-mark {
@@ -250,6 +290,18 @@ body:has(.aeon-orb-system) main {
 
 .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb::before {
   opacity: 0.08;
+}
+
+@media (max-width: 767px) {
+  .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb {
+    opacity: 0.24;
+    transform: translateY(0.55rem) scale(0.62);
+    filter: saturate(0.82);
+  }
+
+  .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb::before {
+    opacity: 0.03;
+  }
 }
 
 .aeon-command-orb {
@@ -900,10 +952,10 @@ body:has(.aeon-orb-system) main {
   position: relative;
   display: inline-flex;
   align-items: center;
-  height: 2rem;
-  border-radius: 0.42rem;
+  height: 1.9rem;
+  border-radius: 0.38rem;
   padding: 0 0.72rem;
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   font-weight: 500;
   color: rgba(218, 220, 224, 0.52);
   transition:
@@ -915,7 +967,7 @@ body:has(.aeon-orb-system) main {
 .premium-nav-link:hover,
 .premium-nav-link-active {
   color: rgba(247, 247, 244, 0.88);
-  background: rgba(255, 255, 255, 0.045);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .hero-pulse {
@@ -1436,11 +1488,11 @@ summary:focus-visible {
 .premium-surface {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(218, 220, 224, 0.095);
+  border: 1px solid rgba(218, 220, 224, 0.07);
   background:
-    linear-gradient(180deg, rgba(24, 25, 28, 0.88), rgba(13, 14, 16, 0.9));
-  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.32);
-  backdrop-filter: blur(18px);
+    linear-gradient(180deg, rgba(24, 25, 28, 0.72), rgba(11, 12, 14, 0.78));
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(22px) saturate(126%);
 }
 
 .auth-stage {
@@ -1503,16 +1555,15 @@ summary:focus-visible {
   overflow: hidden;
   isolation: isolate;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.035)),
-    rgba(18, 19, 22, 0.68);
-  border: 1px solid rgba(232, 234, 238, 0.24);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.035)),
+    rgba(30, 31, 34, 0.7);
+  border: 1px solid rgba(232, 234, 238, 0.2);
   color: rgba(255, 255, 255, 0.96);
   min-height: 2.25rem;
   border-radius: 0.45rem;
   box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(232, 234, 238, 0.028),
-    0 0 16px rgba(232, 234, 238, 0.07),
+    0 8px 22px rgba(0, 0, 0, 0.24),
+    0 0 0 1px rgba(232, 234, 238, 0.02),
     inset 0 1px 0 rgba(255, 255, 255, 0.085);
   backdrop-filter: blur(16px);
   text-shadow: none;
@@ -1566,12 +1617,11 @@ a.royal-gradient {
 .premium-button-primary:hover,
 .premium-action:hover,
 .royal-gradient:hover {
-  border-color: rgba(255, 255, 255, 0.32);
+  border-color: rgba(255, 255, 255, 0.28);
   transform: translateY(-1px);
   box-shadow:
-    0 15px 40px rgba(0, 0, 0, 0.38),
+    0 13px 34px rgba(0, 0, 0, 0.32),
     0 0 0 1px rgba(232, 234, 238, 0.06),
-    0 0 22px rgba(232, 234, 238, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.13);
 }
 

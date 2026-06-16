@@ -102,7 +102,7 @@ export default function Header() {
 
   return (
     <header className="premium-header sticky top-0 z-50">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
+      <div className="mx-auto flex h-11 max-w-7xl items-center justify-between px-6 lg:px-8">
 
         {/* BRAND */}
         <Link
@@ -111,7 +111,7 @@ export default function Header() {
             setAccountOpen(false);
             setMobileOpen(false);
           }}
-          className="group inline-flex items-center gap-3 text-sm font-medium tracking-[0.2em] text-white/85 transition-colors duration-300 hover:text-white"
+          className="group inline-flex items-center gap-3 text-xs font-medium tracking-[0.2em] text-white/85 transition-colors duration-300 hover:text-white"
         >
           <span className="brand-mark" aria-hidden />
           <span>AEONVERA</span>
@@ -138,10 +138,10 @@ export default function Header() {
         </nav>
 
         {/* AUTH */}
-        <div className="flex h-9 items-center gap-3">
+        <div className="flex h-8 items-center gap-3">
           <button
             onClick={() => setMobileOpen((open) => !open)}
-            className="inline-flex size-10 items-center justify-center rounded-md border border-white/10 text-white/60 md:hidden"
+            className="inline-flex size-9 items-center justify-center rounded-md border border-white/10 text-white/60 md:hidden"
             aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={mobileOpen}
             type="button"
@@ -149,13 +149,13 @@ export default function Header() {
             {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
           {!authChecked ? (
-            <div className="hidden h-9 w-24 rounded-md border border-white/10 bg-white/[0.035] sm:block" />
+            <div className="hidden h-8 w-24 rounded-md border border-white/10 bg-white/[0.035] sm:block" />
           ) : authenticated ? (
             <div className="relative hidden sm:block" ref={accountMenuRef}>
               <button
                 type="button"
                 onClick={() => setAccountOpen((open) => !open)}
-                className={`inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-medium leading-none transition ${
+                className={`inline-flex h-8 items-center gap-2 rounded-md border px-3 text-xs font-medium leading-none transition ${
                   accountOpen
                     ? "border-white/[0.16] bg-white/[0.06] text-white/82"
                     : "border-white/[0.08] bg-white/[0.025] text-white/54 hover:border-white/[0.14] hover:text-white/80"
@@ -205,7 +205,7 @@ export default function Header() {
               <Link
                 href="/login?mode=signin"
                 onClick={() => setAccountOpen(false)}
-                className="hidden h-9 items-center text-xs font-medium leading-none text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
+                className="hidden h-8 items-center text-xs font-medium leading-none text-white/50 transition-colors duration-300 hover:text-white/80 sm:inline-flex"
               >
                 Sign In
               </Link>

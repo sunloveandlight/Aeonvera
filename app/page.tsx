@@ -142,7 +142,7 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
     <Link
       href="/optimization"
       aria-label="Open optimization"
-      className="hero-stage group relative flex h-full cursor-pointer overflow-hidden rounded-xl border border-white/10 p-6 transition hover:border-white/[0.18] md:p-7"
+      className="hero-stage group relative flex h-full w-full cursor-pointer overflow-hidden rounded-xl border border-white/10 p-6 transition hover:border-white/[0.18] md:p-7"
     >
       <div className="relative z-10 flex h-full w-full flex-col">
         <div className="mb-6 flex items-center justify-between gap-4">
@@ -218,7 +218,7 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
           </div>
         </div>
 
-        <div className="mt-auto grid gap-3 pt-5 sm:grid-cols-3">
+        <div className="hero-mini-metrics mt-auto hidden gap-3 pt-5">
           {[
             ["Demo risk score", "24", "low"],
             ["Model confidence", "84%", "example"],
@@ -395,22 +395,22 @@ export default function HomePage() {
 
   return (
     <div className="text-white">
-      <section className="px-6 pt-24 pb-24 lg:px-8">
-        <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-2 lg:items-stretch">
-          <div className="flex flex-col justify-between">
-            <h1 className="max-w-4xl text-6xl font-light leading-[0.98] text-white md:text-7xl xl:text-8xl">
+      <section className="aeon-home-hero px-6 pt-24 pb-24 lg:px-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center text-center">
+          <div className="mx-auto max-w-4xl">
+            <h1 className="text-6xl font-light leading-[0.98] text-white md:text-7xl xl:text-8xl">
               Aeonvera.
             </h1>
 
-            <p className="mt-7 max-w-2xl text-2xl font-light leading-tight text-white/78 md:text-3xl">
+            <p className="mx-auto mt-7 max-w-2xl text-2xl font-light leading-tight text-white/78 md:text-3xl">
               Private intelligence for your body.
             </p>
 
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/56">
+            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/56">
               Labs, wearables, biological age, recovery, and behavior become one calm operating system that explains, plans, reminds, schedules, and adapts.
             </p>
 
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href={authenticated ? "/dashboard" : "/login?mode=signup"}
                 className="premium-action inline-flex h-12 w-full items-center justify-center gap-2 rounded-md px-6 text-sm font-medium transition hover:opacity-95 sm:w-auto"
@@ -427,7 +427,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          <HeroVisual restingHeartRate={restingHeartRate} />
+          <div className="aeon-home-hero-visual mx-auto mt-16 w-full max-w-5xl">
+            <HeroVisual restingHeartRate={restingHeartRate} />
+          </div>
         </div>
       </section>
 
