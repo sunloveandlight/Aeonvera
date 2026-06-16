@@ -557,11 +557,6 @@ body:has(.aeon-orb-system) main {
   place-items: stretch center;
   overflow: hidden;
   isolation: isolate;
-  /* Tunable composition knobs:
-     --hero-image-shift: vertical nudge of the figure (more negative = pulled up)
-     --hero-cta-top: where the button sits over her (smaller % = higher / nearer the face) */
-  --hero-image-shift: -2svh;
-  --hero-cta-top: 56%;
 }
 
 .aeon-apple-hero-media,
@@ -576,29 +571,30 @@ body:has(.aeon-orb-system) main {
 }
 
 .aeon-apple-hero-media img {
-  transform: translateY(var(--hero-image-shift, 0)) scale(1.004);
+  transform: translateY(clamp(-25rem, -31svh, -20rem)) scale(1.004);
   object-position: center top;
 }
 
 .aeon-apple-hero-shade {
   z-index: -2;
   background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.4) 9%, transparent 22%, transparent 60%, rgba(0, 0, 0, 0.32) 100%),
-    radial-gradient(58% 24% at 50% var(--hero-cta-top, 56%), rgba(0, 0, 0, 0.42), transparent 72%);
+    linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.98) 18%, rgba(0, 0, 0, 0.76) 31%, rgba(0, 0, 0, 0.2) 48%, rgba(0, 0, 0, 0.16) 66%, rgba(0, 0, 0, 0.58) 100%),
+    radial-gradient(circle at 50% 20%, rgba(255, 232, 170, 0.1), transparent 20rem),
+    radial-gradient(circle at 50% 58%, transparent 0 30%, rgba(0, 0, 0, 0.2) 68%, rgba(0, 0, 0, 0.72) 100%);
 }
 
 .aeon-apple-hero-content {
-  position: relative;
   width: min(100%, 76rem);
   min-height: inherit;
   margin: 0 auto;
-  padding: clamp(3.6rem, 6svh, 5rem) clamp(1.5rem, 5vw, 4rem) clamp(4rem, 8svh, 6rem);
+  padding: clamp(4.5rem, 7.2svh, 6rem) clamp(1.5rem, 5vw, 4rem) clamp(4.6rem, 8.5svh, 6.6rem);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   text-align: center;
 }
 
 .aeon-apple-hero-brand {
-  position: relative;
-  z-index: 1;
+  align-self: start;
 }
 
 .aeon-apple-hero h1 {
@@ -610,12 +606,10 @@ body:has(.aeon-orb-system) main {
 }
 
 .aeon-apple-hero-copy {
-  position: absolute;
-  left: 50%;
-  top: var(--hero-cta-top, 56%);
-  transform: translate(-50%, -50%);
+  align-self: end;
+  justify-self: center;
   width: min(100%, 38rem);
-  padding-inline: clamp(1.5rem, 5vw, 4rem);
+  transform: translateY(clamp(-3.5rem, -4.6svh, -2.1rem));
 }
 
 .aeon-apple-hero-subtitle {
