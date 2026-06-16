@@ -110,7 +110,7 @@ export default function TermsPage() {
       <main className="py-14 md:py-20">
         <section className="executive-panel rounded-lg p-6 md:p-10">
           <p className="micro-label">Terms of Service</p>
-          <h1 className="mt-5 max-w-4xl text-4xl font-light leading-tight text-white md:text-6xl">
+          <h1 className="mt-5 max-w-4xl leading-tight text-white text-5xl md:text-6xl font-semibold">
             Clear terms for a private health intelligence system.
           </h1>
           <p className="mt-6 max-w-3xl text-sm leading-7 text-white/52">

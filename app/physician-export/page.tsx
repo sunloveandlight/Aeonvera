@@ -561,7 +561,7 @@ function ExportDocument({ bundle }: { bundle: ExportBundle }) {
     <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] p-7 print:border-0 print:bg-white print:p-0 print:text-black">
       <div className="mb-8 border-b border-white/[0.08] pb-6 print:border-black/15">
         <p className="micro-label print:text-black/50">Aeonvera Physician Export</p>
-        <h1 className="mt-4 text-4xl font-semibold text-white print:text-black">
+        <h1 className="mt-4 text-white print:text-black text-5xl md:text-6xl font-semibold">
           Longitudinal healthspan summary
         </h1>
         <div className="mt-5 grid gap-3 text-sm text-white/55 print:text-black/70 sm:grid-cols-3">

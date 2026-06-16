@@ -867,7 +867,7 @@ export default function AssessmentPage() {
               <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p className="micro-label mb-4">Longevity Assessment</p>
-                  <h1 className="text-4xl md:text-5xl font-light tracking-tight text-white/90">
+                  <h1 className="tracking-tight text-white/90 text-5xl md:text-6xl font-semibold">
                     Your assessment is complete.
                   </h1>
                   <p className="mt-4 max-w-2xl text-sm leading-7 text-white/45">
@@ -970,7 +970,7 @@ export default function AssessmentPage() {
             Longevity Assessment — Step {step + 1} of {STEPS.length}
           </p>
 
-          <h1 className="text-4xl md:text-5xl font-light tracking-tight text-white/90">
+          <h1 className="tracking-tight text-white/90 text-5xl md:text-6xl font-semibold">
             {currentStep.title}
           </h1>
 

@@ -7,7 +7,7 @@ type Props = {
 };
 
 const containerVariants = {
-  page: "max-w-7xl mx-auto px-6 lg:px-8",
+  page: "max-w-6xl mx-auto px-6 lg:px-8",
   narrow: "max-w-3xl mx-auto px-6 lg:px-8",
 };
 

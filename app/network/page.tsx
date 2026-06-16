@@ -330,7 +330,7 @@ export default function NetworkPage() {
               <div className="mb-6 flex items-start justify-between gap-4 border-b border-white/[0.06] pb-5">
                 <div>
                   <p className="micro-label">Invite Role</p>
-                  <h1 className="mt-3 text-4xl font-semibold text-white">
+                  <h1 className="mt-3 text-5xl md:text-6xl font-semibold text-white">
                     Build your longevity network.
                   </h1>
                   <p className="mt-4 text-sm leading-7 text-white/48">

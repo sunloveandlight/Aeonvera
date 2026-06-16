@@ -532,7 +532,7 @@ export default function OptimizationPage() {
         <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="micro-label mb-5">Optimization</p>
-            <h1 className="max-w-4xl text-5xl font-semibold leading-[1.04] text-white md:text-6xl">
+            <h1 className="max-w-4xl leading-[1.04] text-white text-5xl md:text-6xl font-semibold">
               Build your health, understood.
             </h1>
             <p className="mt-6 max-w-2xl text-sm leading-7 text-white/50">

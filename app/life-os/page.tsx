@@ -283,7 +283,7 @@ export default function LifeOsPage() {
               <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
                 <div>
                   <p className="micro-label">Life OS</p>
-                  <h1 className="mt-4 text-4xl font-semibold leading-tight text-white md:text-6xl">
+                  <h1 className="mt-4 leading-tight text-white text-5xl md:text-6xl font-semibold">
                     Your future self, made real.
                   </h1>
                   <p className="mt-5 max-w-3xl text-sm leading-7 text-white/52">

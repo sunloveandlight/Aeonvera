@@ -728,7 +728,7 @@ export default function CompanionPage() {
         <div className="mb-9 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="micro-label mb-5">Mobile Companion</p>
-            <h1 className="max-w-4xl text-5xl font-semibold leading-[1.04] text-white md:text-6xl">
+            <h1 className="max-w-4xl leading-[1.04] text-white text-5xl md:text-6xl font-semibold">
               Today
             </h1>
           </div>
@@ -743,8 +743,8 @@ export default function CompanionPage() {
         {loading ? (
           <AccessState
             eyebrow="Companion"
-            title="Opening your daily operating view."
-            body="Aeonvera is loading your coach feed, protocol layer, calendar state, and plan intelligence."
+            title="Opening today."
+            body="Aeonvera is loading your coach feed, protocol, calendar, and plan."
             actions={[{ href: "/plan", label: "View access", variant: "secondary" }]}
           />
         ) : signedOut ? (
