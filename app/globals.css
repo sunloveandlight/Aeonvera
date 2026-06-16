@@ -237,16 +237,17 @@ body::after {
 .aeon-command-orb {
   position: relative;
   display: inline-flex;
-  width: 3.9rem;
-  height: 3.9rem;
+  width: 4rem;
+  height: 4rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.92);
   box-shadow:
     0 18px 52px rgba(0, 0, 0, 0.5),
-    0 0 34px rgba(var(--gold), 0.2),
-    0 0 64px rgba(167, 199, 255, 0.1);
+    0 0 30px rgba(130, 158, 255, 0.2),
+    0 0 60px rgba(198, 138, 255, 0.12),
+    0 0 96px rgba(var(--gold), 0.06);
   cursor: pointer;
   isolation: isolate;
   overflow: visible;
@@ -308,162 +309,113 @@ body::after {
   transform: translateY(-2px) scale(1.02);
   box-shadow:
     0 22px 56px rgba(0, 0, 0, 0.52),
-    0 0 44px rgba(var(--gold), 0.28),
-    0 0 72px rgba(167, 199, 255, 0.14);
+    0 0 40px rgba(130, 158, 255, 0.26),
+    0 0 76px rgba(198, 138, 255, 0.16);
 }
 
 .aeon-command-orb-listening {
   animation: aeon-orb-breathe 2.6s ease-in-out infinite;
   box-shadow:
     0 20px 54px rgba(0, 0, 0, 0.52),
-    0 0 48px rgba(var(--gold), 0.3),
-    0 0 80px rgba(167, 199, 255, 0.18);
+    0 0 46px rgba(130, 158, 255, 0.3),
+    0 0 86px rgba(198, 138, 255, 0.2);
 }
 
 .aeon-command-orb-speaking {
   animation: aeon-orb-breathe 1.6s ease-in-out infinite;
   box-shadow:
     0 20px 54px rgba(0, 0, 0, 0.52),
-    0 0 58px rgba(var(--gold), 0.36),
-    0 0 92px rgba(167, 199, 255, 0.2);
+    0 0 56px rgba(116, 226, 232, 0.32),
+    0 0 100px rgba(198, 138, 255, 0.24);
 }
 
 .aeon-command-orb-speaking .aeon-command-orb-wave {
   animation-duration: 620ms;
 }
 
-.aeon-command-orb-core {
-  position: relative;
-  display: inline-flex;
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  overflow: hidden;
-  background: radial-gradient(circle at 50% 38%, rgba(20, 22, 27, 0.55), rgba(3, 4, 6, 0.92) 80%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    inset 0 -20px 34px rgba(0, 0, 0, 0.36),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-  /* Slow living shimmer across the whole interior. */
-  animation: aeon-orb-hue 13s ease-in-out infinite;
-}
-
-/* Parallax back-blob — a softer, blurred color field drifting the opposite way
-   behind the crisp plasma, giving the orb real depth. */
-.aeon-command-orb-core::before {
-  content: "";
-  position: absolute;
-  inset: -12%;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 62% 34%, rgba(167, 199, 255, 0.5), transparent 46%),
-    radial-gradient(circle at 36% 70%, rgba(214, 176, 255, 0.42), transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.4), transparent 62%);
-  filter: blur(2px);
-  opacity: 0.55;
-  animation: aeon-orb-aurora 8.5s linear infinite reverse;
-}
-
-/* Traveling specular glint — a bright highlight that slowly orbits the rim,
-   like light catching a glass sphere. */
-.aeon-command-orb-core::after {
-  content: "";
+/* ============================================================
+   LIQUID-LIGHT CORE — Siri-style fluid color fields that drift
+   and merge. No rotation, no hard edges: soft heavily-blurred
+   blobs overlapping inside a clipped, shaded glass sphere.
+============================================================ */
+.aeon-orb-fluid {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  z-index: 2;
-  pointer-events: none;
-  background: radial-gradient(circle at 50% 11%, rgba(255, 255, 255, 0.85), transparent 15%);
-  opacity: 0.62;
-  animation: aeon-orb-glint 9s linear infinite;
-}
-
-/* Living iridescent blob — the single hero element.
-   Shape morphs (aeon-orb-plasma); color flows via the rotating ::before (aeon-orb-aurora). */
-.aeon-command-orb-plasma {
-  position: absolute;
-  inset: 13%;
-  border-radius: 48% 52% 46% 54%;
-  background:
-    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.95), transparent 14%),
-    radial-gradient(circle at 68% 60%, rgba(167, 199, 255, 0.7), transparent 36%),
-    radial-gradient(circle at 42% 68%, rgba(var(--gold), 0.85), transparent 40%),
-    radial-gradient(circle at 50% 50%, rgba(214, 176, 255, 0.5), rgba(5, 7, 11, 0.2) 72%);
-  filter: blur(0.3px);
-  opacity: 0.95;
-  isolation: isolate;
+  z-index: 0;
+  border-radius: 999px;
   overflow: hidden;
+  isolation: isolate;
+  background: radial-gradient(circle at 50% 36%, rgba(24, 26, 32, 0.5), rgba(2, 3, 5, 0.94) 82%);
   box-shadow:
-    inset 0 0 20px rgba(255, 255, 255, 0.24),
-    0 0 30px rgba(167, 199, 255, 0.2);
-  animation: aeon-orb-plasma 4s ease-in-out infinite;
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -22px 40px rgba(0, 0, 0, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
-.aeon-command-orb-plasma::before {
-  content: "";
+.aeon-orb-blob {
   position: absolute;
-  inset: -55%;
-  z-index: -1;
+  width: 96%;
+  height: 96%;
+  border-radius: 50%;
+  opacity: 0.85;
+  filter: blur(8px);
+  will-change: transform;
+}
+
+.aeon-orb-blob-1 {
+  left: -8%;
+  top: -6%;
+  background: radial-gradient(circle at 50% 50%, rgba(116, 226, 232, 0.92), transparent 62%);
+  animation: aeon-orb-drift-1 7.5s ease-in-out infinite;
+}
+
+.aeon-orb-blob-2 {
+  right: -10%;
+  top: 0%;
+  background: radial-gradient(circle at 50% 50%, rgba(130, 158, 255, 0.92), transparent 62%);
+  animation: aeon-orb-drift-2 9s ease-in-out infinite;
+}
+
+.aeon-orb-blob-3 {
+  left: 0%;
+  bottom: -10%;
+  background: radial-gradient(circle at 50% 50%, rgba(198, 138, 255, 0.88), transparent 62%);
+  animation: aeon-orb-drift-3 8.2s ease-in-out infinite;
+}
+
+.aeon-orb-blob-4 {
+  right: -6%;
+  bottom: -4%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 150, 208, 0.82), transparent 62%);
+  animation: aeon-orb-drift-4 10s ease-in-out infinite;
+}
+
+/* Glassy sphere read: soft top highlight + grounded base shadow. */
+.aeon-orb-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   border-radius: inherit;
+  pointer-events: none;
   background:
-    conic-gradient(
-      from 0deg,
-      rgba(var(--gold), 0.55),
-      rgba(167, 199, 255, 0.5),
-      rgba(214, 176, 255, 0.42),
-      rgba(255, 255, 255, 0.32),
-      rgba(var(--gold), 0.55)
-    );
-  opacity: 0.72;
-  animation: aeon-orb-aurora 5.5s linear infinite;
+    radial-gradient(120% 78% at 50% -10%, rgba(255, 255, 255, 0.5), transparent 44%),
+    radial-gradient(86% 64% at 50% 118%, rgba(0, 0, 0, 0.42), transparent 52%);
 }
 
-.aeon-command-orb-listening .aeon-command-orb-plasma {
-  animation-duration: 3.4s;
+.aeon-command-orb-listening .aeon-orb-blob,
+.aeon-command-orb-speaking .aeon-orb-blob {
+  opacity: 0.96;
 }
 
-.aeon-command-orb-listening .aeon-command-orb-plasma::before {
-  animation-duration: 4.6s;
-  opacity: 0.78;
-}
+.aeon-command-orb-listening .aeon-orb-blob-1 { animation-duration: 4.8s; }
+.aeon-command-orb-listening .aeon-orb-blob-2 { animation-duration: 5.6s; }
+.aeon-command-orb-listening .aeon-orb-blob-3 { animation-duration: 5.1s; }
+.aeon-command-orb-listening .aeon-orb-blob-4 { animation-duration: 6.2s; }
 
-.aeon-command-orb-speaking .aeon-command-orb-plasma {
-  animation-duration: 1.7s;
-}
-
-.aeon-command-orb-speaking .aeon-command-orb-plasma::before {
-  animation-duration: 2.6s;
-  opacity: 0.9;
-}
-
-.aeon-command-orb-listening .aeon-command-orb-core {
-  animation-duration: 9s;
-}
-
-.aeon-command-orb-listening .aeon-command-orb-core::before {
-  animation-duration: 6s;
-}
-
-.aeon-command-orb-listening .aeon-command-orb-core::after {
-  animation-duration: 5s;
-  opacity: 0.82;
-}
-
-.aeon-command-orb-speaking .aeon-command-orb-core {
-  animation-duration: 6s;
-}
-
-.aeon-command-orb-speaking .aeon-command-orb-core::before {
-  animation-duration: 3.6s;
-  opacity: 0.72;
-}
-
-.aeon-command-orb-speaking .aeon-command-orb-core::after {
-  animation-duration: 2.8s;
-  opacity: 0.95;
-}
+.aeon-command-orb-speaking .aeon-orb-blob-1 { animation-duration: 2.6s; }
+.aeon-command-orb-speaking .aeon-orb-blob-2 { animation-duration: 3.1s; }
+.aeon-command-orb-speaking .aeon-orb-blob-3 { animation-duration: 2.8s; }
+.aeon-command-orb-speaking .aeon-orb-blob-4 { animation-duration: 3.4s; }
 
 .aeon-command-orb-wave {
   position: relative;
@@ -523,41 +475,43 @@ body::after {
   }
 }
 
-@keyframes aeon-orb-aurora {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes aeon-orb-glint {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes aeon-orb-hue {
+@keyframes aeon-orb-drift-1 {
   0%,
   100% {
-    filter: hue-rotate(-10deg) saturate(1);
+    transform: translate(0%, 0%) scale(1);
   }
   50% {
-    filter: hue-rotate(14deg) saturate(1.12);
+    transform: translate(16%, 14%) scale(1.18);
   }
 }
 
-@keyframes aeon-orb-plasma {
+@keyframes aeon-orb-drift-2 {
   0%,
   100% {
-    border-radius: 48% 52% 46% 54%;
-    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+    transform: translate(0%, 0%) scale(1.05);
   }
-  33% {
-    border-radius: 66% 34% 60% 40%;
-    transform: translate3d(0.12rem, -0.1rem, 0) scale(1.14) rotate(9deg);
+  50% {
+    transform: translate(-14%, 12%) scale(0.9);
   }
-  66% {
-    border-radius: 34% 66% 38% 62%;
-    transform: translate3d(-0.11rem, 0.11rem, 0) scale(0.88) rotate(-7deg);
+}
+
+@keyframes aeon-orb-drift-3 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(0.95);
+  }
+  50% {
+    transform: translate(13%, -16%) scale(1.2);
+  }
+}
+
+@keyframes aeon-orb-drift-4 {
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+  }
+  50% {
+    transform: translate(-12%, -10%) scale(1.12);
   }
 }
 
@@ -607,13 +561,11 @@ body::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* Stop bouncing / positional / size / orbiting motion (vestibular triggers)... */
+  /* Freeze drifting/bouncing motion — the static iridescent sphere still looks intentional. */
   .aeon-command-orb,
   .aeon-command-orb-listening,
   .aeon-command-orb-speaking,
-  .aeon-command-orb-core,
-  .aeon-command-orb-core::before,
-  .aeon-command-orb-core::after,
+  .aeon-orb-blob,
   .aeon-command-orb-wave,
   .aeon-command-orb-wave span {
     animation: none !important;
@@ -621,27 +573,6 @@ body::after {
 
   .aeon-orb-system-idle .aeon-command-orb {
     transform: none;
-  }
-
-  /* ...but keep the orb gently alive with an in-place color + opacity drift. */
-  .aeon-command-orb-plasma {
-    animation: aeon-orb-plasma-soft 6s ease-in-out infinite !important;
-  }
-
-  .aeon-command-orb-plasma::before {
-    animation: aeon-orb-aurora 16s linear infinite !important;
-  }
-}
-
-@keyframes aeon-orb-plasma-soft {
-  0%,
-  100% {
-    opacity: 0.78;
-    filter: blur(0.2px) saturate(0.95);
-  }
-  50% {
-    opacity: 1;
-    filter: blur(0.2px) saturate(1.12);
   }
 }
 
