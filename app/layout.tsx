@@ -65,14 +65,6 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body>
-        <script
-          // No-flash theme: apply a stored preference before paint; otherwise
-          // CSS prefers-color-scheme matches the visitor's device.
-          dangerouslySetInnerHTML={{
-            __html:
-              "(function(){try{var t=localStorage.getItem('aeonvera.theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();",
-          }}
-        />
         <AppShell>
           {children}
         </AppShell>

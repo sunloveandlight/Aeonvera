@@ -99,7 +99,7 @@ export default function AeonCommandOrb() {
   );
   const contextualPrompts = routeContext.prompts.length ? routeContext.prompts : STARTER_PROMPTS;
   const latestReceipt = actionReceipts[0] || null;
-  const contentAwareOrb = pathname === "/" || pathname === "/pricing";
+  const contentAwareOrb = pathname === "/";
   const orbStyle = {
     "--orb-tempo": `${orbMood.tempo}s`,
     "--orb-bloom-tempo": `${orbMood.bloomTempo}s`,
@@ -1424,22 +1424,22 @@ function isActiveSubscription(value: unknown) {
 }
 
 const INITIAL_ORB_MOOD = {
-  bloomTempo: 4.2,
-  consciousTempo: 5.2,
+  bloomTempo: 3.8,
+  consciousTempo: 4.4,
   driftX: 0,
   driftY: 0,
   hue: 0,
-  tempo: 4.8,
+  tempo: 4.2,
 };
 
 function createOrbMood() {
   return {
-    bloomTempo: 3.7 + Math.random() * 1.7,
-    consciousTempo: 4.2 + Math.random() * 2.4,
-    driftX: Math.round((Math.random() * 16 - 8) * 10) / 10,
-    driftY: Math.round((Math.random() * 16 - 8) * 10) / 10,
-    hue: Math.round(Math.random() * 18 - 7),
-    tempo: 4.1 + Math.random() * 2.1,
+    bloomTempo: 2.9 + Math.random() * 1.8,
+    consciousTempo: 3.4 + Math.random() * 2.2,
+    driftX: Math.round((Math.random() * 22 - 11) * 10) / 10,
+    driftY: Math.round((Math.random() * 22 - 11) * 10) / 10,
+    hue: Math.round(Math.random() * 24 - 9),
+    tempo: 3.3 + Math.random() * 1.9,
   };
 }
 
