@@ -2335,12 +2335,9 @@ body:has(.aeon-orb-system) main {
 .premium-mega-menu {
   position: relative;
   z-index: 1;
-  border-top: 1px solid var(--hairline);
   border-bottom: 1px solid var(--hairline);
-  background: var(--header-bg);
+  background: transparent;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.1);
-  -webkit-backdrop-filter: blur(24px) saturate(190%);
-  backdrop-filter: blur(24px) saturate(190%);
   animation: premium-menu-in 160ms ease-out both;
 }
 
