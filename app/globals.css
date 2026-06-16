@@ -2337,12 +2337,10 @@ body:has(.aeon-orb-system) main {
   z-index: 1;
   border-top: 1px solid var(--hairline);
   border-bottom: 1px solid var(--hairline);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--header-bg) 92%, transparent), color-mix(in srgb, var(--header-bg) 76%, transparent)),
-    color-mix(in srgb, var(--header-bg) 82%, transparent);
+  background: var(--header-bg);
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.1);
-  -webkit-backdrop-filter: blur(32px) saturate(190%);
-  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(24px) saturate(190%);
   animation: premium-menu-in 160ms ease-out both;
 }
 
@@ -2408,12 +2406,10 @@ body:has(.aeon-orb-system) main {
 
 .premium-account-menu {
   border: 1px solid var(--hairline);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--header-bg) 94%, transparent), color-mix(in srgb, var(--header-bg) 78%, transparent)),
-    color-mix(in srgb, var(--header-bg) 84%, transparent);
+  background: var(--header-bg);
   box-shadow: 0 18px 46px rgba(0, 0, 0, 0.12);
-  -webkit-backdrop-filter: blur(30px) saturate(190%);
-  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(24px) saturate(190%);
 }
 
 .premium-mobile-menu {
