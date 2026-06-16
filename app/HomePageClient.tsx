@@ -173,7 +173,7 @@ export default function HomePage() {
       <section className="aeon-apple-hero">
         <div className="aeon-apple-hero-media" aria-hidden="true">
           <Image
-            src="/marketing/rejuvenation-woman-top-extended.png"
+            src="/marketing/rejuvenation-woman.png"
             alt=""
             fill
             priority
