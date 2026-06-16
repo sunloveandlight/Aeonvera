@@ -28,8 +28,9 @@ function usePrefersReducedMotion() {
 export default function AeonOrbVisual({ className = "", energy = "idle" }: AeonOrbVisualProps) {
   const reduceMotion = usePrefersReducedMotion();
 
-  // Three curated iridescent lines (gold · periwinkle · teal) — saturated so they
-  // read in both light and dark. SMIL morphing is skipped under reduced-motion.
+  // Curated Bio-Aurora lines (gold · teal · violet) — soft enough to feel premium,
+  // saturated enough to stay alive in both light and dark. SMIL morphing is skipped
+  // under reduced-motion.
   const lines: Array<{ cls: string; dur: string; d: string; values: string }> = [
     {
       cls: "aeon-wave-line aeon-wave-line-gold",
@@ -86,17 +87,17 @@ export default function AeonOrbVisual({ className = "", energy = "idle" }: AeonO
             <stop offset="100%" stopColor="rgba(255,236,174,0)" />
           </linearGradient>
           <linearGradient id="aeonWaveBlue" x1="0%" x2="100%" y1="50%" y2="50%">
-            <stop offset="0%" stopColor="rgba(120,160,255,0)" />
-            <stop offset="20%" stopColor="rgba(120,160,255,0.34)" />
-            <stop offset="60%" stopColor="rgba(126,142,255,0.78)" />
-            <stop offset="84%" stopColor="rgba(99,210,226,0.3)" />
-            <stop offset="100%" stopColor="rgba(99,210,226,0)" />
+            <stop offset="0%" stopColor="rgba(111,220,214,0)" />
+            <stop offset="22%" stopColor="rgba(111,220,214,0.42)" />
+            <stop offset="58%" stopColor="rgba(92,151,255,0.68)" />
+            <stop offset="82%" stopColor="rgba(142,112,255,0.34)" />
+            <stop offset="100%" stopColor="rgba(142,112,255,0)" />
           </linearGradient>
           <linearGradient id="aeonWaveGreen" x1="0%" x2="100%" y1="50%" y2="50%">
-            <stop offset="0%" stopColor="rgba(113,229,210,0)" />
-            <stop offset="32%" stopColor="rgba(113,229,210,0.5)" />
-            <stop offset="68%" stopColor="rgba(255,224,150,0.42)" />
-            <stop offset="100%" stopColor="rgba(255,224,150,0)" />
+            <stop offset="0%" stopColor="rgba(111,220,214,0)" />
+            <stop offset="30%" stopColor="rgba(111,220,214,0.52)" />
+            <stop offset="66%" stopColor="rgba(238,198,103,0.42)" />
+            <stop offset="100%" stopColor="rgba(238,198,103,0)" />
           </linearGradient>
           <linearGradient id="aeonWaveEdgeFade" x1="0%" x2="100%" y1="0%" y2="0%">
             <stop offset="0%" stopColor="black" />
