@@ -635,6 +635,7 @@ body:has(.aeon-orb-system) main {
   text-align: center;
 }
 
+.aeon-apple-copy h1,
 .aeon-apple-copy h2 {
   max-width: 56rem;
   color: currentColor;
@@ -644,6 +645,7 @@ body:has(.aeon-orb-system) main {
   text-wrap: balance;
 }
 
+.aeon-apple-copy-center h1,
 .aeon-apple-copy-center h2 {
   margin-left: auto;
   margin-right: auto;
