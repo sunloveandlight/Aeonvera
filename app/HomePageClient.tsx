@@ -273,12 +273,6 @@ export default function HomePage() {
           <div ref={showcaseOrbRef} className="aeon-command-orb aeon-orb-showcase-orb">
             <span className="aeon-command-orb-core">
               <span className="aeon-orb-bloom" />
-              <span className="aeon-command-orb-wave">
-                <span />
-                <span />
-                <span />
-                <span />
-              </span>
             </span>
             <span className="aeon-orb-sheen" aria-hidden="true" />
           </div>
