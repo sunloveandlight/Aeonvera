@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type PointerEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Mic, PhoneOff, Send, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
@@ -46,6 +54,7 @@ export default function AeonCommandOrb() {
   const realtimePeerRef = useRef<RTCPeerConnection | null>(null);
   const realtimeStreamRef = useRef<MediaStream | null>(null);
   const realtimeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const orbButtonRef = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<CommandMessage[]>([
@@ -63,6 +72,7 @@ export default function AeonCommandOrb() {
   const [idleDimmed, setIdleDimmed] = useState(false);
   const [actionReceipts, setActionReceipts] = useState<ActionReceipt[]>([]);
   const [receiptVisible, setReceiptVisible] = useState(false);
+  const [orbMood, setOrbMood] = useState(INITIAL_ORB_MOOD);
   const [pendingConfirmation, setPendingConfirmation] = useState<ConfirmationIntent | null>(
     null
   );
@@ -90,6 +100,16 @@ export default function AeonCommandOrb() {
   const contextualPrompts = routeContext.prompts.length ? routeContext.prompts : STARTER_PROMPTS;
   const latestReceipt = actionReceipts[0] || null;
   const contentAwareOrb = pathname === "/" || pathname === "/pricing";
+  const orbStyle = {
+    "--orb-tempo": `${orbMood.tempo}s`,
+    "--orb-bloom-tempo": `${orbMood.bloomTempo}s`,
+    "--orb-conscious-tempo": `${orbMood.consciousTempo}s`,
+    "--orb-drift-x": `${orbMood.driftX}%`,
+    "--orb-drift-y": `${orbMood.driftY}%`,
+    "--orb-drift-x-neg": `${-orbMood.driftX}%`,
+    "--orb-drift-y-neg": `${-orbMood.driftY}%`,
+    "--orb-hue": `${orbMood.hue}deg`,
+  } as CSSProperties;
 
   const stopRealtimeVoice = useCallback((updateState = true) => {
     realtimePeerRef.current?.close();
@@ -125,6 +145,24 @@ export default function AeonCommandOrb() {
     const timeout = window.setTimeout(() => setIdleDimmed(true), 9000);
     return () => window.clearTimeout(timeout);
   }, [open, realtimeActive, realtimeStatus, speaking, thinking]);
+
+  useEffect(() => {
+    let timeout: number;
+
+    function scheduleNextMood() {
+      timeout = window.setTimeout(() => {
+        setOrbMood(createOrbMood());
+        scheduleNextMood();
+      }, 3200 + Math.random() * 3400);
+    }
+
+    timeout = window.setTimeout(() => {
+      setOrbMood(createOrbMood());
+      scheduleNextMood();
+    }, 900);
+
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     if (!receiptVisible) return;
@@ -963,6 +1001,31 @@ export default function AeonCommandOrb() {
     window.location.assign(data.url);
   }
 
+  function handleOrbPointerMove(event: PointerEvent<HTMLButtonElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
+    const y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+
+    event.currentTarget.style.setProperty("--orb-look-x", `${Math.max(-10, Math.min(10, x * 10))}%`);
+    event.currentTarget.style.setProperty("--orb-look-y", `${Math.max(-10, Math.min(10, y * 10))}%`);
+    event.currentTarget.style.setProperty("--orb-look-x-neg", `${Math.max(-10, Math.min(10, x * -10))}%`);
+    event.currentTarget.style.setProperty("--orb-look-y-neg", `${Math.max(-10, Math.min(10, y * -10))}%`);
+    event.currentTarget.style.setProperty("--orb-tilt-x", `${Math.max(-0.08, Math.min(0.08, x * 0.08))}rem`);
+    event.currentTarget.style.setProperty("--orb-tilt-y", `${Math.max(-0.08, Math.min(0.08, y * 0.08))}rem`);
+  }
+
+  function handleOrbPointerLeave() {
+    const button = orbButtonRef.current;
+    if (!button) return;
+
+    button.style.setProperty("--orb-look-x", "0%");
+    button.style.setProperty("--orb-look-y", "0%");
+    button.style.setProperty("--orb-look-x-neg", "0%");
+    button.style.setProperty("--orb-look-y-neg", "0%");
+    button.style.setProperty("--orb-tilt-x", "0rem");
+    button.style.setProperty("--orb-tilt-y", "0rem");
+  }
+
   return (
     <div
       className={`aeon-orb-system fixed z-40 flex flex-col items-center ${
@@ -1161,6 +1224,7 @@ export default function AeonCommandOrb() {
 
       <div className="flex items-center justify-center">
         <button
+          ref={orbButtonRef}
           type="button"
           onClick={() => {
             if (open && !realtimeActive) {
@@ -1174,6 +1238,9 @@ export default function AeonCommandOrb() {
           className={`aeon-command-orb ${open ? "aeon-command-orb-open" : ""} ${
             realtimeActive ? "aeon-command-orb-listening" : ""
           } ${speaking ? "aeon-command-orb-speaking" : ""}`}
+          style={orbStyle}
+          onPointerMove={handleOrbPointerMove}
+          onPointerLeave={handleOrbPointerLeave}
           aria-label={realtimeActive ? "Stop Aeonvera voice" : "Talk to Aeonvera"}
         >
           <span className="aeon-command-orb-core" aria-hidden="true">
@@ -1313,6 +1380,26 @@ async function readMicrophonePermission() {
 
 function isActiveSubscription(value: unknown) {
   return value === "active" || value === "trialing" || value === "past_due";
+}
+
+const INITIAL_ORB_MOOD = {
+  bloomTempo: 4.2,
+  consciousTempo: 5.2,
+  driftX: 0,
+  driftY: 0,
+  hue: 0,
+  tempo: 4.8,
+};
+
+function createOrbMood() {
+  return {
+    bloomTempo: 3.7 + Math.random() * 1.7,
+    consciousTempo: 4.2 + Math.random() * 2.4,
+    driftX: Math.round((Math.random() * 16 - 8) * 10) / 10,
+    driftY: Math.round((Math.random() * 16 - 8) * 10) / 10,
+    hue: Math.round(Math.random() * 18 - 7),
+    tempo: 4.1 + Math.random() * 2.1,
+  };
 }
 
 async function fetchJson(path: string, init: RequestInit = {}) {

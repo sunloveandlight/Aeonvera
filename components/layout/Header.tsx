@@ -66,10 +66,13 @@ export default function Header() {
   const primaryNavItems: NavItem[] = authenticated
     ? [
         { href: "/dashboard", label: "Today" },
-        { href: "/companion", label: "Ask" },
         { href: "/plan", label: "Plan" },
+        { href: "/digital-twin", label: "Twin" },
+        { href: "/life-os", label: "Life OS" },
+        { href: "/network", label: "Network" },
       ]
     : [
+        { href: "/assessment", label: "Assessment", public: true },
         { href: "/pricing", label: "Pricing", public: true },
         { href: "/optimization", label: "Optimize", public: true },
       ];
@@ -92,9 +95,13 @@ export default function Header() {
         { href: "/dashboard", label: "Today" },
         { href: "/companion", label: "Ask" },
         { href: "/plan", label: "Plan" },
+        { href: "/digital-twin", label: "Digital Twin" },
+        { href: "/life-os", label: "Life OS" },
+        { href: "/network", label: "Care Network" },
         { href: "/settings", label: "Settings" },
       ]
     : [
+        { href: "/assessment", label: "Assessment", public: true },
         { href: "/pricing", label: "Pricing", public: true },
         { href: "/optimization", label: "Optimize", public: true },
       ];
@@ -118,7 +125,7 @@ export default function Header() {
         </Link>
 
         {/* NAV */}
-        <nav className="hidden items-center gap-3 md:flex">
+        <nav className="hidden items-center gap-1.5 md:flex">
           {primaryNavItems
             .filter((item) => item.public || authenticated)
             .map((item) => {
@@ -155,16 +162,16 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setAccountOpen((open) => !open)}
-                className={`inline-flex h-8 items-center gap-2 rounded-md border px-3 text-xs font-medium leading-none transition ${
+                className={`premium-account-trigger inline-flex size-8 items-center justify-center rounded-md text-white/54 transition ${
                   accountOpen
-                    ? "border-white/[0.16] bg-white/[0.06] text-white/82"
-                    : "border-white/[0.08] bg-white/[0.025] text-white/54 hover:border-white/[0.14] hover:text-white/80"
+                    ? "premium-account-trigger-open text-white/86"
+                    : "hover:text-white/82"
                 }`}
                 aria-expanded={accountOpen}
                 aria-haspopup="menu"
+                aria-label="Open account menu"
               >
                 <UserCircle size={15} />
-                Account
               </button>
               {accountOpen ? (
                 <div
