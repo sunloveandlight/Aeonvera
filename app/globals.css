@@ -383,6 +383,21 @@ body::after {
     aeon-orb-hue 14s ease-in-out infinite;
 }
 
+/* Parallax depth layer — a soft blurred golden field counter-rotating
+   behind the blob, so the orb reads dimensional, not flat. */
+.aeon-orb-depth {
+  position: absolute;
+  inset: -10%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 60% 36%, rgba(236, 206, 150, 0.5), transparent 48%),
+    radial-gradient(circle at 36% 68%, rgba(214, 176, 255, 0.3), transparent 52%),
+    radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.42), transparent 62%);
+  filter: blur(3px);
+  opacity: 0.6;
+  animation: aeon-orb-aurora 9s linear infinite reverse;
+}
+
 /* Molten morphing gold blob — the hero. */
 .aeon-orb-plasma {
   position: absolute;
@@ -424,6 +439,18 @@ body::after {
   animation: aeon-orb-aurora 6.5s linear infinite;
 }
 
+/* Traveling light glint — a warm highlight that slowly orbits the rim,
+   like light catching molten glass. (No blend mode → no square.) */
+.aeon-orb-glint {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 12%, rgba(255, 250, 235, 0.8), transparent 16%);
+  opacity: 0.55;
+  animation: aeon-orb-glint 8s linear infinite;
+}
+
 /* Glassy sphere read: warm off-center specular + grounded base shadow. */
 .aeon-orb-sheen {
   position: absolute;
@@ -438,9 +465,13 @@ body::after {
 
 .aeon-command-orb-listening .aeon-orb-plasma { animation-duration: 3.2s; }
 .aeon-command-orb-listening .aeon-orb-plasma::before { animation-duration: 4.4s; }
+.aeon-command-orb-listening .aeon-orb-depth { animation-duration: 6s; }
+.aeon-command-orb-listening .aeon-orb-glint { animation-duration: 5s; }
 
 .aeon-command-orb-speaking .aeon-orb-plasma { animation-duration: 1.7s; }
 .aeon-command-orb-speaking .aeon-orb-plasma::before { animation-duration: 2.6s; }
+.aeon-command-orb-speaking .aeon-orb-depth { animation-duration: 3.6s; }
+.aeon-command-orb-speaking .aeon-orb-glint { animation-duration: 3s; }
 
 .aeon-command-orb-wave {
   position: relative;
@@ -524,6 +555,12 @@ body::after {
   }
 }
 
+@keyframes aeon-orb-glint {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes aeon-orb-plasma {
   0%,
   100% {
@@ -602,8 +639,10 @@ body::after {
   .aeon-command-orb-speaking,
   .aeon-command-orb::before,
   .aeon-orb-fluid,
+  .aeon-orb-depth,
   .aeon-orb-plasma,
   .aeon-orb-plasma::before,
+  .aeon-orb-glint,
   .aeon-command-orb-wave,
   .aeon-command-orb-wave span {
     animation: none !important;
