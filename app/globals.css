@@ -1098,6 +1098,7 @@ body:has(.aeon-orb-system) main {
     radial-gradient(ellipse at 56% 74%, rgba(52, 255, 169, 0.13), transparent 48%);
   filter: blur(22px) saturate(1.08);
   opacity: 0.62;
+  transform: translate3d(var(--aeon-look-x-subtle, 0px), var(--aeon-look-y-subtle, 0px), 0);
   animation: aeon-siri-ambient 6.2s ease-in-out infinite;
 }
 
@@ -1128,9 +1129,14 @@ body:has(.aeon-orb-system) main {
   display: block;
   pointer-events: none;
   overflow: visible;
-  transform: translateZ(0);
+  transform:
+    translate3d(var(--aeon-look-x-soft, 0px), var(--aeon-look-y-soft, 0px), 0)
+    scale(var(--aeon-depth, 1));
   border-radius: 999px;
-  filter: saturate(1.08);
+  filter:
+    hue-rotate(var(--aeon-hue-shift, 0deg))
+    saturate(var(--aeon-saturate, 1.08))
+    brightness(var(--aeon-bright, 1));
 }
 
 .aeon-siri-field {
@@ -1141,12 +1147,26 @@ body:has(.aeon-orb-system) main {
   overflow: visible;
   mix-blend-mode: plus-lighter;
   will-change: transform, opacity;
+  transform-origin: center;
   animation: aeon-siri-drift 13s cubic-bezier(0.43, 0, 0.22, 1) infinite;
+}
+
+.aeon-siri-aurora ellipse {
+  fill: rgba(117, 226, 210, 0.22);
+  filter: blur(18px);
+  opacity: calc(0.2 + var(--aeon-attention-high, 0));
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: aeon-siri-aurora 8.8s ease-in-out infinite;
+}
+
+.aeon-siri-aurora ellipse:nth-child(2) {
+  fill: rgba(255, 220, 145, 0.24);
+  animation-delay: -3.2s;
 }
 
 .aeon-siri-wave {
   fill: none;
-  stroke: url(#aeonSiriSpectrum);
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
@@ -1156,33 +1176,32 @@ body:has(.aeon-orb-system) main {
 }
 
 .aeon-siri-wave-one {
-  stroke-width: 6.8;
-  opacity: 0.92;
+  stroke-width: 6.8px;
+  opacity: calc(0.78 + var(--aeon-attention-mid, 0));
   animation: aeon-siri-wave-one 5.8s ease-in-out infinite;
 }
 
 .aeon-siri-wave-two {
-  stroke-width: 4.8;
-  opacity: 0.74;
+  stroke-width: 4.8px;
+  opacity: calc(0.56 + var(--aeon-attention-mid, 0));
   animation: aeon-siri-wave-two 7.4s ease-in-out infinite;
 }
 
 .aeon-siri-wave-three {
-  stroke-width: 3.2;
-  opacity: 0.58;
+  stroke-width: 3.2px;
+  opacity: calc(0.38 + var(--aeon-attention-mid, 0));
   animation: aeon-siri-wave-three 9.1s ease-in-out infinite;
 }
 
 .aeon-siri-wave-four {
-  stroke-width: 2.1;
-  opacity: 0.42;
+  stroke-width: 2.1px;
+  opacity: calc(0.26 + var(--aeon-attention-mid, 0));
   animation: aeon-siri-wave-four 11.6s ease-in-out infinite;
 }
 
 .aeon-siri-light-core ellipse {
-  fill: url(#aeonSiriSun);
   filter: blur(7px);
-  opacity: 0.58;
+  opacity: calc(0.44 + var(--aeon-attention-high, 0));
   transform-box: fill-box;
   transform-origin: center;
   animation: aeon-siri-sun-pulse 4.8s ease-in-out infinite;
@@ -1194,10 +1213,25 @@ body:has(.aeon-orb-system) main {
   stroke-linecap: round;
   stroke-width: 1.2;
   filter: blur(2.6px);
-  opacity: 0.42;
+  opacity: calc(0.18 + var(--aeon-attention-high, 0));
   transform-box: fill-box;
   transform-origin: left center;
   animation: aeon-siri-rays 5.6s ease-in-out infinite;
+}
+
+.aeon-siri-neural path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.68);
+  stroke-linecap: round;
+  stroke-width: 1.2px;
+  opacity: calc(0.22 + var(--aeon-attention-high, 0));
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: aeon-siri-neural 6.9s ease-in-out infinite;
+}
+
+.aeon-siri-neural path:nth-child(2) {
+  animation-delay: -2.6s;
 }
 
 .aeon-siri-listening .aeon-siri-field,
@@ -1247,45 +1281,77 @@ body:has(.aeon-orb-system) main {
 }
 
 @keyframes aeon-siri-drift {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(-1deg) scale(0.98); }
-  23% { transform: translate3d(2.8%, -3.4%, 0) rotate(3deg) scale(1.04); }
-  57% { transform: translate3d(-3.4%, 2.4%, 0) rotate(-2.2deg) scale(1.01); }
-  79% { transform: translate3d(1.2%, 3.2%, 0) rotate(1.4deg) scale(1.06); }
+  0%, 100% {
+    transform:
+      translate3d(var(--aeon-look-x, 0px), var(--aeon-look-y, 0px), 0)
+      rotate(calc(var(--aeon-tilt-low, 0deg) - 1deg))
+      scale(0.98);
+  }
+  23% {
+    transform:
+      translate3d(calc(var(--aeon-look-x-soft, 0px) + 8px), calc(var(--aeon-look-y-soft, 0px) - 8px), 0)
+      rotate(calc(var(--aeon-tilt-low, 0deg) + 3deg))
+      scale(1.04);
+  }
+  57% {
+    transform:
+      translate3d(calc(var(--aeon-look-x-inverse, 0px) - 8px), calc(var(--aeon-look-y-inverse, 0px) + 6px), 0)
+      rotate(calc(var(--aeon-counter-tilt-low, 0deg) - 2.2deg))
+      scale(1.01);
+  }
+  79% {
+    transform:
+      translate3d(calc(var(--aeon-look-x-subtle, 0px) + 3px), calc(var(--aeon-look-y-subtle, 0px) + 7px), 0)
+      rotate(calc(var(--aeon-tilt-low, 0deg) + 1.4deg))
+      scale(1.06);
+  }
 }
 
 @keyframes aeon-siri-wave-one {
-  0%, 100% { stroke-dashoffset: 0; transform: scaleX(0.96) scaleY(0.94) rotate(0deg); opacity: 0.82; }
-  31% { stroke-dashoffset: -0.18; transform: scaleX(1.08) scaleY(1.16) rotate(2.6deg); opacity: 1; }
-  67% { stroke-dashoffset: -0.42; transform: scaleX(0.92) scaleY(1.04) rotate(-2.1deg); opacity: 0.9; }
+  0%, 100% { stroke-dashoffset: 0; transform: scaleX(0.96) scaleY(0.94) rotate(var(--aeon-tilt-low, 0deg)); }
+  31% { stroke-dashoffset: -0.18; transform: scaleX(var(--aeon-scale-wide, 1.08)) scaleY(var(--aeon-scale-tall, 1.2)) rotate(calc(var(--aeon-tilt-mid, 0deg) + 2.6deg)); }
+  67% { stroke-dashoffset: -0.42; transform: scaleX(0.92) scaleY(1.04) rotate(calc(var(--aeon-counter-tilt-low, 0deg) - 2.1deg)); }
 }
 
 @keyframes aeon-siri-wave-two {
-  0%, 100% { stroke-dashoffset: -0.22; transform: translateY(2px) scaleX(1.04) scaleY(0.86) rotate(-2.2deg); opacity: 0.58; }
-  36% { stroke-dashoffset: -0.54; transform: translateY(-3px) scaleX(0.94) scaleY(1.22) rotate(2.8deg); opacity: 0.88; }
-  72% { stroke-dashoffset: -0.84; transform: translateY(1px) scaleX(1.12) scaleY(1.02) rotate(-0.8deg); opacity: 0.68; }
+  0%, 100% { stroke-dashoffset: -0.22; transform: translateY(var(--aeon-look-y-subtle, 2px)) scaleX(1.04) scaleY(0.86) rotate(calc(var(--aeon-counter-tilt-low, 0deg) - 2.2deg)); }
+  36% { stroke-dashoffset: -0.54; transform: translateY(var(--aeon-look-y-inverse, -3px)) scaleX(0.94) scaleY(var(--aeon-scale-tall, 1.22)) rotate(calc(var(--aeon-tilt-low, 0deg) + 2.8deg)); }
+  72% { stroke-dashoffset: -0.84; transform: translateY(1px) scaleX(var(--aeon-scale-live, 1.14)) scaleY(1.02) rotate(-0.8deg); }
 }
 
 @keyframes aeon-siri-wave-three {
-  0%, 100% { stroke-dashoffset: -0.08; transform: translateX(-2px) scaleX(0.94) scaleY(1.18) rotate(1.8deg); opacity: 0.44; }
-  42% { stroke-dashoffset: -0.44; transform: translateX(3px) scaleX(1.12) scaleY(0.9) rotate(-3.4deg); opacity: 0.74; }
-  75% { stroke-dashoffset: -0.7; transform: translateX(-1px) scaleX(0.98) scaleY(1.08) rotate(2.4deg); opacity: 0.52; }
+  0%, 100% { stroke-dashoffset: -0.08; transform: translateX(var(--aeon-look-x-inverse, -2px)) scaleX(0.94) scaleY(1.18) rotate(1.8deg); }
+  42% { stroke-dashoffset: -0.44; transform: translateX(var(--aeon-look-x-subtle, 3px)) scaleX(1.12) scaleY(0.9) rotate(calc(var(--aeon-counter-tilt-low, 0deg) - 3.4deg)); }
+  75% { stroke-dashoffset: -0.7; transform: translateX(-1px) scaleX(0.98) scaleY(1.08) rotate(2.4deg); }
 }
 
 @keyframes aeon-siri-wave-four {
-  0%, 100% { stroke-dashoffset: -0.36; transform: scaleX(1.16) scaleY(0.72) rotate(-3deg); opacity: 0.3; }
-  48% { stroke-dashoffset: -0.86; transform: scaleX(0.9) scaleY(1.32) rotate(3.8deg); opacity: 0.58; }
+  0%, 100% { stroke-dashoffset: -0.36; transform: scaleX(1.16) scaleY(0.72) rotate(calc(var(--aeon-counter-tilt-low, 0deg) - 3deg)); }
+  48% { stroke-dashoffset: -0.86; transform: scaleX(0.9) scaleY(var(--aeon-scale-live, 1.32)) rotate(calc(var(--aeon-tilt-low, 0deg) + 3.8deg)); }
 }
 
 @keyframes aeon-siri-sun-pulse {
-  0%, 100% { transform: scale(0.86); opacity: 0.38; }
-  48% { transform: scale(1.24); opacity: 0.72; }
-  72% { transform: scale(1.02); opacity: 0.52; }
+  0%, 100% { transform: translate3d(var(--aeon-look-x-subtle, 0px), var(--aeon-look-y-subtle, 0px), 0) scale(0.86); }
+  48% { transform: translate3d(var(--aeon-look-x-soft, 0px), var(--aeon-look-y-soft, 0px), 0) scale(var(--aeon-scale-live, 1.14)); }
+  72% { transform: translate3d(var(--aeon-look-x-subtle, 0px), var(--aeon-look-y-subtle, 0px), 0) scale(1.02); }
 }
 
 @keyframes aeon-siri-rays {
   0%, 100% { transform: scaleX(0.82); opacity: 0.2; }
   45% { transform: scaleX(1.18); opacity: 0.5; }
   68% { transform: scaleX(0.96); opacity: 0.28; }
+}
+
+@keyframes aeon-siri-aurora {
+  0%, 100% { transform: translate3d(var(--aeon-look-x-inverse, 0px), var(--aeon-look-y-subtle, 0px), 0) scaleX(0.82) scaleY(0.72) rotate(var(--aeon-counter-tilt-low, 0deg)); }
+  44% { transform: translate3d(var(--aeon-look-x-soft, 0px), var(--aeon-look-y-inverse, 0px), 0) scaleX(1.16) scaleY(1.04) rotate(calc(var(--aeon-tilt-low, 0deg) + 8deg)); }
+  73% { transform: translate3d(var(--aeon-look-x-inverse, 0px), var(--aeon-look-y-subtle, 0px), 0) scaleX(0.98) scaleY(0.86) rotate(-5deg); }
+}
+
+@keyframes aeon-siri-neural {
+  0%, 100% { stroke-dasharray: 0.08 0.12; stroke-dashoffset: 0; transform: translate3d(var(--aeon-look-x-inverse, 0px), 0, 0) scaleX(0.96) scaleY(0.9); }
+  38% { stroke-dasharray: 0.16 0.1; stroke-dashoffset: -0.28; transform: translate3d(var(--aeon-look-x-subtle, 0px), var(--aeon-look-y-inverse, 0px), 0) scaleX(1.08) scaleY(1.18); }
+  71% { stroke-dasharray: 0.06 0.18; stroke-dashoffset: -0.54; transform: translate3d(var(--aeon-look-x-inverse, 0px), var(--aeon-look-y-subtle, 0px), 0) scaleX(1.02) scaleY(0.98); }
 }
 
 .aeon-orb-panel {
