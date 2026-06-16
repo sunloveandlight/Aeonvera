@@ -358,6 +358,7 @@ body::after {
   background: radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.16), transparent 62%);
   opacity: 0.5;
   transition: opacity 240ms ease;
+  animation: aeon-orb-halo 6.5s ease-in-out infinite;
 }
 
 .aeon-command-orb-listening::before,
@@ -378,6 +379,7 @@ body::after {
   width: 1.92rem;
   height: 1.92rem;
   border-radius: 999px;
+  overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
     radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.22), transparent 42%),
@@ -386,6 +388,36 @@ body::after {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     0 0 20px rgba(var(--gold), 0.16);
+}
+
+/* Living light — a soft gold sheen that slowly sweeps inside the core. */
+.aeon-command-orb-core::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(var(--gold), 0.42) 42deg,
+    transparent 116deg,
+    transparent 232deg,
+    rgba(255, 244, 214, 0.3) 304deg,
+    transparent 350deg
+  );
+  filter: blur(3px);
+  opacity: 0.55;
+  animation: aeon-orb-core-spin 15s linear infinite;
+}
+
+.aeon-command-orb-listening .aeon-command-orb-core::before {
+  animation-duration: 8s;
+  opacity: 0.7;
+}
+
+.aeon-command-orb-speaking .aeon-command-orb-core::before {
+  animation-duration: 4.5s;
+  opacity: 0.82;
 }
 
 .aeon-command-orb-listening .aeon-command-orb-core {
@@ -457,6 +489,22 @@ body::after {
   }
   50% {
     transform: translateY(-0.08rem) scale(1.028);
+  }
+}
+
+@keyframes aeon-orb-core-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes aeon-orb-halo {
+  0%,
+  100% {
+    transform: scale(0.96);
+  }
+  50% {
+    transform: scale(1.06);
   }
 }
 
@@ -567,6 +615,7 @@ body::after {
   .aeon-command-orb-listening,
   .aeon-command-orb-speaking,
   .aeon-command-orb::before,
+  .aeon-command-orb-core::before,
   .aeon-command-orb-wave,
   .aeon-command-orb-wave span {
     animation: none !important;
