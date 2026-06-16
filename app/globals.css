@@ -567,7 +567,7 @@ body:has(.aeon-orb-system) main {
 }
 
 .aeon-apple-hero-media {
-  inset: clamp(3.75rem, 6.15svh, 4.65rem) 0 0;
+  inset: clamp(3.1rem, 5.15svh, 3.95rem) 0 0;
   z-index: -3;
 }
 
@@ -578,7 +578,40 @@ body:has(.aeon-orb-system) main {
 
 .aeon-apple-hero-shade {
   z-index: -2;
-  background: transparent;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0) 0,
+      rgba(0, 0, 0, 0.18) clamp(1.15rem, 2.1svh, 1.65rem),
+      rgba(0, 0, 0, 0.92) clamp(2.65rem, 4.45svh, 3.35rem),
+      rgba(0, 0, 0, 0.98) clamp(3.25rem, 5.25svh, 4.05rem),
+      rgba(0, 0, 0, 0.72) clamp(4.35rem, 6.4svh, 5.05rem),
+      rgba(0, 0, 0, 0.22) clamp(5.65rem, 7.8svh, 6.45rem),
+      rgba(0, 0, 0, 0) clamp(7rem, 9.35svh, 7.8rem),
+      transparent 100%
+    );
+}
+
+:root[data-theme="light"] .aeon-apple-hero {
+  background: #fff;
+}
+
+:root[data-theme="light"] .aeon-apple-hero h1 {
+  color: #111;
+}
+
+:root[data-theme="light"] .aeon-apple-hero-shade {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.18) clamp(1.15rem, 2.1svh, 1.65rem),
+    rgba(255, 255, 255, 0.92) clamp(2.65rem, 4.45svh, 3.35rem),
+    rgba(255, 255, 255, 0.98) clamp(3.25rem, 5.25svh, 4.05rem),
+    rgba(255, 255, 255, 0.72) clamp(4.35rem, 6.4svh, 5.05rem),
+    rgba(255, 255, 255, 0.22) clamp(5.65rem, 7.8svh, 6.45rem),
+    rgba(255, 255, 255, 0) clamp(7rem, 9.35svh, 7.8rem),
+    transparent 100%
+  );
 }
 
 .aeon-apple-hero-content {
@@ -628,11 +661,40 @@ body:has(.aeon-orb-system) main {
   }
 
   .aeon-apple-hero-media {
-    inset: clamp(3.15rem, 6.3svh, 3.75rem) 0 0;
+    inset: clamp(2.55rem, 5.25svh, 3.1rem) 0 0;
   }
 
   .aeon-apple-hero-media img {
     transform: none;
+  }
+
+  .aeon-apple-hero-shade {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0) 0,
+        rgba(0, 0, 0, 0.18) clamp(0.9rem, 2.55svh, 1.35rem),
+        rgba(0, 0, 0, 0.92) clamp(2.25rem, 4.85svh, 2.75rem),
+        rgba(0, 0, 0, 0.98) clamp(2.85rem, 5.75svh, 3.35rem),
+        rgba(0, 0, 0, 0.7) clamp(3.85rem, 7.1svh, 4.45rem),
+        rgba(0, 0, 0, 0.2) clamp(5rem, 8.9svh, 5.7rem),
+        rgba(0, 0, 0, 0) clamp(6.25rem, 10.9svh, 7rem),
+        transparent 100%
+      );
+  }
+
+  :root[data-theme="light"] .aeon-apple-hero-shade {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0) 0,
+      rgba(255, 255, 255, 0.18) clamp(0.9rem, 2.55svh, 1.35rem),
+      rgba(255, 255, 255, 0.92) clamp(2.25rem, 4.85svh, 2.75rem),
+      rgba(255, 255, 255, 0.98) clamp(2.85rem, 5.75svh, 3.35rem),
+      rgba(255, 255, 255, 0.7) clamp(3.85rem, 7.1svh, 4.45rem),
+      rgba(255, 255, 255, 0.2) clamp(5rem, 8.9svh, 5.7rem),
+      rgba(255, 255, 255, 0) clamp(6.25rem, 10.9svh, 7rem),
+      transparent 100%
+    );
   }
 
   .aeon-apple-hero-content {
