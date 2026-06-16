@@ -2238,7 +2238,12 @@ body:has(.aeon-orb-system) main {
   .aeon-command-orb,
   .aeon-command-orb::before,
   .aeon-siri-field,
-  .aeon-siri-light-core {
+  .aeon-siri-light-core,
+  .aeon-wave-glow,
+  .aeon-wave-translucent-orb,
+  .aeon-wave-core,
+  .aeon-wave-field,
+  .aeon-wave-line {
     animation: none !important;
   }
 

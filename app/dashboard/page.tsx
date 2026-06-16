@@ -894,7 +894,7 @@ export default function DashboardPage() {
                 <div className={`h-1.5 w-1.5 rounded-full ${
                   systemStatus === "STABLE"
                     ? "system-status-stable-dot"
-                    : "bg-white/55 shadow-[0_0_16px_rgba(255,255,255,0.18)]"
+                    : "bg-[rgb(var(--gold))] shadow-[0_0_16px_rgba(var(--gold),0.3)]"
                 }`} />
                 <span className="text-[9px] uppercase tracking-[0.14em] text-white/78">
                   {systemStatus}

@@ -16,151 +16,66 @@ type NavLink = {
 type NavGroup = {
   label: string;
   href: string;
-  primary: NavLink[];
-  secondary: NavLink[];
+  items: NavLink[];
 };
 
+// Every route lives in exactly one menu — no overlap.
 const PUBLIC_NAV_GROUPS: NavGroup[] = [
   {
-    label: "Platform",
+    label: "Overview",
     href: "/about",
-    primary: [
-      {
-        href: "/about",
-        label: "How Aeonvera works",
-        description: "Private longevity intelligence, explained simply.",
-      },
-      {
-        href: "/companion",
-        label: "Assistant",
-        description: "Voice and text help across Aeonvera.",
-      },
-      {
-        href: "/digital-twin",
-        label: "Digital Twin",
-        description: "A living model of your health state.",
-      },
-    ],
-    secondary: [
-      { href: "/optimization", label: "Optimization" },
-      { href: "/data-sources", label: "Data Sources" },
+    items: [
+      { href: "/about", label: "How Aeonvera works", description: "Private longevity intelligence, explained simply." },
+      { href: "/login?mode=signup", label: "Create account", description: "Start a private workspace for your health." },
+      { href: "/login?mode=signin", label: "Sign in", description: "Return to your Aeonvera workspace." },
     ],
   },
   {
     label: "Assess",
     href: "/assessment",
-    primary: [
-      {
-        href: "/assessment",
-        label: "Start assessment",
-        description: "Begin with your biological-age baseline.",
-      },
-      {
-        href: "/login?mode=signup",
-        label: "Create account",
-        description: "Save your results in a private workspace.",
-      },
+    items: [
+      { href: "/assessment", label: "Start assessment", description: "Begin with your biological-age baseline." },
+      { href: "/data-sources", label: "Connect your data", description: "Oura, Apple Health, labs, and imports." },
     ],
-    secondary: [{ href: "/login?mode=signin", label: "Sign in" }],
   },
   {
     label: "Twin",
     href: "/digital-twin",
-    primary: [
-      {
-        href: "/digital-twin",
-        label: "Digital Twin",
-        description: "Signals, protocols, outcomes, and timeline.",
-      },
-      {
-        href: "/life-os",
-        label: "Life OS",
-        description: "Priorities, trajectory, and life domains.",
-      },
-    ],
-    secondary: [
-      { href: "/memory", label: "Memory" },
-      { href: "/report", label: "Report" },
+    items: [
+      { href: "/digital-twin", label: "Digital Twin", description: "A living model of your health state." },
+      { href: "/life-os", label: "Life OS", description: "Priorities, trajectory, and life domains." },
+      { href: "/memory", label: "Memory", description: "Context that makes coaching sharper." },
     ],
   },
   {
     label: "Optimize",
     href: "/optimization",
-    primary: [
-      {
-        href: "/optimization",
-        label: "Optimization",
-        description: "Turn your signals into a daily protocol.",
-      },
-      {
-        href: "/plan",
-        label: "Daily plan",
-        description: "Make insight executable.",
-      },
-    ],
-    secondary: [
-      { href: "/data-sources", label: "Connect data" },
-      { href: "/companion", label: "Ask Aeonvera" },
+    items: [
+      { href: "/optimization", label: "Optimization", description: "Turn your signals into a daily protocol." },
+      { href: "/plan", label: "Daily plan", description: "Make insight executable." },
+      { href: "/companion", label: "Ask Aeonvera", description: "Voice and text help across the app." },
     ],
   },
   {
     label: "Reports",
     href: "/report",
-    primary: [
-      {
-        href: "/report",
-        label: "Longevity report",
-        description: "Readable summaries for progress and decisions.",
-      },
-      {
-        href: "/physician-export",
-        label: "Physician export",
-        description: "Clinical packets and share links.",
-      },
-    ],
-    secondary: [
-      { href: "/network", label: "Care Network" },
-      { href: "/privacy", label: "Privacy" },
+    items: [
+      { href: "/report", label: "Longevity report", description: "A readable summary of your healthspan." },
+      { href: "/physician-export", label: "Physician export", description: "Clinical packets and secure share links." },
+      { href: "/network", label: "Care network", description: "Invite physicians, coaches, and family." },
     ],
   },
   {
     label: "Pricing",
     href: "/pricing",
-    primary: [
-      {
-        href: "/pricing",
-        label: "Compare plans",
-        description: "Core, Elite, and Sovereign.",
-      },
-      {
-        href: "/login?mode=signup",
-        label: "Begin",
-        description: "Create an account and choose your level.",
-      },
-    ],
-    secondary: [
-      { href: "/privacy", label: "Privacy" },
-      { href: "/terms", label: "Terms" },
-    ],
+    items: [{ href: "/pricing", label: "Compare plans", description: "Core, Elite, and Sovereign." }],
   },
   {
     label: "Privacy",
     href: "/privacy",
-    primary: [
-      {
-        href: "/privacy",
-        label: "Privacy",
-        description: "How sensitive health data is handled.",
-      },
-      {
-        href: "/terms",
-        label: "Terms",
-        description: "Membership, account, and platform terms.",
-      },
-    ],
-    secondary: [
-      { href: "/login?mode=signin", label: "Sign in" },
-      { href: "/login?mode=signup", label: "Create account" },
+    items: [
+      { href: "/privacy", label: "Privacy", description: "How your sensitive health data is handled." },
+      { href: "/terms", label: "Terms", description: "Membership, account, and platform terms." },
     ],
   },
 ];
@@ -169,161 +84,42 @@ const AUTH_NAV_GROUPS: NavGroup[] = [
   {
     label: "Today",
     href: "/dashboard",
-    primary: [
-      {
-        href: "/dashboard",
-        label: "Today",
-        description: "Your most important signal and next action.",
-      },
-      {
-        href: "/companion",
-        label: "Ask Aeonvera",
-        description: "Voice and text help across the app.",
-      },
-      {
-        href: "/optimization",
-        label: "Optimization",
-        description: "Refine the protocol from your latest state.",
-      },
+    items: [
+      { href: "/dashboard", label: "Today", description: "Your most important signal and next action." },
+      { href: "/companion", label: "Ask Aeonvera", description: "Voice and text help across the app." },
     ],
-    secondary: [
-      { href: "/plan", label: "Plan" },
-      { href: "/report", label: "Report" },
+  },
+  {
+    label: "Optimize",
+    href: "/optimization",
+    items: [
+      { href: "/optimization", label: "Optimization", description: "Generate and refine your protocol." },
+      { href: "/plan", label: "Daily plan", description: "Protocols, reminders, and execution." },
+      { href: "/assessment", label: "Assessment", description: "Refresh your baseline and context." },
     ],
   },
   {
     label: "Twin",
     href: "/digital-twin",
-    primary: [
-      {
-        href: "/digital-twin",
-        label: "Digital Twin",
-        description: "Signals, protocols, outcomes, and timeline.",
-      },
-      {
-        href: "/life-os",
-        label: "Life OS",
-        description: "Priorities, trajectory, and life domains.",
-      },
-      {
-        href: "/memory",
-        label: "Memory",
-        description: "Context that makes coaching sharper.",
-      },
-    ],
-    secondary: [{ href: "/assessment", label: "Assessment" }],
-  },
-  {
-    label: "Plan",
-    href: "/plan",
-    primary: [
-      {
-        href: "/plan",
-        label: "Plan",
-        description: "Protocols, reminders, and next actions.",
-      },
-      {
-        href: "/optimization",
-        label: "Optimization",
-        description: "Generate or refine your protocol.",
-      },
-      {
-        href: "/companion",
-        label: "Simplify with Aeonvera",
-        description: "Adjust the plan by voice or text.",
-      },
-    ],
-    secondary: [
-      { href: "/dashboard", label: "Today" },
-      { href: "/life-os", label: "Life OS" },
+    items: [
+      { href: "/digital-twin", label: "Digital Twin", description: "Signals, protocols, outcomes, and timeline." },
+      { href: "/life-os", label: "Life OS", description: "Priorities, trajectory, and life domains." },
+      { href: "/memory", label: "Memory", description: "Context that makes coaching sharper." },
     ],
   },
   {
     label: "Data",
     href: "/data-sources",
-    primary: [
-      {
-        href: "/data-sources",
-        label: "Data Sources",
-        description: "Oura, Apple Health, labs, and imports.",
-      },
-      {
-        href: "/report",
-        label: "Reports",
-        description: "Readable healthspan summaries.",
-      },
-      {
-        href: "/physician-export",
-        label: "Physician Export",
-        description: "Prepare a clinical packet or share link.",
-      },
-    ],
-    secondary: [{ href: "/network", label: "Care Network" }],
-  },
-  {
-    label: "Reports",
-    href: "/report",
-    primary: [
-      {
-        href: "/report",
-        label: "Report",
-        description: "Your current healthspan summary.",
-      },
-      {
-        href: "/physician-export",
-        label: "Physician Export",
-        description: "Clinical packets and share links.",
-      },
-      {
-        href: "/future-self/demo",
-        label: "Future Self",
-        description: "Scenario views and shareable projections.",
-      },
-    ],
-    secondary: [
-      { href: "/digital-twin", label: "Digital Twin" },
-      { href: "/data-sources", label: "Data Sources" },
+    items: [
+      { href: "/data-sources", label: "Data Sources", description: "Oura, Apple Health, labs, and imports." },
+      { href: "/report", label: "Reports", description: "Readable healthspan summaries." },
+      { href: "/physician-export", label: "Physician Export", description: "Prepare a clinical packet or share link." },
     ],
   },
   {
-    label: "Network",
+    label: "Care",
     href: "/network",
-    primary: [
-      {
-        href: "/network",
-        label: "Care Network",
-        description: "Invite family, clinicians, and support partners.",
-      },
-      {
-        href: "/physician-export",
-        label: "Physician Share",
-        description: "Create clinical context without exposing the whole account.",
-      },
-    ],
-    secondary: [
-      { href: "/settings", label: "Settings" },
-      { href: "/privacy", label: "Privacy" },
-    ],
-  },
-  {
-    label: "Pricing",
-    href: "/pricing",
-    primary: [
-      {
-        href: "/pricing",
-        label: "Membership",
-        description: "Upgrade, downgrade, or compare plan levels.",
-      },
-      {
-        href: "/settings",
-        label: "Account Settings",
-        description: "Manage profile, preferences, and billing context.",
-      },
-    ],
-    secondary: [
-      { href: "/terms", label: "Terms" },
-      { href: "/privacy", label: "Privacy" },
-    ],
+    items: [{ href: "/network", label: "Care Network", description: "Invite and manage who can see your health." }],
   },
 ];
 
@@ -410,7 +206,7 @@ export default function Header() {
       className="premium-header fixed inset-x-0 top-0 z-50"
       onMouseLeave={() => setActiveMenu(null)}
     >
-      <div className="mx-auto flex h-11 max-w-7xl items-center justify-between px-5 lg:px-8">
+      <div className="mx-auto flex h-11 max-w-6xl items-center justify-between px-5 lg:px-8">
         <Link
           href="/"
           onClick={() => {
@@ -534,37 +330,20 @@ export default function Header() {
 
       {activeGroup ? (
         <div className="premium-mega-menu hidden md:block">
-          <div className="mx-auto grid max-w-7xl grid-cols-[1.3fr_1fr] gap-10 px-8 py-8">
-            <div>
-              <p className="premium-mega-label">Explore {activeGroup.label}</p>
-              <div className="mt-4 grid gap-1">
-                {activeGroup.primary.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setActiveMenu(null)}
-                    className="premium-mega-primary rounded-xl px-3 py-2.5"
-                  >
-                    <span>{item.label}</span>
-                    {item.description ? <small>{item.description}</small> : null}
-                  </Link>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="premium-mega-label">Go directly to</p>
-              <div className="mt-4 grid gap-1">
-                {activeGroup.secondary.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setActiveMenu(null)}
-                    className="premium-mega-secondary rounded-lg px-3 py-2"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
+          <div className="mx-auto max-w-6xl px-5 py-7 lg:px-8">
+            <p className="premium-mega-label">{activeGroup.label}</p>
+            <div className="mt-4 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
+              {activeGroup.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setActiveMenu(null)}
+                  className="premium-mega-primary rounded-xl px-3 py-3"
+                >
+                  <span>{item.label}</span>
+                  {item.description ? <small>{item.description}</small> : null}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
@@ -572,12 +351,12 @@ export default function Header() {
 
       {mobileOpen ? (
         <div className="premium-mobile-menu border-t px-6 py-5 md:hidden">
-          <nav className="mx-auto flex max-w-7xl flex-col gap-5">
+          <nav className="mx-auto flex max-w-6xl flex-col gap-5">
             {navGroups.map((group) => (
               <div key={group.label}>
                 <p className="premium-mega-label mb-2">{group.label}</p>
                 <div className="grid gap-0.5">
-                  {[...group.primary, ...group.secondary].slice(0, 5).map((item) => (
+                  {group.items.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
