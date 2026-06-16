@@ -29,7 +29,7 @@ export default function DesignOverlayToggle({
         }
       `}
     >
-      {enabled ? "Audit ON" : "Audit OFF"}
+      {enabled ? "Audit ON" : "Design audit"}
     </button>
   );
 }

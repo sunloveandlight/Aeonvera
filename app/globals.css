@@ -214,6 +214,9 @@ body::after {
 }
 
 .aeon-orb-system {
+  right: max(1.15rem, env(safe-area-inset-right));
+  bottom: max(1.15rem, env(safe-area-inset-bottom));
+  width: min(26rem, calc(100vw - 2rem));
   pointer-events: none;
 }
 
@@ -224,34 +227,32 @@ body::after {
 }
 
 .aeon-orb-system-idle .aeon-command-orb {
-  opacity: 0.52;
-  transform: translateY(0.2rem) scale(0.94);
+  opacity: 0.42;
+  transform: translateY(0.12rem) scale(0.9);
 }
 
 .aeon-orb-system-idle:hover .aeon-command-orb,
 .aeon-orb-system-idle:focus-within .aeon-command-orb {
-  opacity: 1;
-  transform: translateY(-3px) scale(1.015);
+  opacity: 0.96;
+  transform: translateY(-2px) scale(1);
 }
 
 .aeon-command-orb {
   position: relative;
   display: inline-flex;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 3.05rem;
+  height: 3.05rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.92);
   box-shadow:
-    0 18px 52px rgba(0, 0, 0, 0.5),
-    0 0 30px rgba(130, 158, 255, 0.2),
-    0 0 60px rgba(198, 138, 255, 0.12),
-    0 0 96px rgba(var(--gold), 0.06);
+    0 12px 30px rgba(0, 0, 0, 0.38),
+    0 0 18px rgba(130, 158, 255, 0.15),
+    0 0 34px rgba(198, 138, 255, 0.1);
   cursor: pointer;
   isolation: isolate;
   overflow: visible;
-  animation: aeon-orb-breathe 6s ease-in-out infinite;
   transition:
     opacity 260ms ease,
     box-shadow 260ms ease,
@@ -306,31 +307,37 @@ body::after {
 
 .aeon-command-orb:hover,
 .aeon-command-orb-open {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-2px) scale(1.03);
   box-shadow:
-    0 22px 56px rgba(0, 0, 0, 0.52),
-    0 0 40px rgba(130, 158, 255, 0.26),
-    0 0 76px rgba(198, 138, 255, 0.16);
+    0 14px 34px rgba(0, 0, 0, 0.42),
+    0 0 24px rgba(130, 158, 255, 0.2),
+    0 0 44px rgba(198, 138, 255, 0.14);
 }
 
 .aeon-command-orb-listening {
-  animation: aeon-orb-breathe 2.6s ease-in-out infinite;
   box-shadow:
-    0 20px 54px rgba(0, 0, 0, 0.52),
-    0 0 46px rgba(130, 158, 255, 0.3),
-    0 0 86px rgba(198, 138, 255, 0.2);
+    0 14px 36px rgba(0, 0, 0, 0.44),
+    0 0 30px rgba(130, 158, 255, 0.26),
+    0 0 58px rgba(198, 138, 255, 0.18);
 }
 
 .aeon-command-orb-speaking {
-  animation: aeon-orb-breathe 1.6s ease-in-out infinite;
   box-shadow:
-    0 20px 54px rgba(0, 0, 0, 0.52),
-    0 0 56px rgba(116, 226, 232, 0.32),
-    0 0 100px rgba(198, 138, 255, 0.24);
+    0 14px 36px rgba(0, 0, 0, 0.44),
+    0 0 34px rgba(116, 226, 232, 0.28),
+    0 0 62px rgba(198, 138, 255, 0.2);
 }
 
 .aeon-command-orb-speaking .aeon-command-orb-wave {
   animation-duration: 620ms;
+}
+
+.aeon-command-orb-listening .aeon-orb-fluid {
+  animation-duration: 2.6s;
+}
+
+.aeon-command-orb-speaking .aeon-orb-fluid {
+  animation-duration: 1.6s;
 }
 
 /* ============================================================
@@ -350,6 +357,7 @@ body::after {
     inset 0 1px 0 rgba(255, 255, 255, 0.3),
     inset 0 -22px 40px rgba(0, 0, 0, 0.42),
     inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  animation: aeon-orb-breathe 6s ease-in-out infinite;
 }
 
 /* Flowing light rays — bright colored beams separated by dark gaps. The

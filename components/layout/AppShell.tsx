@@ -43,7 +43,7 @@ export default function AppShell({ children }: AppShellProps) {
       )}
 
       {/* TOGGLE */}
-      {designToolsEnabled ? (
+      {designToolsEnabled && enabled ? (
         <DesignOverlayToggle enabled={enabled} onToggle={toggle} />
       ) : null}
     </main>

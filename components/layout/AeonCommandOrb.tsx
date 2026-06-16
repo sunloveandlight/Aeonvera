@@ -371,12 +371,15 @@ export default function AeonCommandOrb() {
         page: pathname || "/",
         voice: selectedVoice,
       });
+      const realtimeController = new AbortController();
+      const realtimeTimeout = window.setTimeout(() => realtimeController.abort(), 12000);
       const response = await fetch(`/api/agent/realtime?${params.toString()}`, {
         body: offer.sdp || "",
         credentials: "include",
         headers: { "Content-Type": "application/sdp" },
         method: "POST",
-      });
+        signal: realtimeController.signal,
+      }).finally(() => window.clearTimeout(realtimeTimeout));
       const answer = await response.text();
 
       if (!response.ok) {
@@ -389,7 +392,9 @@ export default function AeonCommandOrb() {
     } catch (error) {
       stopRealtimeVoice();
       const answer =
-        error instanceof Error ? error.message : "Realtime voice could not start.";
+        error instanceof DOMException && error.name === "AbortError"
+          ? "Voice is taking longer than expected. Try again in a moment, or type your request from the assistant panel."
+          : error instanceof Error ? error.message : "Realtime voice could not start.";
       setMessages((current) => [...current, { role: "assistant", content: answer }]);
       setRealtimeStatus(answer);
       setOpen(false);
@@ -959,7 +964,7 @@ export default function AeonCommandOrb() {
 
   return (
     <div
-      className={`aeon-orb-system fixed inset-x-0 bottom-6 z-40 mx-auto flex w-full max-w-2xl flex-col items-center px-3 ${
+      className={`aeon-orb-system fixed z-40 flex flex-col items-end ${
         idleDimmed ? "aeon-orb-system-idle" : ""
       }`}
       onFocusCapture={() => setIdleDimmed(false)}
@@ -967,7 +972,7 @@ export default function AeonCommandOrb() {
     >
       {!open && !realtimeActive && !realtimeStatus && !speaking && receiptVisible && latestReceipt ? (
         <div
-          className={`aeon-orb-receipt aeon-orb-receipt-${latestReceipt.tone} mb-4 max-w-[min(92vw,26rem)] rounded-full px-4 py-2`}
+          className={`aeon-orb-receipt aeon-orb-receipt-${latestReceipt.tone} mb-3 max-w-[min(80vw,24rem)] rounded-full px-4 py-2`}
         >
           <span className="aeon-orb-receipt-dot" aria-hidden="true" />
           <span className="min-w-0">
@@ -978,7 +983,7 @@ export default function AeonCommandOrb() {
       ) : null}
 
       {!open && (realtimeStatus || realtimeActive || speaking) ? (
-        <div className="aeon-orb-live-pill mb-4 inline-flex max-w-[min(92vw,28rem)] items-center gap-3 rounded-full px-4 py-2 text-sm text-white/72">
+        <div className="aeon-orb-live-pill mb-3 inline-flex max-w-[min(80vw,24rem)] items-center gap-3 rounded-full px-4 py-2 text-sm text-white/72">
           <span
             className={`size-2 rounded-full ${
               speaking ? "bg-[rgb(var(--gold))]" : realtimeActive ? "bg-[rgb(var(--success))]" : "bg-white/35"
@@ -991,7 +996,7 @@ export default function AeonCommandOrb() {
       ) : null}
 
       {open ? (
-        <section className="aeon-orb-panel mb-4 max-h-[min(72vh,34rem)] w-full max-w-2xl overflow-y-auto rounded-lg p-4 md:p-5">
+        <section className="aeon-orb-panel mb-3 max-h-[min(72vh,34rem)] w-[min(26rem,calc(100vw-2rem))] overflow-y-auto rounded-lg p-4 md:p-5">
           <div className="mb-4 flex items-start justify-between gap-4 border-b border-white/[0.07] pb-4">
             <div>
               <p className="micro-label">Aeonvera Intelligence</p>
@@ -1153,7 +1158,7 @@ export default function AeonCommandOrb() {
         </section>
       ) : null}
 
-      <div className="flex items-center justify-center">
+      <div className="flex items-center justify-end">
         <button
           type="button"
           onClick={() => {
