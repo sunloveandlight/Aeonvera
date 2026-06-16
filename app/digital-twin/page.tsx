@@ -201,6 +201,7 @@ export default function DigitalTwinPage() {
   });
   const [activeType, setActiveType] = useState<TimelineEvent["type"] | "all">("all");
   const [timelineExpanded, setTimelineExpanded] = useState(false);
+  const [showAllPanels, setShowAllPanels] = useState(false);
   const [projectionResult, setProjectionResult] = useState<TwinProjectionResult | null>(null);
   const [projectionMessage, setProjectionMessage] = useState<string | null>(null);
   const [projectionProtocolMessage, setProjectionProtocolMessage] = useState<string | null>(null);
@@ -593,7 +594,7 @@ export default function DigitalTwinPage() {
               <DigitalTwinIntelligencePanel intelligence={payload.intelligence} />
             )}
 
-            {payload.audit && (
+            {showAllPanels && payload.audit && (
               <DigitalTwinAuditPanel audit={payload.audit} />
             )}
 
@@ -615,6 +616,9 @@ export default function DigitalTwinPage() {
               />
             )}
 
+            <div className="flex justify-center pt-2"><button type="button" onClick={() => setShowAllPanels((v) => !v)} className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-full px-6 text-sm font-medium">{showAllPanels ? "Show less" : "Show more"}</button></div>
+
+            {showAllPanels && (<>
             <div className="mt-6 grid gap-6 lg:grid-cols-[0.78fr_1.22fr]">
               <div className="space-y-6">
                 <div className="executive-panel rounded-lg p-6 md:p-7">
@@ -760,6 +764,7 @@ export default function DigitalTwinPage() {
                 ) : null}
               </div>
             </div>
+            </>)}
           </>
         ) : null}
       </div>

@@ -962,13 +962,13 @@ function VitalSignalClock() {
   return (
     <div className="age-signal" aria-hidden="true">
       <div className="age-signal__halo" />
-      <svg viewBox="20 20 120 120">
+      <svg viewBox="20 20 120 120" className="text-white/80">
         <defs>
           <linearGradient id="optimization-age-signal-gradient" x1="36" y1="28" x2="124" y2="132" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="rgba(248,250,252,0.94)" />
+            <stop offset="0%" stopColor="currentColor" />
             <stop offset="48%" stopColor="rgba(164, 195, 255, 0.82)" />
             <stop offset="74%" stopColor="rgba(var(--gold), 0.78)" />
-            <stop offset="100%" stopColor="rgba(248,250,252,0.9)" />
+            <stop offset="100%" stopColor="currentColor" />
           </linearGradient>
         </defs>
         <circle className="age-signal__track" cx="80" cy="80" r="58" />
@@ -1032,11 +1032,12 @@ function FutureSelfComparisonPanel({
             </div>
           </div>
 
-          <svg viewBox="0 0 100 60" className="h-56 w-full overflow-visible" aria-hidden="true">
+          <svg viewBox="0 0 100 60" className="h-56 w-full overflow-visible text-white/80" aria-hidden="true">
             <polyline
               points={chart.current.join(" ")}
               fill="none"
-              stroke="rgba(255,255,255,0.18)"
+              stroke="currentColor"
+              strokeOpacity={0.18}
               strokeWidth="1.8"
               strokeDasharray="4 5"
               strokeLinecap="round"
@@ -1058,7 +1059,8 @@ function FutureSelfComparisonPanel({
                   cx={cx}
                   cy={cy}
                   r={index === chart.optimized.length - 1 ? "2.8" : "1.8"}
-                  fill="rgba(248,250,252,0.92)"
+                  fill="currentColor"
+                  fillOpacity={0.92}
                 />
               );
             })}

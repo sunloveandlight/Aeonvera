@@ -1,13 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, Check, Crown, Settings, ShieldCheck, Sparkles } from "lucide-react";
-import PageContainer from "@/components/ui/PageContainer";
-import Page from "@/components/ui/Page";
-import Section from "@/components/ui/Section";
-import Text from "@/components/ui/Text";
-import Motion from "@/components/motion/Motion";
-import PricingPlanCard, { type PricingPlan } from "@/components/pricing/PricingPlanCard";
+import { ArrowRight, Check } from "lucide-react";
+import { type PricingPlan } from "@/components/pricing/PricingPlanCard";
 import { supabase } from "@/lib/supabase/client";
 import {
   PLAN_USAGE_LIMITS,
@@ -316,172 +311,73 @@ export default function PricingPage() {
 
   const activePlanDetails = activePlan ? PLAN_BY_ID[activePlan] : null;
   const ownedCopy = activePlan ? OWNED_TIER_COPY[activePlan] : null;
-  const planChangeOptions = activePlan
-    ? PLANS.filter((plan) => plan.id !== activePlan)
-    : [];
+
+  function getPlanActionLabel(plan: Plan) {
+    const planName = PLAN_BY_ID[plan]?.name || plan;
+    if (!activePlan) return `Choose ${planName}`;
+    if (plan === activePlan) return "Manage";
+    if (PLAN_RANK[plan] < PLAN_RANK[activePlan]) return "Downgrade";
+    return "Upgrade";
+  }
 
   return (
-    <Page className="text-white" density="compact">
-      <Section className="px-6 lg:px-8" intensity="low">
-        <PageContainer>
+    <div className="aeon-apple-page text-white">
+      <section className="aeon-apple-pricing">
+        <div className="aeon-apple-copy aeon-apple-copy-center">
           {activePlan && ownedCopy && activePlanDetails ? (
-            <div className="mx-auto max-w-4xl text-center">
-              <p className="text-eyebrow">Membership</p>
-              <h1 className="mt-5 text-4xl font-semibold leading-tight text-white md:text-6xl">
-                Your {activePlanDetails.name} plan is active.
-              </h1>
-              <Text
-                variant="secondary"
-                className="mx-auto mt-6 block max-w-2xl text-center text-lg leading-8"
-              >
-                Your current tier stays active until you choose otherwise. From
-                here, you can manage billing or move into any other plan.
-              </Text>
-            </div>
-          ) : (
-            <div className="mx-auto max-w-3xl text-center">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-white/25 mb-6">
-                Pricing
+            <>
+              <h2>Your {activePlanDetails.name} plan is active.</h2>
+              <p>
+                Your tier stays active until you choose otherwise. Manage billing
+                or move into any other plan.
               </p>
-              <h1 className="pricing-hero-title font-semibold tracking-tight text-white/90">
-                Choose the right level of longevity insight.
-              </h1>
-              <Text
-                variant="secondary"
-                className="mx-auto mt-6 block max-w-2xl text-center text-lg leading-8"
-              >
-                Start with a reliable baseline. Move into deeper support as your
-                data, goals, and decision-making needs grow.
-              </Text>
-            </div>
-          )}
-          {checkoutMessage && (
-            <div className="mx-auto mt-6 max-w-xl rounded-lg border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-sm leading-6 text-red-200/80">
-              {checkoutMessage}
-            </div>
-          )}
-        </PageContainer>
-      </Section>
-
-      <Section className="px-6 pb-24 lg:px-8" intensity="low">
-        <PageContainer>
-          {activePlan && ownedCopy && activePlanDetails ? (
-            <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-3">
-              <button
-                type="button"
-                onClick={() => handleBillingPortal(activePlan)}
-                disabled={loadingPlan !== null}
-                className="membership-current-card quiet-lift flex flex-col items-start rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <div className="membership-card-top w-full">
-                  <div className="membership-card-emblem flex size-12 items-center justify-center rounded-lg bg-white/[0.06] text-white/82">
-                    <ShieldCheck size={22} />
-                  </div>
-                  <p className="micro-label">Current plan</p>
-                  <h2 className="membership-card-title text-3xl font-semibold text-white md:text-4xl">
-                    {ownedCopy.title}
-                  </h2>
-                  <p className="mt-5 max-w-2xl text-sm leading-7 text-white/55">
-                    {ownedCopy.body}
-                  </p>
-                </div>
-                <div className="premium-status membership-active-badge rounded-md px-3 py-1.5 text-xs font-medium">
-                  Active
-                </div>
-
-                <div className="mt-9 grid w-full gap-3">
-                  {ownedCopy.owned.map((item) => (
-                    <div key={item} className="flex gap-3 rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 text-sm leading-6 text-white/68">
-                      <Check size={16} className="mt-1 shrink-0 royal-text" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-9 flex w-full flex-col items-stretch gap-4 border-t border-white/[0.07] pt-5">
-                  <span className="text-sm text-white/42">
-                    Opens billing, invoices, payment method, and cancellation settings.
-                  </span>
-                  <span className="premium-action-secondary inline-flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-md px-4 text-sm font-medium">
-                    {loadingPlan === activePlan ? "Opening" : "Manage"}
-                    {loadingPlan !== activePlan && <Settings size={16} />}
-                  </span>
-                </div>
-              </button>
-
-              {planChangeOptions.map((planOption) => {
-                const isDowngrade = PLAN_RANK[planOption.id] < PLAN_RANK[activePlan];
-                const actionLabel = isDowngrade ? "Downgrade" : "Upgrade";
-
-                return (
-                  <button
-                    key={planOption.id}
-                    type="button"
-                    onClick={() => handleBillingPortal(planOption.id)}
-                    disabled={loadingPlan !== null}
-                    className="membership-upgrade-card quiet-lift flex flex-col items-start rounded-lg p-7 text-left disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    <div className="membership-card-top w-full">
-                      <div className="membership-card-emblem flex size-12 items-center justify-center rounded-lg bg-white/[0.06] text-white/86">
-                        {planOption.id === "sovereign" ? <Crown size={22} /> : <Sparkles size={22} />}
-                      </div>
-                      <p className="micro-label">
-                        {isDowngrade
-                          ? "Plan adjustment"
-                          : planOption.id === "sovereign"
-                            ? "Executive upgrade"
-                            : "Optimization upgrade"}
-                      </p>
-                      <h2 className="membership-card-title text-3xl font-semibold text-white md:text-4xl">
-                        {planOption.name}
-                      </h2>
-                    </div>
-                    <p className="mt-5 text-sm leading-7 text-white/55">
-                      {isDowngrade
-                        ? `Move to ${planOption.name} if you want a simpler monthly membership. You'll see the billing effect before anything changes.`
-                        : planOption.id === "sovereign"
-                          ? "Move directly into the full executive digital-twin path."
-                          : ownedCopy.upgradeIntro}
-                    </p>
-
-                    <div className="mt-8 space-y-3">
-                      {planOption.features.slice(1, 5).map((feature) => (
-                        <div key={feature} className="flex gap-3 text-sm leading-6 text-white/68">
-                          <Check size={16} className="mt-1 shrink-0 royal-text" />
-                          <span>{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="premium-action mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium">
-                      {loadingPlan === planOption.id
-                        ? "Opening"
-                        : `${actionLabel} to ${planOption.name}`}
-                      {loadingPlan !== planOption.id && <ArrowRight size={16} />}
-                    </div>
-                    <p className="mt-4 text-center text-xs leading-5 text-white/35">
-                      Billing details and proration are confirmed securely before any change.
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
+            </>
           ) : (
-            <div className="grid gap-5 lg:grid-cols-3">
-              {PLANS.map((plan) => (
-                <Motion key={plan.id} type="rise" className="h-full">
-                  <PricingPlanCard
-                    plan={plan}
-                    loadingPlan={loadingPlan}
-                    mode="purchase"
-                    onSelect={handleCheckout}
-                  />
-                </Motion>
-              ))}
-            </div>
+            <>
+              <h2>Choose the right level of longevity insight.</h2>
+              <p>
+                Start with a reliable baseline. Move into deeper support as your
+                data, goals, and decision-making grow.
+              </p>
+            </>
           )}
-        </PageContainer>
-      </Section>
-    </Page>
+        </div>
+
+        {checkoutMessage && (
+          <div className="mx-auto mt-6 max-w-xl rounded-lg border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-sm leading-6 text-red-200/80">
+            {checkoutMessage}
+          </div>
+        )}
+
+        <div className="aeon-apple-plan-grid">
+          {PLANS.map((plan) => (
+            <button
+              key={plan.id}
+              type="button"
+              onClick={() => handleCheckout(plan.id)}
+              disabled={loadingPlan !== null}
+              className={`aeon-apple-plan ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`}
+            >
+              <span className="aeon-apple-plan-name">{plan.name}</span>
+              {activePlan && plan.id === activePlan ? (
+                <span className="aeon-apple-plan-price">Active</span>
+              ) : (
+                <span className="aeon-apple-plan-price">{plan.price}</span>
+              )}
+              <span className="aeon-apple-plan-body">{plan.summary}</span>
+              {plan.features.slice(0, 4).map((feature) => (
+                <span key={feature} className="aeon-apple-plan-check">
+                  <Check size={15} /> {feature}
+                </span>
+              ))}
+              <span className="aeon-apple-plan-action">
+                {loadingPlan === plan.id ? "Opening" : getPlanActionLabel(plan.id)}
+                {loadingPlan !== plan.id ? <ArrowRight size={15} /> : null}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }

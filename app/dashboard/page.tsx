@@ -1991,11 +1991,12 @@ function BioAgeTrend({
           {displayPoints.length} point{displayPoints.length === 1 ? "" : "s"}
         </span>
       </div>
-      <svg viewBox="0 0 100 100" className="h-24 w-full overflow-visible" aria-hidden="true">
+      <svg viewBox="0 0 100 100" className="h-24 w-full overflow-visible text-white/80" aria-hidden="true">
         <polyline
           points={chronoPoints.join(" ")}
           fill="none"
-          stroke="rgba(255,255,255,0.14)"
+          stroke="currentColor"
+          strokeOpacity={0.14}
           strokeWidth="1.5"
           strokeDasharray="3 4"
         />
@@ -2015,7 +2016,8 @@ function BioAgeTrend({
               cx={cx}
               cy={cy}
               r={index === chartPoints.length - 1 ? "2.8" : "2"}
-              fill="rgba(248,250,252,0.9)"
+              fill="currentColor"
+              fillOpacity={0.9}
             />
           );
         })}

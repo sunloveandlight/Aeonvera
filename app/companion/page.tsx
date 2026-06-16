@@ -294,6 +294,7 @@ export default function CompanionPage() {
   const [scheduledActionKeys, setScheduledActionKeys] = useState<Record<string, boolean>>({});
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installState, setInstallState] = useState(() => getInstallState());
+  const [showAllPanels, setShowAllPanels] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -853,7 +854,19 @@ export default function CompanionPage() {
               onSend={(value) => void askPersonalAgent(value)}
             />
 
-            <TierUsagePanel usageLimits={usageLimits} />
+            <div className="flex justify-center pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAllPanels((v) => !v)}
+                className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-full px-6 text-sm font-medium"
+              >
+                {showAllPanels ? "Show less" : "Show more"}
+              </button>
+            </div>
+
+            {showAllPanels && (
+              <>
+                <TierUsagePanel usageLimits={usageLimits} />
 
             <AdvancedModalitiesPanel
               modalities={modalities}
@@ -897,7 +910,9 @@ export default function CompanionPage() {
               }
             />
 
-            <NotificationPreferencesPanel />
+                <NotificationPreferencesPanel />
+              </>
+            )}
           </div>
         )}
       </div>

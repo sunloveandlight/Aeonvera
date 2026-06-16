@@ -50,12 +50,12 @@ export default function AboutPage() {
       <section className="px-6 pb-24 lg:px-8">
         <div className="mx-auto grid max-w-5xl gap-5 sm:grid-cols-2">
           <RenewalImage
-            src="/renewal-woman.jpg"
+            src="/marketing/rejuvenation-woman.png"
             alt="A woman, renewed"
             caption="Feeling years younger — not by chance, but by understanding."
           />
           <RenewalImage
-            src="/renewal-man.jpg"
+            src="/marketing/rejuvenation-man.png"
             alt="A man, renewed"
             caption="Vitality is not given back by time. It is reclaimed."
           />

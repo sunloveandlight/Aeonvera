@@ -270,11 +270,12 @@ export default function SharedFutureSelfPage() {
                 </div>
               </div>
 
-              <svg viewBox="0 0 100 60" className="h-64 w-full overflow-visible" aria-hidden="true">
+              <svg viewBox="0 0 100 60" className="h-64 w-full overflow-visible text-white/80" aria-hidden="true">
                 <polyline
                   points={chart.current.join(" ")}
                   fill="none"
-                  stroke="rgba(255,255,255,0.18)"
+                  stroke="currentColor"
+                  strokeOpacity={0.18}
                   strokeWidth="1.8"
                   strokeDasharray="4 5"
                   strokeLinecap="round"
@@ -296,7 +297,8 @@ export default function SharedFutureSelfPage() {
                       cx={cx}
                       cy={cy}
                       r={index === chart.optimized.length - 1 ? "2.8" : "1.8"}
-                      fill="rgba(248,250,252,0.92)"
+                      fill="currentColor"
+                      fillOpacity={0.92}
                     />
                   );
                 })}

@@ -375,8 +375,8 @@ export default function ReportPage() {
               {/* ACCURACY BADGE */}
               <div className="premium-status flex items-center gap-3 rounded-md px-4 py-2">
                 <div className="relative w-8 h-8">
-                  <svg className="w-8 h-8 -rotate-90" viewBox="0 0 32 32">
-                    <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="3" />
+                  <svg className="w-8 h-8 -rotate-90 text-white/80" viewBox="0 0 32 32">
+                    <circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" strokeOpacity={0.05} strokeWidth="3" />
                     <circle
                       cx="16" cy="16" r="13" fill="none"
                       stroke={accuracyScore >= 80 ? "rgba(74,222,128,0.7)" : accuracyScore >= 60 ? "rgba(250,204,21,0.7)" : "rgba(251,146,60,0.7)"}
@@ -747,11 +747,12 @@ function BioAgeHistoryCard({
             </div>
           </div>
 
-          <svg viewBox="0 0 100 100" className="h-44 w-full overflow-visible" aria-hidden="true">
+          <svg viewBox="0 0 100 100" className="h-44 w-full overflow-visible text-white/80" aria-hidden="true">
             <polyline
               points={chronologicalLine.join(" ")}
               fill="none"
-              stroke="rgba(255,255,255,0.16)"
+              stroke="currentColor"
+              strokeOpacity={0.16}
               strokeDasharray="3 4"
               strokeWidth="1.5"
             />
@@ -771,7 +772,8 @@ function BioAgeHistoryCard({
                   cx={cx}
                   cy={cy}
                   r={index === biologicalLine.length - 1 ? "3.2" : "2.2"}
-                  fill="rgba(248,250,252,0.92)"
+                  fill="currentColor"
+                  fillOpacity={0.92}
                 />
               );
             })}
