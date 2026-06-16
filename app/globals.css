@@ -1631,6 +1631,260 @@ body:has(.aeon-orb-system) main {
   50% { transform: translateX(2px) scaleX(1.06) scaleY(1.2); opacity: 0.62; }
 }
 
+/* Restored Siri-style waveform orb: the thin multi-line reference state. */
+.aeon-orb-showcase {
+  display: grid !important;
+  width: min(30rem, 72vw);
+  height: min(18rem, 44vw);
+  place-items: center;
+  margin-bottom: 0.6rem;
+  filter: none;
+}
+
+.aeon-orb-system {
+  display: flex !important;
+}
+
+.aeon-command-orb {
+  position: relative;
+  display: inline-grid;
+  width: 3.2rem;
+  height: 3.2rem;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  overflow: visible;
+  isolation: isolate;
+  cursor: pointer;
+  transition:
+    opacity 240ms ease,
+    filter 240ms ease,
+    transform 240ms ease;
+}
+
+.aeon-command-orb::before {
+  content: "";
+  position: absolute;
+  inset: -118% -210%;
+  z-index: -1;
+  border-radius: 999px;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 52%, rgba(255, 246, 202, 0.24), transparent 18%),
+    radial-gradient(ellipse at 48% 54%, rgba(116, 226, 213, 0.18), transparent 43%),
+    radial-gradient(ellipse at 52% 58%, rgba(88, 190, 255, 0.11), transparent 58%);
+  filter: blur(24px);
+  opacity: 0.7;
+  animation: aeon-wave-halo 4.8s ease-in-out infinite;
+}
+
+.aeon-command-orb:hover,
+.aeon-command-orb-open,
+.aeon-command-orb-listening,
+.aeon-command-orb-speaking,
+.aeon-command-orb-summoned {
+  box-shadow: none;
+  filter: saturate(1.08) brightness(1.04);
+  transform: translateY(-0.06rem) scale(1.03);
+}
+
+.aeon-orb-showcase-orb {
+  width: min(18rem, 48vw) !important;
+  height: min(7rem, 19vw) !important;
+  filter: saturate(1.05);
+}
+
+.aeon-orb-showcase-orb::before {
+  inset: -92% -34%;
+  filter: blur(32px);
+  opacity: 0.76;
+}
+
+.aeon-wave-orb {
+  position: absolute;
+  inset: -82% -260%;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: visible;
+  border-radius: 999px;
+  filter: saturate(1.08);
+  transform: translateZ(0);
+}
+
+.aeon-orb-showcase-orb .aeon-wave-orb {
+  inset: -36% -10%;
+}
+
+.aeon-wave-glow,
+.aeon-wave-core,
+.aeon-wave-field {
+  position: absolute;
+  pointer-events: none;
+}
+
+.aeon-wave-glow {
+  width: 72%;
+  height: 160%;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 50% 44%, rgba(255, 244, 202, 0.35), transparent 24%),
+    radial-gradient(ellipse at 48% 56%, rgba(112, 229, 210, 0.2), transparent 56%),
+    radial-gradient(ellipse at 50% 66%, rgba(74, 168, 255, 0.12), transparent 70%);
+  filter: blur(28px);
+  opacity: 0.7;
+  animation: aeon-wave-glow-breathe 4.9s ease-in-out infinite;
+}
+
+.aeon-wave-glow-gold {
+  width: 32%;
+  height: 82%;
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(255, 238, 166, 0.5), transparent 32%),
+    radial-gradient(ellipse at 48% 60%, rgba(255, 255, 255, 0.18), transparent 62%);
+  filter: blur(18px);
+  opacity: 0.72;
+  animation-duration: 3.3s;
+  animation-delay: -0.8s;
+}
+
+.aeon-wave-core {
+  width: 14%;
+  height: 40%;
+  border-radius: 999px;
+  background:
+    radial-gradient(ellipse at 50% 46%, rgba(255, 255, 255, 0.84), transparent 28%),
+    radial-gradient(ellipse at 50% 55%, rgba(255, 226, 142, 0.52), transparent 58%);
+  filter: blur(12px);
+  opacity: 0.72;
+  animation: aeon-wave-core 2.9s ease-in-out infinite;
+}
+
+.aeon-wave-field {
+  width: 108%;
+  height: 66%;
+  overflow: visible;
+  mix-blend-mode: screen;
+  transform-origin: center;
+  animation: aeon-wave-field-float 5.6s ease-in-out infinite;
+}
+
+.aeon-wave-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.aeon-wave-line-gold {
+  stroke: url("#aeonWaveGold");
+  stroke-width: 2.45px;
+  opacity: 0.88;
+  animation: aeon-wave-line-gold 2.9s ease-in-out infinite;
+}
+
+.aeon-wave-line-blue {
+  stroke: url("#aeonWaveBlue");
+  stroke-width: 2.1px;
+  opacity: 0.74;
+  animation: aeon-wave-line-blue 3.4s ease-in-out infinite;
+}
+
+.aeon-wave-line-green {
+  stroke: url("#aeonWaveGreen");
+  stroke-width: 1.75px;
+  opacity: 0.52;
+  animation: aeon-wave-line-green 4.2s ease-in-out infinite;
+}
+
+.aeon-wave-line-white {
+  stroke: rgba(255, 255, 255, 0.66);
+  stroke-width: 1.35px;
+  opacity: 0.56;
+  animation: aeon-wave-line-white 3.8s ease-in-out infinite;
+}
+
+.aeon-wave-line-violet {
+  stroke: rgba(161, 122, 255, 0.46);
+  stroke-width: 1.45px;
+  opacity: 0.5;
+  animation: aeon-wave-line-violet 4.8s ease-in-out infinite;
+}
+
+.aeon-command-orb-listening .aeon-wave-field,
+.aeon-command-orb-speaking .aeon-wave-field,
+.aeon-command-orb-summoned .aeon-wave-field,
+.aeon-command-orb-open .aeon-wave-field,
+.aeon-wave-orb-showcase .aeon-wave-field {
+  animation-duration: 4.4s;
+}
+
+.aeon-command-orb-listening .aeon-wave-line,
+.aeon-command-orb-speaking .aeon-wave-line,
+.aeon-command-orb-summoned .aeon-wave-line,
+.aeon-command-orb-open .aeon-wave-line,
+.aeon-wave-orb-showcase .aeon-wave-line {
+  opacity: 0.9;
+}
+
+@keyframes aeon-wave-halo {
+  0%, 100% { transform: scaleX(0.9) scaleY(0.82); opacity: 0.48; }
+  44% { transform: scaleX(1.08) scaleY(1.05); opacity: 0.8; }
+  72% { transform: scaleX(0.98) scaleY(0.94); opacity: 0.62; }
+}
+
+@keyframes aeon-wave-glow-breathe {
+  0%, 100% { transform: scaleX(0.84) scaleY(0.78); opacity: 0.48; }
+  48% { transform: scaleX(1.1) scaleY(1.12); opacity: 0.78; }
+  72% { transform: scaleX(0.96) scaleY(0.9); opacity: 0.58; }
+}
+
+@keyframes aeon-wave-core {
+  0%, 100% { transform: scale(0.82); opacity: 0.52; }
+  46% { transform: scale(1.24); opacity: 0.86; }
+  72% { transform: scale(1.02); opacity: 0.68; }
+}
+
+@keyframes aeon-wave-field-float {
+  0%, 100% { transform: translateY(0) scaleX(0.98) scaleY(0.92); }
+  38% { transform: translateY(-2%) scaleX(1.04) scaleY(1.08); }
+  68% { transform: translateY(1%) scaleX(0.96) scaleY(1); }
+}
+
+@keyframes aeon-wave-line-gold {
+  0%, 100% { transform: translateY(0) scaleX(0.98) scaleY(0.92); opacity: 0.76; }
+  44% { transform: translateY(-1px) scaleX(1.05) scaleY(1.18); opacity: 1; }
+  72% { transform: translateY(1px) scaleX(0.94) scaleY(1); opacity: 0.84; }
+}
+
+@keyframes aeon-wave-line-blue {
+  0%, 100% { transform: translateY(2px) scaleX(1.02) scaleY(0.86); opacity: 0.58; }
+  38% { transform: translateY(-2px) scaleX(0.96) scaleY(1.2); opacity: 0.86; }
+  74% { transform: translateY(1px) scaleX(1.08) scaleY(0.98); opacity: 0.7; }
+}
+
+@keyframes aeon-wave-line-green {
+  0%, 100% { transform: translateX(-2px) scaleX(0.98) scaleY(1.08); opacity: 0.38; }
+  50% { transform: translateX(2px) scaleX(1.08) scaleY(0.92); opacity: 0.64; }
+}
+
+@keyframes aeon-wave-line-white {
+  0%, 100% { transform: translateY(0) scaleX(1.02) scaleY(0.78); opacity: 0.44; }
+  50% { transform: translateY(-1px) scaleX(0.96) scaleY(1.08); opacity: 0.7; }
+}
+
+@keyframes aeon-wave-line-violet {
+  0%, 100% { transform: translateY(3px) scaleX(0.94) scaleY(0.88); opacity: 0.34; }
+  48% { transform: translateY(-3px) scaleX(1.08) scaleY(1.22); opacity: 0.62; }
+}
+
 .aeon-orb-panel {
   border: 1px solid var(--panel-border);
   background:
