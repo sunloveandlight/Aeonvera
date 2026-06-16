@@ -215,7 +215,7 @@ body::after {
 
 .aeon-orb-system {
   left: 50%;
-  bottom: max(1.05rem, env(safe-area-inset-bottom));
+  bottom: max(3rem, calc(env(safe-area-inset-bottom) + 2.25rem));
   width: min(32rem, calc(100vw - 2rem));
   transform: translateX(-50%);
   pointer-events: none;
@@ -241,26 +241,28 @@ body::after {
 .aeon-command-orb {
   position: relative;
   display: inline-flex;
-  width: 3.2rem;
-  height: 3.2rem;
+  width: 4.25rem;
+  height: 4.25rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: rgba(255, 255, 255, 0.92);
   background:
-    radial-gradient(circle at 36% 28%, rgba(255, 255, 255, 0.5), transparent 24%),
-    radial-gradient(circle at 60% 64%, rgba(var(--gold), 0.3), transparent 60%),
-    linear-gradient(150deg, rgba(20, 21, 24, 0.86), rgba(4, 5, 7, 0.92));
+    radial-gradient(circle at 34% 22%, rgba(255, 255, 255, 0.7), transparent 18%),
+    radial-gradient(circle at 66% 74%, rgba(6, 8, 16, 0.76), transparent 54%),
+    linear-gradient(150deg, rgba(22, 24, 32, 0.9), rgba(3, 4, 8, 0.94));
   box-shadow:
-    0 14px 40px rgba(0, 0, 0, 0.46),
-    0 0 26px rgba(var(--gold), 0.14),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(20px) saturate(130%);
+    0 18px 52px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(105, 195, 255, 0.2),
+    0 0 74px rgba(191, 126, 255, 0.16),
+    0 0 116px rgba(255, 168, 212, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(22px) saturate(150%);
   cursor: pointer;
   isolation: isolate;
   overflow: visible;
-  animation: aeon-orb-breathe 6.5s ease-in-out infinite;
+  animation: aeon-orb-breathe 5.6s ease-in-out infinite;
   transition:
     border-color 240ms ease,
     opacity 260ms ease,
@@ -316,12 +318,14 @@ body::after {
 
 .aeon-command-orb:hover,
 .aeon-command-orb-open {
-  border-color: rgba(var(--gold), 0.34);
-  transform: translateY(-0.12rem) scale(1.012);
+  border-color: rgba(255, 255, 255, 0.24);
+  transform: translateY(-0.14rem) scale(1.018);
   box-shadow:
-    0 16px 44px rgba(0, 0, 0, 0.5),
-    0 0 32px rgba(var(--gold), 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.26);
+    0 22px 58px rgba(0, 0, 0, 0.52),
+    0 0 42px rgba(105, 195, 255, 0.28),
+    0 0 92px rgba(191, 126, 255, 0.24),
+    0 0 148px rgba(255, 168, 212, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
 }
 
 .aeon-command-orb:hover::before,
@@ -330,21 +334,25 @@ body::after {
 }
 
 .aeon-command-orb-listening {
-  border-color: rgba(var(--gold), 0.4);
+  border-color: rgba(184, 222, 255, 0.36);
   animation: aeon-orb-breathe 2.8s ease-in-out infinite;
   box-shadow:
-    0 16px 44px rgba(0, 0, 0, 0.5),
-    0 0 36px rgba(var(--gold), 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.26);
+    0 22px 60px rgba(0, 0, 0, 0.52),
+    0 0 54px rgba(105, 195, 255, 0.34),
+    0 0 106px rgba(191, 126, 255, 0.28),
+    0 0 158px rgba(255, 168, 212, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
 }
 
 .aeon-command-orb-speaking {
-  border-color: rgba(var(--gold), 0.48);
+  border-color: rgba(255, 255, 255, 0.4);
   animation: aeon-orb-breathe 1.7s ease-in-out infinite;
   box-shadow:
-    0 16px 44px rgba(0, 0, 0, 0.5),
-    0 0 42px rgba(var(--gold), 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    0 24px 64px rgba(0, 0, 0, 0.54),
+    0 0 64px rgba(105, 195, 255, 0.42),
+    0 0 122px rgba(191, 126, 255, 0.34),
+    0 0 174px rgba(255, 168, 212, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
 /* Soft outer halo — the second, larger circle. Subtle, static. */
@@ -353,10 +361,14 @@ body::after {
   content: "";
   border-radius: 999px;
   pointer-events: none;
-  inset: -0.4rem;
+  inset: -0.72rem;
   z-index: -1;
-  background: radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.16), transparent 62%);
-  opacity: 0.5;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(105, 195, 255, 0.18), transparent 54%),
+    radial-gradient(circle at 52% 48%, rgba(191, 126, 255, 0.18), transparent 64%),
+    radial-gradient(circle at 48% 54%, rgba(255, 168, 212, 0.1), transparent 72%);
+  filter: blur(4px);
+  opacity: 0.68;
   transition: opacity 240ms ease;
   animation: aeon-orb-halo 6.5s ease-in-out infinite;
 }
@@ -370,54 +382,144 @@ body::after {
   animation-duration: 620ms;
 }
 
-/* Inner gold core — the second concentric circle. Subtle, no morphing. */
+.aeon-orb-aurora {
+  position: absolute;
+  inset: 0.28rem;
+  z-index: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background:
+    conic-gradient(
+      from 12deg,
+      rgba(105, 195, 255, 0.9),
+      rgba(191, 126, 255, 0.86),
+      rgba(255, 168, 212, 0.82),
+      rgba(255, 221, 145, 0.42),
+      rgba(105, 195, 255, 0.9)
+    );
+  filter: blur(5px) saturate(135%);
+  opacity: 0.78;
+  animation: aeon-orb-aurora 7.4s ease-in-out infinite;
+}
+
+.aeon-orb-intelligence-ring {
+  position: absolute;
+  inset: 0.36rem;
+  z-index: 2;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    0 0 18px rgba(105, 195, 255, 0.08);
+  animation: aeon-orb-ring 5.8s ease-in-out infinite;
+}
+
+.aeon-orb-intelligence-ring span {
+  position: absolute;
+  width: 0.24rem;
+  height: 0.24rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 0 8px rgba(255, 255, 255, 0.36),
+    0 0 18px rgba(105, 195, 255, 0.28);
+}
+
+.aeon-orb-intelligence-ring span:nth-child(1) {
+  left: 50%;
+  top: -0.12rem;
+  transform: translateX(-50%);
+}
+
+.aeon-orb-intelligence-ring span:nth-child(2) {
+  right: 0.15rem;
+  top: 54%;
+}
+
+.aeon-orb-intelligence-ring span:nth-child(3) {
+  bottom: 0.08rem;
+  left: 32%;
+}
+
+.aeon-orb-intelligence-ring span:nth-child(4) {
+  left: 0.12rem;
+  top: 36%;
+}
+
+/* Inner intelligence core: layered color fields inside a glass aperture. */
 .aeon-command-orb-core {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.92rem;
-  height: 1.92rem;
+  width: 2.96rem;
+  height: 2.96rem;
   border-radius: 999px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  background: radial-gradient(circle at 50% 46%, rgba(22, 17, 9, 0.5), rgba(4, 4, 6, 0.8) 82%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    radial-gradient(circle at 42% 24%, rgba(255, 255, 255, 0.48), transparent 20%),
+    radial-gradient(circle at 50% 46%, rgba(28, 30, 40, 0.54), rgba(4, 4, 8, 0.9) 82%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 -10px 18px rgba(0, 0, 0, 0.4),
-    0 0 22px rgba(var(--gold), 0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    inset 0 -18px 28px rgba(0, 0, 0, 0.46),
+    0 0 22px rgba(105, 195, 255, 0.18),
+    0 0 42px rgba(191, 126, 255, 0.12);
 }
 
-/* Organic gold light pools — each drifts + pulses on its own rhythm and never
-   syncs, so the light shifts like reflections on molten gold. No rotation. */
+.aeon-orb-depth {
+  position: absolute;
+  inset: -16%;
+  border-radius: inherit;
+  background:
+    conic-gradient(
+      from 220deg,
+      rgba(3, 5, 11, 0.1),
+      rgba(105, 195, 255, 0.36),
+      rgba(191, 126, 255, 0.46),
+      rgba(255, 168, 212, 0.36),
+      rgba(8, 10, 18, 0.12)
+    );
+  filter: blur(4px);
+  animation: aeon-orb-plasma 8s ease-in-out infinite;
+}
+
+/* Organic light pools: independent rhythms so the assistant feels alive. */
 .aeon-orb-light {
   position: absolute;
-  width: 80%;
-  height: 80%;
+  width: 86%;
+  height: 86%;
   border-radius: 50%;
   filter: blur(6px);
   will-change: transform, opacity;
 }
 
 .aeon-orb-light-1 {
-  left: 6%;
-  top: 4%;
-  background: radial-gradient(circle at 50% 50%, rgba(var(--gold), 0.95), transparent 60%);
+  left: -8%;
+  top: -10%;
+  background: radial-gradient(circle at 50% 50%, rgba(105, 195, 255, 0.95), transparent 62%);
   animation: aeon-orb-drift-1 5.3s ease-in-out infinite;
 }
 
 .aeon-orb-light-2 {
-  right: 2%;
-  top: 18%;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 244, 214, 0.82), transparent 58%);
+  right: -10%;
+  top: 8%;
+  background: radial-gradient(circle at 50% 50%, rgba(191, 126, 255, 0.92), transparent 60%);
   animation: aeon-orb-drift-2 6.7s ease-in-out infinite;
 }
 
 .aeon-orb-light-3 {
-  left: 16%;
-  bottom: 0%;
-  background: radial-gradient(circle at 50% 50%, rgba(236, 196, 128, 0.88), transparent 60%);
+  left: 12%;
+  bottom: -18%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 168, 212, 0.88), transparent 62%);
   animation: aeon-orb-drift-3 4.3s ease-in-out infinite;
+}
+
+.aeon-orb-light-4 {
+  right: 8%;
+  bottom: -8%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 221, 145, 0.5), transparent 64%);
+  animation: aeon-orb-drift-4 7.1s ease-in-out infinite;
 }
 
 /* Static glass specular for premium depth. */
@@ -433,25 +535,29 @@ body::after {
 .aeon-command-orb-listening .aeon-orb-light-1 { animation-duration: 3.4s; }
 .aeon-command-orb-listening .aeon-orb-light-2 { animation-duration: 4.2s; }
 .aeon-command-orb-listening .aeon-orb-light-3 { animation-duration: 2.8s; }
+.aeon-command-orb-listening .aeon-orb-light-4 { animation-duration: 3.8s; }
 
 .aeon-command-orb-speaking .aeon-orb-light-1 { animation-duration: 1.9s; }
 .aeon-command-orb-speaking .aeon-orb-light-2 { animation-duration: 2.4s; }
 .aeon-command-orb-speaking .aeon-orb-light-3 { animation-duration: 1.6s; }
+.aeon-command-orb-speaking .aeon-orb-light-4 { animation-duration: 2.1s; }
 
 .aeon-command-orb-listening .aeon-command-orb-core {
-  border-color: rgba(var(--gold), 0.3);
+  border-color: rgba(184, 222, 255, 0.24);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.24),
     inset 0 -10px 18px rgba(0, 0, 0, 0.4),
-    0 0 28px rgba(var(--gold), 0.26);
+    0 0 28px rgba(105, 195, 255, 0.26),
+    0 0 48px rgba(191, 126, 255, 0.16);
 }
 
 .aeon-command-orb-speaking .aeon-command-orb-core {
-  border-color: rgba(var(--gold), 0.4);
+  border-color: rgba(255, 255, 255, 0.28);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.26),
     inset 0 -10px 18px rgba(0, 0, 0, 0.4),
-    0 0 34px rgba(var(--gold), 0.32);
+    0 0 34px rgba(105, 195, 255, 0.32),
+    0 0 58px rgba(191, 126, 255, 0.2);
 }
 
 .aeon-command-orb-wave {
@@ -531,6 +637,13 @@ body::after {
   40% { transform: translate(18%, -20%) scale(1.22); opacity: 1; }
   75% { transform: translate(-16%, -8%) scale(0.9); opacity: 0.76; }
   100% { transform: translate(0%, 0%) scale(0.95); opacity: 0.7; }
+}
+
+@keyframes aeon-orb-drift-4 {
+  0% { transform: translate(0%, 0%) scale(0.9); opacity: 0.46; }
+  34% { transform: translate(-18%, -18%) scale(1.2); opacity: 0.78; }
+  68% { transform: translate(12%, 10%) scale(0.82); opacity: 0.52; }
+  100% { transform: translate(0%, 0%) scale(0.9); opacity: 0.46; }
 }
 
 @keyframes aeon-orb-halo {
@@ -650,6 +763,9 @@ body::after {
   .aeon-command-orb-listening,
   .aeon-command-orb-speaking,
   .aeon-command-orb::before,
+  .aeon-orb-aurora,
+  .aeon-orb-intelligence-ring,
+  .aeon-orb-depth,
   .aeon-orb-light,
   .aeon-command-orb-wave,
   .aeon-command-orb-wave span {
