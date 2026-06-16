@@ -150,7 +150,7 @@ function HeroVisual({ restingHeartRate }: { restingHeartRate: RestingHeartRate }
       <div className="relative z-10 grid h-full w-full gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
         <div className="hero-product-copy">
           <p className="text-sm font-medium text-white/72">Health intelligence</p>
-          <h2 className="mt-4 max-w-md text-3xl font-light leading-tight text-white md:text-5xl">
+          <h2 className="mt-4 max-w-md text-3xl font-semibold leading-tight text-white md:text-5xl">
             A private model of what your body is asking for next.
           </h2>
           <p className="mt-5 max-w-md text-sm leading-7 text-white/52">
@@ -391,11 +391,11 @@ export default function HomePage() {
       <section className="aeon-home-hero px-6 pt-24 pb-20 lg:px-8">
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center text-center">
           <div className="mx-auto max-w-4xl">
-            <h1 className="text-6xl font-light leading-[0.98] text-white md:text-7xl xl:text-8xl">
+            <h1 className="text-6xl font-semibold leading-[0.98] text-white md:text-7xl xl:text-8xl">
               Aeonvera.
             </h1>
 
-            <p className="mx-auto mt-7 max-w-2xl text-2xl font-light leading-tight text-white/78 md:text-3xl">
+            <p className="mx-auto mt-7 max-w-2xl text-2xl font-semibold leading-tight text-white/78 md:text-3xl">
               Private intelligence for your body.
             </p>
 
@@ -430,7 +430,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <h2 className="mt-4 max-w-3xl text-3xl font-light leading-tight md:text-5xl">
+              <h2 className="mt-4 max-w-3xl text-3xl font-semibold leading-tight md:text-5xl">
                 Every signal becomes part of the same intelligence layer.
               </h2>
             </div>
@@ -446,7 +446,7 @@ export default function HomePage() {
               return (
                 <div key={item.title} className="apple-feature-tile rounded-lg p-6">
                   <Icon size={20} className="royal-text" />
-                  <h3 className="mt-8 text-lg font-light text-white">{item.title}</h3>
+                  <h3 className="mt-8 text-lg font-semibold text-white">{item.title}</h3>
                   <p className="mt-3 text-sm leading-6 text-white/52">{item.body}</p>
                 </div>
               );
@@ -493,7 +493,7 @@ export default function HomePage() {
                   />
                 </svg>
               </div>
-              <h2 className="max-w-xl text-3xl font-light leading-tight md:text-5xl">
+              <h2 className="max-w-xl text-3xl font-semibold leading-tight md:text-5xl">
                 A healthspan dashboard that stays out of your way.
               </h2>
               <p className="mt-5 max-w-xl text-base leading-7 text-white/55">
@@ -505,7 +505,7 @@ export default function HomePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               {METRICS.map(([value, label]) => (
                 <div key={label} className="rounded-lg bg-white/[0.055] p-5 transition duration-300 hover:bg-white/[0.08]">
-                  <p className="text-4xl font-light leading-none text-white">{value}</p>
+                  <p className="text-4xl font-semibold leading-none text-white">{value}</p>
                   <p className="mt-3 text-sm text-white/50">{label}</p>
                 </div>
               ))}
@@ -519,7 +519,7 @@ export default function HomePage() {
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
               <p className="text-eyebrow">Coverage</p>
-              <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
+              <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
                 One model across the domains that shape healthspan.
               </h2>
             </div>
@@ -538,7 +538,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 max-w-3xl">
             <p className="text-eyebrow">Platform</p>
-            <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
+            <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
               From signal to protocol to execution.
             </h2>
           </div>
@@ -547,7 +547,7 @@ export default function HomePage() {
             {CAPABILITIES.map((item) => (
               <div key={item.title} className="premium-surface rounded-lg p-7">
                 <Dna size={24} className="mb-8 text-[rgb(var(--royal))]" />
-                <h3 className="text-xl font-light text-white">{item.title}</h3>
+                <h3 className="text-xl font-semibold text-white">{item.title}</h3>
                 <p className="mt-4 text-sm leading-7 text-white/55">{item.body}</p>
               </div>
             ))}
@@ -560,7 +560,7 @@ export default function HomePage() {
           <div className="mb-14 grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
             <div>
               <p className="text-eyebrow">Intelligence Loop</p>
-              <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
+              <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
                 The system gets sharper as your life produces signal.
               </h2>
             </div>
@@ -577,7 +577,7 @@ export default function HomePage() {
           <div className="grid gap-10 lg:grid-cols-2">
             <div>
               <p className="text-eyebrow">Workflow</p>
-              <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
+              <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
                 Built for progress you can actually live.
               </h2>
             </div>
@@ -586,7 +586,7 @@ export default function HomePage() {
                 <div key={title} className="grid gap-4 border-b border-white/[0.08] pb-6 sm:grid-cols-[72px_1fr]">
                   <p className="text-sm text-white/35">{String(index + 1).padStart(2, "0")}</p>
                   <div>
-                    <h3 className="text-xl font-light text-white">{title}</h3>
+                    <h3 className="text-xl font-semibold text-white">{title}</h3>
                     <p className="mt-2 text-sm leading-7 text-white/55">{body}</p>
                   </div>
                 </div>
@@ -601,8 +601,8 @@ export default function HomePage() {
           <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
             <div>
               <p className="text-eyebrow">Membership</p>
-              <h2 className="mt-4 text-3xl font-light leading-tight md:text-5xl">
-                Choose how much intelligence you want Aeonvera to run.
+              <h2 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
+                Choose how much Aeonvera runs for you.
               </h2>
             </div>
             <Link href="/pricing" className="inline-flex items-center gap-2 text-sm font-medium royal-text">
@@ -625,7 +625,7 @@ export default function HomePage() {
                     : ""
                 }`}
               >
-                <h3 className="text-xl font-light">{plan.name}</h3>
+                <h3 className="text-xl font-semibold">{plan.name}</h3>
                 {activePlan && plan.id === activePlan ? (
                   <div className="mt-6">
                     <p className="text-[10px] uppercase tracking-[0.14em] royal-text">
@@ -636,7 +636,7 @@ export default function HomePage() {
                     </p>
                   </div>
                 ) : (
-                  <p className="mt-6 text-4xl font-light">{plan.price}</p>
+                  <p className="mt-6 text-4xl font-semibold">{plan.price}</p>
                 )}
                 <p className="mt-4 text-sm leading-7 text-white/55">{plan.body}</p>
                 <div className="mt-8 flex items-center gap-2 text-sm text-white/60">
@@ -655,7 +655,7 @@ export default function HomePage() {
 
       <section className="border-t border-white/[0.06] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl font-light leading-tight md:text-6xl">
+          <h2 className="text-4xl font-semibold leading-tight md:text-6xl">
             Start with the number. Build the operating system.
           </h2>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-white/55">

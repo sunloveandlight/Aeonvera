@@ -123,7 +123,7 @@ export default function SuccessPage() {
           AEONVERA
         </p>
 
-        <h1 className="mb-6 text-5xl font-light tracking-tight">Subscription Activated</h1>
+        <h1 className="mb-6 text-5xl font-semibold tracking-tight">Subscription Activated</h1>
 
         <div className="mb-8 flex justify-center">
           <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-[rgb(var(--gold))]" />

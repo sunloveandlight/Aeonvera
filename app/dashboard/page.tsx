@@ -873,7 +873,7 @@ export default function DashboardPage() {
               <p className="micro-label mb-5">
                 {currentTime.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               </p>
-              <h1 className="text-5xl md:text-6xl font-light tracking-tight text-white/90 leading-tight">
+              <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-white/90 leading-tight">
                 {greeting},
                 <br />
                 <span className="text-white/50">
@@ -943,7 +943,7 @@ export default function DashboardPage() {
                     <div>
                       <p className="micro-label mb-2">Biological</p>
                       <div className="flex items-baseline gap-3">
-                        <p className={`metric-display text-7xl md:text-8xl font-light tracking-tight leading-none ${bioAgeColor}`}>
+                        <p className={`metric-display text-7xl md:text-8xl font-semibold tracking-tight leading-none ${bioAgeColor}`}>
                           {bioAge}
                         </p>
                         <span className="text-2xl font-light leading-none text-white/24">yrs</span>
@@ -953,7 +953,7 @@ export default function DashboardPage() {
                       <div className="min-w-[8rem] border-l border-white/[0.07] pl-5">
                         <p className="micro-label mb-2">Chronological</p>
                         <div className="flex items-baseline gap-2">
-                          <p className="text-3xl font-light leading-none text-white/58">{assessmentAge}</p>
+                          <p className="text-3xl font-semibold leading-none text-white/58">{assessmentAge}</p>
                           <span className="text-sm leading-none text-white/24">yrs</span>
                         </div>
                       </div>
@@ -1014,13 +1014,13 @@ export default function DashboardPage() {
 
           {/* RISK + INTELLIGENCE CARD */}
           <Card
-            title="INTELLIGENCE REPORT"
+            title="Your report"
             className="min-h-[340px]"
             actionLabel={
               report
-                ? "Open intelligence report"
+                ? "Open your report"
                 : hasAssessment
-                ? "Generate intelligence report"
+                ? "Generate your report"
                 : "Start assessment"
             }
             onClick={() => {
@@ -1040,7 +1040,7 @@ export default function DashboardPage() {
             {report ? (
               <div className="flex h-full flex-col">
                 <div className="dashboard-hero-metric-block flex items-end gap-3">
-                  <p className="metric-display text-6xl font-light tracking-tight leading-none text-white/86">
+                  <p className="metric-display text-6xl font-semibold tracking-tight leading-none text-white/86">
                     {report.risk_score}
                     <span className="text-white/15 text-2xl ml-2">/ 100</span>
                   </p>
@@ -1084,8 +1084,8 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 <p className="text-white/25 text-sm leading-relaxed">
                   {hasAssessment
-                    ? "Your assessment is complete. Generate your first intelligence report."
-                    : "Complete your assessment to unlock AI intelligence reports."}
+                    ? "Your assessment is complete. Generate your first report."
+                    : "Complete your assessment to unlock your report."}
                 </p>
                 {hasAssessment ? (
                   <button
@@ -1096,7 +1096,7 @@ export default function DashboardPage() {
                     disabled={generatingReport}
                     className="premium-action inline-flex h-9 items-center justify-center px-6 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em] disabled:opacity-30"
                   >
-                    {generatingReport ? "Generating..." : "Generate Intelligence Report"}
+                    {generatingReport ? "Generating..." : "Generate your report"}
                   </button>
                 ) : (
                   <Button href="/assessment">Start Assessment</Button>
@@ -1163,7 +1163,7 @@ export default function DashboardPage() {
           className="group flex w-full items-center justify-between gap-4 rounded-lg border border-white/[0.08] bg-white/[0.025] px-5 py-4 text-left transition hover:border-white/[0.14] hover:bg-white/[0.04]"
         >
           <div>
-            <p className="text-sm font-light text-white/76">Advanced health console</p>
+            <p className="text-sm font-light text-white/76">More detail</p>
             <p className="mt-1 text-xs leading-5 text-white/38">
               Labs, wearables, simulations, notification delivery, and detailed protocol tools.
             </p>
@@ -1250,7 +1250,7 @@ export default function DashboardPage() {
         ═══════════════════════════════════════ */}
         <div>
           <p className="micro-label mb-4">
-            Active Intelligence Alerts
+            Alerts
           </p>
           {intelligenceItems.length > 0 ? (
             <div className="space-y-3">
@@ -1454,7 +1454,7 @@ function buildTodayPrimaryAction({
 
   if (!bioAge || !report) {
     return {
-      body: "Your assessment is ready. Generate the intelligence report to activate your biological age and first health plan.",
+      body: "Your assessment is ready. Generate your report to activate your biological age and first health plan.",
       href: "/report",
       label: "Generate report",
       title: "Activate intelligence",
@@ -1512,7 +1512,7 @@ function BioAgeSimulationPanel({
             <div>
               <p className="micro-label mb-5">Highest Leverage Scenario</p>
               <div className="flex items-end gap-3">
-                <p className="metric-display text-5xl font-light leading-none royal-text">
+                <p className="metric-display text-5xl font-semibold leading-none royal-text">
                   {formatYears(topSimulation.projectedAgeDeltaImprovement)}
                 </p>
                 <p className="mb-1 text-xs uppercase tracking-[0.14em] text-white/25">
@@ -1604,7 +1604,7 @@ function ImprovementLoopPanel({
   return (
     <Card
       title="BIOLOGICAL AGE IMPROVEMENT LOOP"
-      actionLabel={hasAssessment ? "Prepare phase 5" : "Start assessment"}
+      actionLabel={hasAssessment ? "Take the next step" : "Start assessment"}
       onClick={action}
     >
       {hasAssessment && loop ? (
@@ -1612,7 +1612,7 @@ function ImprovementLoopPanel({
           <div className="flex flex-col justify-between rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
             <div>
               <div className="mb-4 flex items-center justify-between gap-3">
-                <p className="micro-label">Phase 4 Status</p>
+                <p className="micro-label">Next step</p>
                 <span className={improvementStatusClassName(loop.status)}>
                   {loop.status}
                 </span>
@@ -1629,7 +1629,7 @@ function ImprovementLoopPanel({
               {[
                 ["Tracked", `${loop.daysTracked}d`],
                 ["30d pace", loop.pacePer30Days == null ? "new" : `${loop.pacePer30Days > 0 ? "+" : ""}${loop.pacePer30Days}`],
-                ["Phase 5", loop.phase5Ready ? "ready" : "building"],
+                ["Next step", loop.phase5Ready ? "ready" : "building"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
                   <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">{label}</p>
@@ -1676,7 +1676,7 @@ function ImprovementLoopPanel({
         </div>
       ) : (
         <p className="text-sm leading-7 text-white/38">
-          Generate biological age history, import labs, and build an optimization protocol to close Phase 4.
+          Generate biological age history, import labs, and build an optimization protocol to take the next step.
         </p>
       )}
     </Card>
@@ -1815,7 +1815,7 @@ function LabImportPanel({
             </div>
           ) : (
             <p className="text-sm leading-7 text-white/38">
-              Waiting for albumin, creatinine, glucose, hsCRP, lymphocytes, MCV, RDW, alkaline phosphatase, and WBC.
+              Waiting for your lab results.
             </p>
           )}
         </div>

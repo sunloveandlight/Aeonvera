@@ -379,7 +379,7 @@ export default function DataSourcesPage() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="micro-label">Data Sources</p>
-              <h1 className="mt-5 max-w-4xl text-4xl font-light leading-tight text-white md:text-6xl">
+              <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-tight text-white md:text-6xl">
                 Your health intelligence starts with clean signal.
               </h1>
               <p className="mt-5 max-w-3xl text-sm leading-7 text-white/52">
@@ -552,7 +552,7 @@ function SignalMetric({ label, value, detail }: { label: string; value: string; 
     <div className="executive-panel flex min-h-[10rem] flex-col rounded-lg p-5">
       <p className="micro-label">{label}</p>
       <div className="mt-auto pt-5">
-        <p className="tabular-nums text-3xl font-light leading-none text-white">{value}</p>
+        <p className="tabular-nums text-3xl font-semibold leading-none text-white">{value}</p>
         <p className="mt-3 min-h-10 text-xs leading-5 text-white/42">{detail}</p>
       </div>
     </div>
@@ -569,7 +569,7 @@ function SourceIntelligencePanel({
       <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
         <div>
           <p className="micro-label">Source Intelligence</p>
-          <h2 className="mt-3 text-2xl font-light leading-tight text-white">
+          <h2 className="mt-3 text-2xl font-semibold leading-tight text-white">
             {intelligence.headline}
           </h2>
           <p className="mt-4 text-sm leading-7 text-white/48">
@@ -640,7 +640,7 @@ function SourceCard({
         </div>
         <span className={statusClassName(status)}>{statusLabel(status)}</span>
       </div>
-      <h2 className="mt-5 text-2xl font-light text-white">{title}</h2>
+      <h2 className="mt-5 text-2xl font-semibold text-white">{title}</h2>
       <p className="mt-3 flex-1 text-sm leading-7 text-white/48">{detail}</p>
       {href ? (
         <span className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.78)]">
@@ -698,7 +698,7 @@ function ImportPanel({
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="micro-label">{label}</p>
-          <h2 className="mt-3 text-2xl font-light text-white">Upload or paste data.</h2>
+          <h2 className="mt-3 text-2xl font-semibold text-white">Upload or paste data.</h2>
         </div>
         <div className="inline-flex size-10 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.035] text-[rgba(var(--gold),0.85)]">
           {icon}

@@ -327,7 +327,7 @@ export default function PricingPage() {
           {activePlan && ownedCopy && activePlanDetails ? (
             <div className="mx-auto max-w-4xl text-center">
               <p className="text-eyebrow">Membership</p>
-              <h1 className="mt-5 text-4xl font-light leading-tight text-white md:text-6xl">
+              <h1 className="mt-5 text-4xl font-semibold leading-tight text-white md:text-6xl">
                 Your {activePlanDetails.name} plan is active.
               </h1>
               <Text
@@ -343,8 +343,8 @@ export default function PricingPage() {
               <p className="text-[10px] uppercase tracking-[0.14em] text-white/25 mb-6">
                 Pricing
               </p>
-              <h1 className="pricing-hero-title font-light tracking-tight text-white/90">
-                Choose the right level of longevity intelligence.
+              <h1 className="pricing-hero-title font-semibold tracking-tight text-white/90">
+                Choose the right level of longevity insight.
               </h1>
               <Text
                 variant="secondary"
@@ -378,7 +378,7 @@ export default function PricingPage() {
                     <ShieldCheck size={22} />
                   </div>
                   <p className="micro-label">Current plan</p>
-                  <h2 className="membership-card-title text-3xl font-light text-white md:text-4xl">
+                  <h2 className="membership-card-title text-3xl font-semibold text-white md:text-4xl">
                     {ownedCopy.title}
                   </h2>
                   <p className="mt-5 max-w-2xl text-sm leading-7 text-white/55">
@@ -432,7 +432,7 @@ export default function PricingPage() {
                             ? "Executive upgrade"
                             : "Optimization upgrade"}
                       </p>
-                      <h2 className="membership-card-title text-3xl font-light text-white md:text-4xl">
+                      <h2 className="membership-card-title text-3xl font-semibold text-white md:text-4xl">
                         {planOption.name}
                       </h2>
                     </div>

@@ -136,7 +136,7 @@ export default function MemoryPage() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="micro-label">Agent Memory</p>
-              <h1 className="mt-5 max-w-4xl text-4xl font-light leading-tight text-white md:text-6xl">
+              <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-tight text-white md:text-6xl">
                 What Aeonvera is learning about you.
               </h1>
               <p className="mt-5 max-w-3xl text-sm leading-7 text-white/52">
@@ -167,7 +167,7 @@ export default function MemoryPage() {
               <p className="micro-label">Private Coaching Model</p>
               <Brain size={18} className="royal-text" />
             </div>
-            <h2 className="text-2xl font-light leading-tight text-white/88">
+            <h2 className="text-2xl font-semibold leading-tight text-white/88">
               {memory?.morningBrief ||
                 "Aeonvera is still building the shape of your coaching model."}
             </h2>

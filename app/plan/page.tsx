@@ -148,7 +148,7 @@ export default function PlanPage() {
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                 <div>
                   <p className="micro-label">Your Plan</p>
-                  <h1 className="mt-4 text-4xl font-light leading-tight text-white md:text-5xl">
+                  <h1 className="mt-4 text-4xl font-semibold leading-tight text-white md:text-5xl">
                     {usageLimits?.plan ? `${titleCase(usageLimits.plan)} intelligence` : "Membership inactive"}
                   </h1>
                   <p className="mt-4 max-w-2xl text-sm leading-7 text-white/52">
@@ -190,7 +190,7 @@ export default function PlanPage() {
               {(usageLimits?.usage || []).map((item) => (
                 <div key={item.meter} className="executive-panel rounded-lg p-5">
                   <p className="micro-label">{usageMeterLabel(item.meter)}</p>
-                  <p className="mt-4 text-3xl font-light text-white">
+                  <p className="mt-4 text-3xl font-semibold text-white">
                     {item.limit <= 0 ? "Locked" : item.remaining.toLocaleString()}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-white/45">

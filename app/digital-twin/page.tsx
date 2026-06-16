@@ -507,7 +507,7 @@ export default function DigitalTwinPage() {
         <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="micro-label mb-5">Digital Twin</p>
-            <h1 className="max-w-4xl text-5xl font-light leading-[1.04] text-white md:text-6xl">
+            <h1 className="max-w-4xl text-5xl font-semibold leading-[1.04] text-white md:text-6xl">
               A living model of your healthspan.
             </h1>
             <p className="mt-6 max-w-2xl text-sm leading-7 text-white/50">
@@ -698,7 +698,7 @@ export default function DigitalTwinPage() {
                 <div className="mb-5 flex flex-col gap-5 border-b border-white/[0.06] pb-5">
                   <div>
                     <p className="micro-label">Recent Signals</p>
-                    <h2 className="mt-3 text-2xl font-light text-white md:text-3xl">
+                    <h2 className="mt-3 text-2xl font-semibold text-white md:text-3xl">
                       The changes worth noticing.
                     </h2>
                     <p className="mt-3 max-w-xl text-sm leading-6 text-white/42">
@@ -778,7 +778,7 @@ function DigitalTwinIntelligencePanel({
         <div className="mb-6 flex flex-col gap-4 border-b border-white/[0.06] pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="micro-label">Twin Intelligence</p>
-            <h2 className="mt-3 text-3xl font-light text-white">
+            <h2 className="mt-3 text-3xl font-semibold text-white">
               {intelligence.modelState} model.
             </h2>
           </div>
@@ -804,7 +804,7 @@ function DigitalTwinIntelligencePanel({
           <p className="micro-label">Next Best Move</p>
           <ArrowRight size={17} className="royal-text" />
         </div>
-        <h3 className="text-3xl font-light leading-tight text-white">
+        <h3 className="text-3xl font-semibold leading-tight text-white">
           {intelligence.nextMove.title}
         </h3>
         <p className="mt-5 text-sm leading-7 text-white/48">
@@ -821,7 +821,7 @@ function DigitalTwinAuditPanel({ audit }: { audit: TwinAudit }) {
       <div className="mb-6 flex flex-col gap-4 border-b border-white/[0.06] pb-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="micro-label">Model Audit</p>
-          <h2 className="mt-3 text-3xl font-light text-white">
+          <h2 className="mt-3 text-3xl font-semibold text-white">
             What the twin trusts right now.
           </h2>
         </div>
@@ -832,7 +832,7 @@ function DigitalTwinAuditPanel({ audit }: { audit: TwinAudit }) {
 
       <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
-          <p className="micro-label">Why Aeonvera recommends this</p>
+          <p className="micro-label">Recommendation reason</p>
           <p className="mt-4 text-sm leading-7 text-white/62">
             {audit.recommendationReason}
           </p>
@@ -941,7 +941,7 @@ function LivingTwinModelPanel({
         <div className="mb-6 flex flex-col gap-4 border-b border-white/[0.06] pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="micro-label">Living Twin Map</p>
-            <h2 className="mt-3 text-3xl font-light text-white">
+            <h2 className="mt-3 text-3xl font-semibold text-white">
               {model.readiness.status}.
             </h2>
           </div>
@@ -984,8 +984,8 @@ function LivingTwinModelPanel({
 
       <div className="executive-panel rounded-lg p-6 md:p-7">
         <div className="mb-6 border-b border-white/[0.06] pb-5">
-          <p className="micro-label">Scenario Intelligence</p>
-          <h2 className="mt-3 text-3xl font-light text-white">
+          <p className="micro-label">Scenarios</p>
+          <h2 className="mt-3 text-3xl font-semibold text-white">
             Ask what your future self becomes.
           </h2>
         </div>
@@ -1075,7 +1075,7 @@ function LivingTwinModelPanel({
                     suffix="years"
                   />
                   <ProjectionMetric
-                    label="Twin score"
+                    label="Twin match"
                     value={String(projectionResult.projection.score)}
                     suffix="score"
                   />

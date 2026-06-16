@@ -532,8 +532,8 @@ export default function OptimizationPage() {
         <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="micro-label mb-5">Optimization</p>
-            <h1 className="max-w-4xl text-5xl font-light leading-[1.04] text-white md:text-6xl">
-              Build the operating system for your healthspan.
+            <h1 className="max-w-4xl text-5xl font-semibold leading-[1.04] text-white md:text-6xl">
+              Build your health, understood.
             </h1>
             <p className="mt-6 max-w-2xl text-sm leading-7 text-white/50">
               Aeonvera asks across the major human performance domains, then
@@ -598,7 +598,7 @@ export default function OptimizationPage() {
             <div className="mb-6 flex items-center justify-between gap-4 border-b border-white/[0.06] pb-5">
               <div>
                 <p className="micro-label">{question.domain}</p>
-                <h2 className="mt-3 text-3xl font-light text-white md:text-4xl">
+                <h2 className="mt-3 text-3xl font-semibold text-white md:text-4xl">
                   {complete ? "Optimization map" : question.prompt}
                 </h2>
               </div>
@@ -707,7 +707,7 @@ export default function OptimizationPage() {
                       </div>
                       <p className="mb-3 text-xs leading-5 text-white/42">{item.action}</p>
                       <p className="mb-3 text-[11px] leading-5 text-[rgba(var(--gold),0.7)]">
-                        Why Aeonvera recommends this: {item.why}
+                        {item.why}
                       </p>
                       <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
                         <div
@@ -774,7 +774,7 @@ export default function OptimizationPage() {
             <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="micro-label">Biological age levers</p>
-                <h2 className="mt-3 text-3xl font-light text-white">
+                <h2 className="mt-3 text-3xl font-semibold text-white">
                   Highest-impact changes from your current baseline.
                 </h2>
               </div>
@@ -855,7 +855,7 @@ export default function OptimizationPage() {
             <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="micro-label">Future self simulator</p>
-                <h2 className="mt-3 text-3xl font-light text-white">
+                <h2 className="mt-3 text-3xl font-semibold text-white">
                   Adjust the levers and project the biological-age shift.
                 </h2>
               </div>
@@ -900,7 +900,7 @@ export default function OptimizationPage() {
                 {simulatorProjection ? (
                   <>
                     <div className="flex items-end gap-3">
-                      <p className="text-6xl font-light leading-none text-white/88">
+                      <p className="text-6xl font-semibold leading-none text-white/88">
                         {simulatorProjection.biologicalAge}
                       </p>
                       <p className="mb-1 text-sm uppercase tracking-[0.14em] text-white/24">
@@ -1006,7 +1006,7 @@ function FutureSelfComparisonPanel({
       <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="micro-label">Future self simulator</p>
-          <h2 className="mt-3 text-3xl font-light text-white">
+          <h2 className="mt-3 text-3xl font-semibold text-white">
             Current trajectory versus optimized trajectory.
           </h2>
         </div>
@@ -1020,7 +1020,7 @@ function FutureSelfComparisonPanel({
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm text-white/52">Projected separation</p>
-              <p className="mt-2 text-3xl font-light leading-none royal-text">
+              <p className="mt-2 text-3xl font-semibold leading-none royal-text">
                 {finalPoint?.gap?.toFixed(1) || "0.0"} yrs
               </p>
             </div>
@@ -1150,7 +1150,7 @@ function ScenarioStackPanel({
       <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="micro-label">Scenario stack</p>
-          <h2 className="mt-3 text-3xl font-light text-white">
+          <h2 className="mt-3 text-3xl font-semibold text-white">
             Combine changes and compare the future.
           </h2>
         </div>
@@ -1226,7 +1226,7 @@ function SavedFutureSelfScenariosPanel({
       <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="micro-label">Saved Future Selves</p>
-          <h2 className="mt-3 text-3xl font-light text-white">
+          <h2 className="mt-3 text-3xl font-semibold text-white">
             Reopen or share your strongest scenarios.
           </h2>
         </div>

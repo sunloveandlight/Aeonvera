@@ -2227,6 +2227,13 @@ button.membership-upgrade-card {
   color: var(--text-1);
 }
 
+.renewal-placeholder {
+  background:
+    radial-gradient(circle at 34% 28%, rgba(var(--gold), 0.24), transparent 56%),
+    radial-gradient(circle at 72% 74%, rgba(116, 156, 255, 0.14), transparent 56%),
+    var(--panel-2);
+}
+
 .dashboard-hero-metric-block {
   min-height: 7.75rem;
   padding-bottom: 1.25rem;
@@ -2354,6 +2361,24 @@ input[type="number"]::-webkit-inner-spin-button {
    BLACK / SILVER / GOLD COMPATIBILITY
    Keeps older utility-heavy pages in the same elite dark system.
 ===================================================== */
+
+/* Catch-all fallbacks: ANY white/black opacity utility themes correctly,
+   even values not listed in the specific buckets below (which refine them). */
+[class*="text-white/"] {
+  color: var(--text-2) !important;
+}
+
+[class*="border-white/"] {
+  border-color: var(--hairline) !important;
+}
+
+[class*="bg-white/"] {
+  background-color: var(--glass-fill) !important;
+}
+
+[class*="bg-black/"] {
+  background-color: var(--glass-fill-2) !important;
+}
 
 .text-white,
 .text-white\/90,

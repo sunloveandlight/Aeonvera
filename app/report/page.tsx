@@ -277,7 +277,7 @@ export default function ReportPage() {
 
         if (!reportRes.data) setError("No report found. Complete your assessment first.");
       } catch {
-        setError("Failed to load intelligence report.");
+        setError("Failed to load your report.");
       } finally {
         setLoading(false);
       }
@@ -311,7 +311,7 @@ export default function ReportPage() {
           <div className="absolute inset-0 rounded-full border-t royal-border animate-spin" />
         </div>
         <p className="text-white/20 text-[10px] tracking-[0.14em] uppercase">
-          Loading Intelligence Report
+          Loading your report
         </p>
       </div>
     );
@@ -356,12 +356,12 @@ export default function ReportPage() {
         ═══════════════════════════════════════ */}
         <div className="pb-10 border-b border-white/[0.04]">
           <p className="text-[10px] tracking-[0.14em] text-white/15 uppercase mb-6">
-            Aeonvera — Biological Intelligence Report
+            Aeonvera — Your report
           </p>
 
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-5xl md:text-6xl font-light tracking-tight text-white/90 leading-tight">
+              <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-white/90 leading-tight">
                 {profile?.display_name ? `${profile.display_name}'s` : "Your"}
                 <br />
                 <span className="text-white/30">Biological Profile</span>
@@ -420,7 +420,7 @@ export default function ReportPage() {
                     <div>
                       <p className="micro-label mb-2">Biological</p>
                       <div className="flex items-baseline gap-3">
-                        <p className={`text-6xl font-light tracking-tight leading-none ${bioAgeColor}`}>
+                        <p className={`text-6xl font-semibold tracking-tight leading-none ${bioAgeColor}`}>
                           {bioAge}
                         </p>
                         <span className="text-2xl font-light leading-none text-white/24">yrs</span>
@@ -430,7 +430,7 @@ export default function ReportPage() {
                       <div className="min-w-[7rem] border-l border-white/[0.07] pl-5">
                         <p className="micro-label mb-2">Chronological</p>
                         <div className="flex items-baseline gap-2">
-                          <p className="text-3xl font-light leading-none text-white/58">{chronologicalAge}</p>
+                          <p className="text-3xl font-semibold leading-none text-white/58">{chronologicalAge}</p>
                           <span className="text-sm leading-none text-white/24">yrs</span>
                         </div>
                       </div>
@@ -469,7 +469,7 @@ export default function ReportPage() {
           {/* RISK SCORE */}
           <Card title="RISK INDEX">
             <div className="pt-2">
-              <p className={`text-6xl md:text-6xl font-light tracking-tight leading-none mb-4 ${riskColor}`}>
+              <p className={`text-6xl md:text-6xl font-semibold tracking-tight leading-none mb-4 ${riskColor}`}>
                 {report.risk_score}
                 <span className="text-white/20 text-3xl ml-2">/ 100</span>
               </p>
@@ -511,7 +511,7 @@ export default function ReportPage() {
             PRIMARY OBJECTIVE
         ═══════════════════════════════════════ */}
         <Card title="PRIMARY OBJECTIVE">
-          <p className="text-2xl md:text-3xl font-light text-white/80 leading-relaxed">
+          <p className="text-2xl md:text-3xl font-semibold text-white/80 leading-relaxed">
             {report.primary_goal}
           </p>
         </Card>
@@ -730,7 +730,7 @@ function BioAgeHistoryCard({
         <div>
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-4xl font-light leading-none text-white/86">
+              <p className="text-4xl font-semibold leading-none text-white/86">
                 {latest.biological}
                 <span className="ml-2 text-xl text-white/22">yrs</span>
               </p>
@@ -836,7 +836,7 @@ function BioAgeSimulationCard({
           <div className="mb-5 rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
             <p className="micro-label mb-4">{topSimulation.domain}</p>
             <div className="flex items-end gap-3">
-              <p className="text-5xl font-light leading-none royal-text">
+              <p className="text-5xl font-semibold leading-none royal-text">
                 {topSimulation.projectedAgeDeltaImprovement.toFixed(1)}
               </p>
               <p className="mb-1 text-xs uppercase tracking-[0.14em] text-white/24">
@@ -889,7 +889,7 @@ function ImprovementLoopCard({
         <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <p className="micro-label">Phase 4 Completion</p>
+              <p className="micro-label">Next step</p>
               <span className={improvementStatusClassName(loop.status)}>
                 {loop.status}
               </span>
@@ -902,8 +902,8 @@ function ImprovementLoopCard({
             </p>
             <div className="mt-6 grid grid-cols-3 gap-2">
               {[
-                ["Phase 4", loop.phase4Complete ? "closed" : "building"],
-                ["Phase 5", loop.phase5Ready ? "ready" : "building"],
+                ["Step 1", loop.phase4Complete ? "closed" : "building"],
+                ["Next step", loop.phase5Ready ? "ready" : "building"],
                 ["90d pace", loop.projected90DayChange == null ? "new" : `${loop.projected90DayChange > 0 ? "+" : ""}${loop.projected90DayChange}`],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">

@@ -727,8 +727,8 @@ export default function CompanionPage() {
         <div className="mb-9 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="micro-label mb-5">Mobile Companion</p>
-            <h1 className="max-w-4xl text-5xl font-light leading-[1.04] text-white md:text-6xl">
-              Today&apos;s healthspan operating view.
+            <h1 className="max-w-4xl text-5xl font-semibold leading-[1.04] text-white md:text-6xl">
+              Today
             </h1>
           </div>
           <Link
@@ -754,7 +754,7 @@ export default function CompanionPage() {
             points={[
               "Daily focus and coach inbox",
               "Protocol execution and reminders",
-              "Personal health agent",
+              "Ask Aeonvera",
             ]}
             actions={[
               { href: "/login?mode=signin", label: "Sign in" },
@@ -777,7 +777,7 @@ export default function CompanionPage() {
                   <p className="micro-label">Today</p>
                   <Sparkles size={18} className="royal-text" />
                 </div>
-                <h2 className="text-3xl font-light leading-tight text-white">
+                <h2 className="text-3xl font-semibold leading-tight text-white">
                   {dailyBrief?.title ||
                     twin?.intelligence?.nextMove.title ||
                     "Run your next protocol"}
@@ -802,7 +802,7 @@ export default function CompanionPage() {
                   <Dna size={18} className="royal-text" />
                 </div>
                 <div className="flex items-end gap-3">
-                  <p className="text-5xl font-light leading-none text-white">
+                  <p className="text-5xl font-semibold leading-none text-white">
                     {twin?.intelligence?.confidence || 0}
                   </p>
                   <p className="mb-1 text-xs uppercase tracking-[0.14em] text-white/28">
@@ -1010,11 +1010,10 @@ function ProtocolActionsCalendarPanel({
                       </span>
                     )}
                   </div>
-                  <h3 className="text-lg font-light leading-snug text-white/86">
+                  <h3 className="text-lg font-semibold leading-snug text-white/86">
                     {action.action || "Protocol action"}
                   </h3>
                   <p className="mt-3 text-sm leading-6 text-white/42">
-                    Why Aeonvera recommends this:{" "}
                     {action.why || "it is the next calendar-ready action for this protocol."}
                   </p>
                 </div>
@@ -1096,7 +1095,7 @@ function ExecutionScorePanel({ execution }: { execution: ExecutionSummary | null
       <div className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
         <div>
           <div className="flex items-end gap-3">
-            <p className="text-6xl font-light leading-none text-white">{score}</p>
+            <p className="text-6xl font-semibold leading-none text-white">{score}</p>
             <p className="mb-2 text-xs uppercase tracking-[0.14em] text-white/28">
               score
             </p>
@@ -1106,7 +1105,7 @@ function ExecutionScorePanel({ execution }: { execution: ExecutionSummary | null
           </p>
         </div>
         <div>
-          <h3 className="text-2xl font-light leading-tight text-white/88">
+          <h3 className="text-2xl font-semibold leading-tight text-white/88">
             {execution?.headline ||
               "Execution score appears after protocol actions are completed, skipped, or scheduled."}
           </h3>
@@ -1155,8 +1154,8 @@ function PersonalHealthAgentPanel({
     <div className="executive-panel rounded-lg p-6 md:p-7">
       <div className="mb-6 flex items-center justify-between gap-3">
         <div>
-          <p className="micro-label">Personal Health Agent</p>
-          <h2 className="mt-3 text-3xl font-light leading-tight text-white">
+          <p className="micro-label">Ask Aeonvera</p>
+          <h2 className="mt-3 text-3xl font-semibold leading-tight text-white">
             Ask Aeonvera why.
           </h2>
         </div>
@@ -1275,8 +1274,8 @@ function TierUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | nul
     <div className="executive-panel rounded-lg p-5 md:p-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="micro-label">Tier Intelligence</p>
-          <h2 className="mt-3 text-2xl font-light leading-tight text-white">
+          <p className="micro-label">Your plan</p>
+          <h2 className="mt-3 text-2xl font-semibold leading-tight text-white">
             {usageLimits.plan ? `${titleCase(usageLimits.plan)} limits` : "Membership limits"}
           </h2>
         </div>
@@ -1391,7 +1390,7 @@ function AdvancedModalitiesPanel({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="micro-label">Advanced Longevity Modalities</p>
-          <h2 className="mt-3 max-w-2xl text-3xl font-light leading-tight text-white">
+          <h2 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight text-white">
             Protocols ranked by fit, evidence, and tier.
           </h2>
         </div>
@@ -1427,7 +1426,7 @@ function AdvancedModalitiesPanel({
                 <p className="text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.7)]">
                   {titleCase(modality.category)} / {titleCase(modality.evidenceGrade)}
                 </p>
-                <h3 className="mt-3 text-xl font-light leading-tight text-white/88">
+                <h3 className="mt-3 text-xl font-semibold leading-tight text-white/88">
                   {modality.name}
                 </h3>
               </div>
@@ -1443,7 +1442,7 @@ function AdvancedModalitiesPanel({
             </div>
 
             <div className="mt-5 flex items-end gap-2">
-              <p className="text-4xl font-light leading-none text-white/90">
+              <p className="text-4xl font-semibold leading-none text-white/90">
                 {modality.fitScore}
               </p>
               <p className="mb-1 text-[9px] uppercase tracking-[0.14em] text-white/30">
@@ -1451,7 +1450,7 @@ function AdvancedModalitiesPanel({
               </p>
             </div>
             <p className="mt-4 text-sm leading-6 text-white/48">
-              Why Aeonvera recommends this: {modality.rationale}
+              {modality.rationale}
             </p>
             <div className="mt-4 grid gap-2">
               <ModalitySignal label="Risk" value={titleCase(modality.risk)} />
@@ -1528,7 +1527,7 @@ function PersonalAgentMemoryPanel({ memory }: { memory: CoachMemory | null }) {
             </span>
           </div>
 
-          <h3 className="mt-5 text-2xl font-light leading-tight text-white/88">
+          <h3 className="mt-5 text-2xl font-semibold leading-tight text-white/88">
             {memory?.morningBrief ||
               "Aeonvera is learning your natural rhythm, the places your energy resists, and the interventions your system responds to best."}
           </h3>
@@ -1616,7 +1615,7 @@ function ClinicalIntelligenceMemoryPanel({
                 {confidence || 0}% confidence
               </span>
             </div>
-            <h3 className="mt-5 text-2xl font-light leading-tight text-white/88">
+            <h3 className="mt-5 text-2xl font-semibold leading-tight text-white/88">
               {latest.answer_summary ||
                 "Aeonvera has stored a clinical reasoning memory for future comparisons."}
             </h3>
@@ -1740,7 +1739,7 @@ function ClinicalIntelligenceMemoryPanel({
         </div>
       ) : (
         <div>
-          <h3 className="text-2xl font-light leading-tight text-white/88">
+          <h3 className="text-2xl font-semibold leading-tight text-white/88">
             Aeonvera is ready to remember clinical conclusions.
           </h3>
           <p className="mt-4 text-sm leading-7 text-white/42">
@@ -1984,7 +1983,7 @@ function InstallCompanionCard({
         <p className="micro-label">App Mode</p>
         <Bell size={17} className="royal-text" />
       </div>
-      <h3 className="text-2xl font-light leading-tight text-white/86">{title}</h3>
+      <h3 className="text-2xl font-semibold leading-tight text-white/86">{title}</h3>
       <p className="mt-4 text-sm leading-7 text-white/42">{detail}</p>
       <div className="mt-5 flex flex-wrap gap-2">
         {[
@@ -2062,7 +2061,7 @@ function CalendarAutomationCard({
         <p className="micro-label">Calendar</p>
         <CalendarClock size={17} className="royal-text" />
       </div>
-      <h3 className="text-2xl font-light leading-tight text-white/86">
+      <h3 className="text-2xl font-semibold leading-tight text-white/86">
         {connected ? "Google connected" : "Connect Google"}
       </h3>
       <p className="mt-4 text-sm leading-7 text-white/42">
@@ -2113,7 +2112,7 @@ function CompanionCard({
         <p className="micro-label">{label}</p>
         <Icon size={17} className="royal-text" />
       </div>
-      <h3 className="text-2xl font-light leading-tight text-white/86">{title}</h3>
+      <h3 className="text-2xl font-semibold leading-tight text-white/86">{title}</h3>
       <p className="mt-4 line-clamp-4 text-sm leading-7 text-white/42">{detail}</p>
     </Link>
   );

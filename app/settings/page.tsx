@@ -103,7 +103,7 @@ export default function SettingsPage() {
           <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="micro-label">Account</p>
-              <h1 className="mt-4 max-w-3xl text-5xl font-light leading-tight text-white md:text-6xl">
+              <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-tight text-white md:text-6xl">
                 Your private account.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-white/46">
@@ -120,7 +120,7 @@ export default function SettingsPage() {
               <div className="mb-6 flex items-start justify-between gap-5 border-b border-white/[0.06] pb-5">
                 <div>
                   <p className="micro-label">Voice</p>
-                  <h2 className="mt-3 text-3xl font-light text-white">
+                  <h2 className="mt-3 text-3xl font-semibold text-white">
                     {selectedVoiceOption.label}
                   </h2>
                   <p className="mt-3 text-sm leading-7 text-white/46">
@@ -166,7 +166,7 @@ export default function SettingsPage() {
               <div className="mb-6 flex items-start justify-between gap-5 border-b border-white/[0.06] pb-5">
                 <div>
                   <p className="micro-label">Preferences</p>
-                  <h2 className="mt-3 text-3xl font-light text-white">
+                  <h2 className="mt-3 text-3xl font-semibold text-white">
                     Quiet by default.
                   </h2>
                 </div>

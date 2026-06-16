@@ -330,7 +330,7 @@ export default function NetworkPage() {
               <div className="mb-6 flex items-start justify-between gap-4 border-b border-white/[0.06] pb-5">
                 <div>
                   <p className="micro-label">Invite Role</p>
-                  <h1 className="mt-3 text-4xl font-light text-white">
+                  <h1 className="mt-3 text-4xl font-semibold text-white">
                     Build your longevity network.
                   </h1>
                   <p className="mt-4 text-sm leading-7 text-white/48">
@@ -439,7 +439,7 @@ export default function NetworkPage() {
             <div className="executive-panel rounded-lg p-6 md:p-7">
               <div className="mb-6 border-b border-white/[0.06] pb-5">
                 <p className="micro-label">Active Network</p>
-                <h2 className="mt-3 text-3xl font-light text-white">
+                <h2 className="mt-3 text-3xl font-semibold text-white">
                   Roles, access, and revocation.
                 </h2>
               </div>
@@ -605,7 +605,7 @@ function NetworkIntelligencePanel({
         <div className="mb-5 flex items-start justify-between gap-4 border-b border-white/[0.06] pb-4">
           <div>
             <p className="micro-label">Network Activity</p>
-            <h2 className="mt-3 text-3xl font-light text-white">Who has seen what.</h2>
+            <h2 className="mt-3 text-3xl font-semibold text-white">Who has seen what.</h2>
           </div>
           <Clock3 className="royal-text" size={22} />
         </div>
@@ -637,7 +637,7 @@ function NetworkIntelligencePanel({
         <div className="mb-5 flex items-start justify-between gap-4 border-b border-white/[0.06] pb-4">
           <div>
             <p className="micro-label">Recommended Roles</p>
-            <h2 className="mt-3 text-3xl font-light text-white">Invite with intent.</h2>
+            <h2 className="mt-3 text-3xl font-semibold text-white">Invite with intent.</h2>
           </div>
           <Sparkles className="royal-text" size={22} />
         </div>
@@ -660,7 +660,7 @@ function NetworkIntelligencePanel({
                 {recommendation.detail}
               </p>
               <p className="mt-3 text-[11px] leading-5 text-[rgba(var(--gold),0.7)]">
-                Why Aeonvera recommends this: {recommendation.reason}
+                {recommendation.reason}
               </p>
             </button>
           ))}

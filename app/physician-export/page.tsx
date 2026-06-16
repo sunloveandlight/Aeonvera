@@ -395,7 +395,7 @@ function ShareLinkManager({
       <div className="mb-5 flex flex-col gap-3 border-b border-white/[0.06] pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="micro-label">Secure Clinical Sharing</p>
-          <h2 className="mt-3 text-3xl font-light text-white">
+          <h2 className="mt-3 text-3xl font-semibold text-white">
             Share a controlled read-only export.
           </h2>
         </div>
@@ -561,7 +561,7 @@ function ExportDocument({ bundle }: { bundle: ExportBundle }) {
     <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] p-7 print:border-0 print:bg-white print:p-0 print:text-black">
       <div className="mb-8 border-b border-white/[0.08] pb-6 print:border-black/15">
         <p className="micro-label print:text-black/50">Aeonvera Physician Export</p>
-        <h1 className="mt-4 text-4xl font-light text-white print:text-black">
+        <h1 className="mt-4 text-4xl font-semibold text-white print:text-black">
           Longitudinal healthspan summary
         </h1>
         <div className="mt-5 grid gap-3 text-sm text-white/55 print:text-black/70 sm:grid-cols-3">
@@ -652,7 +652,7 @@ function ExportSection({
 }) {
   return (
     <section className="mb-8 break-inside-avoid">
-      <h2 className="mb-4 text-xl font-light text-white print:text-black">{title}</h2>
+      <h2 className="mb-4 text-xl font-semibold text-white print:text-black">{title}</h2>
       {children}
     </section>
   );

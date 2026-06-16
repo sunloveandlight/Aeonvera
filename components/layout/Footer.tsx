@@ -17,6 +17,9 @@ export default function Footer() {
 
           {/* NAV LINKS */}
           <div className="flex flex-wrap gap-5 text-sm text-white/45">
+            <Link href="/about" className="transition hover:text-white">
+              About
+            </Link>
             <Link href="/pricing" className="transition hover:text-white">
               Pricing
             </Link>

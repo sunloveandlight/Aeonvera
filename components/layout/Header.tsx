@@ -73,6 +73,7 @@ export default function Header() {
         { href: "/network", label: "Network" },
       ]
     : [
+        { href: "/about", label: "About", public: true },
         { href: "/assessment", label: "Start", public: true },
         { href: "/pricing", label: "Pricing", public: true },
         { href: "/optimization", label: "Optimize", public: true },
@@ -102,6 +103,7 @@ export default function Header() {
         { href: "/settings", label: "Settings" },
       ]
     : [
+        { href: "/about", label: "About", public: true },
         { href: "/assessment", label: "Start", public: true },
         { href: "/pricing", label: "Pricing", public: true },
         { href: "/optimization", label: "Optimize", public: true },

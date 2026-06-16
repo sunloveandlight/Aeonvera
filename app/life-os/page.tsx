@@ -283,8 +283,8 @@ export default function LifeOsPage() {
               <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
                 <div>
                   <p className="micro-label">Life OS</p>
-                  <h1 className="mt-4 text-4xl font-light leading-tight text-white md:text-6xl">
-                    Your future self becomes operational.
+                  <h1 className="mt-4 text-4xl font-semibold leading-tight text-white md:text-6xl">
+                    Your future self, made real.
                   </h1>
                   <p className="mt-5 max-w-3xl text-sm leading-7 text-white/52">
                     {payload?.summary ||
@@ -296,7 +296,7 @@ export default function LifeOsPage() {
                 </div>
                 <div className="rounded-lg border border-white/[0.06] bg-black/20 p-5">
                   <p className="micro-label">Trajectory Status</p>
-                  <p className="mt-4 text-4xl font-light capitalize text-white">
+                  <p className="mt-4 text-4xl font-semibold capitalize text-white">
                     {payload?.trajectory.status || "forming"}
                   </p>
                   <div className="mt-5 grid grid-cols-2 gap-3">
@@ -312,14 +312,14 @@ export default function LifeOsPage() {
                 <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                   <div>
                     <p className="micro-label">Next Best Move</p>
-                    <h2 className="mt-3 text-3xl font-light text-white">
+                    <h2 className="mt-3 text-3xl font-semibold text-white">
                       Stabilize {payload.nextBestMove.domain}.
                     </h2>
                     <p className="mt-3 max-w-3xl text-sm leading-7 text-white/50">
                       {payload.nextBestMove.detail}
                     </p>
                     <p className="mt-3 text-xs leading-6 text-[rgba(var(--gold),0.72)]">
-                      Why Aeonvera recommends this: {payload.nextBestMove.reason}
+                      {payload.nextBestMove.reason}
                     </p>
                   </div>
                   <Link
@@ -348,7 +348,7 @@ export default function LifeOsPage() {
               <div className="mb-5 flex flex-col gap-4 border-b border-white/[0.06] pb-5 md:flex-row md:items-start md:justify-between">
                 <div>
                   <p className="micro-label">90-Day Priorities</p>
-                  <h2 className="mt-3 text-3xl font-light text-white">
+                  <h2 className="mt-3 text-3xl font-semibold text-white">
                     Convert trajectory into commitment.
                   </h2>
                   <p className="mt-3 max-w-3xl text-sm leading-7 text-white/48">
@@ -394,7 +394,7 @@ export default function LifeOsPage() {
               {topDomains.map((domain) => (
                 <div key={domain.domain} className="executive-panel rounded-lg p-5">
                   <p className="micro-label">{domain.label}</p>
-                  <p className="mt-4 text-4xl font-light text-white">{domain.score}</p>
+                  <p className="mt-4 text-4xl font-semibold text-white">{domain.score}</p>
                   <p className="mt-3 text-sm capitalize text-white/42">{domain.direction}</p>
                 </div>
               ))}
@@ -420,7 +420,7 @@ function DomainCard({ domain }: { domain: LifeDomain }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="micro-label">{domain.direction}</p>
-          <h2 className="mt-3 text-2xl font-light text-white">{domain.label}</h2>
+          <h2 className="mt-3 text-2xl font-semibold text-white">{domain.label}</h2>
         </div>
         <Icon className="royal-text" size={22} />
       </div>

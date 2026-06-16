@@ -127,7 +127,7 @@ export default function OnboardingPage() {
             <p className="mb-8 text-eyebrow">
               Welcome
             </p>
-            <h1 className="text-5xl font-light leading-[1.04] tracking-tight md:text-6xl">
+            <h1 className="text-5xl font-semibold leading-[1.04] tracking-tight md:text-6xl">
               Create your
               <br />
               longevity profile
