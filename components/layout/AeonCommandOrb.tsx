@@ -12,6 +12,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { Mic, PhoneOff, Send, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import AeonOrbVisual, { type AeonOrbEnergy } from "./AeonOrbVisual";
 import {
   DEFAULT_VOICE,
   HIDDEN_ROUTES,
@@ -103,6 +104,13 @@ export default function AeonCommandOrb() {
   const contextualPrompts = routeContext.prompts.length ? routeContext.prompts : STARTER_PROMPTS;
   const latestReceipt = actionReceipts[0] || null;
   const contentAwareOrb = pathname === "/";
+  const orbEnergy: AeonOrbEnergy = speaking
+    ? "speaking"
+    : realtimeActive
+      ? "listening"
+      : orbSummoned
+        ? "summoned"
+        : "idle";
   const orbStyle = {
     "--orb-tempo": `${orbMood.tempo}s`,
     "--orb-bloom-tempo": `${orbMood.bloomTempo}s`,
@@ -1363,13 +1371,7 @@ export default function AeonCommandOrb() {
           onPointerLeave={handleOrbPointerLeave}
           aria-label={realtimeActive ? "Stop Aeonvera voice" : "Talk to Aeonvera"}
         >
-          <span className="aeon-command-orb-core" aria-hidden="true">
-            <span className="aeon-orb-bloom" />
-            <span className="aeon-orb-flow aeon-orb-flow-one" />
-            <span className="aeon-orb-flow aeon-orb-flow-two" />
-            <span className="aeon-orb-flow aeon-orb-flow-three" />
-          </span>
-          <span className="aeon-orb-sheen" aria-hidden="true" />
+          <AeonOrbVisual energy={orbEnergy} />
           <span className="sr-only">
             {realtimeActive ? "Aeonvera voice is active" : "Aeonvera voice is ready"}
           </span>

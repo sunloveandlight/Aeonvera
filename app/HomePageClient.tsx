@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
+import AeonOrbVisual from "@/components/layout/AeonOrbVisual";
 import { supabase } from "@/lib/supabase/client";
 import { isSubscriptionValid, type SubscriptionStatus } from "@/lib/auth/permissions";
 
@@ -51,7 +52,6 @@ const CAPABILITIES = [
 ];
 
 export default function HomePage() {
-  const showcaseOrbRef = useRef<HTMLButtonElement | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -101,48 +101,6 @@ export default function HomePage() {
       cancelled = true;
       subscription.unsubscribe();
     };
-  }, []);
-
-  useEffect(() => {
-    let animationFrame = 0;
-    const seed = Math.random() * 1000;
-
-    function animateShowcaseOrb(time: number) {
-      const orb = showcaseOrbRef.current;
-      if (orb) {
-        const t = time / 1000 + seed;
-        const aX = Math.sin(t * 0.73) * 5.4 + Math.sin(t * 1.91 + 1.7) * 2.2;
-        const aY = Math.cos(t * 0.61 + 0.4) * 5.1 + Math.sin(t * 1.37) * 2;
-        const bX = Math.cos(t * 0.47 + 2.1) * 6.6 + Math.sin(t * 1.13) * 1.8;
-        const bY = Math.sin(t * 0.83 + 0.8) * 5.8 + Math.cos(t * 1.67) * 2.4;
-        const cX = Math.sin(t * 0.39 + 3.4) * 7.2 + Math.cos(t * 1.29) * 1.7;
-        const cY = Math.cos(t * 0.52 + 2.8) * 6.5 + Math.sin(t * 1.49) * 1.9;
-        const dX = Math.sin(t * 0.31 + 5.2) * 4.8 + Math.cos(t * 1.73) * 2.6;
-        const dY = Math.cos(t * 0.69 + 4.6) * 4.8 + Math.sin(t * 1.07) * 2.5;
-        const flowA = Math.sin(t * 0.43 + 0.6) * 18 + Math.cos(t * 1.07) * 7;
-        const flowB = Math.cos(t * 0.37 + 2.3) * 16 + Math.sin(t * 0.91) * 8;
-        const flowC = Math.sin(t * 0.51 + 4.1) * 20 + Math.cos(t * 0.73) * 5;
-
-        orb.style.setProperty("--orb-live-a-x", `${aX.toFixed(2)}%`);
-        orb.style.setProperty("--orb-live-a-y", `${aY.toFixed(2)}%`);
-        orb.style.setProperty("--orb-live-b-x", `${bX.toFixed(2)}%`);
-        orb.style.setProperty("--orb-live-b-y", `${bY.toFixed(2)}%`);
-        orb.style.setProperty("--orb-live-c-x", `${cX.toFixed(2)}%`);
-        orb.style.setProperty("--orb-live-c-y", `${cY.toFixed(2)}%`);
-        orb.style.setProperty("--orb-live-d-x", `${dX.toFixed(2)}%`);
-        orb.style.setProperty("--orb-live-d-y", `${dY.toFixed(2)}%`);
-        orb.style.setProperty("--orb-flow-a", `${flowA.toFixed(2)}deg`);
-        orb.style.setProperty("--orb-flow-b", `${flowB.toFixed(2)}deg`);
-        orb.style.setProperty("--orb-flow-c", `${flowC.toFixed(2)}deg`);
-        orb.style.setProperty("--orb-rotation", `${((t * 18) % 360).toFixed(2)}deg`);
-        orb.style.setProperty("--orb-hue", `${(Math.sin(t * 0.19) * 9).toFixed(2)}deg`);
-      }
-
-      animationFrame = window.requestAnimationFrame(animateShowcaseOrb);
-    }
-
-    animationFrame = window.requestAnimationFrame(animateShowcaseOrb);
-    return () => window.cancelAnimationFrame(animationFrame);
   }, []);
 
   function getPlanActionLabel(plan: Plan) {
@@ -283,19 +241,12 @@ export default function HomePage() {
       <section className="aeon-apple-section aeon-apple-section-dark">
         <div className="aeon-orb-showcase">
           <button
-            ref={showcaseOrbRef}
             type="button"
             className="aeon-command-orb aeon-orb-showcase-orb"
             onClick={activateVoiceOrb}
             aria-label="Start Aeonvera voice"
           >
-            <span className="aeon-command-orb-core">
-              <span className="aeon-orb-bloom" />
-              <span className="aeon-orb-flow aeon-orb-flow-one" />
-              <span className="aeon-orb-flow aeon-orb-flow-two" />
-              <span className="aeon-orb-flow aeon-orb-flow-three" />
-            </span>
-            <span className="aeon-orb-sheen" aria-hidden="true" />
+            <AeonOrbVisual energy="showcase" />
           </button>
         </div>
         <div className="aeon-apple-copy aeon-apple-copy-center">
