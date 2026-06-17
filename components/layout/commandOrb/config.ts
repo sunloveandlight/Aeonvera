@@ -122,7 +122,6 @@ export const HIDDEN_ROUTES = [
   "/future-self/",
   "/login",
   "/physician-share/",
-  "/pricing",
   "/privacy",
   "/terms",
 ];
