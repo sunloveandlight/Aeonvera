@@ -206,6 +206,11 @@ function isInteractiveTarget(target: EventTarget | null) {
     : false;
 }
 
+function formatMembershipPlan(plan?: string | null) {
+  if (!plan) return "Core intelligence";
+  return `${plan.charAt(0).toUpperCase()}${plan.slice(1)} intelligence`;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
 
@@ -787,6 +792,13 @@ export default function DashboardPage() {
     : ageDelta !== null && ageDelta <= 0 ? "STABLE"
     : ageDelta !== null && ageDelta <= 4 ? "NEEDS REVIEW"
     : "PRIORITY REVIEW";
+  const systemStatusLabel =
+    systemStatus === "STABLE" ? "Trajectory steady"
+    : systemStatus === "COMPUTING" ? "Building baseline"
+    : systemStatus === "NOT STARTED" ? "Baseline pending"
+    : systemStatus === "NEEDS REVIEW" ? "Review recommended"
+    : "Priority review";
+  const membershipLabel = formatMembershipPlan(profile?.plan);
   const activationMessage = activatedPlan
     ? {
         core: {
@@ -897,11 +909,11 @@ export default function DashboardPage() {
                     : "bg-[rgb(var(--gold))] shadow-[0_0_16px_rgba(var(--gold),0.3)]"
                 }`} />
                 <span className="text-[9px] uppercase tracking-[0.14em] text-white/78">
-                  {systemStatus}
+                  {systemStatusLabel}
                 </span>
               </div>
               <p className="text-[9px] uppercase tracking-[0.14em] text-white/25">
-                {profile?.plan || "core"} · {profile?.subscription_status || "active"}
+                {membershipLabel}
               </p>
             </div>
           </div>
