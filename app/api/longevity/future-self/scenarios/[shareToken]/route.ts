@@ -10,7 +10,12 @@ export async function GET(
   context: RouteContext<"/api/longevity/future-self/scenarios/[shareToken]">
 ) {
   try {
-    const rateLimited = rateLimitRequest(request, "future-self-share", 90, 60_000);
+    const rateLimited = await rateLimitRequest(
+      request,
+      "future-self-share",
+      90,
+      60_000
+    );
     if (rateLimited) return rateLimited;
 
     const { shareToken } = await context.params;

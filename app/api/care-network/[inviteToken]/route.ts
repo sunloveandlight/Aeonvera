@@ -31,7 +31,7 @@ export async function GET(
   context: RouteContext<"/api/care-network/[inviteToken]">
 ) {
   try {
-    const rateLimited = rateLimitRequest(request, "care-network", 60, 60_000);
+    const rateLimited = await rateLimitRequest(request, "care-network", 60, 60_000);
     if (rateLimited) return rateLimited;
 
     const { inviteToken } = await context.params;

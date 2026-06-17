@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       controls,
       projection,
       future_self: futureSelf,
-      is_public: body?.isPublic !== false,
+      is_public: body?.isPublic === true,
       parent_scenario_id: parentScenarioId || null,
       version_number: versionNumber,
     };
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
           controls,
           projection,
           future_self: futureSelf,
-          is_public: body?.isPublic !== false,
+          is_public: body?.isPublic === true,
         })
         .select(BASE_SELECT_FIELDS)
         .single()

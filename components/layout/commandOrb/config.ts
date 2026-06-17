@@ -10,6 +10,7 @@ export type VoiceId = (typeof VOICE_OPTIONS)[number]["id"];
 
 export type CommandMessage = {
   content: string;
+  mode?: "generated" | "fallback";
   role: "assistant" | "user";
 };
 

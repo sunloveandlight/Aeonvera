@@ -32,18 +32,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const accessToken =
-      body.accessToken ||
-      (await getValidWearableAccessToken({
-        supabase: admin,
-        userId: user.id,
-        provider: "oura",
-      })) ||
-      process.env.OURA_ACCESS_TOKEN;
+    const accessToken = await getValidWearableAccessToken({
+      supabase: admin,
+      userId: user.id,
+      provider: "oura",
+    });
 
     if (!accessToken) {
       return NextResponse.json(
-        { error: "Missing Oura access token." },
+        { error: "Connect Oura before syncing wearable data." },
         { status: 400 }
       );
     }

@@ -43,6 +43,31 @@ http://localhost:3000/api/calendar/google/callback
 Apply `supabase/migrations/20260611170000_calendar_execution.sql` before using
 calendar scheduling live.
 
+## Launch Security Setup
+
+Apply all Supabase migrations before handling real user data, including
+`supabase/migrations/20260617120000_launch_security_hardening.sql`.
+
+For durable production rate limiting on public share and invite routes, set:
+
+```bash
+UPSTASH_REDIS_REST_URL=your_upstash_rest_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_rest_token
+SHARE_ACCESS_SALT=your_long_random_share_code_salt
+```
+
+Without Upstash variables, local development falls back to an in-memory limiter.
+Production requests fail loudly if Upstash rate limiting or share-code hashing
+secrets are missing.
+
+Recommended AI model environment overrides:
+
+```bash
+OPENAI_MODEL=gpt-5.5
+OPENAI_REALTIME_MODEL=gpt-realtime-2
+XAI_MODEL=grok-4.3
+```
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

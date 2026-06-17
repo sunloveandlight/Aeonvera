@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 import AppShell from "@/components/layout/AppShell";
@@ -65,7 +66,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body>
-        <script
+        <Script
+          id="aeonvera-theme"
+          strategy="beforeInteractive"
           // No-flash theme: apply stored/system theme before first paint.
           dangerouslySetInnerHTML={{
             __html:

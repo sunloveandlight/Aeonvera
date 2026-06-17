@@ -460,7 +460,14 @@ export default function AeonCommandOrb() {
         typeof data.answer === "string"
           ? data.answer
           : "I read the signal, but I need a little more context to answer well.";
-      setMessages((current) => [...current, { role: "assistant", content: answer }]);
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: answer,
+          mode: data.mode === "fallback" ? "fallback" : "generated",
+        },
+      ]);
     } catch (error) {
       const answer =
         error instanceof Error
@@ -968,6 +975,7 @@ export default function AeonCommandOrb() {
               typeof data.answer === "string"
                 ? data.answer
                 : "I simplified today's plan and kept the highest-leverage actions.",
+            mode: data.mode === "fallback" ? "fallback" : "generated",
           },
         ]);
         pushActionReceipt({
@@ -1268,7 +1276,12 @@ export default function AeonCommandOrb() {
                     : "aeon-orb-message-user ml-auto max-w-[86%] text-white/76"
                 }`}
               >
-                {message.content}
+                <p>{message.content}</p>
+                {message.role === "assistant" && message.mode === "fallback" ? (
+                  <p className="mt-2 text-[9px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.72)]">
+                    AI temporarily unavailable. Local fallback response.
+                  </p>
+                ) : null}
               </div>
             ))}
             {thinking ? (

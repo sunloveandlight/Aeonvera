@@ -1,14 +1,15 @@
 import { createHash, randomBytes, timingSafeEqual } from "crypto";
 
-const FALLBACK_SALT = "aeonvera-secure-share";
-
 function shareSalt() {
-  return (
-    process.env.SHARE_ACCESS_SALT ||
-    process.env.OPENAI_SAFETY_SALT ||
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    FALLBACK_SALT
-  );
+  const salt = process.env.SHARE_ACCESS_SALT || process.env.OPENAI_SAFETY_SALT;
+
+  if (salt) return salt;
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Production share-code hashing requires SHARE_ACCESS_SALT.");
+  }
+
+  return process.env.NEXT_PUBLIC_SUPABASE_URL || "aeonvera-local-share-salt";
 }
 
 export function createShareAccessCode() {

@@ -23,7 +23,7 @@ export async function GET(
   context: RouteContext<"/api/physician-share/[shareToken]">
 ) {
   try {
-    const rateLimited = rateLimitRequest(request, "physician-share", 60, 60_000);
+    const rateLimited = await rateLimitRequest(request, "physician-share", 60, 60_000);
     if (rateLimited) return rateLimited;
 
     const { shareToken } = await context.params;

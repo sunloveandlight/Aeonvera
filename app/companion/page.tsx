@@ -146,6 +146,7 @@ type DailyBrief = {
 type AgentChatMessage = {
   role: "user" | "assistant";
   content: string;
+  mode?: "generated" | "fallback";
 };
 
 type AgentAppliedAction = {
@@ -650,6 +651,7 @@ export default function CompanionPage() {
         {
           role: "assistant",
           content: data.answer || "Aeonvera is still reading the signal.",
+          mode: data.mode === "fallback" ? "fallback" : "generated",
         },
       ]);
 
@@ -1228,6 +1230,11 @@ function PersonalHealthAgentPanel({
                   {message.role === "assistant" ? "Aeonvera" : "You"}
                 </p>
                 <p className="text-sm leading-7 text-white/58">{message.content}</p>
+                {message.role === "assistant" && message.mode === "fallback" ? (
+                  <p className="mt-3 text-[9px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.72)]">
+                    AI temporarily unavailable. Local fallback response.
+                  </p>
+                ) : null}
               </div>
             ))}
             {thinking ? (

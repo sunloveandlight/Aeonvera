@@ -1,26 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 
 type Mode = "light" | "dark";
 
 export default function ThemeToggle({ className = "" }: { className?: string }) {
-  const [mode, setMode] = useState<Mode>(getInitialMode);
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", mode);
-  }, [mode]);
+  const mode = useSyncExternalStore(subscribeToTheme, getInitialMode, getServerMode);
 
   function toggle() {
     const next: Mode = mode === "dark" ? "light" : "dark";
-    setMode(next);
     document.documentElement.setAttribute("data-theme", next);
     try {
       window.localStorage.setItem("aeonvera.theme", next);
     } catch {
       // Theme preference is a nicety, not required.
     }
+    window.dispatchEvent(new Event("aeonvera-theme-change"));
   }
 
   const isDark = mode === "dark";
@@ -38,11 +34,29 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
   );
 }
 
+function subscribeToTheme(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener("aeonvera-theme-change", onStoreChange);
+
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("aeonvera-theme-change", onStoreChange);
+  };
+}
+
+function getServerMode(): Mode {
+  return "dark";
+}
+
 function getInitialMode(): Mode {
   if (typeof window === "undefined") return "dark";
 
-  const stored = window.localStorage.getItem("aeonvera.theme");
-  if (stored === "light" || stored === "dark") return stored;
+  try {
+    const stored = window.localStorage.getItem("aeonvera.theme");
+    if (stored === "light" || stored === "dark") return stored;
+  } catch {
+    // Ignore storage restrictions and fall back to system preference.
+  }
 
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
