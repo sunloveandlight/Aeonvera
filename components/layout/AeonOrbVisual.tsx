@@ -72,6 +72,9 @@ export default function AeonOrbVisual({
       const voice = intensityRef.current;
       const active = energy === "listening" || energy === "speaking";
       const energyLift = active ? 0.16 : 0;
+      // Voice-controller orb wears the brand gold (--aurora-gold, ~hsl(42, 80%, 67%))
+      // pulled from the hero image; the homepage showcase orb keeps its full spectrum.
+      const goldTint = energy !== "showcase";
       let time = frame / (5 - voice * 1.6);
 
       for (let e = 0; e < 3; e += 1) {
@@ -105,7 +108,9 @@ export default function AeonOrbVisual({
             context.beginPath();
             const alpha = 0.09 + energyLift * 0.12 + voice * 0.22;
             const lightness = 56 + voice * 16;
-            context.strokeStyle = `hsla(${Math.floor((a / MAX) * 360)},70%,${lightness}%,${alpha})`;
+            const hue = goldTint ? 38 + (a / MAX) * 12 : Math.floor((a / MAX) * 360);
+            const saturation = goldTint ? 76 + voice * 10 : 70;
+            context.strokeStyle = `hsla(${hue},${saturation}%,${lightness}%,${alpha})`;
             context.lineWidth = Math.pow(5.2 + voice * 3.6, start[2]);
             context.moveTo(start[0] * scale + CENTER, start[1] * scale + CENTER);
             context.lineTo(end[0] * scale + CENTER, end[1] * scale + CENTER);
