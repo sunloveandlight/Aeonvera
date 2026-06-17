@@ -7,6 +7,7 @@ export type AeonOrbEnergy = "idle" | "showcase" | "summoned" | "listening" | "sp
 type AeonOrbVisualProps = {
   className?: string;
   energy?: AeonOrbEnergy;
+  intensity?: number;
 };
 
 const MAX = 50;
@@ -33,8 +34,17 @@ function createOrbPoints() {
   return points;
 }
 
-export default function AeonOrbVisual({ className = "", energy = "idle" }: AeonOrbVisualProps) {
+export default function AeonOrbVisual({
+  className = "",
+  energy = "idle",
+  intensity = 0,
+}: AeonOrbVisualProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const intensityRef = useRef(0);
+
+  useEffect(() => {
+    intensityRef.current = Math.max(0, Math.min(1, intensity));
+  }, [intensity]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -59,7 +69,10 @@ export default function AeonOrbVisual({ className = "", energy = "idle" }: AeonO
       context.fillRect(0, 0, SIZE, SIZE);
       context.globalCompositeOperation = "lighter";
 
-      let time = frame / 5;
+      const voice = intensityRef.current;
+      const active = energy === "listening" || energy === "speaking";
+      const energyLift = active ? 0.16 : 0;
+      let time = frame / (5 - voice * 1.6);
 
       for (let e = 0; e < 3; e += 1) {
         time *= 1.7;
@@ -83,15 +96,17 @@ export default function AeonOrbVisual({ className = "", energy = "idle" }: AeonO
           projected.push([x1 * depth, y1 * depth, z]);
         }
 
-        scale *= 120;
+        scale *= 106 + energyLift * 42 + voice * 48;
 
         for (let d = 0; d < 3; d += 1) {
           for (let a = 0; a < MAX; a += 1) {
             const start = projected[d * MAX + a];
             const end = projected[((a + 1) % MAX) + d * MAX];
             context.beginPath();
-            context.strokeStyle = `hsla(${Math.floor((a / MAX) * 360)},70%,60%,0.15)`;
-            context.lineWidth = Math.pow(6, start[2]);
+            const alpha = 0.09 + energyLift * 0.12 + voice * 0.22;
+            const lightness = 56 + voice * 16;
+            context.strokeStyle = `hsla(${Math.floor((a / MAX) * 360)},70%,${lightness}%,${alpha})`;
+            context.lineWidth = Math.pow(5.2 + voice * 3.6, start[2]);
             context.moveTo(start[0] * scale + CENTER, start[1] * scale + CENTER);
             context.lineTo(end[0] * scale + CENTER, end[1] * scale + CENTER);
             context.stroke();

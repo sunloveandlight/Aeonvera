@@ -10,6 +10,7 @@ import {
   Eye,
   LogOut,
   Mic2,
+  Orbit,
   ShieldCheck,
   SlidersHorizontal,
   UserCircle,
@@ -20,10 +21,11 @@ import PageContainer from "@/components/ui/PageContainer";
 import { supabase } from "@/lib/supabase/client";
 import { VOICE_OPTIONS, type VoiceId } from "@/components/layout/commandOrb/config";
 
-type ToggleKey = "dailyBrief" | "coachAlerts" | "shareAccess";
+type ToggleKey = "commandOrb" | "dailyBrief" | "coachAlerts" | "shareAccess";
 
 const DEFAULT_TOGGLES: Record<ToggleKey, boolean> = {
   coachAlerts: true,
+  commandOrb: true,
   dailyBrief: true,
   shareAccess: true,
 };
@@ -62,11 +64,17 @@ export default function SettingsPage() {
       if (isVoiceId(savedVoice)) setSelectedVoice(savedVoice);
 
       const savedToggles = window.localStorage.getItem("aeonvera.settings.toggles");
-      if (!savedToggles) return;
+      const commandOrbEnabled = window.localStorage.getItem("aeonvera.commandOrb.enabled");
 
       try {
-        const parsed = JSON.parse(savedToggles) as Partial<Record<ToggleKey, boolean>>;
-        setToggles((current) => ({ ...current, ...parsed }));
+        const parsed = savedToggles
+          ? JSON.parse(savedToggles) as Partial<Record<ToggleKey, boolean>>
+          : {};
+        setToggles((current) => ({
+          ...current,
+          ...parsed,
+          commandOrb: commandOrbEnabled !== "false",
+        }));
       } catch {
         // Settings fall back to the calm defaults above.
       }
@@ -87,6 +95,10 @@ export default function SettingsPage() {
     setToggles((current) => {
       const next = { ...current, [key]: !current[key] };
       window.localStorage.setItem("aeonvera.settings.toggles", JSON.stringify(next));
+      if (key === "commandOrb") {
+        window.localStorage.setItem("aeonvera.commandOrb.enabled", String(next.commandOrb));
+        window.dispatchEvent(new Event("aeonvera:orb-settings-change"));
+      }
       return next;
     });
   }
@@ -174,6 +186,13 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-3">
+                <SettingsToggle
+                  active={toggles.commandOrb}
+                  body="Show the floating voice orb when your membership includes realtime voice."
+                  icon={Orbit}
+                  label="Floating voice orb"
+                  onClick={() => toggleSetting("commandOrb")}
+                />
                 <SettingsToggle
                   active={toggles.dailyBrief}
                   body="Morning brief and today’s highest-leverage plan."

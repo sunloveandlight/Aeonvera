@@ -11,6 +11,7 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { Mic, PhoneOff, Send, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
 import AeonOrbVisual, { type AeonOrbEnergy } from "./AeonOrbVisual";
 import {
   DEFAULT_VOICE,
@@ -54,6 +55,8 @@ export default function AeonCommandOrb() {
   const realtimePeerRef = useRef<RTCPeerConnection | null>(null);
   const realtimeStreamRef = useRef<MediaStream | null>(null);
   const realtimeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const voiceAudioContextRef = useRef<AudioContext | null>(null);
+  const voiceAnimationRef = useRef<number | null>(null);
   const orbButtonRef = useRef<HTMLButtonElement | null>(null);
   const startRealtimeVoiceRef = useRef<(() => Promise<void>) | null>(null);
   const summonTimeoutRef = useRef<number | null>(null);
@@ -71,8 +74,12 @@ export default function AeonCommandOrb() {
   const [realtimeActive, setRealtimeActive] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
+  const [voiceLevel, setVoiceLevel] = useState(0);
   const [idleDimmed, setIdleDimmed] = useState(false);
   const [orbSummoned, setOrbSummoned] = useState(false);
+  const [orbAccessChecked, setOrbAccessChecked] = useState(false);
+  const [orbEligible, setOrbEligible] = useState(false);
+  const [orbEnabled, setOrbEnabled] = useState(true);
   const [actionReceipts, setActionReceipts] = useState<ActionReceipt[]>([]);
   const [receiptVisible, setReceiptVisible] = useState(false);
   const [orbMood, setOrbMood] = useState(INITIAL_ORB_MOOD);
@@ -119,9 +126,22 @@ export default function AeonCommandOrb() {
     "--orb-drift-x-neg": `${-orbMood.driftX}%`,
     "--orb-drift-y-neg": `${-orbMood.driftY}%`,
     "--orb-hue": `${orbMood.hue}deg`,
+    "--aeon-voice-level": voiceLevel,
   } as CSSProperties;
 
+  const stopVoiceLevelMeter = useCallback((resetState = true) => {
+    if (voiceAnimationRef.current) {
+      cancelAnimationFrame(voiceAnimationRef.current);
+      voiceAnimationRef.current = null;
+    }
+
+    void voiceAudioContextRef.current?.close().catch(() => undefined);
+    voiceAudioContextRef.current = null;
+    if (resetState) setVoiceLevel(0);
+  }, []);
+
   const stopRealtimeVoice = useCallback((updateState = true) => {
+    stopVoiceLevelMeter(updateState);
     realtimePeerRef.current?.close();
     realtimePeerRef.current = null;
     pendingRealtimeActionRef.current = null;
@@ -138,13 +158,90 @@ export default function AeonCommandOrb() {
       setRealtimeStatus(null);
       setSpeaking(false);
     }
-  }, []);
+  }, [stopVoiceLevelMeter]);
+
+  const startVoiceLevelMeter = useCallback((stream: MediaStream) => {
+    stopVoiceLevelMeter();
+
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const audioContext = new AudioContextClass();
+    const analyser = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(stream);
+    const samples = new Uint8Array(analyser.fftSize);
+
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.76;
+    source.connect(analyser);
+    voiceAudioContextRef.current = audioContext;
+
+    function tick() {
+      analyser.getByteTimeDomainData(samples);
+      let total = 0;
+      for (let index = 0; index < samples.length; index += 1) {
+        const value = (samples[index] - 128) / 128;
+        total += value * value;
+      }
+
+      const rms = Math.sqrt(total / samples.length);
+      setVoiceLevel(Math.min(1, Math.max(0, rms * 7.5)));
+      voiceAnimationRef.current = requestAnimationFrame(tick);
+    }
+
+    tick();
+  }, [stopVoiceLevelMeter]);
 
   useEffect(() => {
     return () => {
       stopRealtimeVoice(false);
     };
   }, [stopRealtimeVoice]);
+
+  useEffect(() => {
+    function readOrbEnabled() {
+      setOrbEnabled(window.localStorage.getItem("aeonvera.commandOrb.enabled") !== "false");
+    }
+
+    async function refreshAccess() {
+      readOrbEnabled();
+      const { data: userResult } = await supabase.auth.getUser();
+      const user = userResult.user;
+
+      if (!user) {
+        setOrbEligible(false);
+        setOrbAccessChecked(true);
+        return;
+      }
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("plan,subscription_status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const profile = data as {
+        plan?: Plan | null;
+        subscription_status?: SubscriptionStatus | null;
+      } | null;
+
+      setOrbEligible(canAccess(profile?.plan || null, profile?.subscription_status || null, "voice_agent"));
+      setOrbAccessChecked(true);
+    }
+
+    void refreshAccess();
+    window.addEventListener("aeonvera:orb-settings-change", readOrbEnabled);
+    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+      void refreshAccess();
+    });
+
+    return () => {
+      window.removeEventListener("aeonvera:orb-settings-change", readOrbEnabled);
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (open || realtimeActive || realtimeStatus || speaking || thinking) {
@@ -415,6 +512,7 @@ export default function AeonCommandOrb() {
       realtimeAudioRef.current = audio;
       realtimePeerRef.current = peer;
       realtimeStreamRef.current = stream;
+      startVoiceLevelMeter(stream);
 
       stream.getAudioTracks().forEach((track) => peer.addTrack(track, stream));
 
@@ -1083,7 +1181,7 @@ export default function AeonCommandOrb() {
     window.location.assign(data.url);
   }
 
-  if (hidden) return null;
+  if (hidden || !orbAccessChecked || !orbEligible || !orbEnabled) return null;
 
   return (
     <div
@@ -1302,7 +1400,7 @@ export default function AeonCommandOrb() {
           style={orbStyle}
           aria-label={realtimeActive ? "Stop Aeonvera voice" : "Talk to Aeonvera"}
         >
-          <AeonOrbVisual energy={orbEnergy} />
+          <AeonOrbVisual energy={orbEnergy} intensity={voiceLevel} />
           <span className="sr-only">
             {realtimeActive ? "Aeonvera voice is active" : "Aeonvera voice is ready"}
           </span>
