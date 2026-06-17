@@ -3459,6 +3459,60 @@ body:has(.aeon-orb-system) main {
   backdrop-filter: blur(24px) saturate(190%);
 }
 
+.premium-footer {
+  border-top: 1px solid var(--hairline);
+  background:
+    linear-gradient(180deg, var(--bg-soft), var(--bg));
+  color: var(--text-2);
+}
+
+.premium-footer-brand {
+  color: var(--text-1) !important;
+  font-size: 0.69rem;
+  font-weight: 650;
+  letter-spacing: 0.18em;
+  text-decoration: none;
+}
+
+.premium-footer-copy {
+  color: var(--text-3) !important;
+}
+
+.premium-footer-label {
+  color: var(--text-4) !important;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.premium-footer-link {
+  color: var(--text-3) !important;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+.premium-footer-link:hover {
+  color: var(--text-1) !important;
+}
+
+.premium-footer-bottom {
+  border-top: 1px solid var(--hairline);
+  color: var(--text-4) !important;
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+:root[data-theme="dark"] .premium-footer {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(var(--gold), 0.045), transparent 24rem),
+    #000;
+}
+
 .premium-mobile-menu {
   background: var(--header-bg);
   color: var(--text-1);

@@ -2,77 +2,93 @@
 
 import Link from "next/link";
 
+const FOOTER_GROUPS = [
+  {
+    title: "Product",
+    links: [
+      { href: "/about", label: "How it works" },
+      { href: "/demo", label: "Demo workspace" },
+      { href: "/pricing", label: "Pricing" },
+      { href: "/optimization", label: "Optimization" },
+    ],
+  },
+  {
+    title: "Workspace",
+    links: [
+      { href: "/assessment", label: "Assessment" },
+      { href: "/data-sources", label: "Data sources" },
+      { href: "/digital-twin", label: "Digital Twin" },
+      { href: "/companion", label: "Ask Aeonvera" },
+    ],
+  },
+  {
+    title: "Care",
+    links: [
+      { href: "/physician-export", label: "Physician export" },
+      { href: "/network", label: "Care network" },
+      { href: "/report", label: "Longevity report" },
+      { href: "/plan", label: "Daily plan" },
+    ],
+  },
+  {
+    title: "Trust",
+    links: [
+      { href: "/privacy", label: "Privacy" },
+      { href: "/terms", label: "Terms" },
+      { href: "/login?mode=signin", label: "Sign in" },
+      { href: "/login?mode=signup", label: "Create account" },
+    ],
+  },
+];
+
 export default function Footer() {
   return (
-    <footer className="mt-16 border-t border-white/[0.07] bg-black/35">
-      <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
-
-        {/* TOP ROW */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-
-          {/* BRAND */}
-          <div className="text-sm font-medium tracking-[0.2em] text-white/85">
-            AEONVERA
+    <footer className="premium-footer mt-16">
+      <div className="mx-auto max-w-6xl px-5 py-10 lg:px-8">
+        <div className="grid gap-10 lg:grid-cols-[1.15fr_2.2fr]">
+          <div>
+            <Link
+              href="/"
+              className="premium-footer-brand inline-flex items-center gap-2.5"
+              aria-label="Aeonvera home"
+            >
+              <span className="brand-mark" aria-hidden />
+              <span>AEONVERA</span>
+            </Link>
+            <p className="premium-footer-copy mt-4 max-w-sm text-sm leading-6">
+              Private longevity intelligence for labs, wearables, biological age,
+              protocols, and clinician-ready sharing.
+            </p>
           </div>
 
-          {/* NAV LINKS */}
-          <div className="flex flex-wrap gap-5 text-sm text-white/45">
-            <Link href="/about" className="transition hover:text-white">
-              About
-            </Link>
-            <Link href="/pricing" className="transition hover:text-white">
-              Pricing
-            </Link>
-            <Link href="/optimization" className="transition hover:text-white">
-              Optimize
-            </Link>
-            <Link href="/dashboard" className="transition hover:text-white">
-              Dashboard
-            </Link>
-            <Link href="/data-sources" className="transition hover:text-white">
-              Data Sources
-            </Link>
-            <Link href="/memory" className="transition hover:text-white">
-              Memory
-            </Link>
-            <Link href="/companion" className="transition hover:text-white">
-              Companion
-            </Link>
-            <Link href="/plan" className="transition hover:text-white">
-              Your Plan
-            </Link>
-            <Link href="/digital-twin" className="transition hover:text-white">
-              Digital Twin
-            </Link>
-            <Link href="/assessment" className="transition hover:text-white">
-              Assessment
-            </Link>
-            <Link href="/report" className="transition hover:text-white">
-              Report
-            </Link>
-            <Link href="/privacy" className="transition hover:text-white">
-              Privacy
-            </Link>
-            <Link href="/terms" className="transition hover:text-white">
-              Terms
-            </Link>
-          </div>
-
+          <nav className="grid grid-cols-2 gap-8 sm:grid-cols-4" aria-label="Footer navigation">
+            {FOOTER_GROUPS.map((group) => (
+              <div key={group.title}>
+                <p className="premium-footer-label">{group.title}</p>
+                <ul className="mt-4 space-y-2.5">
+                  {group.links.map((link) => (
+                    <li key={link.href}>
+                      <Link href={link.href} className="premium-footer-link">
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
         </div>
 
-        {/* BOTTOM ROW */}
-        <div className="mt-8 flex flex-col gap-4 border-t border-white/[0.07] pt-6 md:flex-row md:items-center md:justify-between">
-
-          <p className="text-xs text-white/35">
+        <div className="premium-footer-bottom mt-10 flex flex-col gap-3 pt-6 md:flex-row md:items-start md:justify-between">
+          <p>
             © {new Date().getFullYear()} AEONVERA. All rights reserved.
           </p>
 
-          <p className="text-xs text-white/35">
-            Private longevity intelligence
+          <p className="max-w-2xl md:text-right">
+            Aeonvera provides health intelligence and decision support. It is
+            not emergency care, diagnosis, or a replacement for your clinician.
           </p>
-
         </div>
-
       </div>
     </footer>
   );
