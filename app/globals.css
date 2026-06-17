@@ -2729,7 +2729,16 @@ body:has(.aeon-orb-system) main {
 }
 
 .aeon-command-orb::before {
-  display: none;
+  display: block;
+  inset: -92%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 246, 204, 0.26), transparent 22%),
+    radial-gradient(circle at 48% 50%, rgba(var(--aurora-teal), 0.14), transparent 48%),
+    radial-gradient(circle at 54% 56%, rgba(var(--aurora-violet), 0.1), transparent 62%);
+  filter: blur(18px) saturate(1.08);
+  opacity: 0.36;
+  animation: aeon-resting-orb-presence 5.8s ease-in-out infinite;
 }
 
 .aeon-command-orb:hover,
@@ -2745,12 +2754,12 @@ body:has(.aeon-orb-system) main {
 
 .aeon-canvas-orb {
   position: absolute;
-  inset: -6%;
+  inset: -16%;
   display: block;
   overflow: visible;
   border-radius: 0;
-  filter: saturate(0.76) brightness(0.62);
-  opacity: 0.42;
+  filter: saturate(0.98) brightness(0.9);
+  opacity: 0.72;
   mix-blend-mode: screen;
   transition:
     filter 260ms ease,
@@ -2773,9 +2782,9 @@ body:has(.aeon-orb-system) main {
 
 .aeon-orb-system-idle .aeon-command-orb,
 .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb {
-  opacity: 0.58;
-  filter: saturate(0.82) brightness(0.78);
-  transform: translateY(0.08rem) scale(0.9);
+  opacity: 0.86;
+  filter: saturate(1) brightness(0.94);
+  transform: translateY(0.02rem) scale(0.98);
 }
 
 .aeon-orb-system-idle:hover .aeon-command-orb,
@@ -2795,6 +2804,20 @@ body:has(.aeon-orb-system) main {
   inset: -20%;
   filter: saturate(calc(1.08 + var(--aeon-voice-level, 0) * 0.42)) brightness(calc(1.08 + var(--aeon-voice-level, 0) * 0.22));
   opacity: 0.96;
+}
+
+.aeon-command-orb:hover::before,
+.aeon-command-orb-open::before,
+.aeon-command-orb-listening::before,
+.aeon-command-orb-speaking::before,
+.aeon-command-orb-summoned::before {
+  opacity: 0.58;
+}
+
+@keyframes aeon-resting-orb-presence {
+  0%, 100% { transform: scale(0.9); opacity: 0.28; }
+  46% { transform: scale(1.08); opacity: 0.46; }
+  74% { transform: scale(0.98); opacity: 0.36; }
 }
 
 .aeon-orb-panel {
