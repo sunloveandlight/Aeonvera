@@ -383,7 +383,7 @@ export default function PricingPage() {
 
         <div className="aeon-apple-plan-grid">
           {PLANS.map((plan) => {
-            const className = `aeon-apple-plan ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`;
+            const className = `aeon-apple-plan aeon-apple-plan-${plan.id} ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`;
             const content = (
               <>
                 <span className="aeon-apple-plan-topline">

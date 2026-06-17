@@ -54,6 +54,7 @@ const PUBLIC_NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/optimization", label: "Optimization", description: "Turn your signals into a daily protocol." },
       { href: "/plan", label: "Daily plan", description: "Make insight executable." },
+      { href: "/life-autopilot", label: "Life Autopilot", description: "Behavior reminders, quiet hours, and schedule permissions." },
       { href: "/companion", label: "Ask Aeonvera", description: "Voice and text help across the app." },
     ],
   },
@@ -96,6 +97,7 @@ const AUTH_NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/optimization", label: "Optimization", description: "Generate and refine your protocol." },
       { href: "/plan", label: "Daily plan", description: "Protocols, reminders, and execution." },
+      { href: "/life-autopilot", label: "Life Autopilot", description: "Coach intensity, reminders, and schedule permissions." },
       { href: "/assessment", label: "Assessment", description: "Refresh your baseline and context." },
     ],
   },
@@ -137,6 +139,7 @@ export default function Header() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<{ label: string; pathname: string } | null>(null);
   const headerRef = useRef<HTMLElement | null>(null);
+  const accountCloseTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -151,8 +154,26 @@ export default function Header() {
       setAuthChecked(true);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearAccountCloseTimer();
+    };
   }, []);
+
+  function clearAccountCloseTimer() {
+    if (accountCloseTimerRef.current) {
+      window.clearTimeout(accountCloseTimerRef.current);
+      accountCloseTimerRef.current = null;
+    }
+  }
+
+  function scheduleAccountClose() {
+    clearAccountCloseTimer();
+    accountCloseTimerRef.current = window.setTimeout(() => {
+      setAccountOpen(false);
+      accountCloseTimerRef.current = null;
+    }, 280);
+  }
 
   useEffect(() => {
     if (!accountOpen && !activeMenu) return;
@@ -265,8 +286,13 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => {
+                  clearAccountCloseTimer();
                   setAccountOpen((open) => !open);
                   setActiveMenu(null);
+                }}
+                onMouseEnter={clearAccountCloseTimer}
+                onMouseLeave={() => {
+                  if (accountOpen) scheduleAccountClose();
                 }}
                 className={`premium-account-trigger inline-flex size-8 items-center justify-center rounded-md transition ${
                   accountOpen ? "premium-account-trigger-open" : ""
@@ -278,7 +304,12 @@ export default function Header() {
                 <UserCircle size={15} />
               </button>
               {accountOpen ? (
-                <div className="premium-account-menu absolute right-0 top-11 w-56 rounded-xl p-2" role="menu">
+                <div
+                  className="premium-account-menu absolute right-0 top-11 w-56 rounded-xl p-2"
+                  role="menu"
+                  onMouseEnter={clearAccountCloseTimer}
+                  onMouseLeave={scheduleAccountClose}
+                >
                   {ACCOUNT_LINKS.map((item) => (
                     <Link
                       key={item.href}

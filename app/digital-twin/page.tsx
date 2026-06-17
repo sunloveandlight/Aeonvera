@@ -590,6 +590,8 @@ export default function DigitalTwinPage() {
               ))}
             </div>
 
+            <LivingHumanStatus payload={payload} />
+
             {payload.intelligence && (
               <DigitalTwinIntelligencePanel intelligence={payload.intelligence} />
             )}
@@ -1326,38 +1328,122 @@ function formatProjectionValue(value: unknown) {
 function buildCustomTwinPrompt(question: string): TwinScenarioPrompt {
   const normalized = question.toLowerCase();
   const scenarioIds = new Set<string>();
+  const signals: string[] = [];
+
+  const weightMatch = normalized.match(/(?:lose|drop|cut|reduce)\s+(\d{1,3})\s*(?:pounds|lbs|lb|kg)/);
+  const vo2Match = normalized.match(/(?:vo2|vo₂|max).*?(\d{1,2})\s*%|(\d{1,2})\s*%\s*(?:vo2|vo₂|max)/);
+  const sleepMatch = normalized.match(/(\d{1,3})\s*(?:minutes|min|mins)\s+(?:more|longer|extra)\s+(?:sleep|bed|rest)/);
 
   if (/sleep|bed|wake|insomnia|rest|recovery|rem|deep|nap/.test(normalized)) {
     scenarioIds.add("sleep-30");
+    signals.push(sleepMatch ? `sleep +${sleepMatch[1]} min` : "sleep extension");
   }
 
   if (/zone 2|vo2|cardio|aerobic|run|running|bike|cycling|walk|walking|steps|heart|hrv|resting heart/.test(normalized)) {
     scenarioIds.add("vo2-15");
+    signals.push(vo2Match ? `VO2 max +${vo2Match[1] || vo2Match[2]}%` : "cardiorespiratory fitness");
   }
 
   if (/lift|lifting|strength|resistance|muscle|training|workout|gym|exercise/.test(normalized)) {
     scenarioIds.add("training-consistency");
+    signals.push("training consistency");
   }
 
   if (/weight|fat|lean|waist|body composition|pounds|lbs|kg|metabolic|glucose|insulin|a1c|hba1c|triglyceride|alcohol|drinking|sugar|carb|protein/.test(normalized)) {
     scenarioIds.add("lose-20-pounds");
+    signals.push(weightMatch ? `weight change ${weightMatch[1]} ${weightMatch[2] || "lb"}` : "metabolic/body composition");
   }
 
   if (/stress|cortisol|anxiety|burnout|meditation|breath|breathing|sauna|cold|red light|pemf|hyperbaric|recovery|alcohol|caffeine/.test(normalized)) {
     scenarioIds.add("stress-reset");
+    signals.push("stress/recovery load");
   }
 
   if (!scenarioIds.size) {
     scenarioIds.add("sleep-30");
     scenarioIds.add("training-consistency");
+    signals.push("sleep", "training consistency");
   }
 
   return {
     question,
-    detail: `Custom Digital Twin question interpreted as ${scenarioIds.size} model lever${scenarioIds.size === 1 ? "" : "s"}.`,
+    detail: `Interpreted as ${Array.from(new Set(signals)).slice(0, 3).join(", ")}. Aeonvera maps plain English into model levers, then saves the result to your timeline.`,
     href: "/digital-twin",
     scenarioIds: Array.from(scenarioIds).slice(0, 5),
   };
+}
+
+function LivingHumanStatus({ payload }: { payload: DigitalTwinPayload }) {
+  const freshness = payload.audit?.freshness;
+  const nextMove = payload.intelligence?.nextMove;
+  const readiness = payload.model?.readiness;
+  const topRisk = Object.entries(payload.state?.risk_scores || {})
+    .sort((a, b) => Number(b[1]) - Number(a[1]))[0];
+
+  return (
+    <section className="executive-panel mt-5 rounded-lg p-6 md:p-7">
+      <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <p className="micro-label">Living Human Status</p>
+          <h2 className="mt-3 text-3xl font-semibold text-white">
+            Aeonvera is watching your trajectory.
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-white/48">
+            Your twin is not just storing data. It is looking for drift, recovery pressure,
+            missing evidence, and the next behavior that could move your projected future.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <LivingStatusMetric
+            label="Model state"
+            value={readiness?.status || payload.intelligence?.modelState || "Learning"}
+            detail={readiness ? `${readiness.score}% formed` : "Building baseline"}
+          />
+          <LivingStatusMetric
+            label="Freshness"
+            value={freshness?.label || "Signal check"}
+            detail={freshness?.detail || "Add data to sharpen the model."}
+          />
+          <LivingStatusMetric
+            label="Watch point"
+            value={topRisk ? topRisk[0].replace(/_/g, " ") : "Baseline"}
+            detail={topRisk ? `${Math.round(Number(topRisk[1]))}% risk signal` : "No dominant risk yet."}
+          />
+          <LivingStatusMetric
+            label="Next nudge"
+            value={nextMove?.title || "Create signal"}
+            detail={nextMove?.detail || "Run a protocol or add an outcome."}
+          />
+        </div>
+      </div>
+      {nextMove?.href ? (
+        <Link
+          href={nextMove.href}
+          className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-xs font-medium"
+        >
+          Open next nudge
+        </Link>
+      ) : null}
+    </section>
+  );
+}
+
+function LivingStatusMetric({
+  detail,
+  label,
+  value,
+}: {
+  detail: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+      <p className="micro-label">{label}</p>
+      <p className="mt-3 text-lg font-semibold capitalize text-white">{value}</p>
+      <p className="mt-2 text-xs leading-5 text-white/40">{detail}</p>
+    </div>
+  );
 }
 
 function ProjectionRealityPanel({

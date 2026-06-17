@@ -10,6 +10,7 @@ const FOOTER_GROUPS = [
       { href: "/demo", label: "Demo workspace" },
       { href: "/pricing", label: "Pricing" },
       { href: "/optimization", label: "Optimization" },
+      { href: "/life-autopilot", label: "Life Autopilot" },
     ],
   },
   {

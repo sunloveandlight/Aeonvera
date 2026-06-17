@@ -32,6 +32,7 @@ type ProtocolRow = {
 };
 
 type PreferencesRow = {
+  allowed_reminder_domains?: Record<string, boolean>;
   user_id: string;
   mode: AutopilotMode;
   calendar_enabled: boolean;
@@ -43,6 +44,12 @@ type PreferencesRow = {
   allow_check_ins: boolean;
   quiet_hours_start: string;
   quiet_hours_end: string;
+  sleep_window_start?: string;
+  sunlight_target_minutes?: number;
+  hydration_target_ml?: number;
+  fasting_window_start?: string;
+  fasting_window_end?: string;
+  supplement_reminders_enabled?: boolean;
   timezone: string;
 };
 
@@ -382,7 +389,10 @@ function buildDailyPlan({
   protocol: ProtocolRow | null;
   today: string;
 }) {
-  const actions = (protocol?.protocol?.primary_protocol || [])
+  const actions = [
+    ...(protocol?.protocol?.primary_protocol || []),
+    ...buildLifeAutopilotAnchors(preferences),
+  ]
     .map((action, actionIndex) => {
       const scope = classifyActionScope(action);
       return {
@@ -759,13 +769,98 @@ function isAllowedByPreferences(
   action: ProtocolAction & { scope: ActionScope }
 ) {
   const text = [action.domain, action.action, action.why].filter(Boolean).join(" ").toLowerCase();
+  const domains = preferences.allowed_reminder_domains || {};
 
   if (!preferences.allow_check_ins && action.scope === "check_in") return false;
+  if (domains.hydration === false && /(hydration|hydrate|water)/.test(text)) return false;
+  if (domains.fasting === false && /(fast|fasting|eating window)/.test(text)) return false;
+  if (domains.food === false && /(nutrition|meal|protein|food)/.test(text)) return false;
+  if (domains.sunlight === false && /(sunlight|outdoor|fresh air|light)/.test(text)) return false;
+  if (domains.sleep === false && /(sleep|bedtime|wind down)/.test(text)) return false;
+  if (domains.supplements === false && /(supplement|creatine|vitamin)/.test(text)) return false;
   if (!preferences.allow_training_blocks && /(training|workout|strength|resistance|zone 2|cardio|movement)/.test(text)) return false;
   if (!preferences.allow_nutrition_blocks && /(nutrition|meal|protein|food|supplement|hydration)/.test(text)) return false;
   if (!preferences.allow_recovery_blocks && /(sleep|recovery|stress|breath|meditation|relax)/.test(text)) return false;
 
   return true;
+}
+
+function buildLifeAutopilotAnchors(preferences: PreferencesRow): ProtocolAction[] {
+  const domains = preferences.allowed_reminder_domains || {};
+  const enabled = (key: string, fallback = true) => domains[key] ?? fallback;
+  const actions: ProtocolAction[] = [];
+
+  if (enabled("hydration")) {
+    actions.push({
+      domain: "Hydration",
+      action: `Reach ${preferences.hydration_target_ml || 2500} ml water by early evening`,
+      cadence: "daily",
+      impact: "medium",
+      why: "Hydration supports recovery, cognition, training output, and appetite stability.",
+    });
+  }
+
+  if (enabled("sunlight")) {
+    actions.push({
+      domain: "Sunlight",
+      action: `Get ${preferences.sunlight_target_minutes || 20} minutes outside before midday`,
+      cadence: "daily",
+      impact: "medium",
+      why: "Morning light anchors circadian rhythm and helps sleep timing.",
+    });
+  }
+
+  if (enabled("fasting")) {
+    actions.push({
+      domain: "Fasting",
+      action: `Protect eating window from ${preferences.fasting_window_end || "08:00"} to ${preferences.fasting_window_start || "20:00"}`,
+      cadence: "daily",
+      impact: "medium",
+      why: "A clear eating window reduces decision fatigue and keeps metabolic rhythm consistent.",
+    });
+  }
+
+  if (enabled("sleep")) {
+    actions.push({
+      domain: "Sleep",
+      action: `Begin wind-down at ${preferences.sleep_window_start || "22:30"}`,
+      cadence: "daily",
+      impact: "high",
+      why: "Sleep is the highest-leverage recovery and biological-age input.",
+    });
+  }
+
+  if (enabled("recovery")) {
+    actions.push({
+      domain: "Recovery",
+      action: "Add one 5-minute nervous-system reset",
+      cadence: "daily",
+      impact: "medium",
+      why: "Small recovery blocks reduce stress load without crowding the day.",
+    });
+  }
+
+  if (enabled("supplements", false) && preferences.supplement_reminders_enabled) {
+    actions.push({
+      domain: "Supplements",
+      action: "Confirm clinician-approved supplement routine",
+      cadence: "daily",
+      impact: "low",
+      why: "Aeonvera can remind, but does not prescribe medication or supplement changes.",
+    });
+  }
+
+  if (enabled("check_ins")) {
+    actions.push({
+      domain: "Check-in",
+      action: "Log the one signal that changed most today",
+      cadence: "daily",
+      impact: "medium",
+      why: "Short feedback loops teach the model what is actually working.",
+    });
+  }
+
+  return actions;
 }
 
 function actionPriority(

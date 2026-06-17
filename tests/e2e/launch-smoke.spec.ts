@@ -8,6 +8,7 @@ const protectedRoutes = [
   "/data-sources",
   "/digital-twin",
   "/life-os",
+  "/life-autopilot",
   "/memory",
   "/network",
   "/onboarding",
@@ -76,6 +77,7 @@ test.describe("launch shell", () => {
 
     await expect(page.locator(".premium-mobile-menu")).toContainText("Demo workspace");
     await expect(page.locator(".premium-mobile-menu")).toContainText("Connect your data");
+    await expect(page.locator(".premium-mobile-menu")).toContainText("Life Autopilot");
     await expect(page.locator(".premium-mobile-menu")).toContainText("Physician export");
   });
 });

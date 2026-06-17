@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Bell,
+  CalendarClock,
   Check,
   CreditCard,
   Database,
@@ -31,6 +32,13 @@ const DEFAULT_TOGGLES: Record<ToggleKey, boolean> = {
 };
 
 const SETTINGS_LINKS = [
+  {
+    icon: CalendarClock,
+    title: "Life Autopilot",
+    body: "Coach intensity, real notification delivery, quiet hours, reminders, behavior domains, and schedule permissions.",
+    href: "/life-autopilot",
+    action: "Open Autopilot",
+  },
   {
     icon: CreditCard,
     title: "Membership",
@@ -177,10 +185,13 @@ export default function SettingsPage() {
             <section className="executive-panel rounded-lg p-6 md:p-7">
               <div className="mb-6 flex items-start justify-between gap-5 border-b border-white/[0.06] pb-5">
                 <div>
-                  <p className="micro-label">Preferences</p>
+                  <p className="micro-label">Local Preferences</p>
                   <h2 className="mt-3 text-3xl font-semibold text-white">
-                    Quiet by default.
+                    Interface controls.
                   </h2>
+                  <p className="mt-3 text-sm leading-7 text-white/46">
+                    Delivery, quiet hours, reminders, and coach intensity now live in Life Autopilot.
+                  </p>
                 </div>
                 <SlidersHorizontal className="shrink-0 royal-text" size={23} />
               </div>
@@ -218,7 +229,7 @@ export default function SettingsPage() {
             </section>
           </div>
 
-          <div className="mt-5 grid gap-4 md:grid-cols-3">
+          <div className="mt-5 grid gap-4 md:grid-cols-4">
             {SETTINGS_LINKS.map(({ action, body, href, icon: Icon, title }) => (
               <Link
                 key={title}
