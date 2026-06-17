@@ -12,7 +12,7 @@ type AeonOrbVisualProps = {
 const MAX = 50;
 const SIZE = 400;
 const CENTER = SIZE / 2;
-const HUES = [47, 178, 258, 286, 218];
+const GOLD_HUES = [38, 42, 46, 50, 54, 58];
 
 function createOrbPoints() {
   const points: Array<[number, number, number]> = [];
@@ -56,11 +56,11 @@ export default function AeonOrbVisual({ className = "", energy = "idle" }: AeonO
 
     function draw() {
       context.globalCompositeOperation = "destination-out";
-      context.fillStyle = "rgba(0, 0, 0, 0.055)";
+      context.fillStyle = "rgba(0, 0, 0, 0.035)";
       context.fillRect(0, 0, SIZE, SIZE);
       context.globalCompositeOperation = "lighter";
 
-      let time = frame / (energy === "idle" ? 6.2 : 4.8);
+      let time = frame / 5;
 
       for (let e = 0; e < 3; e += 1) {
         time *= 1.7;
@@ -84,19 +84,22 @@ export default function AeonOrbVisual({ className = "", energy = "idle" }: AeonO
           projected.push([x1 * depth, y1 * depth, z]);
         }
 
-        scale *= energy === "showcase" ? 126 : 118;
+        scale *= 120;
 
         for (let d = 0; d < 3; d += 1) {
           for (let a = 0; a < MAX; a += 1) {
             const start = projected[d * MAX + a];
             const end = projected[((a + 1) % MAX) + d * MAX];
-            const hue = HUES[(a + d * 9 + e * 5) % HUES.length];
-            const alpha = 0.11 + e * 0.025;
-            const lightness = hue === 47 ? 70 : 62;
-
             context.beginPath();
-            context.strokeStyle = `hsla(${hue}, 86%, ${lightness}%, ${alpha})`;
-            context.lineWidth = Math.max(0.4, Math.pow(6, start[2]) * (energy === "idle" ? 0.82 : 1));
+            const hue = energy === "showcase"
+              ? Math.floor((a / MAX) * 360)
+              : GOLD_HUES[(a + d * 7 + e * 3) % GOLD_HUES.length];
+            const saturation = energy === "showcase" ? 70 : 88;
+            const lightness = energy === "showcase" ? 60 : 64;
+            const alpha = energy === "showcase" ? 0.15 : 0.18;
+
+            context.strokeStyle = `hsla(${hue},${saturation}%,${lightness}%,${alpha})`;
+            context.lineWidth = Math.pow(6, start[2]);
             context.moveTo(start[0] * scale + CENTER, start[1] * scale + CENTER);
             context.lineTo(end[0] * scale + CENTER, end[1] * scale + CENTER);
             context.stroke();
