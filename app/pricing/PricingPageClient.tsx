@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, ShieldCheck, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { type PricingPlan } from "@/components/pricing/PricingPlanCard";
 import { supabase } from "@/lib/supabase/client";
@@ -220,6 +220,12 @@ const TRUST_POINTS = [
   },
 ];
 
+const CHECKOUT_REASSURANCE = [
+  "Secure Stripe checkout",
+  "Private health workspace",
+  "Doctor sharing stays under your control",
+];
+
 export default function PricingPage() {
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
   const [checkoutMessage, setCheckoutMessage] = useState<string | null>(null);
@@ -359,6 +365,14 @@ export default function PricingPage() {
               </p>
             </>
           )}
+          <div className="aeon-pricing-reassurance" aria-label="Checkout reassurance">
+            {CHECKOUT_REASSURANCE.map((item) => (
+              <span key={item}>
+                <ShieldCheck size={14} aria-hidden />
+                {item}
+              </span>
+            ))}
+          </div>
         </div>
 
         {checkoutMessage && (
@@ -372,18 +386,33 @@ export default function PricingPage() {
             const className = `aeon-apple-plan ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`;
             const content = (
               <>
-                <span className="aeon-apple-plan-name">{plan.name}</span>
+                <span className="aeon-apple-plan-topline">
+                  <span className="aeon-apple-plan-name">{plan.name}</span>
+                  {plan.id === "elite" ? (
+                    <span className="aeon-apple-plan-badge">
+                      <Sparkles size={13} aria-hidden />
+                      Recommended
+                    </span>
+                  ) : null}
+                </span>
                 {activePlan && plan.id === activePlan ? (
                   <span className="aeon-apple-plan-price">Active</span>
                 ) : (
-                  <span className="aeon-apple-plan-price">{plan.price}</span>
-                )}
-                <span className="aeon-apple-plan-body">{plan.summary}</span>
-                {plan.features.slice(0, 4).map((feature) => (
-                  <span key={feature} className="aeon-apple-plan-check">
-                    <Check size={15} /> {feature}
+                  <span className="aeon-apple-plan-price">
+                    {plan.price}
+                    <small>/mo</small>
                   </span>
-                ))}
+                )}
+                <span className="aeon-apple-plan-depth">{plan.depth}</span>
+                <span className="aeon-apple-plan-body">{plan.summary}</span>
+                <span className="aeon-apple-plan-divider" aria-hidden />
+                <span className="aeon-apple-plan-feature-list">
+                  {plan.features.slice(0, 4).map((feature) => (
+                    <span key={feature} className="aeon-apple-plan-check">
+                      <Check size={15} /> {feature}
+                    </span>
+                  ))}
+                </span>
                 <span className="aeon-apple-plan-action">
                   {loadingPlan === plan.id ? "Opening" : getPlanActionLabel(plan.id)}
                   {loadingPlan !== plan.id ? <ArrowRight size={15} /> : null}

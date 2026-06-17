@@ -188,17 +188,16 @@ export default function Header() {
   const activeMenuLabel = activeMenu?.pathname === pathname ? activeMenu.label : null;
   const activeGroup = navGroups.find((group) => group.label === activeMenuLabel) || null;
 
-  function toggleMenu(label: string) {
+  function openMenu(label: string) {
     setAccountOpen(false);
-    setActiveMenu((current) =>
-      current?.label === label && current.pathname === pathname ? null : { label, pathname }
-    );
+    setActiveMenu({ label, pathname });
   }
 
   return (
     <header
       ref={headerRef}
       className="premium-header fixed inset-x-0 top-0 z-50"
+      onMouseLeave={() => setActiveMenu(null)}
     >
       <div className="mx-auto flex h-11 max-w-6xl items-center justify-between px-5 lg:px-8">
         <Link
@@ -221,16 +220,18 @@ export default function Header() {
             const expanded = activeMenuLabel === group.label;
 
             return (
-              <button
+              <Link
                 key={group.label}
-                type="button"
-                onClick={() => toggleMenu(group.label)}
+                href={group.href}
+                onMouseEnter={() => openMenu(group.label)}
+                onFocus={() => openMenu(group.label)}
+                onClick={() => setActiveMenu(null)}
                 className={`premium-nav-link ${active || expanded ? "premium-nav-link-active" : ""}`}
                 aria-expanded={expanded}
                 aria-haspopup="true"
               >
                 {group.label}
-              </button>
+              </Link>
             );
           })}
         </nav>

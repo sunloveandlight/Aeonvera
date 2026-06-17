@@ -55,16 +55,13 @@ test.describe("launch shell", () => {
     });
   }
 
-  test("desktop header menus open by click, not hover", async ({ page, isMobile }) => {
+  test("desktop header menus open on hover", async ({ page, isMobile }) => {
     test.skip(isMobile, "desktop-only hover behavior");
 
     await page.goto("/");
-    const overview = page.getByRole("button", { name: "Overview" });
+    const overview = page.getByRole("link", { name: "Overview" });
 
     await overview.hover();
-    await expect(page.locator(".premium-mega-menu")).toHaveCount(0);
-
-    await overview.click();
     await expect(page.locator(".premium-mega-menu")).toContainText("Demo workspace");
 
     await page.mouse.click(20, 900);
