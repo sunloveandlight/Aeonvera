@@ -2527,6 +2527,256 @@ body:has(.aeon-orb-system) main {
   }
 }
 
+/* Instagram reference rebuild: rotating gradient shape + deep glow + crescent sphere mask. */
+.aeon-command-orb {
+  background: transparent;
+  box-shadow: none;
+}
+
+.aeon-command-orb::before {
+  inset: -88%;
+  background:
+    radial-gradient(circle at 48% 48%, rgba(255, 246, 204, 0.78) 0%, rgba(255, 207, 146, 0.42) 14%, rgba(164, 82, 255, 0.42) 33%, rgba(75, 117, 255, 0.2) 50%, transparent 72%);
+  filter: blur(20px);
+  opacity: 0.62;
+  animation: aeon-ref-deep-glow 5.2s ease-in-out infinite;
+}
+
+.aeon-command-orb:hover,
+.aeon-command-orb-open,
+.aeon-command-orb-listening,
+.aeon-command-orb-speaking,
+.aeon-command-orb-summoned {
+  background: transparent;
+  box-shadow: none;
+  filter: saturate(1.08) brightness(1.05);
+  transform: translateY(-0.04rem) scale(1.02);
+}
+
+.aeon-wave-orb {
+  inset: -42%;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  filter: saturate(1.16);
+  transform: translateZ(0);
+}
+
+.aeon-orb-showcase-orb .aeon-wave-orb {
+  inset: -30%;
+}
+
+.aeon-glow-sphere,
+.aeon-gradient-shell,
+.aeon-dark-hollow,
+.aeon-crescent-rim,
+.aeon-comet-fold,
+.aeon-star-core {
+  position: absolute;
+  pointer-events: none;
+}
+
+.aeon-glow-sphere {
+  width: 76%;
+  height: 76%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 45% 48%, rgba(255, 247, 212, 0.95) 0%, rgba(255, 204, 162, 0.52) 15%, rgba(174, 91, 255, 0.48) 34%, rgba(83, 93, 255, 0.26) 52%, transparent 74%);
+  filter: blur(18px);
+  opacity: 0.82;
+  animation: aeon-ref-glow-breathe 4.8s ease-in-out infinite;
+  z-index: 0;
+}
+
+.aeon-gradient-shell {
+  width: 58%;
+  height: 58%;
+  overflow: visible;
+  filter:
+    blur(0.25px)
+    drop-shadow(0 0 10px rgba(179, 83, 255, 0.7))
+    drop-shadow(0 0 22px rgba(255, 188, 154, 0.46));
+  transform-origin: center;
+  animation: aeon-ref-shell 5.6s ease-in-out infinite;
+  z-index: 2;
+}
+
+.aeon-ref-crescent-fill {
+  fill: url("#aeonRefCoreGradient");
+  opacity: 0.96;
+}
+
+.aeon-ref-crescent-light {
+  fill: none;
+  stroke: url("#aeonRefSweepGradient");
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.96;
+  filter: drop-shadow(0 0 8px rgba(255, 208, 183, 0.72));
+}
+
+.aeon-dark-hollow {
+  width: 42%;
+  height: 42%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.94) 0%, rgba(0, 0, 0, 0.88) 48%, rgba(41, 19, 76, 0.5) 68%, transparent 82%);
+  filter: blur(1.2px);
+  opacity: 0.94;
+  transform: translate(-11%, 15%);
+  animation: aeon-ref-hollow 5.6s ease-in-out infinite;
+  z-index: 3;
+}
+
+.aeon-crescent-rim {
+  width: 60%;
+  height: 60%;
+  border-radius: 999px;
+  background:
+    conic-gradient(from 120deg, transparent 0deg, rgba(255, 220, 162, 0.98) 38deg, rgba(255, 112, 176, 0.92) 76deg, rgba(178, 87, 255, 0.95) 126deg, transparent 166deg, transparent 226deg, rgba(105, 228, 221, 0.72) 278deg, rgba(255, 239, 190, 0.98) 326deg, transparent 360deg);
+  -webkit-mask-image:
+    radial-gradient(circle at 50% 50%, transparent 0 70%, #000 73% 80%, transparent 84% 100%),
+    conic-gradient(from 114deg, #000 0deg 218deg, transparent 236deg 360deg);
+  mask-image:
+    radial-gradient(circle at 50% 50%, transparent 0 70%, #000 73% 80%, transparent 84% 100%),
+    conic-gradient(from 114deg, #000 0deg 218deg, transparent 236deg 360deg);
+  filter:
+    blur(0.3px)
+    drop-shadow(0 0 8px rgba(255, 184, 173, 0.68))
+    drop-shadow(0 0 16px rgba(158, 91, 255, 0.45));
+  animation: aeon-ref-rim 5.6s ease-in-out infinite;
+  z-index: 4;
+}
+
+.aeon-comet-fold {
+  width: 33%;
+  height: 20%;
+  border-radius: 60% 36% 58% 42%;
+  background:
+    linear-gradient(95deg, rgba(255, 244, 202, 0) 0%, rgba(255, 244, 205, 0.94) 34%, rgba(191, 103, 255, 0.72) 72%, rgba(95, 105, 255, 0) 100%);
+  filter:
+    blur(0.8px)
+    drop-shadow(0 0 10px rgba(255, 241, 203, 0.72));
+  transform: translate(11%, -2%) rotate(12deg);
+  animation: aeon-ref-fold 5.6s ease-in-out infinite;
+  z-index: 5;
+}
+
+.aeon-star-core {
+  width: 12%;
+  height: 12%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 1) 0%, rgba(255, 248, 214, 0.95) 35%, rgba(255, 169, 170, 0.58) 58%, transparent 82%);
+  filter:
+    blur(1.8px)
+    drop-shadow(0 0 9px rgba(255, 246, 210, 0.88))
+    drop-shadow(0 0 18px rgba(174, 91, 255, 0.58));
+  transform: translate(18%, -3%);
+  animation: aeon-ref-core 2.8s ease-in-out infinite;
+  z-index: 6;
+}
+
+@keyframes aeon-ref-deep-glow {
+  0%, 100% { transform: scale(0.9); opacity: 0.46; }
+  46% { transform: scale(1.12); opacity: 0.72; }
+  72% { transform: scale(1); opacity: 0.58; }
+}
+
+@keyframes aeon-ref-glow-breathe {
+  0%, 100% { transform: scale(0.86); opacity: 0.62; }
+  44% { transform: scale(1.1); opacity: 0.92; }
+  70% { transform: scale(0.98); opacity: 0.74; }
+}
+
+@keyframes aeon-ref-shell {
+  0%, 100% { border-radius: 48% 52% 46% 54%; transform: rotate(-16deg) translate(-2%, 1%) scale(0.9); opacity: 0.92; }
+  36% { border-radius: 62% 38% 58% 42%; transform: rotate(38deg) translate(4%, -2%) scale(1.06); opacity: 1; }
+  68% { border-radius: 42% 58% 44% 56%; transform: rotate(82deg) translate(-1%, 3%) scale(0.96); opacity: 0.9; }
+}
+
+@keyframes aeon-ref-hollow {
+  0%, 100% { transform: translate(-6%, 15%) scale(0.9); opacity: 0.92; }
+  42% { transform: translate(-1%, 7%) scale(1.12); opacity: 0.86; }
+  72% { transform: translate(4%, 12%) scale(0.98); opacity: 0.9; }
+}
+
+@keyframes aeon-ref-rim {
+  0%, 100% { transform: rotate(-18deg) scale(0.92); opacity: 0.82; }
+  42% { transform: rotate(26deg) scale(1.04); opacity: 1; }
+  70% { transform: rotate(66deg) scale(0.98); opacity: 0.88; }
+}
+
+@keyframes aeon-ref-fold {
+  0%, 100% { transform: translate(7%, 0%) rotate(10deg) scaleX(0.82); opacity: 0.52; }
+  40% { transform: translate(17%, -3%) rotate(4deg) scaleX(1.18); opacity: 0.96; }
+  72% { transform: translate(12%, 4%) rotate(18deg) scaleX(0.96); opacity: 0.68; }
+}
+
+@keyframes aeon-ref-core {
+  0%, 100% { transform: translate(16%, -2%) scale(0.82); opacity: 0.84; }
+  46% { transform: translate(20%, -4%) scale(1.35); opacity: 1; }
+  74% { transform: translate(13%, 2%) scale(0.96); opacity: 0.9; }
+}
+
+/* Source-replaced orb: theperfect404 canvas algorithm, adapted to Aeonvera colors. */
+.aeon-command-orb {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.aeon-command-orb::before {
+  content: "";
+  position: absolute;
+  inset: -68%;
+  z-index: -1;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 246, 204, 0.74) 0%, rgba(255, 227, 151, 0.28) 18%, rgba(111, 220, 214, 0.18) 36%, rgba(174, 111, 255, 0.16) 54%, transparent 74%);
+  filter: blur(18px);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.aeon-command-orb:hover,
+.aeon-command-orb-open,
+.aeon-command-orb-listening,
+.aeon-command-orb-speaking,
+.aeon-command-orb-summoned {
+  background: transparent;
+  box-shadow: none;
+  filter: saturate(1.08) brightness(1.06);
+  transform: translateY(-0.04rem) scale(1.02);
+}
+
+.aeon-canvas-orb {
+  position: absolute;
+  inset: -74%;
+  display: block;
+  overflow: visible;
+  border-radius: 999px;
+  filter:
+    saturate(1.12)
+    drop-shadow(0 0 14px rgba(255, 229, 151, 0.2))
+    drop-shadow(0 0 26px rgba(111, 220, 214, 0.18))
+    drop-shadow(0 0 34px rgba(174, 111, 255, 0.14));
+  mix-blend-mode: screen;
+}
+
+.aeon-orb-showcase-orb .aeon-canvas-orb {
+  inset: -34%;
+}
+
+.aeon-canvas-orb-surface {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
 .aeon-orb-panel {
   border: 1px solid var(--panel-border);
   background:
@@ -2819,7 +3069,13 @@ body:has(.aeon-orb-system) main {
   .aeon-orb-ring,
   .aeon-orb-plasma-arc,
   .aeon-orb-particle,
-  .aeon-orb-core {
+  .aeon-orb-core,
+  .aeon-glow-sphere,
+  .aeon-gradient-shell,
+  .aeon-dark-hollow,
+  .aeon-crescent-rim,
+  .aeon-comet-fold,
+  .aeon-star-core {
     animation: none !important;
   }
 
