@@ -2745,7 +2745,7 @@ body:has(.aeon-orb-system) main {
 
 .aeon-canvas-orb {
   position: absolute;
-  inset: -10%;
+  inset: -25%;
   display: block;
   overflow: visible;
   border-radius: 0;

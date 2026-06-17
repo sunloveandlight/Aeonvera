@@ -12,7 +12,6 @@ type AeonOrbVisualProps = {
 const MAX = 50;
 const SIZE = 400;
 const CENTER = SIZE / 2;
-const GOLD_HUES = [38, 42, 46, 50, 54, 58];
 
 function createOrbPoints() {
   const points: Array<[number, number, number]> = [];
@@ -91,14 +90,7 @@ export default function AeonOrbVisual({ className = "", energy = "idle" }: AeonO
             const start = projected[d * MAX + a];
             const end = projected[((a + 1) % MAX) + d * MAX];
             context.beginPath();
-            const hue = energy === "showcase"
-              ? Math.floor((a / MAX) * 360)
-              : GOLD_HUES[(a + d * 7 + e * 3) % GOLD_HUES.length];
-            const saturation = energy === "showcase" ? 70 : 88;
-            const lightness = energy === "showcase" ? 60 : 64;
-            const alpha = energy === "showcase" ? 0.15 : 0.18;
-
-            context.strokeStyle = `hsla(${hue},${saturation}%,${lightness}%,${alpha})`;
+            context.strokeStyle = `hsla(${Math.floor((a / MAX) * 360)},70%,60%,0.15)`;
             context.lineWidth = Math.pow(6, start[2]);
             context.moveTo(start[0] * scale + CENTER, start[1] * scale + CENTER);
             context.lineTo(end[0] * scale + CENTER, end[1] * scale + CENTER);
