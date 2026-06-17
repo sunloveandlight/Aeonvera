@@ -117,14 +117,7 @@ export type RealtimeEvent = {
 
 export const DEFAULT_VOICE: VoiceId = "marin";
 
-export const HIDDEN_ROUTES = [
-  "/care-network/",
-  "/future-self/",
-  "/login",
-  "/physician-share/",
-  "/privacy",
-  "/terms",
-];
+export const HIDDEN_ROUTES: string[] = [];
 
 export const STARTER_PROMPTS = [
   "Prepare my highest-leverage plan for today",
