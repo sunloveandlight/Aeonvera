@@ -26,6 +26,7 @@ const PUBLIC_NAV_GROUPS: NavGroup[] = [
     href: "/about",
     items: [
       { href: "/about", label: "How Aeonvera works", description: "Private longevity intelligence, explained simply." },
+      { href: "/demo", label: "Demo workspace", description: "Preview Aeonvera with sample health signals." },
       { href: "/login?mode=signup", label: "Create account", description: "Start a private workspace for your health." },
       { href: "/login?mode=signin", label: "Sign in", description: "Return to your Aeonvera workspace." },
     ],
@@ -126,8 +127,6 @@ const AUTH_NAV_GROUPS: NavGroup[] = [
 const ACCOUNT_LINKS: NavLink[] = [
   { href: "/settings", label: "Settings" },
   { href: "/pricing", label: "Membership" },
-  { href: "/data-sources", label: "Data Sources" },
-  { href: "/report", label: "Report" },
 ];
 
 export default function Header() {
@@ -137,7 +136,6 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<{ label: string; pathname: string } | null>(null);
-  const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -190,15 +188,17 @@ export default function Header() {
   const activeMenuLabel = activeMenu?.pathname === pathname ? activeMenu.label : null;
   const activeGroup = navGroups.find((group) => group.label === activeMenuLabel) || null;
 
-  function showMenu(label: string) {
-    setActiveMenu({ label, pathname });
+  function toggleMenu(label: string) {
+    setAccountOpen(false);
+    setActiveMenu((current) =>
+      current?.label === label && current.pathname === pathname ? null : { label, pathname }
+    );
   }
 
   return (
     <header
       ref={headerRef}
       className="premium-header fixed inset-x-0 top-0 z-50"
-      onMouseLeave={() => setActiveMenu(null)}
     >
       <div className="mx-auto flex h-11 max-w-6xl items-center justify-between px-5 lg:px-8">
         <Link
@@ -221,18 +221,16 @@ export default function Header() {
             const expanded = activeMenuLabel === group.label;
 
             return (
-              <Link
+              <button
                 key={group.label}
-                href={group.href}
-                onMouseEnter={() => showMenu(group.label)}
-                onFocus={() => showMenu(group.label)}
-                onClick={() => setActiveMenu(null)}
+                type="button"
+                onClick={() => toggleMenu(group.label)}
                 className={`premium-nav-link ${active || expanded ? "premium-nav-link-active" : ""}`}
                 aria-expanded={expanded}
                 aria-haspopup="true"
               >
                 {group.label}
-              </Link>
+              </button>
             );
           })}
         </nav>
@@ -240,6 +238,10 @@ export default function Header() {
         <div className="flex h-8 items-center gap-2">
           <Link
             href="/companion"
+            onClick={() => {
+              setAccountOpen(false);
+              setActiveMenu(null);
+            }}
             className="premium-icon-link hidden size-8 items-center justify-center rounded-md transition sm:inline-flex"
             aria-label="Search or ask Aeonvera"
           >
@@ -258,7 +260,7 @@ export default function Header() {
           {!authChecked ? (
             <div className="hidden h-8 w-20 rounded-md bg-white/[0.08] sm:block" />
           ) : authenticated ? (
-            <div className="relative hidden sm:block" ref={accountMenuRef}>
+            <div className="relative hidden sm:block">
               <button
                 type="button"
                 onClick={() => {
@@ -280,7 +282,10 @@ export default function Header() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={() => setAccountOpen(false)}
+                      onClick={() => {
+                        setAccountOpen(false);
+                        setActiveMenu(null);
+                      }}
                       className="premium-menu-link block rounded-lg px-3 py-2.5"
                       role="menuitem"
                     >
@@ -364,16 +369,31 @@ export default function Header() {
               </div>
             ))}
             {!authChecked ? null : authenticated ? (
-              <button
-                onClick={() => {
-                  setMobileOpen(false);
-                  void handleLogout();
-                }}
-                className="rounded-lg px-1 py-2 text-left text-lg font-medium tracking-[-0.01em]"
-                type="button"
-              >
-                Sign Out
-              </button>
+              <div>
+                <p className="premium-mega-label mb-2">Account</p>
+                <div className="grid gap-0.5">
+                  {ACCOUNT_LINKS.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className="rounded-lg px-1 py-1.5 text-lg font-medium tracking-[-0.01em]"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      void handleLogout();
+                    }}
+                    className="rounded-lg px-1 py-2 text-left text-lg font-medium tracking-[-0.01em]"
+                    type="button"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
             ) : (
               <Link
                 href="/login?mode=signin"

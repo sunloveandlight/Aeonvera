@@ -2,10 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 import { Checkbox, Field, Form, SubmitButton, TextInput } from "@/components/ui/forms";
+
+const FIRST_WIN_STEPS = [
+  {
+    title: "Complete the baseline",
+    body: "Answer the core assessment so Aeonvera can estimate your biological-age starting point.",
+  },
+  {
+    title: "See the first signal",
+    body: "Get a readable baseline with the highest-leverage risk and recovery signals called out.",
+  },
+  {
+    title: "Create one plan",
+    body: "Turn the baseline into a simple protocol instead of a long list of disconnected advice.",
+  },
+  {
+    title: "Schedule the next action",
+    body: "Move one useful action into your day so the system starts tracking execution.",
+  },
+];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -133,7 +153,9 @@ export default function OnboardingPage() {
               longevity profile
             </h1>
             <p className="mx-auto mt-8 max-w-2xl text-xl text-white/60">
-              Set up the basics of your profile to get started.
+              Set up the basics, then Aeonvera will take you straight into a
+              five-minute path: assessment, baseline, plan, and one scheduled
+              action.
             </p>
           </div>
         </PageContainer>
@@ -141,7 +163,34 @@ export default function OnboardingPage() {
 
       <section className="pb-24">
         <PageContainer>
-          <div className="max-w-2xl mx-auto">
+          <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <Card className="p-8" hover={false}>
+              <p className="micro-label">First five minutes</p>
+              <h2 className="mt-4 text-3xl font-semibold leading-tight text-white">
+                Your first win is a baseline and one next action.
+              </h2>
+              <div className="mt-6 space-y-3">
+                {FIRST_WIN_STEPS.map((step, index) => (
+                  <div
+                    key={step.title}
+                    className="grid grid-cols-[auto_1fr] gap-3 rounded-lg border border-white/[0.08] bg-white/[0.025] p-4"
+                  >
+                    <span className="inline-flex size-7 items-center justify-center rounded-full border border-[rgba(var(--gold),0.24)] text-xs font-semibold text-[rgba(var(--gold),0.86)]">
+                      {index + 1}
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold text-white">{step.title}</span>
+                      <span className="mt-1 block text-sm leading-6 text-white/48">{step.body}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 inline-flex items-center gap-2 text-sm text-[rgba(var(--gold),0.82)]">
+                Complete setup <ArrowRight size={15} />
+              </div>
+            </Card>
+
+          <div>
             <Card className="p-10" hover={false} glow>
               <Form onSubmit={handleCompleteOnboarding} className="space-y-6">
                 {message && (
@@ -173,6 +222,7 @@ export default function OnboardingPage() {
                 <SubmitButton loading={saving}>Complete Setup</SubmitButton>
               </Form>
             </Card>
+          </div>
           </div>
         </PageContainer>
       </section>

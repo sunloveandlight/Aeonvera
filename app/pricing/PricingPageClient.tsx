@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
+import Link from "next/link";
 import { type PricingPlan } from "@/components/pricing/PricingPlanCard";
 import { supabase } from "@/lib/supabase/client";
 import {
@@ -192,6 +193,33 @@ const OWNED_TIER_COPY: Record<Plan, {
   },
 };
 
+const TRUST_POINTS = [
+  {
+    title: "Private by default",
+    body: "Your health workspace is protected behind your account. Future-self scenarios are not public unless you explicitly share them.",
+  },
+  {
+    title: "You control sharing",
+    body: "Physician and care-network links are deliberate, revocable, and designed for clinical context rather than broad public access.",
+  },
+  {
+    title: "Your data stays yours",
+    body: "Labs, wearable signals, reports, and plan history are used to power your Aeonvera workspace, not to sell your health profile.",
+  },
+  {
+    title: "Cancel or change tiers",
+    body: "Membership changes go through secure Stripe billing. You can manage upgrades, downgrades, and cancellation from your account.",
+  },
+  {
+    title: "Medical boundary",
+    body: "Aeonvera provides health intelligence and decision support. It is not emergency care, diagnosis, or a replacement for your clinician.",
+  },
+  {
+    title: "Built for real signals",
+    body: "Connect Oura, WHOOP, Apple Health imports, labs, Google Calendar, reports, and physician exports as your data depth grows.",
+  },
+];
+
 export default function PricingPage() {
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
   const [checkoutMessage, setCheckoutMessage] = useState<string | null>(null);
@@ -269,16 +297,6 @@ export default function PricingPage() {
   }
 
   async function handleCheckout(plan: Plan) {
-    if (activePlan) {
-      await handleBillingPortal(plan);
-      return;
-    }
-
-    if (!authenticated) {
-      window.location.assign("/login?mode=signup");
-      return;
-    }
-
     try {
       setLoadingPlan(plan);
       setCheckoutMessage(null);
@@ -350,31 +368,59 @@ export default function PricingPage() {
         )}
 
         <div className="aeon-apple-plan-grid">
-          {PLANS.map((plan) => (
-            <button
-              key={plan.id}
-              type="button"
-              onClick={() => handleCheckout(plan.id)}
-              disabled={loadingPlan !== null}
-              className={`aeon-apple-plan ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`}
-            >
-              <span className="aeon-apple-plan-name">{plan.name}</span>
-              {activePlan && plan.id === activePlan ? (
-                <span className="aeon-apple-plan-price">Active</span>
-              ) : (
-                <span className="aeon-apple-plan-price">{plan.price}</span>
-              )}
-              <span className="aeon-apple-plan-body">{plan.summary}</span>
-              {plan.features.slice(0, 4).map((feature) => (
-                <span key={feature} className="aeon-apple-plan-check">
-                  <Check size={15} /> {feature}
+          {PLANS.map((plan) => {
+            const className = `aeon-apple-plan ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`;
+            const content = (
+              <>
+                <span className="aeon-apple-plan-name">{plan.name}</span>
+                {activePlan && plan.id === activePlan ? (
+                  <span className="aeon-apple-plan-price">Active</span>
+                ) : (
+                  <span className="aeon-apple-plan-price">{plan.price}</span>
+                )}
+                <span className="aeon-apple-plan-body">{plan.summary}</span>
+                {plan.features.slice(0, 4).map((feature) => (
+                  <span key={feature} className="aeon-apple-plan-check">
+                    <Check size={15} /> {feature}
+                  </span>
+                ))}
+                <span className="aeon-apple-plan-action">
+                  {loadingPlan === plan.id ? "Opening" : getPlanActionLabel(plan.id)}
+                  {loadingPlan !== plan.id ? <ArrowRight size={15} /> : null}
                 </span>
-              ))}
-              <span className="aeon-apple-plan-action">
-                {loadingPlan === plan.id ? "Opening" : getPlanActionLabel(plan.id)}
-                {loadingPlan !== plan.id ? <ArrowRight size={15} /> : null}
-              </span>
-            </button>
+              </>
+            );
+
+            if (!authenticated && !activePlan) {
+              return (
+                <Link key={plan.id} href="/login?mode=signup" className={className}>
+                  {content}
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={plan.id}
+                type="button"
+                onClick={() => activePlan ? handleBillingPortal(plan.id) : handleCheckout(plan.id)}
+                disabled={loadingPlan !== null}
+                className={className}
+              >
+                {content}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="aeon-pricing-trust mx-auto mt-16 grid max-w-6xl gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {TRUST_POINTS.map((point) => (
+            <div key={point.title} className="aeon-pricing-trust-card rounded-lg p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgba(var(--gold),0.78)]">
+                {point.title}
+              </p>
+              <p className="mt-3 text-sm leading-6 text-white/52">{point.body}</p>
+            </div>
           ))}
         </div>
       </section>
