@@ -194,12 +194,6 @@ export default function Header() {
     setActiveMenu({ label, pathname });
   }
 
-  function toggleMenu(label: string) {
-    setActiveMenu((current) =>
-      current?.label === label && current.pathname === pathname ? null : { label, pathname },
-    );
-  }
-
   return (
     <header
       ref={headerRef}
@@ -227,18 +221,18 @@ export default function Header() {
             const expanded = activeMenuLabel === group.label;
 
             return (
-              <button
+              <Link
                 key={group.label}
-                type="button"
+                href={group.href}
                 onMouseEnter={() => showMenu(group.label)}
                 onFocus={() => showMenu(group.label)}
-                onClick={() => toggleMenu(group.label)}
+                onClick={() => setActiveMenu(null)}
                 className={`premium-nav-link ${active || expanded ? "premium-nav-link-active" : ""}`}
                 aria-expanded={expanded}
                 aria-haspopup="true"
               >
                 {group.label}
-              </button>
+              </Link>
             );
           })}
         </nav>

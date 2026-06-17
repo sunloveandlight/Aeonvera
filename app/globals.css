@@ -2745,12 +2745,12 @@ body:has(.aeon-orb-system) main {
 
 .aeon-canvas-orb {
   position: absolute;
-  inset: -16%;
+  inset: -6%;
   display: block;
   overflow: visible;
   border-radius: 0;
-  filter: saturate(0.9) brightness(0.84);
-  opacity: 0.72;
+  filter: saturate(0.76) brightness(0.62);
+  opacity: 0.42;
   mix-blend-mode: screen;
   transition:
     filter 260ms ease,
@@ -2773,9 +2773,9 @@ body:has(.aeon-orb-system) main {
 
 .aeon-orb-system-idle .aeon-command-orb,
 .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb {
-  opacity: 0.82;
-  filter: saturate(0.94) brightness(0.92);
-  transform: none;
+  opacity: 0.58;
+  filter: saturate(0.82) brightness(0.78);
+  transform: translateY(0.08rem) scale(0.9);
 }
 
 .aeon-orb-system-idle:hover .aeon-command-orb,
@@ -2792,9 +2792,9 @@ body:has(.aeon-orb-system) main {
 .aeon-command-orb-listening .aeon-canvas-orb,
 .aeon-command-orb-speaking .aeon-canvas-orb,
 .aeon-command-orb-summoned .aeon-canvas-orb {
-  inset: -25%;
-  filter: saturate(calc(1.1 + var(--aeon-voice-level, 0) * 0.45)) brightness(calc(1 + var(--aeon-voice-level, 0) * 0.22));
-  opacity: 1;
+  inset: -20%;
+  filter: saturate(calc(1.08 + var(--aeon-voice-level, 0) * 0.42)) brightness(calc(1.08 + var(--aeon-voice-level, 0) * 0.22));
+  opacity: 0.96;
 }
 
 .aeon-orb-panel {
