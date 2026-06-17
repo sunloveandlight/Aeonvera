@@ -3280,7 +3280,7 @@ body:has(.aeon-orb-system) main {
 @media (max-width: 767px) {
   .aeon-orb-system {
     right: max(0.85rem, calc(env(safe-area-inset-right) + 0.85rem));
-    bottom: max(1rem, calc(env(safe-area-inset-bottom) + 0.85rem));
+    bottom: max(4.85rem, calc(env(safe-area-inset-bottom) + 4.65rem));
     left: auto;
     width: auto;
     max-width: calc(100vw - 1.5rem);
@@ -3293,8 +3293,8 @@ body:has(.aeon-orb-system) main {
   }
 
   .aeon-command-orb {
-    width: 3.05rem;
-    height: 3.05rem;
+    width: 2.92rem;
+    height: 2.92rem;
   }
 }
 
@@ -5311,13 +5311,23 @@ input[type="number"]::-webkit-inner-spin-button {
   color: var(--text-1) !important;
 }
 
-.royal-gradient,
-.royal-gradient *,
-.premium-button-primary,
-.premium-button-primary *,
-.premium-action,
-.premium-action * {
+:root[data-theme="light"] .royal-gradient,
+:root[data-theme="light"] .royal-gradient *,
+:root[data-theme="light"] .premium-button-primary,
+:root[data-theme="light"] .premium-button-primary *,
+:root[data-theme="light"] .premium-action,
+:root[data-theme="light"] .premium-action * {
   color: #171106 !important;
+  stroke: currentColor !important;
+}
+
+:root[data-theme="dark"] .royal-gradient,
+:root[data-theme="dark"] .royal-gradient *,
+:root[data-theme="dark"] .premium-button-primary,
+:root[data-theme="dark"] .premium-button-primary *,
+:root[data-theme="dark"] .premium-action,
+:root[data-theme="dark"] .premium-action * {
+  color: rgba(255, 244, 214, 0.96) !important;
   stroke: currentColor !important;
 }
 
