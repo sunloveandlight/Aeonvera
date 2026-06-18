@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Sparkles } from "lucide-react";
 import AeonOrbVisual from "@/components/layout/AeonOrbVisual";
 import { supabase } from "@/lib/supabase/client";
 import { isSubscriptionValid, type SubscriptionStatus } from "@/lib/auth/permissions";
@@ -26,21 +26,39 @@ const PLANS = [
     id: "core",
     name: "Core",
     price: "$49",
-    body: "Biological age, unified health timeline, and first longevity report.",
+    body: "Essential longevity OS for focused operators.",
+    features: [
+      "Biological age tracking",
+      "Unified health timeline",
+      "AI longevity report",
+      "Core lab intelligence",
+    ],
   },
   {
     id: "elite",
     name: "Elite",
     price: "$199",
-    body: "Proactive coaching, future-self simulation, and advanced biomarker analysis.",
+    body: "Advanced intelligence for performance-driven longevity.",
+    features: [
+      "Everything in Core",
+      "Proactive coaching",
+      "Future-self simulation",
+      "Advanced biomarkers",
+    ],
   },
   {
     id: "sovereign",
     name: "Sovereign",
     price: "$999",
-    body: "Full digital twin, unlimited reports, physician exports, and concierge integration.",
+    body: "The complete longevity infrastructure for those who lead.",
+    features: [
+      "Everything in Elite",
+      "Full digital twin",
+      "Physician-ready exports",
+      "Concierge integration",
+    ],
   },
-] satisfies Array<{ id: Plan; name: string; price: string; body: string }>;
+] satisfies Array<{ id: Plan; name: string; price: string; body: string; features: string[] }>;
 
 const CAPABILITIES = [
   "Biological age modeling",
@@ -303,11 +321,31 @@ export default function HomePage() {
                 disabled={loadingPlan !== null}
                 className={`aeon-apple-plan aeon-apple-plan-${plan.id} ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`}
               >
-                <span className="aeon-apple-plan-name">{plan.name}</span>
-                <span className="aeon-apple-plan-price">{plan.price}</span>
+                <span className="aeon-apple-plan-emblem" aria-hidden="true">
+                  <span />
+                </span>
+                <span className="aeon-apple-plan-topline">
+                  <span className="aeon-apple-plan-name">{plan.name}</span>
+                  {plan.id === "elite" ? (
+                    <span className="aeon-apple-plan-badge">
+                      <Sparkles size={13} aria-hidden />
+                      Most popular
+                    </span>
+                  ) : null}
+                </span>
                 <span className="aeon-apple-plan-body">{plan.body}</span>
-                <span className="aeon-apple-plan-check">
-                  <Check size={15} /> Monthly membership
+                <span className="aeon-apple-plan-divider" aria-hidden />
+                <span className="aeon-apple-plan-price">
+                  {plan.price}
+                  <small>/mo</small>
+                </span>
+                <span className="aeon-apple-plan-depth">Billed monthly</span>
+                <span className="aeon-apple-plan-feature-list">
+                  {plan.features.map((feature) => (
+                    <span key={feature} className="aeon-apple-plan-check">
+                      <Check size={15} /> {feature}
+                    </span>
+                  ))}
                 </span>
                 <span className="aeon-apple-plan-action">
                   {loadingPlan === plan.id ? "Opening" : getPlanActionLabel(plan.id)}

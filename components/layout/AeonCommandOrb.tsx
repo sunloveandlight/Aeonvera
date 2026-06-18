@@ -58,6 +58,7 @@ export default function AeonCommandOrb() {
   const voiceAudioContextRef = useRef<AudioContext | null>(null);
   const voiceAnimationRef = useRef<number | null>(null);
   const orbButtonRef = useRef<HTMLButtonElement | null>(null);
+  const orbSystemRef = useRef<HTMLDivElement | null>(null);
   const startRealtimeVoiceRef = useRef<(() => Promise<void>) | null>(null);
   const summonTimeoutRef = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
@@ -199,6 +200,22 @@ export default function AeonCommandOrb() {
       stopRealtimeVoice(false);
     };
   }, [stopRealtimeVoice]);
+
+  useEffect(() => {
+    if (!open && !realtimeActive && !realtimeStatus && !speaking) return undefined;
+
+    function handleOutsidePointerDown(event: PointerEvent) {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (orbSystemRef.current?.contains(target)) return;
+
+      stopRealtimeVoice();
+      setOpen(false);
+    }
+
+    document.addEventListener("pointerdown", handleOutsidePointerDown, true);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointerDown, true);
+  }, [open, realtimeActive, realtimeStatus, speaking, stopRealtimeVoice]);
 
   useEffect(() => {
     function readOrbEnabled() {
@@ -1193,6 +1210,7 @@ export default function AeonCommandOrb() {
 
   return (
     <div
+      ref={orbSystemRef}
       className={`aeon-orb-system fixed z-40 flex flex-col items-center ${
         idleDimmed ? "aeon-orb-system-idle" : ""
       } ${contentAwareOrb ? "aeon-orb-system-content-aware" : ""}`}

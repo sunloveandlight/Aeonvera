@@ -49,7 +49,7 @@ function LoginInner() {
           await ensureProfile(data.user.id);
         }
 
-        router.replace("/onboarding");
+        router.replace("/pricing");
         return;
       }
 
@@ -98,7 +98,7 @@ function LoginInner() {
           </h1>
           <p className="mt-4 text-sm leading-6 text-white/55">
             {isSignUpMode
-              ? "Start your biological age assessment and build your healthspan baseline."
+              ? "Create your private account, choose a membership, then complete onboarding."
               : "Sign in to continue to your dashboard and reports."}
           </p>
         </div>

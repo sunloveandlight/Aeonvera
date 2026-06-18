@@ -358,10 +358,9 @@ export default function PricingPage() {
             </>
           ) : (
             <>
-              <h1>Choose the right level of longevity insight.</h1>
+              <h1>Three pathways. One operating system.</h1>
               <p>
-                Start with a reliable baseline. Move into deeper support as your
-                data, goals, and decision-making grow.
+                Choose the level of longevity intelligence that fits your mission.
               </p>
             </>
           )}
@@ -386,15 +385,20 @@ export default function PricingPage() {
             const className = `aeon-apple-plan aeon-apple-plan-${plan.id} ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`;
             const content = (
               <>
+                <span className="aeon-apple-plan-emblem" aria-hidden="true">
+                  <span />
+                </span>
                 <span className="aeon-apple-plan-topline">
                   <span className="aeon-apple-plan-name">{plan.name}</span>
                   {plan.id === "elite" ? (
                     <span className="aeon-apple-plan-badge">
                       <Sparkles size={13} aria-hidden />
-                      Recommended
+                      Most popular
                     </span>
                   ) : null}
                 </span>
+                <span className="aeon-apple-plan-body">{plan.summary}</span>
+                <span className="aeon-apple-plan-divider" aria-hidden />
                 {activePlan && plan.id === activePlan ? (
                   <span className="aeon-apple-plan-price">Active</span>
                 ) : (
@@ -403,9 +407,9 @@ export default function PricingPage() {
                     <small>/mo</small>
                   </span>
                 )}
-                <span className="aeon-apple-plan-depth">{plan.depth}</span>
-                <span className="aeon-apple-plan-body">{plan.summary}</span>
-                <span className="aeon-apple-plan-divider" aria-hidden />
+                <span className="aeon-apple-plan-depth">
+                  {activePlan && plan.id === activePlan ? "Current membership" : "Billed monthly"}
+                </span>
                 <span className="aeon-apple-plan-feature-list">
                   {plan.features.slice(0, 4).map((feature) => (
                     <span key={feature} className="aeon-apple-plan-check">

@@ -8,9 +8,9 @@ import { isUserAllowed } from "@/lib/auth/permissions";
 type Plan = "core" | "elite" | "sovereign";
 
 function getTierDestination(plan: Plan | null) {
-  if (plan === "sovereign") return "/dashboard?activated=sovereign";
-  if (plan === "elite") return "/dashboard?activated=elite";
-  return "/dashboard?activated=core";
+  if (plan === "sovereign") return "/onboarding?activated=sovereign";
+  if (plan === "elite") return "/onboarding?activated=elite";
+  return "/onboarding?activated=core";
 }
 
 function getRequestedPlan(): Plan | null {
@@ -78,7 +78,7 @@ export default function SuccessPage() {
         if (allowed && requestedPlanActive) {
           const plan = profile.plan as Plan | null;
           cancelledRef.current = true;
-          setStatus(`Opening your ${plan || "Aeonvera"} experience...`);
+          setStatus(`Opening your ${plan || "Aeonvera"} onboarding...`);
           router.replace(getTierDestination(plan));
           return;
         }
