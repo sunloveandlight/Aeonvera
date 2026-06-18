@@ -6972,3 +6972,199 @@ input[type="number"]::-webkit-inner-spin-button {
     min-height: 39rem;
   }
 }
+
+/* Sitewide button system: one non-pricing material family, pricing isolated. */
+:root[data-theme="light"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send),
+:root[data-theme="dark"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(118, 86, 33, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.18) 44%, rgba(77, 54, 17, 0.075)),
+    linear-gradient(135deg, rgb(239, 225, 194) 0%, rgb(217, 194, 147) 46%, rgb(187, 151, 88) 100%) !important;
+  color: rgba(38, 29, 13, 0.94) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.36);
+  box-shadow:
+    0 1px 1px rgba(50, 37, 13, 0.08),
+    0 0.6rem 1.35rem rgba(80, 62, 25, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.76),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(73, 52, 18, 0.18);
+  filter: none;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease;
+}
+
+:root[data-theme="light"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send)::before,
+:root[data-theme="dark"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send)::before {
+  content: "";
+  position: absolute;
+  inset: 1px 1px auto;
+  height: 52%;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.48), rgba(255, 255, 255, 0.055));
+  opacity: 0.68;
+}
+
+:root[data-theme="light"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send)::after,
+:root[data-theme="dark"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg, transparent 0 35%, rgba(255, 255, 255, 0.22) 47%, rgba(255, 246, 219, 0.11) 56%, transparent 68% 100%);
+  opacity: 0.18;
+  mix-blend-mode: soft-light;
+}
+
+:root[data-theme="light"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send):hover,
+:root[data-theme="dark"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send):hover {
+  transform: translateY(-1px);
+  border-color: rgba(118, 86, 33, 0.46);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.22) 44%, rgba(77, 54, 17, 0.08)),
+    linear-gradient(135deg, rgb(244, 231, 202) 0%, rgb(222, 199, 152) 46%, rgb(193, 156, 92) 100%) !important;
+  box-shadow:
+    0 1px 1px rgba(50, 37, 13, 0.09),
+    0 0.78rem 1.62rem rgba(80, 62, 25, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(73, 52, 18, 0.18);
+}
+
+:root[data-theme="light"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send) *,
+:root[data-theme="dark"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send) * {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+:root[data-theme="light"] .premium-action-secondary,
+:root[data-theme="dark"] .premium-action-secondary,
+:root[data-theme="light"] .premium-button-secondary,
+:root[data-theme="dark"] .premium-button-secondary,
+:root[data-theme="light"] .apple-cta-link,
+:root[data-theme="dark"] .apple-cta-link {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(139, 111, 60, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.11) 46%, rgba(77, 54, 17, 0.045)),
+    linear-gradient(135deg, rgba(238, 224, 196, 0.92), rgba(207, 183, 136, 0.88));
+  color: rgba(42, 31, 13, 0.92) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 1px 1px rgba(50, 37, 13, 0.06),
+    0 0.45rem 1.05rem rgba(80, 62, 25, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(73, 52, 18, 0.1);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+:root[data-theme="light"] .premium-action-secondary:hover,
+:root[data-theme="dark"] .premium-action-secondary:hover,
+:root[data-theme="light"] .premium-button-secondary:hover,
+:root[data-theme="dark"] .premium-button-secondary:hover,
+:root[data-theme="light"] .apple-cta-link:hover,
+:root[data-theme="dark"] .apple-cta-link:hover {
+  transform: translateY(-1px);
+  border-color: rgba(139, 111, 60, 0.42);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.14) 46%, rgba(77, 54, 17, 0.055)),
+    linear-gradient(135deg, rgba(243, 230, 202, 0.96), rgba(213, 188, 140, 0.92));
+  box-shadow:
+    0 1px 1px rgba(50, 37, 13, 0.07),
+    0 0.58rem 1.22rem rgba(80, 62, 25, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -1px 0 rgba(73, 52, 18, 0.1);
+}
+
+:root[data-theme="light"] .premium-action-secondary *,
+:root[data-theme="dark"] .premium-action-secondary *,
+:root[data-theme="light"] .premium-button-secondary *,
+:root[data-theme="dark"] .premium-button-secondary *,
+:root[data-theme="light"] .apple-cta-link *,
+:root[data-theme="dark"] .apple-cta-link * {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+:root[data-theme="light"] [data-aeonvera-content] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient),
+:root[data-theme="dark"] [data-aeonvera-content] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient) {
+  color: rgba(38, 29, 13, 0.94) !important;
+}
+
+/* Pricing card finish: richer surfaces, stable emblems, clean badge separation. */
+:root[data-theme="light"] .aeon-apple-plan,
+:root[data-theme="dark"] .aeon-apple-plan,
+:root[data-theme="light"] .aeon-apple-plan:hover,
+:root[data-theme="dark"] .aeon-apple-plan:hover {
+  transform: none;
+}
+
+:root[data-theme="light"] .aeon-apple-plan,
+:root[data-theme="dark"] .aeon-apple-plan {
+  background:
+    linear-gradient(105deg, rgba(255, 255, 255, 0.13), transparent 28%, rgba(255, 255, 255, 0.055) 54%, transparent 76%),
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.24), transparent 36%),
+    radial-gradient(ellipse at 12% 14%, rgba(255, 255, 255, 0.08), transparent 34%),
+    linear-gradient(155deg, var(--pathway-bg-a), var(--pathway-bg-b) 76%);
+  box-shadow:
+    0 1.85rem 4.65rem rgba(0, 0, 0, 0.22),
+    0 0.18rem 0.56rem rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.09),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28);
+}
+
+:root[data-theme="light"] .aeon-apple-plan:hover,
+:root[data-theme="dark"] .aeon-apple-plan:hover {
+  border-color: rgba(255, 255, 255, 0.54);
+  background:
+    linear-gradient(105deg, rgba(255, 255, 255, 0.18), transparent 30%, rgba(255, 255, 255, 0.07) 56%, transparent 78%),
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.28), transparent 37%),
+    radial-gradient(ellipse at 12% 14%, rgba(255, 255, 255, 0.09), transparent 34%),
+    linear-gradient(155deg, var(--pathway-bg-a), var(--pathway-bg-b) 76%);
+  box-shadow:
+    0 2.1rem 5.2rem rgba(0, 0, 0, 0.26),
+    0 0.2rem 0.62rem rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.11),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.28);
+}
+
+:root[data-theme="light"] .aeon-apple-plan-sovereign,
+:root[data-theme="dark"] .aeon-apple-plan-sovereign {
+  background:
+    linear-gradient(105deg, rgba(255, 255, 255, 0.5), transparent 29%, rgba(197, 154, 82, 0.14) 60%, transparent 80%),
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.74), transparent 35%),
+    radial-gradient(ellipse at 82% 12%, rgba(198, 156, 84, 0.2), transparent 32%),
+    linear-gradient(155deg, var(--pathway-bg-a), var(--pathway-bg-b) 76%);
+}
+
+:root[data-theme="light"] .aeon-apple-plan-badge,
+:root[data-theme="dark"] .aeon-apple-plan-badge {
+  top: -6.15rem;
+}
+
+:root[data-theme="light"] .aeon-apple-plan-emblem,
+:root[data-theme="dark"] .aeon-apple-plan-emblem,
+:root[data-theme="light"] .aeon-apple-plan:hover .aeon-apple-plan-emblem,
+:root[data-theme="dark"] .aeon-apple-plan:hover .aeon-apple-plan-emblem,
+:root[data-theme="light"] .aeon-apple-plan-emblem svg,
+:root[data-theme="dark"] .aeon-apple-plan-emblem svg {
+  transform: none !important;
+  transition: none !important;
+  will-change: auto;
+}
