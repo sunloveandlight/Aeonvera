@@ -726,7 +726,7 @@ export default function CompanionPage() {
 
   return (
     <PageContainer>
-      <div className="py-14">
+      <div className="py-14 md:py-16">
         <div className="mb-9 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="micro-label mb-5">Mobile Companion</p>

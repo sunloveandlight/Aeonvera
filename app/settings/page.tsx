@@ -49,7 +49,7 @@ const SETTINGS_LINKS = [
   {
     icon: Database,
     title: "Connected data",
-    body: "Oura, Whoop, Apple Health, labs, calendar, and source freshness.",
+    body: "Oura, WHOOP, Apple Health, labs, calendar, and source freshness.",
     href: "/data-sources",
     action: "Open sources",
   },
@@ -124,7 +124,7 @@ export default function SettingsPage() {
 
   return (
     <Page density="compact">
-      <PageContainer className="pt-20">
+      <PageContainer className="py-14 md:py-16">
         <section className="mx-auto max-w-6xl">
           <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>

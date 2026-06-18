@@ -375,7 +375,7 @@ export default function ReportPage() {
 
   return (
     <PageContainer>
-      <div className="py-16 space-y-8">
+      <div className="py-14 md:py-16 space-y-8">
 
         {/* ═══════════════════════════════════════
             HEADER
@@ -1062,5 +1062,5 @@ function buildRiskNarrative(report: ReportData, assessment: AssessmentData | nul
     return "Moderate biological risk. Targeted improvements will move the needle.";
   }
 
-  return "Elevated biological risk. Immediate lifestyle intervention is advised.";
+  return "Elevated biological risk. Prioritizing lifestyle changes can move this meaningfully.";
 }

@@ -246,7 +246,7 @@ export default function LifeOsPage() {
 
   return (
     <PageContainer>
-      <main className="py-14">
+      <main className="py-14 md:py-16">
         {loading ? (
           <AccessState
             eyebrow="Life OS"

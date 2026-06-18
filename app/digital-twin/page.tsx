@@ -504,7 +504,7 @@ export default function DigitalTwinPage() {
 
   return (
     <PageContainer>
-      <div className="py-16">
+      <div className="py-14 md:py-16">
         <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="micro-label mb-5">Digital Twin</p>
@@ -1698,7 +1698,7 @@ function buildSummaryCards(
   latestBioAge?: number | null
 ): TwinSummaryCardData[] {
   return [
-    { Icon: Dna, label: "Bio age", suffix: "years", value: latestBioAge ? `${latestBioAge}` : "--" },
+    { Icon: Dna, label: "Bio Age", suffix: "years", value: latestBioAge ? `${latestBioAge}` : "--" },
     { Icon: Sparkles, label: "Protocols", suffix: "generated", value: `${payload.counts.protocols || 0}` },
     { Icon: Activity, label: "Signals", suffix: "events", value: `${totalSignals(payload.counts)}` },
     {

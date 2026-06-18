@@ -120,7 +120,7 @@ export default function SuccessPage() {
     <main className="flex min-h-screen items-center justify-center px-6 text-white">
       <div className="premium-surface max-w-xl rounded-lg p-8 text-center">
         <p className="mb-6 text-eyebrow">
-          AEONVERA
+          Aeonvera
         </p>
 
         <h1 className="mb-6 text-5xl font-semibold tracking-tight">Subscription Activated</h1>

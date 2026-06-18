@@ -5555,7 +5555,27 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 .text-red-400 {
-  color: #c0453f !important;
+  color: rgb(var(--danger)) !important;
+}
+
+/* Danger / risk states — consolidated to one muted brick-red token.
+   Previously a scatter of rose and red Tailwind shades across ~13 files;
+   these buckets remap them all to --danger at consistent opacities so
+   error + elevated-risk UI reads the same everywhere (and stays on-brand). */
+:root {
+  --danger: 192, 69, 63;
+}
+[class*="bg-rose-"],
+[class*="bg-red-"] {
+  background-color: rgba(var(--danger), 0.08) !important;
+}
+[class*="text-rose-"],
+[class*="text-red-"] {
+  color: rgba(var(--danger), 0.92) !important;
+}
+[class*="border-rose-"],
+[class*="border-red-"] {
+  border-color: rgba(var(--danger), 0.32) !important;
 }
 
 /* Consolidated interaction systems: keep this as the only late-stage button/pricing override. */

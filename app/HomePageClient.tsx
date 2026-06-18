@@ -243,7 +243,7 @@ export default function HomePage() {
         <div className="aeon-apple-split-media">
           <Image
             src="/marketing/rejuvenation-man.png"
-            alt="A futuristic age reversal portrait moving from older to younger"
+            alt="A portrait evoking renewal and vitality"
             fill
             sizes="(max-width: 900px) 100vw, 50vw"
             className="object-cover"

@@ -568,7 +568,7 @@ export default function OptimizationPage() {
 
   return (
     <PageContainer>
-      <div className="py-16">
+      <div className="py-14 md:py-16">
         <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="micro-label mb-5">Optimization</p>

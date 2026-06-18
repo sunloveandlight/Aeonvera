@@ -271,7 +271,7 @@ export default function NetworkPage() {
 
   return (
     <PageContainer>
-      <div className="py-14">
+      <div className="py-14 md:py-16">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/digital-twin"

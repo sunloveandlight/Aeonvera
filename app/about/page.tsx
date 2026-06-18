@@ -38,7 +38,7 @@ export default function AboutPage() {
           <h1 className="mt-6 text-5xl font-semibold leading-[1.04] tracking-tight text-white md:text-7xl">
             Time is not your opponent.
           </h1>
-          <p className="mx-auto mt-7 max-w-2xl text-xl leading-relaxed text-white/70 md:text-2xl">
+          <p className="mx-auto mt-8 max-w-2xl text-xl leading-relaxed text-white/70 md:text-2xl">
             Aeonvera was born from a simple, hopeful belief: that with the right
             understanding, your body can be guided toward more years — and far
             more life within them.
@@ -66,7 +66,7 @@ export default function AboutPage() {
       <section className="border-t border-white/[0.08] px-6 py-24 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-semibold leading-tight tracking-tight text-white md:text-5xl">
-            We are here to help you grow younger in the ways that matter.
+            We are here to help you feel younger in the ways that matter.
           </h2>
           <p className="mx-auto mt-8 max-w-2xl text-lg leading-relaxed text-white/64">
             Not a number on a chart, but how you wake, how you recover, how
@@ -108,7 +108,7 @@ export default function AboutPage() {
           <h2 className="text-4xl font-semibold leading-[1.05] tracking-tight text-white md:text-6xl">
             Your longest, best years are still ahead.
           </h2>
-          <p className="mx-auto mt-7 max-w-xl text-lg leading-relaxed text-white/64">
+          <p className="mx-auto mt-8 max-w-xl text-lg leading-relaxed text-white/64">
             Wherever you are beginning from, you are welcome here. Let&rsquo;s
             understand your body together — and build the future it is capable
             of.

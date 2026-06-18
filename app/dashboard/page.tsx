@@ -878,7 +878,7 @@ export default function DashboardPage() {
 
   return (
     <PageContainer>
-      <div className="space-y-8 py-16">
+      <div className="space-y-8 py-14 md:py-16">
 
         {/* ═══════════════════════════════════════
             HEADER

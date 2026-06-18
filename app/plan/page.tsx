@@ -119,7 +119,7 @@ export default function PlanPage() {
 
   return (
     <PageContainer>
-      <main className="py-14">
+      <main className="py-14 md:py-16">
         {loading ? (
           <AccessState
             eyebrow="Your Plan"
