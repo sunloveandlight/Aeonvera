@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import { possessiveName, resolveDisplayName } from "@/lib/profile/displayName";
 
 type ReportData = {
   risk_score: number;
@@ -275,7 +276,13 @@ export default function ReportPage() {
         if (labTrendsRes?.trends) setLabTrends(labTrendsRes.trends);
         if (improvementLoopRes?.loop) setImprovementLoop(improvementLoopRes.loop);
 
-        if (!reportRes.data) setError("No report found. Complete your assessment first.");
+        if (!reportRes.data) {
+          setError(
+            assessmentRes.data
+              ? "No report found. Generate your longevity report from the assessment you already completed."
+              : "No report found. Complete your assessment first."
+          );
+        }
       } catch {
         setError("Failed to load your report.");
       } finally {
@@ -318,6 +325,7 @@ export default function ReportPage() {
   }
 
   if (error || !report) {
+    const hasCompletedAssessment = Boolean(assessment);
     return (
       <PageContainer>
         <div className="min-h-[60vh] flex items-center justify-center">
@@ -327,7 +335,18 @@ export default function ReportPage() {
               No report found.
             </h1>
             <p className="text-white/40 text-sm">{error}</p>
-            <Button href="/assessment">Start Assessment</Button>
+            {hasCompletedAssessment ? (
+              <button
+                type="button"
+                onClick={handleRegenerate}
+                disabled={regenerating}
+                className="premium-action inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                {regenerating ? "Generating..." : "Generate report"}
+              </button>
+            ) : (
+              <Button href="/assessment">Start Assessment</Button>
+            )}
           </div>
         </div>
       </PageContainer>
@@ -349,6 +368,7 @@ export default function ReportPage() {
     : "NEEDS ATTENTION";
 
   const accuracyColor = "text-white/78";
+  const displayName = resolveDisplayName(profile?.display_name);
 
   return (
     <PageContainer>
@@ -365,7 +385,7 @@ export default function ReportPage() {
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
               <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-white/90 leading-tight">
-                {profile?.display_name ? `${profile.display_name}'s` : "Your"}
+                {possessiveName(displayName)}
                 <br />
                 <span className="text-white/30">Biological Profile</span>
               </h1>

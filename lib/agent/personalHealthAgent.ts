@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { buildTieredModalityRecommendations, type TieredModalityRecommendation } from "@/lib/longevity/advancedModalities";
 import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
+import { retrieveSemanticMemories, storeSemanticMemory } from "@/lib/memory/semanticMemory";
 import type { Plan, SubscriptionStatus } from "@/lib/auth/permissions";
 import type { getSupabaseAdmin } from "@/lib/supabase/admin";
 
@@ -388,6 +389,11 @@ export async function answerPersonalHealthAgent({
   });
   const finalContext = toolActions.length ? await loadAgentContext(supabase, userId) : updatedContext;
   const allActions = dedupeActions([...actions, ...toolActions]);
+  const semanticMemories = await retrieveSemanticMemories({
+    query: question,
+    supabase,
+    userId,
+  });
   const openai = getOpenAI();
   const xaiClinicalReview = await buildXaiClinicalReview(question, finalContext, history);
 
@@ -399,6 +405,13 @@ export async function answerPersonalHealthAgent({
       source: "agent_chat",
       supabase,
       toolResults,
+      userId,
+    });
+    await storeAgentSemanticMemory({
+      answer: xaiClinicalReview,
+      mode: "generated",
+      question,
+      supabase,
       userId,
     });
 
@@ -419,6 +432,13 @@ export async function answerPersonalHealthAgent({
       source: "agent_chat",
       supabase,
       toolResults,
+      userId,
+    });
+    await storeAgentSemanticMemory({
+      answer: fallbackAnswer,
+      mode: "fallback",
+      question,
+      supabase,
       userId,
     });
 
@@ -442,7 +462,7 @@ export async function answerPersonalHealthAgent({
         },
         {
           role: "user",
-          content: `User context:\n${JSON.stringify(summarizeContext(finalContext), null, 2)}\n\nAgent tool results:\n${JSON.stringify(toolResults, null, 2)}\n\nActions already applied from this message:\n${JSON.stringify(allActions, null, 2)}\n\nIndependent xAI/Grok clinical reasoning review, when available:\n${xaiClinicalReview || "No xAI review available for this message."}`,
+          content: `User context:\n${JSON.stringify(summarizeContext(finalContext), null, 2)}\n\nSemantic memory retrieved for this question:\n${JSON.stringify(summarizeSemanticMemories(semanticMemories), null, 2)}\n\nAgent tool results:\n${JSON.stringify(toolResults, null, 2)}\n\nActions already applied from this message:\n${JSON.stringify(allActions, null, 2)}\n\nIndependent xAI/Grok clinical reasoning review, when available:\n${xaiClinicalReview || "No xAI review available for this message."}`,
         },
         ...history.slice(-6).map((message) => ({
           role: message.role,
@@ -462,6 +482,13 @@ export async function answerPersonalHealthAgent({
         source: "agent_chat",
         supabase,
         toolResults,
+        userId,
+      });
+      await storeAgentSemanticMemory({
+        answer,
+        mode: "generated",
+        question,
+        supabase,
         userId,
       });
 
@@ -487,6 +514,13 @@ export async function answerPersonalHealthAgent({
     source: "agent_chat",
     supabase,
     toolResults,
+    userId,
+  });
+  await storeAgentSemanticMemory({
+    answer: fallbackAnswer,
+    mode: "fallback",
+    question,
+    supabase,
     userId,
   });
 
@@ -535,6 +569,58 @@ async function buildXaiClinicalReview(
     console.error("[xAI Clinical Review Error]", error instanceof Error ? error.message : error);
     return null;
   }
+}
+
+function summarizeSemanticMemories(
+  memories: Awaited<ReturnType<typeof retrieveSemanticMemories>>
+) {
+  return memories.slice(0, 8).map((memory) => ({
+    title: memory.title,
+    sourceType: memory.source_type,
+    content: memory.content.slice(0, 900),
+    importance: memory.importance,
+    similarity: memory.similarity,
+    occurredAt: memory.occurred_at,
+    metadata: memory.metadata,
+  }));
+}
+
+async function storeAgentSemanticMemory({
+  answer,
+  mode,
+  question,
+  supabase,
+  userId,
+}: {
+  answer: string;
+  mode: "generated" | "fallback";
+  question: string;
+  supabase: SupabaseAdmin;
+  userId: string;
+}) {
+  await storeSemanticMemory({
+    content: [`User asked: ${question}`, `Aeonvera answered: ${answer}`].join("\n\n"),
+    importance: inferSemanticImportance(question, answer),
+    metadata: {
+      answer_mode: mode,
+      stored_by: "personal_health_agent",
+    },
+    sourceType: "agent_chat",
+    supabase,
+    title: question.slice(0, 140),
+    userId,
+  });
+}
+
+function inferSemanticImportance(question: string, answer: string) {
+  const text = `${question} ${answer}`.toLowerCase();
+  if (/(doctor|clinician|medication|diagnos|symptom|pain|blood|lab|risk|urgent)/.test(text)) {
+    return 0.82;
+  }
+  if (/(prefer|remember|always|never|goal|habit|schedule|sleep|fast|workout|supplement)/.test(text)) {
+    return 0.72;
+  }
+  return 0.55;
 }
 
 async function storeClinicalInsight({

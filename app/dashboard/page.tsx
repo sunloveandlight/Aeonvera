@@ -17,6 +17,7 @@ import {
   buildDataSourceIntelligence,
   type DataSourceIntelligence,
 } from "@/lib/data/dataSourceIntelligence";
+import { resolveDisplayName } from "@/lib/profile/displayName";
 
 type Profile = {
   display_name: string | null;
@@ -799,6 +800,7 @@ export default function DashboardPage() {
     : systemStatus === "NEEDS REVIEW" ? "Review recommended"
     : "Priority review";
   const membershipLabel = formatMembershipPlan(profile?.plan);
+  const displayName = resolveDisplayName(profile?.display_name) || "there";
   const activationMessage = activatedPlan
     ? {
         core: {
@@ -889,7 +891,7 @@ export default function DashboardPage() {
                 {greeting},{" "}
                 <br />
                 <span className="text-white/50">
-                  {profile?.display_name || "User"}
+                  {displayName}
                 </span>
               </h1>
               <p className="mt-5 max-w-xl text-sm leading-7 text-white/40">
@@ -933,7 +935,7 @@ export default function DashboardPage() {
           action={todayPrimaryAction}
           firstInsight={healthState?.insights?.[0] || latestPriority || protocolSummary}
           greeting={greeting}
-          name={profile?.display_name || "there"}
+          name={displayName}
           onAction={() => {
             if (todayPrimaryAction.href === "/report" && hasAssessment && !report) {
               void handleGenerateReport();

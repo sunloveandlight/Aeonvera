@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { displayNameFromEmail, resolveDisplayName } from "@/lib/profile/displayName";
 import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 import { Checkbox, Field, Form, SubmitButton, TextInput } from "@/components/ui/forms";
@@ -55,10 +56,18 @@ export default function OnboardingPage() {
       }
 
       setUserId(user.id);
+      setDisplayName(
+        resolveDisplayName(
+          user.user_metadata?.display_name,
+          user.user_metadata?.full_name,
+          user.user_metadata?.name,
+          displayNameFromEmail(user.email)
+        )
+      );
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("user_id")
+        .select("user_id, display_name, entity_name")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -87,6 +96,12 @@ export default function OnboardingPage() {
         }
       }
 
+      if (profile) {
+        const existingDisplayName = resolveDisplayName(profile.display_name);
+        if (existingDisplayName) setDisplayName(existingDisplayName);
+        if (profile.entity_name) setEntityName(profile.entity_name);
+      }
+
       setLoading(false);
     };
 
@@ -104,10 +119,16 @@ export default function OnboardingPage() {
       setSaving(true);
       setMessage(null);
 
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const nextDisplayName =
+        resolveDisplayName(displayName) || displayNameFromEmail(user?.email) || null;
+
       const { error } = await supabase
         .from("profiles")
         .update({
-          display_name: displayName || "You",
+          display_name: nextDisplayName,
           entity_name: entityName || "Personal",
           onboarding_completed: true,
           entity_state: "active",

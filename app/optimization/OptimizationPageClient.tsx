@@ -6,6 +6,7 @@ import { ArrowRight, Check, Sparkles } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState, { EmptyState } from "@/components/ui/AccessState";
 import { supabase } from "@/lib/supabase/client";
+import { isUserAllowed, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
 
 type Question = {
   id: string;
@@ -220,6 +221,7 @@ export default function OptimizationPage() {
   const [showMap, setShowMap] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   const [signedOut, setSignedOut] = useState(false);
+  const [locked, setLocked] = useState(false);
   const [generatingProtocol, setGeneratingProtocol] = useState(false);
   const [protocol, setProtocol] = useState<OptimizationProtocol | null>(null);
   const [protocolMessage, setProtocolMessage] = useState<string | null>(null);
@@ -254,6 +256,21 @@ export default function OptimizationPage() {
 
       if (!user) {
         setSignedOut(true);
+        setAuthChecked(true);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("plan,subscription_status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!isUserAllowed(
+        (profile?.plan as Plan | null) || null,
+        (profile?.subscription_status as SubscriptionStatus | null) || null
+      )) {
+        setLocked(true);
         setAuthChecked(true);
         return;
       }
@@ -519,6 +536,29 @@ export default function OptimizationPage() {
             actions={[
               { href: "/login?mode=signin", label: "Sign in" },
               { href: "/pricing", label: "Compare tiers", variant: "secondary" },
+            ]}
+          />
+        </main>
+      </PageContainer>
+    );
+  }
+
+  if (locked) {
+    return (
+      <PageContainer>
+        <main className="py-14">
+          <AccessState
+            eyebrow="Optimization"
+            title="Choose a plan to build protocols."
+            body="Optimization uses your health profile, assessment, and AI protocol generation. Pick a membership tier to unlock the private builder."
+            points={[
+              "Core includes protocol generation",
+              "Elite adds future-self simulations",
+              "Sovereign adds full digital-twin context",
+            ]}
+            actions={[
+              { href: "/pricing", label: "View plans" },
+              { href: "/assessment", label: "Complete assessment", variant: "secondary" },
             ]}
           />
         </main>

@@ -8,6 +8,7 @@ import PageContainer from "@/components/ui/PageContainer";
 import AccessState from "@/components/ui/AccessState";
 import ClinicalPacketSummary from "@/components/physician/ClinicalPacketSummary";
 import { supabase } from "@/lib/supabase/client";
+import { resolveDisplayName } from "@/lib/profile/displayName";
 
 type ExportBundle = {
   clinicalPacket?: {
@@ -557,6 +558,11 @@ function buildClinicalShareMessage(link: ShareLink, absoluteUrl: string) {
 }
 
 function ExportDocument({ bundle }: { bundle: ExportBundle }) {
+  const patientName =
+    resolveDisplayName(bundle.patient.profile?.display_name) ||
+    bundle.patient.email ||
+    "Aeonvera user";
+
   return (
     <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] p-7 print:border-0 print:bg-white print:p-0 print:text-black">
       <div className="mb-8 border-b border-white/[0.08] pb-6 print:border-black/15">
@@ -565,7 +571,7 @@ function ExportDocument({ bundle }: { bundle: ExportBundle }) {
           Longitudinal healthspan summary
         </h1>
         <div className="mt-5 grid gap-3 text-sm text-white/55 print:text-black/70 sm:grid-cols-3">
-          <p>Patient: {bundle.patient.profile?.display_name || bundle.patient.email || "Aeonvera user"}</p>
+          <p>Patient: {patientName}</p>
           <p>Generated: {formatDate(bundle.generatedAt)}</p>
           <p>Plan: {bundle.patient.profile?.plan || "Not specified"}</p>
         </div>
