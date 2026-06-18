@@ -8350,6 +8350,7 @@ a[href] {
 :root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:focus-visible,
 :root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:focus-visible {
   align-items: stretch !important;
+  grid-template-columns: minmax(0, 1fr) !important;
   text-align: left !important;
   transform: none !important;
   filter: none !important;
@@ -8431,8 +8432,8 @@ a[href] {
 :root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
 :root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-emblem,
 :root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem {
-  justify-self: start !important;
-  margin: 0 !important;
+  justify-self: center !important;
+  margin: 0 auto !important;
   filter: none !important;
 }
 
