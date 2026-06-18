@@ -886,7 +886,7 @@ export default function DashboardPage() {
                 {currentTime.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
               </p>
               <h1 className="text-5xl md:text-6xl font-semibold tracking-tight text-white/90 leading-tight">
-                {greeting},
+                {greeting},{" "}
                 <br />
                 <span className="text-white/50">
                   {profile?.display_name || "User"}

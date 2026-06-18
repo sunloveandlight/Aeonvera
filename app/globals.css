@@ -1683,10 +1683,12 @@ body:has(.aeon-orb-system) main {
 }
 
 .aeon-orb-system {
-  left: 50%;
-  bottom: max(6.6rem, calc(env(safe-area-inset-bottom) + 5.9rem));
-  width: min(32rem, calc(100vw - 2rem));
-  transform: translateX(-50%);
+  right: max(1.35rem, calc(env(safe-area-inset-right) + 1.25rem));
+  bottom: max(1.35rem, calc(env(safe-area-inset-bottom) + 1.25rem));
+  width: auto;
+  max-width: min(32rem, calc(100vw - 2rem));
+  align-items: flex-end;
+  transform: none;
   pointer-events: none;
 }
 
@@ -1698,7 +1700,7 @@ body:has(.aeon-orb-system) main {
 
 @media (max-width: 767px) {
   .aeon-orb-system {
-    bottom: max(3.25rem, calc(env(safe-area-inset-bottom) + 2.85rem));
+    bottom: max(1.05rem, calc(env(safe-area-inset-bottom) + 0.95rem));
   }
 }
 
@@ -3280,7 +3282,7 @@ body:has(.aeon-orb-system) main {
 @media (max-width: 767px) {
   .aeon-orb-system {
     right: max(0.85rem, calc(env(safe-area-inset-right) + 0.85rem));
-    bottom: max(4.85rem, calc(env(safe-area-inset-bottom) + 4.65rem));
+    bottom: max(1.05rem, calc(env(safe-area-inset-bottom) + 0.95rem));
     left: auto;
     width: auto;
     max-width: calc(100vw - 1.5rem);

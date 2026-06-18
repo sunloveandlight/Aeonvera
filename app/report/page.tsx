@@ -323,6 +323,9 @@ export default function ReportPage() {
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="text-center max-w-md space-y-6">
             <p className="text-white/20 text-xs uppercase tracking-[0.14em]">No Report Found</p>
+            <h1 className="text-4xl font-semibold leading-tight text-white/90">
+              No report found.
+            </h1>
             <p className="text-white/40 text-sm">{error}</p>
             <Button href="/assessment">Start Assessment</Button>
           </div>
