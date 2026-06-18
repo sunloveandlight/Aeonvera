@@ -16,6 +16,7 @@ import {
   type ParsedClinicalBiomarker,
 } from "@/lib/labs/clinicalBiomarkers";
 import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAge";
+import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 
 let openaiClient: OpenAI | null = null;
 
@@ -110,6 +111,27 @@ export async function POST(request: NextRequest) {
     const clinicalIntelligence = await createClinicalInsightFromLabs({
       sourceQuestion: "Clinical lab import",
       supabase: admin,
+      userId: user.id,
+    });
+    await storeSemanticMemory({
+      content: [
+        `Imported ${biomarkers.length} lab biomarkers from ${source}.`,
+        ...biomarkers.slice(0, 24).map((marker) =>
+          `${marker.canonicalKey}: ${marker.value}${marker.unit ? ` ${marker.unit}` : ""}${
+            marker.referenceRange ? ` (${marker.referenceRange})` : ""
+          }`
+        ),
+      ].join("\n"),
+      importance: 0.86,
+      metadata: {
+        biomarkerCount: biomarkers.length,
+        source,
+        storedBy: "lab_import",
+      },
+      occurredAt: measuredAt,
+      sourceType: "lab_import",
+      supabase: admin,
+      title: "Imported lab biomarkers",
       userId: user.id,
     });
 

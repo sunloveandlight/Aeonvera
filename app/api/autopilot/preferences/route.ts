@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { canAccess } from "@/lib/auth/permissions";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 
 type AutopilotMode = "manual" | "suggest" | "approve" | "autopilot" | "sovereign";
 type Intensity = "quiet" | "balanced" | "high_touch";
@@ -150,6 +151,19 @@ export async function PATCH(request: NextRequest) {
 
     await syncNotificationPreferences(admin, next);
     await recordPreferenceEvent(admin, user.id, next);
+    await storeSemanticMemory({
+      content: summarizeAutopilotPreferences(next),
+      importance: 0.78,
+      metadata: {
+        intensity: next.intensity,
+        mode: next.mode,
+        storedBy: "autopilot_preferences",
+      },
+      sourceType: "autopilot_preferences",
+      supabase: admin,
+      title: "Life Autopilot preferences",
+      userId: user.id,
+    });
 
     return NextResponse.json({
       preferences: sanitizePreferences(user.id, data || next),
@@ -161,6 +175,27 @@ export async function PATCH(request: NextRequest) {
       error instanceof Error ? error.message : "Could not save Life Autopilot.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+function summarizeAutopilotPreferences(preferences: LifeAutopilotPreferences) {
+  const enabledDomains = Object.entries(preferences.allowed_reminder_domains)
+    .filter(([, enabled]) => enabled)
+    .map(([domain]) => domain.replace(/_/g, " "))
+    .join(", ");
+
+  return [
+    `Coach intensity: ${preferences.intensity}`,
+    `Automation mode: ${preferences.mode}`,
+    `Quiet hours: ${preferences.quiet_hours_start}-${preferences.quiet_hours_end} (${preferences.timezone})`,
+    `Fasting window: ${preferences.fasting_window_start}-${preferences.fasting_window_end}`,
+    `Sleep window: ${preferences.sleep_window_start}-${preferences.sleep_window_end}`,
+    `Meal rhythm: ${preferences.meal_rhythm}`,
+    `Training days: ${preferences.training_days.join(", ") || "none selected"}`,
+    `Hydration target: ${preferences.hydration_target_ml} ml`,
+    `Sunlight target: ${preferences.sunlight_target_minutes} minutes`,
+    `Medication boundary: ${preferences.medication_boundary}`,
+    `Reminder domains: ${enabledDomains || "none"}`,
+  ].join("\n");
 }
 
 async function ensureAccess(admin: ReturnType<typeof getSupabaseAdmin>, userId: string) {

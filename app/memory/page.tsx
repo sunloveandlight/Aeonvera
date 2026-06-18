@@ -108,10 +108,64 @@ export default function MemoryPage() {
 
   async function forgetSemanticMemory(id: string) {
     setSemanticMemories((current) => current.filter((memory) => memory.id !== id));
-    const { error } = await supabase.from("semantic_memories").delete().eq("id", id);
-    if (error) {
+    const response = await fetch("/api/memory/semantic", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ ids: [id] }),
+    });
+    if (!response.ok) {
       setMessage("Aeonvera could not forget that memory yet. Try again in a moment.");
     }
+  }
+
+  async function forgetAllSemanticMemories() {
+    if (!semanticMemories.length) return;
+    const confirmed = window.confirm(
+      "Forget all long-term semantic memories? Your account, reports, and source health data stay intact."
+    );
+    if (!confirmed) return;
+
+    const previous = semanticMemories;
+    setSemanticMemories([]);
+    const response = await fetch("/api/memory/semantic", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ all: true }),
+    });
+
+    if (!response.ok) {
+      setSemanticMemories(previous);
+      setMessage("Aeonvera could not forget all memories yet. Try again in a moment.");
+      return;
+    }
+
+    setMessage("Long-term semantic memories forgotten.");
+  }
+
+  function exportSemanticMemories() {
+    const blob = new Blob(
+      [
+        JSON.stringify(
+          {
+            exportedAt: new Date().toISOString(),
+            semanticMemories,
+            preferences,
+            coachMemory: memory,
+          },
+          null,
+          2
+        ),
+      ],
+      { type: "application/json" }
+    );
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `aeonvera-memory-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   if (loading) {
@@ -298,7 +352,24 @@ export default function MemoryPage() {
                 Raw submitted memories and distilled agent memories that can be retrieved by semantic similarity.
               </p>
             </div>
-            <Clock size={18} className="royal-text" />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={exportSemanticMemories}
+                className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+              >
+                Export
+              </button>
+              <button
+                type="button"
+                onClick={() => void forgetAllSemanticMemories()}
+                disabled={!semanticMemories.length}
+                className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Forget all
+              </button>
+              <Clock size={18} className="royal-text" />
+            </div>
           </div>
           {semanticMemories.length ? (
             <div className="grid gap-3 lg:grid-cols-2">

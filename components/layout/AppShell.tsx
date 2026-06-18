@@ -13,7 +13,9 @@ type AppShellProps = {
 
 export default function AppShell({ children }: AppShellProps) {
   const { enabled, toggle } = useDesignOverlay();
-  const designToolsEnabled = process.env.NODE_ENV !== "production";
+  const designToolsEnabled =
+    process.env.NODE_ENV !== "production" &&
+    process.env.NEXT_PUBLIC_SHOW_DESIGN_TOOLS === "true";
   useDesignAudit(designToolsEnabled && enabled);
 
   return (

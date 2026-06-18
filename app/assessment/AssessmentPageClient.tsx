@@ -767,6 +767,22 @@ export default function AssessmentPage() {
         return;
       }
 
+      void fetch("/api/memory/semantic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          sourceType: "assessment",
+          title: "Longevity assessment baseline",
+          content: `Assessment answers:\n${JSON.stringify(sanitizeAnswers(answers), null, 2)}`,
+          importance: 0.82,
+          metadata: {
+            answerCount: Object.values(sanitizeAnswers(answers)).filter(Boolean).length,
+            storedBy: "assessment_submit",
+          },
+        }),
+      }).catch(() => null);
+
       setProcessingStatus("Computing your biological age across all domains...");
 
       await fetch("/api/longevity/biological-age", {

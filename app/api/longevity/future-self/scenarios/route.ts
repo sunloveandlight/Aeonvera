@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
 import { FUTURE_SELF_SCENARIOS } from "@/lib/longevity/futureSelfSimulator";
+import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 
 type CookieToSet = {
   name: string;
@@ -129,6 +130,26 @@ export async function POST(request: NextRequest) {
 
       throw error;
     }
+
+    await storeSemanticMemory({
+      content: [
+        `Saved future-self scenario: ${title}`,
+        description,
+        scenarioIds.length ? `Selected levers: ${scenarioIds.join(", ")}` : "",
+        futureSelf.summary ? `Projection summary: ${futureSelf.summary}` : "",
+      ].filter(Boolean).join("\n"),
+      importance: 0.8,
+      metadata: {
+        scenarioIds,
+        isPublic: body?.isPublic === true,
+        storedBy: "future_self_scenario",
+      },
+      sourceId: typeof data === "object" && data && "id" in data ? String(data.id) : undefined,
+      sourceType: "future_self_scenario",
+      supabase: admin,
+      title,
+      userId: user.id,
+    });
 
     return NextResponse.json({ scenario: data });
   } catch (error) {

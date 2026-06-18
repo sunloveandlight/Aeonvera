@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState from "@/components/ui/AccessState";
+import { supabase } from "@/lib/supabase/client";
 
 type AutopilotMode = "manual" | "suggest" | "approve" | "autopilot" | "sovereign";
 type Intensity = "quiet" | "balanced" | "high_touch";
@@ -157,15 +158,19 @@ export default function LifeAutopilotPage() {
 
     async function load() {
       try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          if (!cancelled) window.location.href = "/login?mode=signin";
+          return;
+        }
+
         const response = await fetch("/api/autopilot/preferences", {
           credentials: "include",
         });
         const data = await response.json();
-
-        if (response.status === 401) {
-          if (!cancelled) window.location.href = "/login?mode=signin";
-          return;
-        }
 
         if (response.status === 403) {
           if (!cancelled) {

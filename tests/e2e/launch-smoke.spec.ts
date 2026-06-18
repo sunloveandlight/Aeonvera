@@ -12,6 +12,7 @@ const protectedRoutes = [
   "/memory",
   "/network",
   "/onboarding",
+  "/optimization",
   "/physician-export",
   "/plan",
   "/report",
@@ -39,7 +40,7 @@ test.describe("launch shell", () => {
     test(`renders public route ${route}`, async ({ page }) => {
       const problems = await collectConsoleProblems(page);
 
-      await page.goto(route);
+      await page.goto(route, { waitUntil: "domcontentloaded" });
 
       await expect(page.locator("body")).toContainText(/Aeonvera|Privacy|Terms|Choose|Demo/i);
       await expect(page.locator("body")).not.toContainText(/Hydration failed|Runtime Error|Application error/i);
@@ -49,7 +50,7 @@ test.describe("launch shell", () => {
 
   for (const route of protectedRoutes) {
     test(`redirects protected route ${route} to login`, async ({ page }) => {
-      await page.goto(route);
+      await page.goto(route, { waitUntil: "domcontentloaded" });
 
       await expect(page).toHaveURL(/\/login/);
       await expect(page.getByRole("heading", { name: /welcome back|create your account/i })).toBeVisible();
@@ -59,8 +60,10 @@ test.describe("launch shell", () => {
   test("desktop header menus open on hover", async ({ page, isMobile }) => {
     test.skip(isMobile, "desktop-only hover behavior");
 
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
     const overview = page.getByRole("link", { name: "Overview" });
+    await expect(overview).toBeVisible();
 
     await overview.hover();
     await expect(page.locator(".premium-mega-menu")).toContainText("Demo workspace");
@@ -72,8 +75,11 @@ test.describe("launch shell", () => {
   test("mobile navigation exposes public product paths", async ({ page, isMobile }) => {
     test.skip(!isMobile, "mobile-only menu behavior");
 
-    await page.goto("/pricing");
-    await page.getByRole("button", { name: "Open navigation" }).click();
+    await page.goto("/pricing", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load");
+    const menuButton = page.getByRole("button", { name: "Open navigation" });
+    await expect(menuButton).toBeVisible();
+    await menuButton.click();
 
     await expect(page.locator(".premium-mobile-menu")).toContainText("Demo workspace");
     await expect(page.locator(".premium-mobile-menu")).toContainText("Connect your data");
@@ -84,7 +90,7 @@ test.describe("launch shell", () => {
 
 test.describe("unauthenticated safety boundaries", () => {
   test("pricing CTA routes unauthenticated users to signup", async ({ page }) => {
-    await page.goto("/pricing");
+    await page.goto("/pricing", { waitUntil: "domcontentloaded" });
     await page.getByRole("link", { name: /Choose Core/i }).click();
 
     await expect(page).toHaveURL(/\/login\?mode=signup/);

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import OptimizationPageClient from "./OptimizationPageClient";
+import { isUserAllowed, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Optimization",
@@ -22,6 +25,30 @@ export const metadata: Metadata = {
   },
 };
 
-export default function OptimizationPage() {
+export default async function OptimizationPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login?mode=signin");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("plan,subscription_status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (
+    !isUserAllowed(
+      (profile?.plan as Plan | null) || null,
+      (profile?.subscription_status as SubscriptionStatus | null) || null
+    )
+  ) {
+    redirect("/pricing");
+  }
+
   return <OptimizationPageClient />;
 }

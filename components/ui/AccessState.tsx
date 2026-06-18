@@ -90,7 +90,7 @@ export function EmptyState({
       {action ? (
         <Link
           href={action.href}
-          className="mt-5 inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)] transition hover:text-[rgb(var(--gold))]"
+          className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 text-[10px] font-semibold uppercase tracking-[0.14em]"
         >
           {action.label}
           <ArrowRight size={13} />

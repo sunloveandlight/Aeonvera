@@ -38,35 +38,41 @@ export default function Button({
     `,
   };
 
-  const content = (
-    <motion.div
-      whileHover={disabled ? {} : { y: -1 }}
-      whileTap={disabled ? {} : { scale: 0.98 }}
-      transition={{ duration: 0.2 }}
-      data-aeonvera-button
-      className={`
-        ${base}
-        ${styles[variant]}
-        ${disabled ? "opacity-40 cursor-not-allowed" : ""}
-        ${className}
-      `}
-    >
-      {/* content */}
-      <span className="relative z-10">{children}</span>
-    </motion.div>
-  );
+  const buttonClassName = `
+    ${base}
+    ${styles[variant]}
+    ${disabled ? "opacity-40 cursor-not-allowed" : ""}
+    ${className}
+  `;
 
   if (href) {
     return (
-      <Link href={disabled ? "#" : href} className="inline-flex">
-        {content}
-      </Link>
+      <motion.span whileHover={disabled ? {} : { y: -1 }} whileTap={disabled ? {} : { scale: 0.98 }} transition={{ duration: 0.2 }} className="inline-flex">
+        <Link
+          href={disabled ? "#" : href}
+          aria-disabled={disabled}
+          tabIndex={disabled ? -1 : undefined}
+          data-aeonvera-button
+          className={buttonClassName}
+        >
+          <span className="relative z-10">{children}</span>
+        </Link>
+      </motion.span>
     );
   }
 
   return (
-    <button type={type} onClick={onClick} disabled={disabled}>
-      {content}
-    </button>
+    <motion.button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      whileHover={disabled ? {} : { y: -1 }}
+      whileTap={disabled ? {} : { scale: 0.98 }}
+      transition={{ duration: 0.2 }}
+      data-aeonvera-button
+      className={buttonClassName}
+    >
+      <span className="relative z-10">{children}</span>
+    </motion.button>
   );
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
+import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 
 const BASE_SELECT =
   "id,domain,action,success,confidence,created_at";
@@ -133,6 +134,25 @@ export async function POST(request: NextRequest) {
       outcome,
       confidence: payload.confidence,
       source: "manual",
+    });
+    await storeSemanticMemory({
+      content: [
+        `Intervention outcome: ${outcome}`,
+        `Domain: ${domain}`,
+        `Action: ${action}`,
+        payload.notes ? `Notes: ${payload.notes}` : "",
+      ].filter(Boolean).join("\n"),
+      importance: outcome === "success" ? 0.74 : 0.82,
+      metadata: {
+        confidence: payload.confidence,
+        outcome,
+        storedBy: "digital_twin_outcome",
+      },
+      sourceId: typeof data === "object" && data && "id" in data ? String(data.id) : undefined,
+      sourceType: "digital_twin_outcome",
+      supabase: admin,
+      title: `${domain} ${outcome}`,
+      userId: user.id,
     });
 
     return NextResponse.json({ outcome: data });

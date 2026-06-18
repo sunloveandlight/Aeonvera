@@ -143,6 +143,25 @@ export default function OnboardingPage() {
         return;
       }
 
+      void fetch("/api/memory/semantic", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          sourceType: "onboarding",
+          title: "Initial profile context",
+          content: [
+            nextDisplayName ? `Display name: ${nextDisplayName}` : "",
+            entityName ? `Entity: ${entityName}` : "",
+            "User completed health intelligence acknowledgement.",
+          ].filter(Boolean).join("\n"),
+          importance: 0.72,
+          metadata: {
+            storedBy: "onboarding_complete",
+          },
+        }),
+      }).catch(() => null);
+
       router.replace("/assessment");
     } catch (err) {
       console.error(err);
