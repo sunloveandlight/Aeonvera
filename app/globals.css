@@ -6772,9 +6772,9 @@ input[type="number"]::-webkit-inner-spin-button {
 :root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
 :root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
 :root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible,
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-apple-split, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-apple-split, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-apple-split, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
