@@ -18,6 +18,7 @@ import {
   type DataSourceIntelligence,
 } from "@/lib/data/dataSourceIntelligence";
 import { resolveDisplayName } from "@/lib/profile/displayName";
+import { sentenceDisplay } from "@/lib/text/display";
 
 type Profile = {
   display_name: string | null;
@@ -747,6 +748,7 @@ export default function DashboardPage() {
   const ageDelta = bioAge && assessmentAge ? bioAge - assessmentAge : null;
   const latestPriority =
     report?.report?.top_priorities?.[0] || report?.primary_goal || null;
+  const latestPriorityDisplay = sentenceDisplay(latestPriority);
   const connectedProviders = Array.from(
     new Set([
       ...wearableConnections
@@ -933,7 +935,7 @@ export default function DashboardPage() {
 
         <TodayBriefing
           action={todayPrimaryAction}
-          firstInsight={healthState?.insights?.[0] || latestPriority || protocolSummary}
+          firstInsight={healthState?.insights?.[0] || (latestPriority ? latestPriorityDisplay : protocolSummary)}
           greeting={greeting}
           name={displayName}
           onAction={() => {
@@ -995,7 +997,7 @@ export default function DashboardPage() {
 
                 <div className="mt-auto border-t border-white/[0.06] pt-5">
                   <div className="flex justify-between micro-label mb-3">
-                    <span>Estimation Accuracy</span>
+                    <span>Profile Completeness</span>
                     <span>{accuracyScore}%</span>
                   </div>
                   {accuracyScore < 70 && (
@@ -1069,7 +1071,7 @@ export default function DashboardPage() {
                 </div>
 
                 <p className="min-h-14 text-white/45 text-sm leading-7 line-clamp-2">
-                  {latestPriority}
+                  {latestPriorityDisplay}
                 </p>
 
                 <div className="mt-auto flex items-center gap-3 border-t border-white/[0.06] pt-5">
@@ -1477,7 +1479,7 @@ function buildTodayPrimaryAction({
 
   if (!optimizationProtocol) {
     return {
-      body: latestPriority || "Turn your latest report into a short, executable protocol.",
+      body: sentenceDisplay(latestPriority, "Turn your latest report into a short, executable protocol."),
       href: "/optimization",
       label: "Build protocol",
       title: "Choose the next intervention",
@@ -1494,7 +1496,7 @@ function buildTodayPrimaryAction({
   }
 
   return {
-    body: latestPriority || "Your baseline and protocol are active. Review the plan and execute the next step.",
+    body: sentenceDisplay(latestPriority, "Your baseline and protocol are active. Review the plan and execute the next step."),
     href: "/plan",
     label: "Open plan",
     title: "Execute today’s plan",

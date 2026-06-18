@@ -7,6 +7,7 @@ import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { possessiveName, resolveDisplayName } from "@/lib/profile/displayName";
+import { sentenceDisplay } from "@/lib/text/display";
 
 type ReportData = {
   risk_score: number;
@@ -369,6 +370,8 @@ export default function ReportPage() {
 
   const accuracyColor = "text-white/78";
   const displayName = resolveDisplayName(profile?.display_name);
+  const primaryObjective = sentenceDisplay(report.primary_goal);
+  const riskNarrative = buildRiskNarrative(report, assessment);
 
   return (
     <PageContainer>
@@ -413,7 +416,7 @@ export default function ReportPage() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/20">Accuracy</p>
+                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/20">Profile completeness</p>
                   <p className={`text-xs font-light ${accuracyColor}`}>{accuracyScore}% complete</p>
                 </div>
               </div>
@@ -505,11 +508,7 @@ export default function ReportPage() {
               </div>
 
               <p className="text-white/30 text-sm mb-6">
-                {report.risk_score <= 35
-                  ? "Low biological risk. Your system is performing exceptionally."
-                  : report.risk_score <= 65
-                  ? "Moderate biological risk. Targeted improvements will move the needle."
-                  : "Elevated biological risk. Immediate lifestyle intervention is advised."}
+                {riskNarrative}
               </p>
 
               {/* RISK PROFILE MINI */}
@@ -535,7 +534,7 @@ export default function ReportPage() {
         ═══════════════════════════════════════ */}
         <Card title="PRIMARY OBJECTIVE">
           <p className="text-2xl md:text-3xl font-semibold text-white/80 leading-relaxed">
-            {report.primary_goal}
+            {primaryObjective}
           </p>
         </Card>
 
@@ -1040,4 +1039,28 @@ function driverStatusClassName(status: ImprovementLoop["drivers"][number]["statu
   if (status === "positive") return `${base} royal-text bg-white/[0.035]`;
   if (status === "negative") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
   return `${base} text-white/30 bg-white/[0.025]`;
+}
+
+function buildRiskNarrative(report: ReportData, assessment: AssessmentData | null) {
+  const sleepQuality = Number(assessment?.sleep_quality);
+  const sleepHours = Number(assessment?.sleep_hours);
+  const exerciseDays = Number(assessment?.exercise_days);
+  const lifestylePressure =
+    (Number.isFinite(sleepQuality) && sleepQuality <= 3) ||
+    (Number.isFinite(sleepHours) && sleepHours < 6) ||
+    (Number.isFinite(exerciseDays) && exerciseDays <= 1);
+
+  if (report.risk_score <= 35 && lifestylePressure) {
+    return "Low measured risk, but sleep or activity inputs show real optimization pressure.";
+  }
+
+  if (report.risk_score <= 35) {
+    return "Low biological risk. Your current signals are trending well.";
+  }
+
+  if (report.risk_score <= 65) {
+    return "Moderate biological risk. Targeted improvements will move the needle.";
+  }
+
+  return "Elevated biological risk. Immediate lifestyle intervention is advised.";
 }

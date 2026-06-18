@@ -909,7 +909,7 @@ export default function AssessmentPage() {
                     </p>
                   </div>
                   <div className="executive-panel-soft rounded-lg p-4">
-                    <p className="micro-label mb-2">Accuracy</p>
+                    <p className="micro-label mb-2">Profile completeness</p>
                     <p className="text-3xl font-light text-white/86">{completionPct}%</p>
                   </div>
                   <div className="executive-panel-soft rounded-lg p-4">
@@ -998,7 +998,7 @@ export default function AssessmentPage() {
           <div className="mt-9 space-y-3">
             <div className="flex justify-between micro-label">
               <span>Progress</span>
-              <span>Accuracy {completionPct}%</span>
+              <span>Profile completeness {completionPct}%</span>
             </div>
             <div className="w-full h-px bg-white/[0.08] overflow-hidden">
               <div

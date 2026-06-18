@@ -1716,9 +1716,9 @@ function totalSignals(counts: Record<string, number>) {
 }
 
 function formatShortDate(value?: string) {
-  if (!value) return "--";
+  if (!value) return "Not yet";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "--";
+  if (Number.isNaN(date.getTime())) return "Not yet";
 
   return new Intl.DateTimeFormat("en", {
     month: "short",

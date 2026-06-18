@@ -2,7 +2,7 @@
 
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState, { EmptyState } from "@/components/ui/AccessState";
 import { supabase } from "@/lib/supabase/client";
@@ -582,8 +582,9 @@ export default function OptimizationPage() {
           </div>
           <Link
             href="/dashboard"
-            className="text-sm font-medium text-white/45 transition hover:text-white/80"
+            className="premium-action-secondary inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
           >
+            <ArrowLeft size={16} />
             Dashboard
           </Link>
         </div>

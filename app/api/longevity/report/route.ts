@@ -22,6 +22,26 @@ type CookieToSet = {
   value: string;
 };
 
+type GeneratedLongevityReport = {
+  risk_score?: number;
+  primary_goal?: string;
+  risk_profile?: {
+    sleep_risk?: "low" | "medium" | "high";
+    metabolic_risk?: "low" | "medium" | "high";
+    cardiovascular_risk?: "low" | "medium" | "high";
+    lifestyle_risk?: "low" | "medium" | "high";
+  };
+  strengths?: string[];
+  weaknesses?: string[];
+  top_priorities?: string[];
+  "90_day_plan"?: Array<{
+    category: string;
+    action: string;
+    impact: "low" | "medium" | "high";
+  }>;
+  behavioral_insights?: string[];
+};
+
 function getOpenAI() {
   const apiKey = process.env.OPENAI_API_KEY;
 
@@ -262,9 +282,12 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
       .replace(/```\s*$/i, "")
       .trim();
 
-    let report;
+    let report: ReturnType<typeof calibrateReportFromAssessment>;
     try {
-      report = JSON.parse(cleaned);
+      report = calibrateReportFromAssessment(
+        JSON.parse(cleaned) as GeneratedLongevityReport,
+        assessment as Record<string, unknown> | null
+      );
     } catch {
       return NextResponse.json(
         { error: "Invalid AI JSON output", raw: cleaned },
@@ -396,6 +419,78 @@ async function recordReportNotification({
     );
     return null;
   }
+}
+
+function calibrateReportFromAssessment(
+  report: GeneratedLongevityReport,
+  assessment: Record<string, unknown> | null
+): GeneratedLongevityReport & {
+  primary_goal: string;
+  risk_profile: NonNullable<GeneratedLongevityReport["risk_profile"]>;
+  risk_score: number;
+  top_priorities: string[];
+} {
+  const sleepQuality = numberFromAssessment(assessment?.sleep_quality);
+  const sleepHours = numberFromAssessment(assessment?.sleep_hours);
+  const exerciseDays = numberFromAssessment(assessment?.exercise_days);
+  const stressLevel = numberFromAssessment(assessment?.stress_level);
+  const smoking = String(assessment?.smoking || "").toLowerCase();
+  const alcoholUse = String(assessment?.alcohol_use || "").toLowerCase();
+
+  const poorSleep =
+    (sleepQuality !== null && sleepQuality <= 3) ||
+    (sleepHours !== null && sleepHours < 6);
+  const sedentary = exerciseDays !== null && exerciseDays <= 1;
+  const highStress = stressLevel !== null && stressLevel >= 8;
+  const currentSmoking = smoking.includes("current") || smoking === "yes";
+  const highAlcohol = alcoholUse.includes("heavy") || alcoholUse.includes("daily");
+
+  let riskFloor = 25;
+  if (poorSleep) riskFloor = Math.max(riskFloor, 52);
+  if (sedentary) riskFloor = Math.max(riskFloor, 52);
+  if (poorSleep && sedentary) riskFloor = Math.max(riskFloor, 66);
+  if (highStress) riskFloor = Math.max(riskFloor, 58);
+  if (currentSmoking) riskFloor = Math.max(riskFloor, 72);
+  if (highAlcohol) riskFloor = Math.max(riskFloor, 60);
+
+  const modelScore = Number(report.risk_score);
+  const riskScore = Math.min(
+    100,
+    Math.max(Number.isFinite(modelScore) ? Math.round(modelScore) : 50, riskFloor)
+  );
+
+  const riskProfile = {
+    sleep_risk: report.risk_profile?.sleep_risk || "low",
+    metabolic_risk: report.risk_profile?.metabolic_risk || "low",
+    cardiovascular_risk: report.risk_profile?.cardiovascular_risk || "low",
+    lifestyle_risk: report.risk_profile?.lifestyle_risk || "low",
+  };
+
+  if (poorSleep) riskProfile.sleep_risk = sleepQuality !== null && sleepQuality <= 2 ? "high" : "medium";
+  if (sedentary || currentSmoking || highAlcohol) {
+    riskProfile.lifestyle_risk = currentSmoking || (poorSleep && sedentary) ? "high" : "medium";
+  }
+
+  const topPriorities = Array.isArray(report.top_priorities) ? [...report.top_priorities] : [];
+  if (poorSleep && !topPriorities.some((priority) => /sleep|recovery/i.test(priority))) {
+    topPriorities.unshift("Stabilize sleep and recovery quality");
+  }
+  if (sedentary && !topPriorities.some((priority) => /activity|exercise|training/i.test(priority))) {
+    topPriorities.unshift("Increase weekly physical activity");
+  }
+
+  return {
+    ...report,
+    primary_goal: report.primary_goal || "Improve biological resilience",
+    risk_profile: riskProfile,
+    risk_score: riskScore,
+    top_priorities: topPriorities.slice(0, 5),
+  };
+}
+
+function numberFromAssessment(value: unknown) {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
 }
 
 function isMissingNotificationTable(error: { message?: string; code?: string }) {

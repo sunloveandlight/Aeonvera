@@ -78,13 +78,19 @@ export default function SettingsPage() {
         const parsed = savedToggles
           ? JSON.parse(savedToggles) as Partial<Record<ToggleKey, boolean>>
           : {};
+        const commandOrb =
+          commandOrbEnabled === null
+            ? parsed.commandOrb ?? true
+            : commandOrbEnabled !== "false";
+        window.localStorage.setItem("aeonvera.commandOrb.enabled", String(commandOrb));
         setToggles((current) => ({
           ...current,
           ...parsed,
-          commandOrb: commandOrbEnabled !== "false",
+          commandOrb,
         }));
       } catch {
         // Settings fall back to the calm defaults above.
+        window.localStorage.setItem("aeonvera.commandOrb.enabled", "true");
       }
     });
   }, []);

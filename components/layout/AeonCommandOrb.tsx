@@ -222,6 +222,15 @@ export default function AeonCommandOrb() {
       setOrbEnabled(window.localStorage.getItem("aeonvera.commandOrb.enabled") !== "false");
     }
 
+    function handleStorage(event: StorageEvent) {
+      if (
+        event.key === "aeonvera.commandOrb.enabled" ||
+        event.key === "aeonvera.settings.toggles"
+      ) {
+        readOrbEnabled();
+      }
+    }
+
     async function refreshAccess() {
       readOrbEnabled();
       const { data: userResult } = await supabase.auth.getUser();
@@ -250,15 +259,23 @@ export default function AeonCommandOrb() {
 
     void refreshAccess();
     window.addEventListener("aeonvera:orb-settings-change", readOrbEnabled);
+    window.addEventListener("storage", handleStorage);
     const { data: authListener } = supabase.auth.onAuthStateChange(() => {
       void refreshAccess();
     });
 
     return () => {
       window.removeEventListener("aeonvera:orb-settings-change", readOrbEnabled);
+      window.removeEventListener("storage", handleStorage);
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (orbEnabled) return;
+    stopRealtimeVoice();
+    setOpen(false);
+  }, [orbEnabled, stopRealtimeVoice]);
 
   useEffect(() => {
     if (open || realtimeActive || realtimeStatus || speaking || thinking) {
