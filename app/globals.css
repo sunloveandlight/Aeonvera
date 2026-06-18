@@ -5946,7 +5946,13 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .aeon-apple-pricing .aeon-apple-plan-core,
 :root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-core,
-:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-core {
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-core,
+.aeon-apple-pricing .aeon-apple-plan-core:hover,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-core:hover,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-core:hover,
+.aeon-apple-pricing .aeon-apple-plan-core:focus-visible,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-core:focus-visible,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-core:focus-visible {
   --pathway-bg-a: rgb(72, 72, 69);
   --pathway-bg-b: rgb(27, 27, 25);
   --pricing-card-cta-bg:
@@ -5965,7 +5971,13 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .aeon-apple-pricing .aeon-apple-plan-featured,
 :root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-featured,
-:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-featured {
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-featured,
+.aeon-apple-pricing .aeon-apple-plan-featured:hover,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-featured:hover,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-featured:hover,
+.aeon-apple-pricing .aeon-apple-plan-featured:focus-visible,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-featured:focus-visible,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-featured:focus-visible {
   --pathway-bg-a: rgb(121, 135, 126);
   --pathway-bg-b: rgb(48, 60, 56);
   --pathway-muted: rgba(255, 255, 255, 0.72);
@@ -5986,7 +5998,13 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .aeon-apple-pricing .aeon-apple-plan-sovereign,
 :root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-sovereign,
-:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-sovereign {
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-sovereign,
+.aeon-apple-pricing .aeon-apple-plan-sovereign:hover,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-sovereign:hover,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-sovereign:hover,
+.aeon-apple-pricing .aeon-apple-plan-sovereign:focus-visible,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-sovereign:focus-visible,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-sovereign:focus-visible {
   --pathway-bg-a: rgba(248, 244, 235, 0.99);
   --pathway-bg-b: rgba(225, 214, 196, 0.99);
   --pathway-ink: rgba(126, 99, 57, 0.92);
@@ -6130,7 +6148,7 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .aeon-apple-pricing .aeon-apple-plan-badge {
   position: absolute;
-  top: -4.55rem;
+  top: -5.8rem;
   left: 50%;
   display: inline-flex;
   transform: translateX(-50%);
@@ -6255,6 +6273,62 @@ input[type="number"]::-webkit-inner-spin-button {
   transform: none !important;
   filter: none !important;
   transition: none !important;
+}
+
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+  position: relative !important;
+  isolation: auto !important;
+  overflow: visible !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
+  gap: 0.45rem !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+  color: rgba(68, 56, 33, 0.86) !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+  text-decoration: none !important;
+  transition: color 140ms ease, opacity 140ms ease !important;
+}
+
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+  color: rgba(238, 223, 184, 0.9) !important;
+}
+
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+  color: rgba(38, 29, 13, 0.98) !important;
+}
+
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+  color: rgba(255, 244, 214, 0.98) !important;
+}
+
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after {
+  content: none !important;
+  display: none !important;
 }
 
 @media (max-width: 900px) {
