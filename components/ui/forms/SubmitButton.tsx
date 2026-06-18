@@ -12,13 +12,12 @@ export default function SubmitButton({ children, loading }: SubmitButtonProps) {
       type="submit"
       disabled={loading}
       className={`
-        w-full
-        h-10
+        inline-flex w-full items-center justify-center
+        h-11
         rounded-lg
         text-sm
-        font-light
+        font-medium
         tracking-normal
-        uppercase
         transition-all
         duration-300
         active:scale-[0.98]

@@ -108,6 +108,53 @@ export async function storeSemanticMemory({
   const normalized = content.trim().slice(0, 6000);
   if (!normalized) return;
 
+  // Dedup before embedding so unchanged content never burns an embedding call.
+  // A (source_type, source_id) pair is treated as a stable key and updated in place;
+  // otherwise an identical (source_type, content) row is skipped entirely.
+  try {
+    if (sourceId) {
+      const { data: existing, error: lookupError } = await supabase
+        .from("semantic_memories")
+        .select("id, content")
+        .eq("user_id", userId)
+        .eq("source_type", sourceType)
+        .eq("source_id", sourceId)
+        .maybeSingle();
+      if (lookupError && isSemanticMemoryMissing(lookupError)) return;
+      if (existing) {
+        if (existing.content === normalized) return;
+        const refreshed = await embedText(normalized);
+        if (!refreshed) return;
+        await supabase
+          .from("semantic_memories")
+          .update({
+            content: normalized,
+            embedding: refreshed,
+            importance: clampImportance(importance),
+            metadata,
+            occurred_at: occurredAt || new Date().toISOString(),
+            title: title?.trim().slice(0, 180) || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", existing.id);
+        return;
+      }
+    } else {
+      const { data: dupe, error: dupeError } = await supabase
+        .from("semantic_memories")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("source_type", sourceType)
+        .eq("content", normalized)
+        .limit(1)
+        .maybeSingle();
+      if (dupeError && isSemanticMemoryMissing(dupeError)) return;
+      if (dupe) return;
+    }
+  } catch {
+    // Dedup is best-effort; fall through to a normal insert if the probe fails.
+  }
+
   const embedding = await embedText(normalized);
   if (!embedding) return;
 
@@ -123,8 +170,41 @@ export async function storeSemanticMemory({
     user_id: userId,
   });
 
-  if (error && !isSemanticMemoryMissing(error)) {
-    console.error("[Semantic Memory Store Error]", error.message);
+  if (error) {
+    if (!isSemanticMemoryMissing(error)) {
+      console.error("[Semantic Memory Store Error]", error.message);
+    }
+    return;
+  }
+
+  await enforceMemoryCap(supabase, userId);
+}
+
+// Keep per-user memory bounded: drop the least-important / oldest rows past the cap.
+const MEMORY_CAP = 800;
+
+async function enforceMemoryCap(supabase: SupabaseAdmin, userId: string) {
+  try {
+    const { count, error } = await supabase
+      .from("semantic_memories")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId);
+    if (error || !count || count <= MEMORY_CAP) return;
+
+    const { data: stale } = await supabase
+      .from("semantic_memories")
+      .select("id")
+      .eq("user_id", userId)
+      .order("importance", { ascending: true })
+      .order("created_at", { ascending: true })
+      .limit(count - MEMORY_CAP);
+
+    const ids = (stale || []).map((row) => row.id);
+    if (ids.length) {
+      await supabase.from("semantic_memories").delete().in("id", ids);
+    }
+  } catch {
+    // Cap enforcement is best-effort and must never block a write.
   }
 }
 

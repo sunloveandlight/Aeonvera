@@ -136,7 +136,7 @@ export default function TermsPage() {
         <section className="mt-6 grid gap-4">
           {sections.map((section) => (
             <article key={section.title} className="executive-panel rounded-lg p-6 md:p-8">
-              <h2 className="text-2xl font-light text-white">{section.title}</h2>
+              <h2 className="text-2xl font-semibold text-white">{section.title}</h2>
               <div className="mt-5 space-y-4">
                 {section.body.map((paragraph) => (
                   <p key={paragraph} className="text-sm leading-7 text-white/52">

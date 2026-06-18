@@ -7245,3 +7245,45 @@ input[type="number"]::-webkit-inner-spin-button {
     transform: translateX(-50%) !important;
   }
 }
+
+/* ── Button system normalization ──────────────────────────────────────────
+   Placed last so it wins source-order over earlier per-block declarations.
+   These class selectors outrank Tailwind utilities, so one rule enforces a
+   uniform button across every call site: single height, comfortable padding,
+   no uppercase, and no letter-spacing (the cause of text crowding the edges).
+   Pricing-plan-card buttons use a different class and are intentionally exempt. */
+.premium-action,
+.premium-action-secondary,
+.premium-button-primary,
+.premium-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding-inline: 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.premium-action-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* Icon-only buttons opt out of text padding so they stay square. */
+.premium-action.aeon-btn-icon,
+.premium-action-secondary.aeon-btn-icon {
+  padding-inline: 0;
+  gap: 0;
+}

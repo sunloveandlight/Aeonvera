@@ -24,7 +24,7 @@ export default function Button({
   className = "",
 }: ButtonProps) {
   const base =
-    "relative inline-flex items-center justify-center rounded-md px-7 h-12 text-sm font-medium tracking-normal transition-all duration-300 select-none";
+    "relative inline-flex items-center justify-center rounded-md px-7 h-11 text-sm font-medium tracking-normal transition-all duration-300 select-none";
 
   const styles = {
     primary: `

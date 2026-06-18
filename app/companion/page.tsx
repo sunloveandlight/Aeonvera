@@ -1263,7 +1263,7 @@ function PersonalHealthAgentPanel({
             <button
               type="submit"
               disabled={thinking || !prompt.trim()}
-              className="premium-action inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-md disabled:cursor-not-allowed disabled:opacity-45"
+              className="premium-action aeon-btn-icon inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md disabled:cursor-not-allowed disabled:opacity-45"
               aria-label="Ask Aeonvera"
             >
               <Send size={16} />
