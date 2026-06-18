@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Check, ShieldCheck, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { PricingPlanEmblem } from "@/components/pricing/PricingPlanEmblem";
 import { type PricingPlan } from "@/components/pricing/PricingPlanCard";
 import { supabase } from "@/lib/supabase/client";
 import {
@@ -385,9 +386,7 @@ export default function PricingPage() {
             const className = `aeon-apple-plan aeon-apple-plan-${plan.id} ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`;
             const content = (
               <>
-                <span className="aeon-apple-plan-emblem" aria-hidden="true">
-                  <span />
-                </span>
+                <PricingPlanEmblem plan={plan.id} />
                 <span className="aeon-apple-plan-topline">
                   <span className="aeon-apple-plan-name">{plan.name}</span>
                   {plan.id === "elite" ? (

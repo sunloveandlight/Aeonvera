@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import AeonOrbVisual from "@/components/layout/AeonOrbVisual";
+import { PricingPlanEmblem } from "@/components/pricing/PricingPlanEmblem";
 import { supabase } from "@/lib/supabase/client";
 import { isSubscriptionValid, type SubscriptionStatus } from "@/lib/auth/permissions";
 
@@ -321,9 +322,7 @@ export default function HomePage() {
                 disabled={loadingPlan !== null}
                 className={`aeon-apple-plan aeon-apple-plan-${plan.id} ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`}
               >
-                <span className="aeon-apple-plan-emblem" aria-hidden="true">
-                  <span />
-                </span>
+                <PricingPlanEmblem plan={plan.id} />
                 <span className="aeon-apple-plan-topline">
                   <span className="aeon-apple-plan-name">{plan.name}</span>
                   {plan.id === "elite" ? (
