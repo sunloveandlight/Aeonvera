@@ -6442,3 +6442,231 @@ input[type="number"]::-webkit-inner-spin-button {
 ) {
   color: rgba(228, 230, 234, 0.62) !important;
 }
+
+/* Button system v2: final authority for every shared button class. */
+:root {
+  --av-btn-primary-bg:
+    radial-gradient(ellipse at 50% -48%, rgba(255, 255, 255, 0.96), transparent 60%),
+    linear-gradient(180deg, rgb(255, 253, 246) 0%, rgb(244, 233, 205) 48%, rgb(207, 181, 125) 100%);
+  --av-btn-primary-border: rgba(112, 84, 35, 0.42);
+  --av-btn-primary-text: rgba(38, 27, 9, 0.96);
+  --av-btn-primary-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.55) inset,
+    0 1px 1px rgba(43, 31, 10, 0.08),
+    0 0.75rem 1.55rem rgba(99, 78, 35, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(69, 48, 16, 0.18);
+  --av-btn-secondary-light: rgba(96, 70, 24, 0.96);
+  --av-btn-secondary-dark: rgba(245, 231, 190, 0.96);
+  --av-btn-secondary-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 0 1.1rem rgba(0, 0, 0, 0.22);
+  --av-btn-utility-light: rgba(28, 30, 34, 0.72);
+  --av-btn-utility-dark: rgba(255, 255, 255, 0.66);
+}
+
+:root[data-theme="light"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link),
+:root[data-theme="dark"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link),
+:root[data-theme="light"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link):hover,
+:root[data-theme="dark"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link):hover,
+:root[data-theme="light"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link):focus-visible,
+:root[data-theme="dark"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link):focus-visible {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  border: 1px solid var(--av-btn-primary-border) !important;
+  border-radius: 0.72rem !important;
+  background: var(--av-btn-primary-bg) !important;
+  color: var(--av-btn-primary-text) !important;
+  box-shadow: var(--av-btn-primary-shadow) !important;
+  text-shadow: none !important;
+  text-decoration: none !important;
+  filter: none !important;
+  transform: none !important;
+  transition: opacity 140ms ease, outline-color 140ms ease !important;
+}
+
+:root[data-theme="light"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)):not(.aeon-apple-plan-action):not(.apple-cta-link)::before,
+:root[data-theme="light"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)):not(.aeon-apple-plan-action):not(.apple-cta-link)::after,
+:root[data-theme="dark"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)):not(.aeon-apple-plan-action):not(.apple-cta-link)::before,
+:root[data-theme="dark"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)):not(.aeon-apple-plan-action):not(.apple-cta-link)::after {
+  pointer-events: none !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+:root[data-theme="light"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)):not(.aeon-apple-plan-action):not(.apple-cta-link) *,
+:root[data-theme="dark"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)):not(.aeon-apple-plan-action):not(.apple-cta-link) * {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+  position: relative !important;
+  isolation: auto !important;
+  overflow: visible !important;
+  width: auto !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--av-btn-secondary-light) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  text-decoration: none !important;
+  filter: none !important;
+  transform: none !important;
+  transition: opacity 140ms ease, outline-color 140ms ease !important;
+}
+
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible,
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+  color: var(--av-btn-secondary-dark) !important;
+  text-shadow: var(--av-btn-secondary-shadow) !important;
+}
+
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after {
+  content: none !important;
+  display: none !important;
+}
+
+:root[data-theme="light"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control, .premium-theme-toggle),
+:root[data-theme="light"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control, .premium-theme-toggle):hover,
+:root[data-theme="light"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control, .premium-theme-toggle):focus-visible {
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: var(--av-btn-utility-light) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+:root[data-theme="dark"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control, .premium-theme-toggle),
+:root[data-theme="dark"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control, .premium-theme-toggle):hover,
+:root[data-theme="dark"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control, .premium-theme-toggle):focus-visible {
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: var(--av-btn-utility-dark) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+:root[data-theme="dark"] .premium-header :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control, .premium-theme-toggle),
+:root[data-theme="dark"] .premium-header :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control, .premium-theme-toggle):hover,
+:root[data-theme="dark"] .premium-header :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control, .premium-theme-toggle):focus-visible,
+:root[data-theme="dark"] .premium-header a:is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control, .premium-theme-toggle):hover,
+:root[data-theme="dark"] .premium-header button:is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control, .premium-theme-toggle):hover {
+  color: var(--av-btn-utility-dark) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+:root[data-theme="dark"] .premium-header a.premium-icon-link:not(.premium-nav-action),
+:root[data-theme="dark"] .premium-header a.premium-icon-link:not(.premium-nav-action):hover,
+:root[data-theme="dark"] .premium-header a.premium-icon-link:not(.premium-nav-action):focus-visible,
+:root[data-theme="dark"] .premium-header button.premium-icon-link:not(.premium-nav-action),
+:root[data-theme="dark"] .premium-header button.premium-icon-link:not(.premium-nav-action):hover,
+:root[data-theme="dark"] .premium-header button.premium-icon-link:not(.premium-nav-action):focus-visible,
+:root[data-theme="dark"] .premium-header button.premium-icon-button:not(.premium-nav-action),
+:root[data-theme="dark"] .premium-header button.premium-icon-button:not(.premium-nav-action):hover,
+:root[data-theme="dark"] .premium-header button.premium-icon-button:not(.premium-nav-action):focus-visible,
+:root[data-theme="dark"] .premium-header button.premium-theme-toggle:not(.premium-nav-action),
+:root[data-theme="dark"] .premium-header button.premium-theme-toggle:not(.premium-nav-action):hover,
+:root[data-theme="dark"] .premium-header button.premium-theme-toggle:not(.premium-nav-action):focus-visible,
+:root[data-theme="dark"] .premium-icon-link:hover,
+:root[data-theme="dark"] .premium-theme-toggle:hover {
+  color: rgba(247, 247, 244, 0.9) !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+:root[data-theme="light"] .aeon-orb-send,
+:root[data-theme="dark"] .aeon-orb-send,
+:root[data-theme="light"] .aeon-orb-send:hover,
+:root[data-theme="dark"] .aeon-orb-send:hover,
+:root[data-theme="light"] .aeon-orb-send:focus-visible,
+:root[data-theme="dark"] .aeon-orb-send:focus-visible {
+  border: 1px solid var(--av-btn-primary-border) !important;
+  background: var(--av-btn-primary-bg) !important;
+  color: var(--av-btn-primary-text) !important;
+  box-shadow: var(--av-btn-primary-shadow) !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:focus-visible,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:focus-visible {
+  background: var(--pricing-card-cta-bg) !important;
+  border-color: var(--pricing-card-cta-border) !important;
+  color: var(--pricing-card-cta-color) !important;
+  box-shadow: var(--pricing-card-cta-shadow) !important;
+  transform: none !important;
+  filter: none !important;
+  transition: none !important;
+}
