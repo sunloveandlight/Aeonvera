@@ -3,7 +3,7 @@ import Link from "next/link";
 import PageContainer from "@/components/ui/PageContainer";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Aeonvera",
+  title: "Privacy Policy",
   description: "How Aeonvera collects, uses, protects, and shares personal health intelligence data.",
 };
 
@@ -107,7 +107,7 @@ export default function PrivacyPage() {
       <main className="py-14 md:py-20">
         <section className="executive-panel rounded-lg p-6 md:p-10">
           <p className="micro-label">Privacy Policy</p>
-          <h1 className="mt-5 max-w-4xl leading-tight text-white text-5xl md:text-6xl font-semibold">
+          <h1 className="legal-hero-title mt-5 max-w-4xl font-semibold text-white">
             Private health intelligence deserves plain-language privacy.
           </h1>
           <p className="mt-6 max-w-3xl text-sm leading-7 text-white/52">

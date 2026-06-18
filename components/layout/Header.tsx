@@ -228,7 +228,7 @@ export default function Header() {
             setActiveMenu(null);
             setMobileOpen(false);
           }}
-          className="group inline-flex items-center gap-2.5 text-[0.69rem] font-medium tracking-[0.18em] transition-colors duration-300"
+          className="group inline-flex min-h-11 items-center gap-2.5 text-[0.69rem] font-medium tracking-[0.18em] transition-colors duration-300"
           data-premium-brand
         >
           <span className="brand-mark" aria-hidden />
@@ -257,14 +257,14 @@ export default function Header() {
           })}
         </nav>
 
-        <div className="flex h-8 items-center gap-2">
+        <div className="flex min-h-11 items-center gap-1.5">
           <Link
             href="/companion"
             onClick={() => {
               setAccountOpen(false);
               setActiveMenu(null);
             }}
-            className="premium-icon-link hidden size-8 items-center justify-center rounded-md transition sm:inline-flex"
+            className="premium-icon-link hidden min-h-11 min-w-11 items-center justify-center rounded-md transition sm:inline-flex"
             aria-label="Search or ask Aeonvera"
           >
             <Search size={15} />
@@ -272,7 +272,7 @@ export default function Header() {
           <ThemeToggle className="premium-theme-toggle" />
           <button
             onClick={() => setMobileOpen((open) => !open)}
-            className="premium-icon-link inline-flex size-9 items-center justify-center rounded-md md:hidden"
+            className="premium-icon-link inline-flex min-h-11 min-w-11 items-center justify-center rounded-md md:hidden"
             aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={mobileOpen}
             type="button"
@@ -294,7 +294,7 @@ export default function Header() {
                 onMouseLeave={() => {
                   if (accountOpen) scheduleAccountClose();
                 }}
-                className={`premium-account-trigger inline-flex size-8 items-center justify-center rounded-md transition ${
+                className={`premium-account-trigger inline-flex min-h-11 min-w-11 items-center justify-center rounded-md transition ${
                   accountOpen ? "premium-account-trigger-open" : ""
                 }`}
                 aria-expanded={accountOpen}
@@ -343,7 +343,7 @@ export default function Header() {
               <Link
                 href="/login?mode=signin"
                 onClick={() => setActiveMenu(null)}
-                className="hidden h-8 items-center text-xs font-medium leading-none text-white/62 transition-colors duration-300 hover:text-white/90 sm:inline-flex"
+                className="hidden min-h-11 items-center text-xs font-medium leading-none text-white/62 transition-colors duration-300 hover:text-white/90 sm:inline-flex"
               >
                 Sign In
               </Link>

@@ -46,12 +46,24 @@ export default function Button({
   `;
 
   if (href) {
+    if (disabled) {
+      return (
+        <motion.span transition={{ duration: 0.2 }} className="inline-flex">
+          <span
+            aria-disabled="true"
+            data-aeonvera-button
+            className={buttonClassName}
+          >
+            <span className="relative z-10">{children}</span>
+          </span>
+        </motion.span>
+      );
+    }
+
     return (
       <motion.span whileHover={disabled ? {} : { y: -1 }} whileTap={disabled ? {} : { scale: 0.98 }} transition={{ duration: 0.2 }} className="inline-flex">
         <Link
-          href={disabled ? "#" : href}
-          aria-disabled={disabled}
-          tabIndex={disabled ? -1 : undefined}
+          href={href}
           data-aeonvera-button
           className={buttonClassName}
         >

@@ -49,6 +49,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith("/data-sources") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/digital-twin") ||
+    pathname.startsWith("/life-autopilot") ||
     pathname.startsWith("/life-os") ||
     pathname.startsWith("/memory") ||
     pathname.startsWith("/network") ||
@@ -77,6 +78,7 @@ export const config = {
     "/companion/:path*",
     "/data-sources/:path*",
     "/digital-twin/:path*",
+    "/life-autopilot/:path*",
     "/life-os/:path*",
     "/login",
     "/memory/:path*",
