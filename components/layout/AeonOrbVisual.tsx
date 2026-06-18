@@ -104,9 +104,9 @@ export default function AeonOrbVisual({
             const end = projected[((a + 1) % MAX) + d * MAX];
             context.beginPath();
             const alpha = 0.1 + energyLift * 0.12 + voice * 0.22;
-            const lightness = 70 + Math.sin(a * 0.72 + e) * 7 + voice * 9;
-            const saturation = 22 + Math.cos(a * 0.38 + d) * 7 + voice * 10;
-            const hue = 43 + Math.sin(a * 0.24 + e * 1.8) * 8;
+            const lightness = 66 + Math.sin(a * 0.72 + e) * 7 + voice * 9;
+            const saturation = 34 + Math.cos(a * 0.38 + d) * 9 + voice * 12;
+            const hue = 42 + Math.sin(a * 0.24 + e * 1.8) * 6;
             context.strokeStyle = `hsla(${hue.toFixed(1)},${saturation.toFixed(1)}%,${lightness.toFixed(1)}%,${alpha})`;
             context.lineWidth = Math.pow(5.2 + voice * 3.6, start[2]);
             context.moveTo(start[0] * scale + CENTER, start[1] * scale + CENTER);

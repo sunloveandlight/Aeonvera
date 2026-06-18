@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Brain, MessageCircle, Target } from "lucide-react";
+import { ArrowRight, Brain, Clock, MessageCircle, Target, Trash2 } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState, { EmptyState } from "@/components/ui/AccessState";
 import { supabase } from "@/lib/supabase/client";
@@ -31,12 +31,23 @@ type AgentPreference = {
   updated_at: string;
 };
 
+type SemanticMemory = {
+  id: string;
+  source_type: string;
+  title: string | null;
+  content: string;
+  importance: number | string;
+  occurred_at: string | null;
+  created_at: string;
+};
+
 export default function MemoryPage() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [locked, setLocked] = useState(false);
   const [memory, setMemory] = useState<CoachMemory | null>(null);
   const [preferences, setPreferences] = useState<AgentPreference[]>([]);
+  const [semanticMemories, setSemanticMemories] = useState<SemanticMemory[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,9 +66,15 @@ export default function MemoryPage() {
         return;
       }
 
-      const [memoryResponse, preferencesResponse] = await Promise.all([
+      const [memoryResponse, preferencesResponse, semanticMemoryResponse] = await Promise.all([
         fetch("/api/coach/memory", { credentials: "include" }),
         fetch("/api/agent/preferences", { credentials: "include" }),
+        supabase
+          .from("semantic_memories")
+          .select("id, source_type, title, content, importance, occurred_at, created_at")
+          .order("importance", { ascending: false })
+          .order("occurred_at", { ascending: false, nullsFirst: false })
+          .limit(12),
       ]);
       const [memoryData, preferencesData] = await Promise.all([
         memoryResponse.json().catch(() => null),
@@ -70,6 +87,11 @@ export default function MemoryPage() {
       setLocked(memoryResponse.status === 403 || preferencesResponse.status === 403);
       setMemory(memoryResponse.ok ? memoryData?.memory || null : null);
       setPreferences(preferencesResponse.ok ? preferencesData?.preferences || [] : []);
+      setSemanticMemories(
+        !semanticMemoryResponse.error && Array.isArray(semanticMemoryResponse.data)
+          ? semanticMemoryResponse.data as SemanticMemory[]
+          : []
+      );
       setMessage(memoryData?.message || preferencesData?.message || null);
       setLoading(false);
     }
@@ -83,6 +105,14 @@ export default function MemoryPage() {
 
   const confidence = Math.round((memory?.confidence || 0) * 100);
   const groupedPreferences = useMemo(() => groupPreferences(preferences), [preferences]);
+
+  async function forgetSemanticMemory(id: string) {
+    setSemanticMemories((current) => current.filter((memory) => memory.id !== id));
+    const { error } = await supabase.from("semantic_memories").delete().eq("id", id);
+    if (error) {
+      setMessage("Aeonvera could not forget that memory yet. Try again in a moment.");
+    }
+  }
 
   if (loading) {
     return (
@@ -256,6 +286,54 @@ export default function MemoryPage() {
             <EmptyState
               title="No explicit preferences yet"
               body='Tell Aeonvera things like "do not schedule workouts in the morning" or "I need direct accountability."'
+            />
+          )}
+        </section>
+
+        <section className="mt-6 executive-panel rounded-lg p-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <p className="micro-label">Long-Term Memory</p>
+              <p className="mt-2 text-sm leading-6 text-white/42">
+                Raw submitted memories and distilled agent memories that can be retrieved by semantic similarity.
+              </p>
+            </div>
+            <Clock size={18} className="royal-text" />
+          </div>
+          {semanticMemories.length ? (
+            <div className="grid gap-3 lg:grid-cols-2">
+              {semanticMemories.map((item) => (
+                <article key={item.id} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                  <div className="mb-3 flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-[9px] uppercase tracking-[0.14em] text-white/28">
+                        {formatKey(item.source_type)}
+                      </p>
+                      <h2 className="mt-2 text-sm font-medium leading-5 text-white/78">
+                        {item.title || "Remembered signal"}
+                      </h2>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void forgetSemanticMemory(item.id)}
+                      className="inline-flex size-8 items-center justify-center rounded-md border border-white/[0.06] text-white/36 transition hover:border-red-300/30 hover:text-red-200"
+                      aria-label="Forget this memory"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  <p className="line-clamp-3 text-xs leading-5 text-white/42">{item.content}</p>
+                  <div className="mt-4 flex items-center justify-between gap-3 text-[9px] uppercase tracking-[0.14em] text-white/24">
+                    <span>{Math.round(Number(item.importance || 0) * 100)}% important</span>
+                    <span>{formatFreshness(item.occurred_at || item.created_at)}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No long-term memories yet"
+              body="Ask Aeonvera questions, speak to the orb, and give protocol feedback. New memories will appear here after the semantic memory migration is active."
             />
           )}
         </section>

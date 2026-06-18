@@ -184,7 +184,7 @@ export default function HomePage() {
         <div className="aeon-apple-hero-shade" aria-hidden="true" />
         <div className="aeon-apple-hero-content">
           <div className="aeon-apple-hero-brand">
-            <h1>Aeonvera</h1>
+            <h1>AEONVERA</h1>
           </div>
           <div className="aeon-apple-hero-copy">
             <p className="aeon-apple-hero-subtitle">

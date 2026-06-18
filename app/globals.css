@@ -1823,12 +1823,13 @@ body:has(.aeon-orb-system) main {
 }
 
 .aeon-orb-system {
-  right: max(1.35rem, calc(env(safe-area-inset-right) + 1.25rem));
+  left: 50%;
+  right: auto;
   bottom: max(1.35rem, calc(env(safe-area-inset-bottom) + 1.25rem));
   width: auto;
   max-width: min(32rem, calc(100vw - 2rem));
-  align-items: flex-end;
-  transform: none;
+  align-items: center;
+  transform: translateX(-50%);
   pointer-events: none;
 }
 
@@ -3356,11 +3357,11 @@ body:has(.aeon-orb-system) main {
   inset: -92%;
   border-radius: 999px;
   background:
-    radial-gradient(circle at 50% 50%, rgba(255, 251, 229, 0.34), transparent 22%),
-    radial-gradient(circle at 46% 48%, rgba(255, 255, 255, 0.16), transparent 44%),
-    radial-gradient(circle at 56% 58%, rgba(224, 203, 151, 0.2), transparent 62%);
-  filter: blur(18px) saturate(0.92);
-  opacity: 0.42;
+    radial-gradient(circle at 50% 50%, rgba(255, 244, 197, 0.42), transparent 22%),
+    radial-gradient(circle at 46% 48%, rgba(255, 255, 245, 0.16), transparent 44%),
+    radial-gradient(circle at 56% 58%, rgba(224, 183, 94, 0.24), transparent 62%);
+  filter: blur(18px) saturate(1.04);
+  opacity: 0.48;
   animation: aeon-resting-orb-presence 5.8s ease-in-out infinite;
 }
 
@@ -3421,13 +3422,13 @@ body:has(.aeon-orb-system) main {
 
 @media (max-width: 767px) {
   .aeon-orb-system {
-    right: max(0.55rem, calc(env(safe-area-inset-right) + 0.55rem));
+    left: 50%;
+    right: auto;
     bottom: max(0.55rem, calc(env(safe-area-inset-bottom) + 0.55rem));
-    left: auto;
     width: auto;
     max-width: calc(100vw - 1.5rem);
-    align-items: flex-end;
-    transform: none;
+    align-items: center;
+    transform: translateX(-50%);
   }
 
   .aeon-orb-panel {
@@ -5530,4 +5531,332 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .text-red-400 {
   color: #c0453f !important;
+}
+
+/* Final primary-button material: polished champagne in light, black-gold ceramic in dark. */
+.premium-action,
+.premium-button-primary,
+.premium-nav-action,
+.royal-gradient,
+.apple-cta-primary {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(131, 96, 31, 0.38);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0.12) 38%, rgba(83, 58, 14, 0.1)),
+    linear-gradient(135deg, rgb(239, 220, 168) 0%, rgb(199, 165, 88) 48%, rgb(162, 121, 45) 100%);
+  color: rgb(35, 25, 8) !important;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 1px 1px rgba(44, 31, 8, 0.08),
+    0 10px 24px rgba(74, 58, 20, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(65, 44, 8, 0.22);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease;
+}
+
+.premium-action *,
+.premium-button-primary *,
+.premium-nav-action *,
+.royal-gradient *,
+.apple-cta-primary * {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.premium-action::before,
+.premium-button-primary::before,
+.premium-nav-action::before,
+.royal-gradient::before,
+.apple-cta-primary::before {
+  content: "";
+  position: absolute;
+  inset: 1px 1px auto;
+  height: 55%;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.05));
+  opacity: 0.62;
+  transition: opacity 180ms ease;
+}
+
+.premium-action::after,
+.premium-button-primary::after,
+.premium-nav-action::after,
+.royal-gradient::after,
+.apple-cta-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg, transparent 0 36%, rgba(255, 255, 255, 0.26) 47%, rgba(255, 247, 218, 0.12) 55%, transparent 68% 100%);
+  opacity: 0.2;
+  mix-blend-mode: soft-light;
+}
+
+.premium-action:hover,
+.premium-button-primary:hover,
+.premium-nav-action:hover,
+.royal-gradient:hover,
+.apple-cta-primary:hover {
+  transform: translateY(-1px);
+  border-color: rgba(131, 96, 31, 0.5);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.16) 38%, rgba(83, 58, 14, 0.11)),
+    linear-gradient(135deg, rgb(244, 226, 177) 0%, rgb(205, 171, 93) 48%, rgb(170, 128, 49) 100%);
+  box-shadow:
+    0 1px 1px rgba(44, 31, 8, 0.08),
+    0 13px 30px rgba(74, 58, 20, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(65, 44, 8, 0.22);
+}
+
+.premium-action:hover::before,
+.premium-button-primary:hover::before,
+.premium-nav-action:hover::before,
+.royal-gradient:hover::before,
+.apple-cta-primary:hover::before {
+  opacity: 0.78;
+}
+
+:root[data-theme="dark"] .premium-action,
+:root[data-theme="dark"] .premium-button-primary,
+:root[data-theme="dark"] .premium-nav-action,
+:root[data-theme="dark"] .royal-gradient,
+:root[data-theme="dark"] .apple-cta-primary {
+  border-color: rgba(226, 204, 150, 0.3);
+  background:
+    radial-gradient(circle at 50% -90%, rgba(255, 236, 183, 0.2), transparent 58%),
+    linear-gradient(180deg, rgba(62, 57, 45, 0.96), rgba(30, 28, 23, 0.96) 48%, rgba(13, 12, 10, 0.98));
+  color: rgba(255, 244, 214, 0.96) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.42);
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.38),
+    0 11px 26px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035),
+    inset 0 -1px 0 rgba(226, 204, 150, 0.06);
+}
+
+:root[data-theme="dark"] .premium-action::before,
+:root[data-theme="dark"] .premium-button-primary::before,
+:root[data-theme="dark"] .premium-nav-action::before,
+:root[data-theme="dark"] .royal-gradient::before,
+:root[data-theme="dark"] .apple-cta-primary::before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.02));
+  opacity: 0.74;
+}
+
+:root[data-theme="dark"] .premium-action::after,
+:root[data-theme="dark"] .premium-button-primary::after,
+:root[data-theme="dark"] .premium-nav-action::after,
+:root[data-theme="dark"] .royal-gradient::after,
+:root[data-theme="dark"] .apple-cta-primary::after {
+  opacity: 0.12;
+}
+
+:root[data-theme="dark"] .premium-action:hover,
+:root[data-theme="dark"] .premium-button-primary:hover,
+:root[data-theme="dark"] .premium-nav-action:hover,
+:root[data-theme="dark"] .royal-gradient:hover,
+:root[data-theme="dark"] .apple-cta-primary:hover {
+  border-color: rgba(226, 204, 150, 0.42);
+  background:
+    radial-gradient(circle at 50% -90%, rgba(255, 236, 183, 0.24), transparent 58%),
+    linear-gradient(180deg, rgba(73, 67, 52, 0.98), rgba(35, 32, 26, 0.98) 48%, rgba(16, 15, 12, 0.98));
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.38),
+    0 14px 32px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.045),
+    inset 0 -1px 0 rgba(226, 204, 150, 0.075);
+}
+
+/* Membership pass redesign: intentionally replaces the old pricing-card look. */
+.aeon-apple-plan-grid {
+  gap: clamp(1rem, 2vw, 1.45rem);
+}
+
+.aeon-apple-plan {
+  --plan-rail: rgba(255, 255, 255, 0.46);
+  --plan-ink: rgba(255, 255, 255, 0.94);
+  --plan-muted: rgba(255, 255, 255, 0.62);
+  --plan-metal-a: rgba(37, 39, 44, 0.98);
+  --plan-metal-b: rgba(18, 20, 25, 0.98);
+  --plan-accent: rgba(224, 203, 151, 0.58);
+  isolation: isolate;
+  min-height: 27.5rem;
+  border: 1px solid color-mix(in srgb, var(--plan-rail) 42%, transparent);
+  border-radius: 0.55rem;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 2.15rem), calc(100% - 2.15rem) 100%, 0 100%);
+  background:
+    linear-gradient(90deg, var(--plan-accent) 0 0.34rem, transparent 0.34rem),
+    radial-gradient(ellipse at 84% 10%, rgba(255, 255, 255, 0.12), transparent 32%),
+    linear-gradient(155deg, var(--plan-metal-a), var(--plan-metal-b) 68%);
+  color: var(--plan-ink);
+  padding: 1.65rem 1.65rem 1.4rem 1.95rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.34),
+    0 22px 58px rgba(12, 15, 21, 0.22);
+}
+
+.aeon-apple-plan::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4.4rem;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 74%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.18), transparent 24%, rgba(255, 255, 255, 0.08) 72%, transparent);
+  opacity: 0.86;
+}
+
+.aeon-apple-plan::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-top: 1px solid color-mix(in srgb, var(--plan-rail) 36%, transparent);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 55%),
+    color-mix(in srgb, var(--plan-accent) 32%, transparent);
+  opacity: 0.9;
+}
+
+.aeon-apple-plan:hover {
+  transform: translateY(-0.38rem);
+  border-color: color-mix(in srgb, var(--plan-rail) 64%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.34),
+    0 30px 80px rgba(12, 15, 21, 0.3);
+}
+
+.aeon-apple-plan:not(:has(.aeon-apple-plan-feature-list)) {
+  min-height: 19.5rem;
+}
+
+.aeon-apple-plan-core {
+  --plan-rail: rgba(210, 216, 226, 0.34);
+  --plan-metal-a: rgba(43, 46, 53, 0.98);
+  --plan-metal-b: rgba(18, 20, 25, 0.99);
+  --plan-accent: rgba(145, 153, 168, 0.56);
+}
+
+.aeon-apple-plan-featured {
+  --plan-rail: rgba(244, 248, 255, 0.66);
+  --plan-metal-a: rgba(137, 147, 163, 0.99);
+  --plan-metal-b: rgba(55, 62, 75, 0.99);
+  --plan-accent: rgba(235, 240, 248, 0.76);
+  transform: translateY(-0.6rem);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(16, 19, 25, 0.28),
+    0 34px 88px rgba(55, 65, 84, 0.34),
+    0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+.aeon-apple-plan-sovereign {
+  --plan-rail: rgba(255, 239, 198, 0.66);
+  --plan-metal-a: rgba(118, 98, 50, 0.99);
+  --plan-metal-b: rgba(54, 39, 15, 0.99);
+  --plan-accent: rgba(239, 216, 158, 0.82);
+  color: rgba(255, 248, 224, 0.96);
+}
+
+.aeon-apple-plan-name {
+  font-size: 0.86rem;
+  font-weight: 780;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.aeon-apple-plan-price {
+  margin-top: 1.25rem;
+  font-size: clamp(3.6rem, 6vw, 5rem);
+  font-weight: 620;
+  letter-spacing: -0.07em;
+}
+
+.aeon-apple-plan-body,
+.aeon-apple-plan-depth,
+.aeon-apple-plan-check,
+.aeon-apple-plan-price small,
+:root[data-theme="dark"] .aeon-apple-plan-body,
+:root[data-theme="dark"] .aeon-apple-plan-depth,
+:root[data-theme="dark"] .aeon-apple-plan-check,
+:root[data-theme="dark"] .aeon-apple-plan-price small {
+  color: var(--plan-muted);
+}
+
+.aeon-apple-plan-divider,
+:root[data-theme="dark"] .aeon-apple-plan-divider {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--plan-rail) 34%, transparent), transparent);
+}
+
+.aeon-apple-plan-badge {
+  border-color: color-mix(in srgb, var(--plan-rail) 46%, transparent);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.aeon-apple-plan-action,
+:root[data-theme="dark"] .aeon-apple-plan-action,
+.aeon-apple-plan-featured .aeon-apple-plan-action,
+:root[data-theme="dark"] .aeon-apple-plan-featured .aeon-apple-plan-action,
+.aeon-apple-plan-sovereign .aeon-apple-plan-action,
+:root[data-theme="dark"] .aeon-apple-plan-sovereign .aeon-apple-plan-action {
+  min-height: 2.75rem;
+  border-color: color-mix(in srgb, var(--plan-rail) 52%, transparent);
+  border-radius: 0.35rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.055)),
+    linear-gradient(90deg, color-mix(in srgb, var(--plan-accent) 34%, transparent), transparent);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 10px 22px rgba(0, 0, 0, 0.16);
+}
+
+:root[data-theme="dark"] .aeon-apple-plan {
+  --plan-metal-a: rgba(93, 98, 110, 0.98);
+  --plan-metal-b: rgba(36, 40, 49, 0.99);
+}
+
+:root[data-theme="dark"] .aeon-apple-plan-core {
+  --plan-metal-a: rgba(77, 83, 96, 0.98);
+  --plan-metal-b: rgba(32, 36, 45, 0.99);
+}
+
+:root[data-theme="dark"] .aeon-apple-plan-featured {
+  --plan-metal-a: rgba(149, 159, 176, 0.99);
+  --plan-metal-b: rgba(68, 76, 92, 0.99);
+}
+
+:root[data-theme="dark"] .aeon-apple-plan-sovereign {
+  --plan-metal-a: rgba(129, 109, 61, 0.99);
+  --plan-metal-b: rgba(63, 47, 21, 0.99);
+}
+
+@media (max-width: 900px) {
+  .aeon-apple-plan,
+  .aeon-apple-plan-featured {
+    transform: none;
+  }
 }
