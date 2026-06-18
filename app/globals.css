@@ -8338,3 +8338,119 @@ a[href] {
 ) {
   color: rgba(228, 230, 234, 0.62) !important;
 }
+
+/* Pricing card final lock: keep these materials stable unless the pricing system is redesigned. */
+.aeon-apple-pricing .aeon-apple-plan,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan,
+.aeon-apple-pricing .aeon-apple-plan:hover,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover,
+.aeon-apple-pricing .aeon-apple-plan:focus-visible,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:focus-visible,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:focus-visible {
+  transform: none !important;
+  will-change: auto !important;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease !important;
+}
+
+.aeon-apple-pricing .aeon-apple-plan-core,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-core,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-core {
+  --pathway-bg-a: rgb(72, 72, 69);
+  --pathway-bg-b: rgb(27, 27, 25);
+  --pricing-card-cta-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.03) 46%, rgba(0, 0, 0, 0.18)),
+    linear-gradient(180deg, rgb(78, 77, 72), rgb(39, 39, 36)) !important;
+  --pricing-card-cta-border: rgba(255, 255, 255, 0.18);
+  --pricing-card-cta-color: rgba(247, 244, 236, 0.92);
+  --pricing-card-cta-shadow: 0 0.58rem 1.12rem rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.aeon-apple-pricing .aeon-apple-plan-featured,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-featured,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-featured {
+  --pathway-bg-a: rgb(121, 135, 126);
+  --pathway-bg-b: rgb(48, 60, 56);
+  --pricing-card-cta-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.055) 46%, rgba(29, 43, 39, 0.12)),
+    linear-gradient(180deg, rgb(142, 158, 148), rgb(82, 99, 92)) !important;
+  --pricing-card-cta-border: rgba(219, 231, 222, 0.34);
+  --pricing-card-cta-color: rgba(250, 252, 247, 0.94);
+  --pricing-card-cta-shadow: 0 0.58rem 1.12rem rgba(28, 42, 38, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.26), inset 0 -1px 0 rgba(24, 42, 37, 0.25);
+  border-color: rgba(229, 235, 226, 0.38) !important;
+  box-shadow:
+    0 1.6rem 3.9rem rgba(43, 59, 54, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18) !important;
+}
+
+.aeon-apple-pricing .aeon-apple-plan-sovereign,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-sovereign,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-sovereign {
+  --pricing-card-cta-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.17) 48%, rgba(101, 72, 25, 0.08)),
+    linear-gradient(180deg, rgb(232, 216, 188), rgb(199, 168, 116)) !important;
+  --pricing-card-cta-border: rgba(159, 119, 57, 0.4);
+  --pricing-card-cta-color: rgba(48, 35, 15, 0.95);
+  --pricing-card-cta-shadow: 0 0.58rem 1.12rem rgba(113, 91, 55, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.72), inset 0 -1px 0 rgba(117, 91, 50, 0.14);
+}
+
+.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action,
+.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
+.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
+.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:focus-visible,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:focus-visible,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:focus-visible {
+  border-color: var(--pricing-card-cta-border) !important;
+  background: var(--pricing-card-cta-bg) !important;
+  color: var(--pricing-card-cta-color) !important;
+  text-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+  box-shadow: var(--pricing-card-cta-shadow) !important;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    filter 140ms ease !important;
+}
+
+.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
+.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover {
+  filter: brightness(1.035) saturate(1.02) !important;
+}
+
+.aeon-apple-pricing .aeon-apple-plan-emblem,
+.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
+.aeon-apple-pricing .aeon-apple-plan-emblem *,
+.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem *,
+.aeon-apple-pricing .aeon-apple-plan-emblem::before,
+.aeon-apple-pricing .aeon-apple-plan-emblem::after,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-emblem,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-emblem *,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem *,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-emblem,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-emblem *,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem * {
+  animation: none !important;
+  transform: none !important;
+  transition: none !important;
+  will-change: auto !important;
+}
