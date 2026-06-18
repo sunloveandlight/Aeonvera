@@ -360,7 +360,7 @@ export default function PricingPage() {
             <>
               <h1>Three pathways. One operating system.</h1>
               <p>
-                Choose the level of longevity intelligence that fits your mission.
+                Choose the level of longevity intelligence that fits your vision.
               </p>
             </>
           )}
