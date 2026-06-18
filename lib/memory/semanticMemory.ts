@@ -27,10 +27,10 @@ function getOpenAI() {
 }
 
 export async function retrieveSemanticMemories({
-  limit = 8,
+  limit = 12,
   query,
   supabase,
-  threshold = 0.7,
+  threshold = 0.62,
   userId,
 }: {
   limit?: number;
@@ -52,6 +52,32 @@ export async function retrieveSemanticMemories({
   if (error) {
     if (isSemanticMemoryMissing(error)) return [];
     console.error("[Semantic Memory Retrieve Error]", error.message);
+    return [];
+  }
+
+  return Array.isArray(data) ? (data as SemanticMemory[]) : [];
+}
+
+export async function listRecentSemanticMemories({
+  limit = 10,
+  supabase,
+  userId,
+}: {
+  limit?: number;
+  supabase: SupabaseAdmin;
+  userId: string;
+}): Promise<SemanticMemory[]> {
+  const { data, error } = await supabase
+    .from("semantic_memories")
+    .select("id, source_type, source_id, title, content, metadata, importance, occurred_at")
+    .eq("user_id", userId)
+    .order("importance", { ascending: false })
+    .order("occurred_at", { ascending: false, nullsFirst: false })
+    .limit(Math.min(Math.max(limit, 1), 24));
+
+  if (error) {
+    if (isSemanticMemoryMissing(error)) return [];
+    console.error("[Semantic Memory Recent Error]", error.message);
     return [];
   }
 

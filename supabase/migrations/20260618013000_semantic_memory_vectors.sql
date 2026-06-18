@@ -11,7 +11,7 @@ create table if not exists public.semantic_memories (
   title text,
   content text not null,
   metadata jsonb not null default '{}'::jsonb,
-  embedding vector(1536) not null,
+  embedding extensions.vector(1536) not null,
   importance numeric not null default 0.5 check (importance >= 0 and importance <= 1),
   occurred_at timestamptz,
   last_retrieved_at timestamptz,
@@ -71,7 +71,7 @@ create index if not exists semantic_memories_embedding_hnsw_idx
   using hnsw (embedding vector_cosine_ops);
 
 create or replace function public.match_semantic_memories(
-  query_embedding vector(1536),
+  query_embedding extensions.vector(1536),
   match_count int default 8,
   match_threshold float default 0.72
 )
@@ -109,12 +109,12 @@ as $$
   limit least(greatest(match_count, 1), 24);
 $$;
 
-grant execute on function public.match_semantic_memories(vector(1536), int, float)
+grant execute on function public.match_semantic_memories(extensions.vector(1536), int, float)
   to authenticated, service_role;
 
 create or replace function public.match_semantic_memories_for_user(
   target_user_id uuid,
-  query_embedding vector(1536),
+  query_embedding extensions.vector(1536),
   match_count int default 8,
   match_threshold float default 0.72
 )
@@ -152,9 +152,9 @@ as $$
   limit least(greatest(match_count, 1), 24);
 $$;
 
-revoke execute on function public.match_semantic_memories_for_user(uuid, vector(1536), int, float)
+revoke execute on function public.match_semantic_memories_for_user(uuid, extensions.vector(1536), int, float)
   from anon, authenticated;
-grant execute on function public.match_semantic_memories_for_user(uuid, vector(1536), int, float)
+grant execute on function public.match_semantic_memories_for_user(uuid, extensions.vector(1536), int, float)
   to service_role;
 
 notify pgrst, 'reload schema';

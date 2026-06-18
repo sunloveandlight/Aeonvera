@@ -1,7 +1,11 @@
 import OpenAI from "openai";
 import { buildTieredModalityRecommendations, type TieredModalityRecommendation } from "@/lib/longevity/advancedModalities";
 import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
-import { retrieveSemanticMemories, storeSemanticMemory } from "@/lib/memory/semanticMemory";
+import {
+  listRecentSemanticMemories,
+  retrieveSemanticMemories,
+  storeSemanticMemory,
+} from "@/lib/memory/semanticMemory";
 import type { Plan, SubscriptionStatus } from "@/lib/auth/permissions";
 import type { getSupabaseAdmin } from "@/lib/supabase/admin";
 
@@ -376,6 +380,13 @@ export async function answerPersonalHealthAgent({
   supabase: SupabaseAdmin;
   userId: string;
 }) {
+  await storeUserSemanticMemory({
+    history,
+    question,
+    supabase,
+    userId,
+  });
+
   const context = await loadAgentContext(supabase, userId);
   const actions = await applyAgentInstructions({ context, question, supabase, userId });
   const updatedContext = actions.length ? await loadAgentContext(supabase, userId) : context;
@@ -391,6 +402,11 @@ export async function answerPersonalHealthAgent({
   const allActions = dedupeActions([...actions, ...toolActions]);
   const semanticMemories = await retrieveSemanticMemories({
     query: question,
+    supabase,
+    userId,
+  });
+  const recentSemanticMemories = await listRecentSemanticMemories({
+    limit: 10,
     supabase,
     userId,
   });
@@ -462,7 +478,7 @@ export async function answerPersonalHealthAgent({
         },
         {
           role: "user",
-          content: `User context:\n${JSON.stringify(summarizeContext(finalContext), null, 2)}\n\nSemantic memory retrieved for this question:\n${JSON.stringify(summarizeSemanticMemories(semanticMemories), null, 2)}\n\nAgent tool results:\n${JSON.stringify(toolResults, null, 2)}\n\nActions already applied from this message:\n${JSON.stringify(allActions, null, 2)}\n\nIndependent xAI/Grok clinical reasoning review, when available:\n${xaiClinicalReview || "No xAI review available for this message."}`,
+          content: `User context:\n${JSON.stringify(summarizeContext(finalContext), null, 2)}\n\nSemantic memory retrieved for this question:\n${JSON.stringify(summarizeSemanticMemories(semanticMemories), null, 2)}\n\nRecent and high-importance memories:\n${JSON.stringify(summarizeSemanticMemories(recentSemanticMemories), null, 2)}\n\nAgent tool results:\n${JSON.stringify(toolResults, null, 2)}\n\nActions already applied from this message:\n${JSON.stringify(allActions, null, 2)}\n\nIndependent xAI/Grok clinical reasoning review, when available:\n${xaiClinicalReview || "No xAI review available for this message."}`,
         },
         ...history.slice(-6).map((message) => ({
           role: message.role,
@@ -612,6 +628,34 @@ async function storeAgentSemanticMemory({
   });
 }
 
+async function storeUserSemanticMemory({
+  history,
+  question,
+  supabase,
+  userId,
+}: {
+  history: AgentMessage[];
+  question: string;
+  supabase: SupabaseAdmin;
+  userId: string;
+}) {
+  await storeSemanticMemory({
+    content: question,
+    importance: inferUserMemoryImportance(question),
+    metadata: {
+      recent_context: history.slice(-4).map((message) => ({
+        role: message.role,
+        content: message.content.slice(0, 700),
+      })),
+      stored_by: "personal_health_agent",
+    },
+    sourceType: "user_message",
+    supabase,
+    title: question.slice(0, 140),
+    userId,
+  });
+}
+
 function inferSemanticImportance(question: string, answer: string) {
   const text = `${question} ${answer}`.toLowerCase();
   if (/(doctor|clinician|medication|diagnos|symptom|pain|blood|lab|risk|urgent)/.test(text)) {
@@ -621,6 +665,17 @@ function inferSemanticImportance(question: string, answer: string) {
     return 0.72;
   }
   return 0.55;
+}
+
+function inferUserMemoryImportance(question: string) {
+  const text = question.toLowerCase();
+  if (/(remember|always|never|prefer|preference|goal|doctor|clinic|medication|allerg|diagnos|symptom|pain|blood|lab|risk|urgent)/.test(text)) {
+    return 0.88;
+  }
+  if (/(sleep|fast|workout|training|supplement|nutrition|food|meal|schedule|habit|family|work|stress|travel)/.test(text)) {
+    return 0.74;
+  }
+  return 0.58;
 }
 
 async function storeClinicalInsight({
