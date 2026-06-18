@@ -29,7 +29,6 @@ export default function Button({
   const styles = {
     primary: `
       premium-button-primary
-      hover:opacity-95
     `,
     secondary: `
       premium-button-secondary

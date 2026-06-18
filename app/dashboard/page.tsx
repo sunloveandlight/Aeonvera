@@ -1165,7 +1165,7 @@ export default function DashboardPage() {
                   void handleGenerateReport();
                 }}
                 disabled={!hasAssessment || generatingReport}
-                className="premium-action inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="premium-action inline-flex items-center justify-center text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {generatingReport ? "Generating..." : report ? "Refresh intelligence" : "Generate report"}
               </button>
@@ -1594,7 +1594,7 @@ function BioAgeSimulationPanel({
               if (hasAssessment) onOpenOptimization();
               else onStartAssessment();
             }}
-            className="premium-action inline-flex h-10 items-center justify-center rounded-md px-5 text-[10px] uppercase tracking-[0.14em] transition hover:opacity-90"
+            className="premium-action inline-flex items-center justify-center text-[10px] uppercase tracking-[0.14em] transition"
           >
             {hasAssessment ? "Open Optimization" : "Start Assessment"}
           </button>

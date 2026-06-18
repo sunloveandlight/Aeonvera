@@ -6670,3 +6670,180 @@ input[type="number"]::-webkit-inner-spin-button {
   filter: none !important;
   transition: none !important;
 }
+
+/* Button system v3: single final authority. Keep material stable on hover. */
+:root {
+  --av-surface-control-bg: rgba(255, 255, 255, 0.045);
+  --av-surface-control-border: rgba(255, 255, 255, 0.11);
+  --av-surface-control-text: rgba(247, 247, 244, 0.72);
+  --av-surface-control-active-bg: rgba(var(--gold), 0.085);
+  --av-surface-control-active-border: rgba(var(--gold), 0.28);
+  --av-surface-control-active-text: rgba(245, 231, 190, 0.96);
+}
+
+:root[data-theme="light"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  .aeon-orb-send,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link),
+:root[data-theme="dark"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  .aeon-orb-send,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link),
+:root[data-theme="light"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  .aeon-orb-send,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link):hover,
+:root[data-theme="dark"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  .aeon-orb-send,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link):hover,
+:root[data-theme="light"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  .aeon-orb-send,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link):focus-visible,
+:root[data-theme="dark"] :is(
+  .premium-action,
+  .premium-button-primary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  .aeon-orb-send,
+  [data-aeonvera-button]:not(.premium-button-secondary):not(.premium-action-secondary):not(.premium-action-ghost)
+):not(.aeon-apple-plan-action):not(.premium-action-secondary):not(.premium-button-secondary):not(.premium-action-ghost):not(.apple-cta-link):focus-visible {
+  background: var(--av-btn-primary-bg) !important;
+  border: 1px solid var(--av-btn-primary-border) !important;
+  color: var(--av-btn-primary-text) !important;
+  box-shadow: var(--av-btn-primary-shadow) !important;
+  text-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme="light"] :is(.premium-action, .premium-button-primary, .royal-gradient, .apple-cta-primary, [data-aeonvera-button]):not(.aeon-apple-plan-action):not(.apple-cta-link):not(.aeon-btn-icon):not(.premium-nav-action),
+:root[data-theme="dark"] :is(.premium-action, .premium-button-primary, .royal-gradient, .apple-cta-primary, [data-aeonvera-button]):not(.aeon-apple-plan-action):not(.apple-cta-link):not(.aeon-btn-icon):not(.premium-nav-action) {
+  min-height: 2.75rem !important;
+  padding: 0 1.4rem !important;
+  gap: 0.5rem !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  line-height: 1.05 !important;
+  letter-spacing: 0 !important;
+}
+
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--av-btn-secondary-light) !important;
+  filter: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible,
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--av-btn-secondary-dark) !important;
+  filter: none !important;
+  text-shadow: var(--av-btn-secondary-shadow) !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after {
+  content: none !important;
+  display: none !important;
+}
+
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]),
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):hover,
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):focus-visible {
+  background: var(--av-surface-control-bg) !important;
+  border-color: var(--av-surface-control-border) !important;
+  color: var(--av-surface-control-text) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+[data-aeonvera-content] :is(label[class*="cursor-pointer"], [role="button"]):not([class*="premium-"]):not([class*="aeon-apple-plan"]):not([class*="pricing"]):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]),
+[data-aeonvera-content] :is(label[class*="cursor-pointer"], [role="button"]):not([class*="premium-"]):not([class*="aeon-apple-plan"]):not([class*="pricing"]):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):hover,
+[data-aeonvera-content] :is(label[class*="cursor-pointer"], [role="button"]):not([class*="premium-"]):not([class*="aeon-apple-plan"]):not([class*="pricing"]):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):focus-visible {
+  background: var(--av-surface-control-bg) !important;
+  border-color: var(--av-surface-control-border) !important;
+  color: var(--av-surface-control-text) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-[rgba(var(--gold)"], [class*="royal-text"]),
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-[rgba(var(--gold)"], [class*="royal-text"]):hover,
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-[rgba(var(--gold)"], [class*="royal-text"]):focus-visible {
+  background: var(--av-surface-control-active-bg) !important;
+  border-color: var(--av-surface-control-active-border) !important;
+  color: var(--av-surface-control-active-text) !important;
+}
+
+:root[data-theme="dark"] .premium-header :is(.premium-nav-link, [data-premium-brand], a:not(.premium-nav-action)),
+:root[data-theme="dark"] .premium-header :is(.premium-nav-link, [data-premium-brand], a:not(.premium-nav-action)):hover,
+:root[data-theme="dark"] .premium-header :is(.premium-nav-link, [data-premium-brand], a:not(.premium-nav-action)):focus-visible {
+  color: rgba(247, 247, 244, 0.9) !important;
+  border-color: currentColor !important;
+  background: transparent !important;
+  transform: none !important;
+}
+
+.premium-mega-primary,
+.premium-mega-primary:hover,
+.premium-mega-primary:focus-visible,
+.premium-mega-secondary,
+.premium-mega-secondary:hover,
+.premium-mega-secondary:focus-visible,
+.premium-menu-link,
+.premium-menu-link:hover,
+.premium-menu-link:focus-visible {
+  transform: none !important;
+}

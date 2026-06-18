@@ -115,7 +115,7 @@ export default function AboutPage() {
           </p>
           <Link
             href="/login?mode=signup"
-            className="premium-action mt-10 inline-flex h-12 items-center justify-center gap-2 rounded-full px-7 text-sm font-medium transition hover:opacity-95"
+            className="premium-action mt-10 inline-flex items-center justify-center gap-2 text-sm font-medium transition"
           >
             Begin your journey
             <ArrowRight size={16} />
