@@ -301,7 +301,7 @@ export default function HomePage() {
                 type="button"
                 onClick={() => handleCheckout(plan.id)}
                 disabled={loadingPlan !== null}
-                className={`aeon-apple-plan ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`}
+                className={`aeon-apple-plan aeon-apple-plan-${plan.id} ${plan.id === "elite" ? "aeon-apple-plan-featured" : ""}`}
               >
                 <span className="aeon-apple-plan-name">{plan.name}</span>
                 <span className="aeon-apple-plan-price">{plan.price}</span>

@@ -311,7 +311,7 @@ export default function LifeAutopilotPage() {
         <section className="mb-8 grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
           <div className="executive-panel rounded-lg p-6 md:p-8">
             <p className="micro-label">Life Autopilot</p>
-            <h1 className="mt-4 max-w-4xl text-5xl font-semibold leading-[1.03] text-white md:text-6xl">
+            <h1 className="life-autopilot-title mt-4 max-w-4xl font-semibold text-white">
               The operating layer for your biological future.
             </h1>
             <p className="mt-5 max-w-2xl text-sm leading-7 text-white/50">
