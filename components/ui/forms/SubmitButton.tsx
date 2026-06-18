@@ -20,7 +20,6 @@ export default function SubmitButton({ children, loading }: SubmitButtonProps) {
         tracking-normal
         transition-all
         duration-300
-        active:scale-[0.98]
         ${
           loading
             ? "bg-white/10 text-white/30 cursor-not-allowed"

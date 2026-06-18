@@ -43,7 +43,7 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
             type="button"
             onClick={onClear}
             aria-label="Clear search"
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition text-xs"
+            className="premium-inline-control absolute right-2 top-1/2 inline-flex min-h-8 min-w-8 -translate-y-1/2 items-center justify-center rounded-md text-xs"
           >
             ✕
           </button>

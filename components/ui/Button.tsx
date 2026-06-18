@@ -30,11 +30,9 @@ export default function Button({
     primary: `
       premium-button-primary
       hover:opacity-95
-      active:scale-[0.985]
     `,
     secondary: `
       premium-button-secondary
-      active:scale-[0.985]
     `,
   };
 
@@ -61,7 +59,7 @@ export default function Button({
     }
 
     return (
-      <motion.span whileHover={disabled ? {} : { y: -1 }} whileTap={disabled ? {} : { scale: 0.98 }} transition={{ duration: 0.2 }} className="inline-flex">
+      <motion.span transition={{ duration: 0.2 }} className="inline-flex">
         <Link
           href={href}
           data-aeonvera-button
@@ -78,8 +76,6 @@ export default function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      whileHover={disabled ? {} : { y: -1 }}
-      whileTap={disabled ? {} : { scale: 0.98 }}
       transition={{ duration: 0.2 }}
       data-aeonvera-button
       className={buttonClassName}

@@ -8339,7 +8339,7 @@ a[href] {
   color: rgba(228, 230, 234, 0.62) !important;
 }
 
-/* Pricing card final lock: keep these materials stable unless the pricing system is redesigned. */
+/* Pricing card repair: left-aligned anatomy, static seals, tier-matched CTAs. */
 .aeon-apple-pricing .aeon-apple-plan,
 :root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan,
 :root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan,
@@ -8349,12 +8349,11 @@ a[href] {
 .aeon-apple-pricing .aeon-apple-plan:focus-visible,
 :root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:focus-visible,
 :root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:focus-visible {
+  align-items: stretch !important;
+  text-align: left !important;
   transform: none !important;
+  filter: none !important;
   will-change: auto !important;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    filter 160ms ease !important;
 }
 
 .aeon-apple-pricing .aeon-apple-plan-core,
@@ -8368,6 +8367,12 @@ a[href] {
   --pricing-card-cta-border: rgba(255, 255, 255, 0.18);
   --pricing-card-cta-color: rgba(247, 244, 236, 0.92);
   --pricing-card-cta-shadow: 0 0.58rem 1.12rem rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  --pricing-card-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.055) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.24) inset,
+    0 1.25rem 2.7rem rgba(0, 0, 0, 0.16),
+    0 2.8rem 6.8rem rgba(0, 0, 0, 0.12);
 }
 
 .aeon-apple-pricing .aeon-apple-plan-featured,
@@ -8381,13 +8386,13 @@ a[href] {
   --pricing-card-cta-border: rgba(219, 231, 222, 0.34);
   --pricing-card-cta-color: rgba(250, 252, 247, 0.94);
   --pricing-card-cta-shadow: 0 0.58rem 1.12rem rgba(28, 42, 38, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.26), inset 0 -1px 0 rgba(24, 42, 37, 0.25);
+  --pricing-card-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.36) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.2) inset,
+    0 1.3rem 3rem rgba(48, 55, 68, 0.2),
+    0 3.1rem 7.2rem rgba(48, 55, 68, 0.16);
   border-color: rgba(229, 235, 226, 0.38) !important;
-  box-shadow:
-    0 1.6rem 3.9rem rgba(43, 59, 54, 0.22),
-    0 0 0 1px rgba(255, 255, 255, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.18) !important;
 }
 
 .aeon-apple-pricing .aeon-apple-plan-sovereign,
@@ -8399,6 +8404,95 @@ a[href] {
   --pricing-card-cta-border: rgba(159, 119, 57, 0.4);
   --pricing-card-cta-color: rgba(48, 35, 15, 0.95);
   --pricing-card-cta-shadow: 0 0.58rem 1.12rem rgba(113, 91, 55, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.72), inset 0 -1px 0 rgba(117, 91, 50, 0.14);
+  --pricing-card-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.58) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.18) inset,
+    0 -1px 0 rgba(117, 91, 50, 0.14) inset,
+    0 1.15rem 2.75rem rgba(113, 91, 55, 0.13),
+    0 2.8rem 6.8rem rgba(113, 91, 55, 0.11);
+}
+
+.aeon-apple-pricing .aeon-apple-plan,
+.aeon-apple-pricing .aeon-apple-plan:hover,
+.aeon-apple-pricing .aeon-apple-plan:focus-visible,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:focus-visible,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:focus-visible {
+  box-shadow: var(--pricing-card-shadow) !important;
+  transition: none !important;
+}
+
+.aeon-apple-pricing .aeon-apple-plan-emblem,
+.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-emblem,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-emblem,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem {
+  justify-self: start !important;
+  margin: 0 !important;
+  filter: none !important;
+}
+
+.aeon-apple-pricing .aeon-apple-plan-emblem,
+.aeon-apple-pricing .aeon-apple-plan-emblem *,
+.aeon-apple-pricing .aeon-apple-plan-emblem::before,
+.aeon-apple-pricing .aeon-apple-plan-emblem::after,
+.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
+.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem *,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-emblem,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-emblem *,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem *,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-emblem,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-emblem *,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem * {
+  animation: none !important;
+  transform: none !important;
+  transition: none !important;
+  will-change: auto !important;
+}
+
+.aeon-apple-pricing .aeon-apple-plan-topline,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-topline,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-topline {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+
+.aeon-apple-pricing .aeon-apple-plan-name,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-name,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-name {
+  text-align: left !important;
+}
+
+.aeon-apple-pricing .aeon-apple-plan-body,
+.aeon-apple-pricing .aeon-apple-plan-divider,
+.aeon-apple-pricing .aeon-apple-plan-price,
+.aeon-apple-pricing .aeon-apple-plan-depth,
+.aeon-apple-pricing .aeon-apple-plan-feature-list,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-body,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-divider,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-price,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-depth,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-feature-list,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-body,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-divider,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-price,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-depth,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-feature-list {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  text-align: left !important;
+}
+
+.aeon-apple-pricing .aeon-apple-plan-body,
+:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-body,
+:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-body {
+  justify-content: flex-start !important;
 }
 
 .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action,
@@ -8413,6 +8507,11 @@ a[href] {
 :root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
 :root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
 :root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:focus-visible {
+  justify-self: stretch !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
   border-color: var(--pricing-card-cta-border) !important;
   background: var(--pricing-card-cta-bg) !important;
   color: var(--pricing-card-cta-color) !important;
@@ -8420,37 +8519,114 @@ a[href] {
   transform: none !important;
   filter: none !important;
   box-shadow: var(--pricing-card-cta-shadow) !important;
+  transition: none !important;
+}
+
+/* Sitewide button interaction lock: CTAs stay consistent; utility controls stay quiet. */
+:root[data-theme="light"] :is(
+  .premium-action,
+  .premium-action-secondary,
+  .premium-action-ghost,
+  .premium-button-primary,
+  .premium-button-secondary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  .apple-cta-link,
+  .aeon-orb-send,
+  [data-aeonvera-button]
+):not(.aeon-apple-plan-action),
+:root[data-theme="dark"] :is(
+  .premium-action,
+  .premium-action-secondary,
+  .premium-action-ghost,
+  .premium-button-primary,
+  .premium-button-secondary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  .apple-cta-link,
+  .aeon-orb-send,
+  [data-aeonvera-button]
+):not(.aeon-apple-plan-action) {
+  transform: none !important;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease !important;
+}
+
+:root[data-theme="light"] :is(
+  .premium-action,
+  .premium-action-secondary,
+  .premium-action-ghost,
+  .premium-button-primary,
+  .premium-button-secondary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  .apple-cta-link,
+  .aeon-orb-send,
+  [data-aeonvera-button]
+):not(.aeon-apple-plan-action):hover,
+:root[data-theme="dark"] :is(
+  .premium-action,
+  .premium-action-secondary,
+  .premium-action-ghost,
+  .premium-button-primary,
+  .premium-button-secondary,
+  .premium-nav-action,
+  .royal-gradient,
+  .apple-cta-primary,
+  .apple-cta-link,
+  .aeon-orb-send,
+  [data-aeonvera-button]
+):not(.aeon-apple-plan-action):hover {
+  transform: none !important;
+  border-color: var(--aeon-unified-button-border-hover) !important;
+  background: var(--aeon-unified-button-bg-hover) !important;
+  box-shadow: var(--aeon-unified-button-shadow-hover) !important;
+}
+
+:root[data-theme="light"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control),
+:root[data-theme="dark"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control) {
+  box-sizing: border-box !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: rgba(28, 30, 34, 0.72) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  transform: none !important;
   transition:
     border-color 140ms ease,
-    box-shadow 140ms ease,
-    filter 140ms ease !important;
+    background 140ms ease,
+    color 140ms ease,
+    opacity 140ms ease !important;
 }
 
-.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
-.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
-:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
-:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
-:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
-:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover {
-  filter: brightness(1.035) saturate(1.02) !important;
+:root[data-theme="dark"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control) {
+  color: rgba(255, 255, 255, 0.62) !important;
 }
 
-.aeon-apple-pricing .aeon-apple-plan-emblem,
-.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
-.aeon-apple-pricing .aeon-apple-plan-emblem *,
-.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem *,
-.aeon-apple-pricing .aeon-apple-plan-emblem::before,
-.aeon-apple-pricing .aeon-apple-plan-emblem::after,
-:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-emblem,
-:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
-:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan-emblem *,
-:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem *,
-:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-emblem,
-:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem,
-:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan-emblem *,
-:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-emblem * {
-  animation: none !important;
+:root[data-theme="light"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control):hover,
+:root[data-theme="light"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control):focus-visible {
+  border-color: rgba(104, 77, 31, 0.18) !important;
+  background: rgba(104, 77, 31, 0.06) !important;
+  color: rgba(28, 30, 34, 0.9) !important;
   transform: none !important;
-  transition: none !important;
-  will-change: auto !important;
+}
+
+:root[data-theme="dark"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control):hover,
+:root[data-theme="dark"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control):focus-visible {
+  border-color: rgba(238, 216, 162, 0.2) !important;
+  background: rgba(238, 216, 162, 0.08) !important;
+  color: rgba(255, 248, 231, 0.92) !important;
+  transform: none !important;
+}
+
+:root[data-theme="light"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control) *,
+:root[data-theme="dark"] :is(.premium-icon-link, .premium-icon-button, .premium-account-trigger, .premium-inline-control) * {
+  color: currentColor !important;
+  stroke: currentColor !important;
 }
