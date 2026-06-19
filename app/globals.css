@@ -6658,3 +6658,23 @@ input[type="number"]::-webkit-inner-spin-button {
   transform: none !important;
   background-position: 155% 50% !important;
 }
+
+:root[data-theme="light"] .apple-cta-primary,
+:root[data-theme="dark"] .apple-cta-primary,
+:root[data-theme="light"] .apple-cta-primary:hover,
+:root[data-theme="dark"] .apple-cta-primary:hover,
+:root[data-theme="light"] .apple-cta-primary:focus-visible,
+:root[data-theme="dark"] .apple-cta-primary:focus-visible {
+  box-shadow: var(--av-btn-primary-shadow) !important;
+}
+
+:root[data-theme="light"] .apple-cta-primary::after,
+:root[data-theme="dark"] .apple-cta-primary::after,
+:root[data-theme="light"] .apple-cta-primary:hover::after,
+:root[data-theme="dark"] .apple-cta-primary:hover::after,
+:root[data-theme="light"] .apple-cta-primary:focus-visible::after,
+:root[data-theme="dark"] .apple-cta-primary:focus-visible::after {
+  content: none !important;
+  display: none !important;
+  opacity: 0 !important;
+}
