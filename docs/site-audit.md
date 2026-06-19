@@ -6,8 +6,9 @@ Last updated: 2026-06-18
 
 - Consolidated dashboard-style card controls under `av-control-card`.
 - Verified signed-in routes across light/dark and desktop/mobile with a disposable Sovereign QA account.
-- Latest authenticated visual audit: 16 routes x 2 themes x 2 viewport classes, 0 button/control issues, 0 protected-route redirects.
+- Latest authenticated visual audit artifact: 16 routes x 2 themes x 2 viewport classes, 0 scripted button/control issues, 0 protected-route redirects.
 - Verification artifact: `/tmp/aeonvera-auth-audit-v9/audit.json`.
+- Manual computed-style review later found cascade-contract issues that the script did not catch; the button/control system should be judged by both screenshot review and computed style checks.
 
 ## Audit Decisions
 

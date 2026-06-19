@@ -650,7 +650,7 @@ export default function OptimizationPage() {
 
             {!complete ? (
               <>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label={question.prompt}>
                   {question.options.map((option) => {
                     const selected = answers[question.id] === option;
 
@@ -658,6 +658,8 @@ export default function OptimizationPage() {
                       <button
                         key={option}
                         type="button"
+                        role="radio"
+                        aria-checked={selected}
                         onClick={() => selectAnswer(option)}
                         className={`av-control-card rounded-lg border p-4 text-left transition ${
                           selected

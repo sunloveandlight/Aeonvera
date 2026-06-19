@@ -216,7 +216,7 @@ p {
    touching the image-led marketing hero sections.
 ===================================================== */
 
-:root[data-theme="light"] [data-aeonvera-content] [class*="text-white"] {
+:root[data-theme="light"] [data-aeonvera-content] [class*="text-white"]:not(.av-control-card) {
   color: var(--text-2) !important;
 }
 
@@ -229,11 +229,11 @@ p {
   background-color: rgba(255, 255, 255, 0.72) !important;
 }
 
-:root[data-theme="light"] [data-aeonvera-content] [class*="bg-white/"] {
+:root[data-theme="light"] [data-aeonvera-content] [class*="bg-white/"]:not(.av-control-card) {
   background-color: rgba(0, 0, 0, 0.035) !important;
 }
 
-:root[data-theme="light"] [data-aeonvera-content] [class*="border-white"] {
+:root[data-theme="light"] [data-aeonvera-content] [class*="border-white"]:not(.av-control-card) {
   border-color: rgba(0, 0, 0, 0.09) !important;
 }
 
@@ -5790,9 +5790,9 @@ input[type="number"]::-webkit-inner-spin-button {
   stroke: currentColor !important;
 }
 
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
   position: relative !important;
   isolation: auto !important;
   overflow: visible !important;
@@ -6018,12 +6018,12 @@ input[type="number"]::-webkit-inner-spin-button {
   opacity: 1 !important;
 }
 
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible,
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-apple-split, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-apple-split, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-apple-split, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible,
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-apple-split, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-apple-split, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-apple-split, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
@@ -6034,10 +6034,10 @@ input[type="number"]::-webkit-inner-spin-button {
   opacity: 1 !important;
 }
 
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after {
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::after,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::after {
   content: none !important;
   display: none !important;
 }
@@ -6055,9 +6055,9 @@ input[type="number"]::-webkit-inner-spin-button {
   opacity: 1 !important;
 }
 
-[data-aeonvera-content] :is(label[class*="cursor-pointer"], [role="button"]):not([class*="premium-"]):not([class*="aeon-apple-plan"]):not([class*="pricing"]):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]),
-[data-aeonvera-content] :is(label[class*="cursor-pointer"], [role="button"]):not([class*="premium-"]):not([class*="aeon-apple-plan"]):not([class*="pricing"]):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):hover,
-[data-aeonvera-content] :is(label[class*="cursor-pointer"], [role="button"]):not([class*="premium-"]):not([class*="aeon-apple-plan"]):not([class*="pricing"]):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):focus-visible {
+[data-aeonvera-content] :is(label[class*="cursor-pointer"], [role="button"]):not(.av-control-card):not([class*="premium-"]):not([class*="aeon-apple-plan"]):not([class*="pricing"]):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]),
+[data-aeonvera-content] :is(label[class*="cursor-pointer"], [role="button"]):not(.av-control-card):not([class*="premium-"]):not([class*="aeon-apple-plan"]):not([class*="pricing"]):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):hover,
+[data-aeonvera-content] :is(label[class*="cursor-pointer"], [role="button"]):not(.av-control-card):not([class*="premium-"]):not([class*="aeon-apple-plan"]):not([class*="pricing"]):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):focus-visible {
   background: var(--av-surface-control-bg) !important;
   border-color: var(--av-surface-control-border) !important;
   color: var(--av-surface-control-text) !important;
@@ -6084,6 +6084,7 @@ input[type="number"]::-webkit-inner-spin-button {
   --av-control-card-active-bg: rgba(142, 103, 33, 0.09);
   --av-control-card-active-border: rgba(142, 103, 33, 0.34);
   --av-control-card-active-text: rgba(70, 49, 12, 0.94);
+  --av-control-card-ring: rgba(142, 103, 33, 0.18);
 }
 
 :root[data-theme="dark"] {
@@ -6094,8 +6095,11 @@ input[type="number"]::-webkit-inner-spin-button {
   --av-control-card-active-bg: rgba(var(--gold), 0.085);
   --av-control-card-active-border: rgba(var(--gold), 0.3);
   --av-control-card-active-text: rgba(245, 231, 190, 0.96);
+  --av-control-card-ring: rgba(var(--gold), 0.16);
 }
 
+:root[data-theme="light"] [data-aeonvera-content] .av-control-card,
+:root[data-theme="dark"] [data-aeonvera-content] .av-control-card,
 [data-aeonvera-content] .av-control-card,
 [data-aeonvera-content] .av-control-card:hover,
 [data-aeonvera-content] .av-control-card:focus-visible {
@@ -6107,8 +6111,25 @@ input[type="number"]::-webkit-inner-spin-button {
   text-shadow: none !important;
   transform: none !important;
   opacity: 1 !important;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    color 160ms ease !important;
 }
 
+:root[data-theme="light"] [data-aeonvera-content] .av-control-card:hover,
+:root[data-theme="dark"] [data-aeonvera-content] .av-control-card:hover,
+:root[data-theme="light"] [data-aeonvera-content] .av-control-card:focus-visible,
+:root[data-theme="dark"] [data-aeonvera-content] .av-control-card:focus-visible {
+  border-color: var(--av-control-card-active-border) !important;
+  box-shadow:
+    0 0 0 1px rgba(var(--gold), 0.06) inset,
+    0 0 0 3px var(--av-control-card-ring) !important;
+}
+
+:root[data-theme="light"] [data-aeonvera-content] .av-control-card.av-control-card-active,
+:root[data-theme="dark"] [data-aeonvera-content] .av-control-card.av-control-card-active,
 [data-aeonvera-content] .av-control-card.av-control-card-active,
 [data-aeonvera-content] .av-control-card.av-control-card-active:hover,
 [data-aeonvera-content] .av-control-card.av-control-card-active:focus-visible {
@@ -6117,11 +6138,15 @@ input[type="number"]::-webkit-inner-spin-button {
   color: var(--av-control-card-active-text) !important;
 }
 
+:root[data-theme="light"] [data-aeonvera-content] .av-control-card :is(p, span, div, svg),
+:root[data-theme="dark"] [data-aeonvera-content] .av-control-card :is(p, span, div, svg),
 [data-aeonvera-content] .av-control-card :is(p, span, div, svg) {
   color: currentColor !important;
   stroke: currentColor !important;
 }
 
+:root[data-theme="light"] [data-aeonvera-content] .av-control-card :is(p + p, [class*="text-xs"], [class*="text-white/3"], [class*="text-white/4"]),
+:root[data-theme="dark"] [data-aeonvera-content] .av-control-card :is(p + p, [class*="text-xs"], [class*="text-white/3"], [class*="text-white/4"]),
 [data-aeonvera-content] .av-control-card :is(p + p, [class*="text-xs"], [class*="text-white/3"], [class*="text-white/4"]) {
   color: var(--av-control-card-muted) !important;
 }
@@ -6152,11 +6177,9 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 /* ============================================================
-   SECONDARY BUTTON RESTORE (final authority, appended last).
-   Button system v3 collapses secondary + ghost into bare text; the
-   product design calls for a 3-tier system where SECONDARY is a real
-   glass/outline box (ghost stays text). This restores the box for
-   .premium-action-secondary / .premium-button-secondary only.
+   SECONDARY GLASS BUTTON AUTHORITY.
+   Secondary buttons are intentional rectangles; ghost/link actions
+   remain bare text. Keep hover regal through light, not movement.
    ============================================================ */
 :root {
   --btn-sec-bg:
@@ -6169,6 +6192,10 @@ input[type="number"]::-webkit-inner-spin-button {
   --btn-sec-border-hover: rgba(var(--gold), 0.45);
   --btn-sec-text: rgba(40, 32, 14, 0.92);
   --btn-sec-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --btn-sec-shadow-hover:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 0 0 3px rgba(var(--gold), 0.1),
+    0 0.7rem 1.4rem rgba(98, 74, 24, 0.1);
 }
 :root[data-theme="dark"] {
   --btn-sec-bg:
@@ -6181,6 +6208,10 @@ input[type="number"]::-webkit-inner-spin-button {
   --btn-sec-border-hover: rgba(var(--gold), 0.55);
   --btn-sec-text: rgba(255, 255, 255, 0.92);
   --btn-sec-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --btn-sec-shadow-hover:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 3px rgba(var(--gold), 0.12),
+    0 0.8rem 1.65rem rgba(0, 0, 0, 0.22);
 }
 
 :root[data-theme="light"] :is(.premium-action-secondary, .premium-button-secondary):not(.aeon-apple-plan-action),
@@ -6227,7 +6258,8 @@ input[type="number"]::-webkit-inner-spin-button {
   background: var(--btn-sec-bg-hover) !important;
   border-color: var(--btn-sec-border-hover) !important;
   color: var(--btn-sec-text) !important;
-  transform: translateY(-1px) !important;
+  box-shadow: var(--btn-sec-shadow-hover) !important;
+  transform: none !important;
   opacity: 1 !important;
 }
 

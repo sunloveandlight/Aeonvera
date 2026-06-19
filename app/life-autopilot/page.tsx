@@ -450,6 +450,7 @@ export default function LifeAutopilotPage() {
                   <button
                     key={key}
                     type="button"
+                    aria-pressed={preferences.allowed_reminder_domains[key]}
                     onClick={() => toggleDomain(key)}
                     className={`av-control-card rounded-lg border p-4 text-left transition ${
                       preferences.allowed_reminder_domains[key]
@@ -490,6 +491,7 @@ export default function LifeAutopilotPage() {
                     <button
                       key={day}
                       type="button"
+                      aria-pressed={preferences.training_days.includes(day)}
                       onClick={() => toggleTrainingDay(day)}
                       className={`av-control-card h-9 rounded-md border px-3 text-xs font-semibold transition ${
                         preferences.training_days.includes(day)
@@ -584,6 +586,7 @@ function Segment({
         <button
           key={value}
           type="button"
+          aria-pressed={active === value}
           onClick={() => onChange(value)}
           className={`av-control-card min-h-9 rounded-md border px-3 text-xs font-semibold transition ${
             active === value
@@ -612,6 +615,7 @@ function ToggleCard({
   return (
     <button
       type="button"
+      aria-pressed={active}
       onClick={onClick}
       className={`av-control-card rounded-lg border p-4 text-left transition ${
         active

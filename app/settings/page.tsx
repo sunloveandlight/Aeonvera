@@ -163,6 +163,7 @@ export default function SettingsPage() {
                     <button
                       key={voice.id}
                       type="button"
+                      aria-pressed={selected}
                       onClick={() => changeVoice(voice.id)}
                       className={`av-control-card rounded-lg border p-4 text-left transition ${
                         selected
@@ -288,6 +289,8 @@ function SettingsToggle({
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={active}
       onClick={onClick}
       className="av-control-card flex w-full items-center justify-between gap-4 rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 text-left transition"
     >
