@@ -164,10 +164,10 @@ export default function SettingsPage() {
                       key={voice.id}
                       type="button"
                       onClick={() => changeVoice(voice.id)}
-                      className={`rounded-lg border p-4 text-left transition ${
+                      className={`av-control-card rounded-lg border p-4 text-left transition ${
                         selected
-                          ? "border-[rgba(var(--gold),0.32)] bg-[rgba(var(--gold),0.08)]"
-                          : "border-white/[0.07] bg-white/[0.025] hover:border-white/[0.14]"
+                          ? "av-control-card-active border-[rgba(var(--gold),0.32)] bg-[rgba(var(--gold),0.08)]"
+                          : "border-white/[0.07] bg-white/[0.025]"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
@@ -260,7 +260,7 @@ export default function SettingsPage() {
             <button
               type="button"
               onClick={() => void handleLogout()}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-white/[0.08] bg-white/[0.025] px-4 text-sm text-white/48 transition hover:border-white/[0.14] hover:text-white/76"
+              className="premium-action-secondary inline-flex items-center justify-center gap-2 text-sm font-medium"
             >
               <LogOut size={16} />
               Sign out
@@ -289,7 +289,7 @@ function SettingsToggle({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center justify-between gap-4 rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 text-left transition hover:border-white/[0.14]"
+      className="av-control-card flex w-full items-center justify-between gap-4 rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 text-left transition"
     >
       <div className="flex items-start gap-3">
         <Icon className="mt-0.5 shrink-0 royal-text" size={17} />

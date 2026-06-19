@@ -713,7 +713,7 @@ function ImportPanel({
         className="executive-input mt-5 h-32 w-full resize-none rounded-lg p-4 text-xs leading-5 placeholder:text-white/16"
       />
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
-        <label className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.025] px-4 py-3 text-xs text-white/50 transition hover:border-white/[0.16] hover:text-white/70">
+        <label className="av-control-card flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.025] px-4 py-3 text-xs text-white/50 transition">
           <span className="min-w-0 truncate">{fileName || "Choose file or picture"}</span>
           <span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-white/30">
             Choose

@@ -659,9 +659,9 @@ export default function OptimizationPage() {
                         key={option}
                         type="button"
                         onClick={() => selectAnswer(option)}
-                        className={`quiet-lift rounded-lg border p-4 text-left transition ${
+                        className={`av-control-card rounded-lg border p-4 text-left transition ${
                           selected
-                            ? "border-white/[0.18] bg-white/[0.07]"
+                            ? "av-control-card-active border-white/[0.18] bg-white/[0.07]"
                             : "border-white/[0.07] bg-white/[0.025]"
                         }`}
                       >

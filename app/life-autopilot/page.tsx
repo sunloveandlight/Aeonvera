@@ -451,10 +451,10 @@ export default function LifeAutopilotPage() {
                     key={key}
                     type="button"
                     onClick={() => toggleDomain(key)}
-                    className={`rounded-lg border p-4 text-left transition ${
+                    className={`av-control-card rounded-lg border p-4 text-left transition ${
                       preferences.allowed_reminder_domains[key]
-                        ? "border-[rgba(var(--gold),0.26)] bg-[rgba(var(--gold),0.07)]"
-                        : "border-white/[0.07] bg-white/[0.025] hover:border-white/[0.14]"
+                        ? "av-control-card-active border-[rgba(var(--gold),0.26)] bg-[rgba(var(--gold),0.07)]"
+                        : "border-white/[0.07] bg-white/[0.025]"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -491,10 +491,10 @@ export default function LifeAutopilotPage() {
                       key={day}
                       type="button"
                       onClick={() => toggleTrainingDay(day)}
-                      className={`h-9 rounded-md border px-3 text-xs font-semibold transition ${
+                      className={`av-control-card h-9 rounded-md border px-3 text-xs font-semibold transition ${
                         preferences.training_days.includes(day)
-                          ? "border-[rgba(var(--gold),0.26)] bg-[rgba(var(--gold),0.08)] royal-text"
-                          : "border-white/[0.07] bg-white/[0.025] text-white/42 hover:text-white/70"
+                          ? "av-control-card-active border-[rgba(var(--gold),0.26)] bg-[rgba(var(--gold),0.08)] royal-text"
+                          : "border-white/[0.07] bg-white/[0.025] text-white/42"
                       }`}
                     >
                       {day}
@@ -585,10 +585,10 @@ function Segment({
           key={value}
           type="button"
           onClick={() => onChange(value)}
-          className={`min-h-9 rounded-md px-3 text-xs font-semibold transition ${
+          className={`av-control-card min-h-9 rounded-md border px-3 text-xs font-semibold transition ${
             active === value
-              ? "bg-white/[0.08] text-white"
-              : "text-white/42 hover:text-white/72"
+              ? "av-control-card-active border-[rgba(var(--gold),0.26)] bg-[rgba(var(--gold),0.08)]"
+              : "border-white/[0.07] bg-white/[0.025] text-white/42"
           }`}
         >
           {label}
@@ -613,10 +613,10 @@ function ToggleCard({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-lg border p-4 text-left transition ${
+      className={`av-control-card rounded-lg border p-4 text-left transition ${
         active
-          ? "border-[rgba(var(--gold),0.26)] bg-[rgba(var(--gold),0.07)]"
-          : "border-white/[0.07] bg-white/[0.025] hover:border-white/[0.14]"
+          ? "av-control-card-active border-[rgba(var(--gold),0.26)] bg-[rgba(var(--gold),0.07)]"
+          : "border-white/[0.07] bg-white/[0.025]"
       }`}
     >
       <div className="flex items-start justify-between gap-3">

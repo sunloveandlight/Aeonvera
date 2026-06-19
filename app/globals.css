@@ -6813,9 +6813,9 @@ input[type="number"]::-webkit-inner-spin-button {
   display: none !important;
 }
 
-[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]),
-[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):hover,
-[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):focus-visible {
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(.av-control-card):not(#next-logo):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]),
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(.av-control-card):not(#next-logo):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):hover,
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(.av-control-card):not(#next-logo):is([class*="bg-white/"], [class*="border-white/"], [class*="hover:"]):focus-visible {
   background: var(--av-surface-control-bg) !important;
   border-color: var(--av-surface-control-border) !important;
   color: var(--av-surface-control-text) !important;
@@ -6839,12 +6839,66 @@ input[type="number"]::-webkit-inner-spin-button {
   opacity: 1 !important;
 }
 
-[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-[rgba(var(--gold)"], [class*="royal-text"]),
-[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-[rgba(var(--gold)"], [class*="royal-text"]):hover,
-[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(#next-logo):is([class*="bg-[rgba(var(--gold)"], [class*="royal-text"]):focus-visible {
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(.av-control-card):not(#next-logo):is([class*="bg-[rgba(var(--gold)"], [class*="royal-text"]),
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(.av-control-card):not(#next-logo):is([class*="bg-[rgba(var(--gold)"], [class*="royal-text"]):hover,
+[data-aeonvera-content] button:not([class*="premium-"]):not([class*="aeon-command-orb"]):not([class*="aeon-orb"]):not([class*="apple-cta"]):not([class*="pricing"]):not(.av-control-card):not(#next-logo):is([class*="bg-[rgba(var(--gold)"], [class*="royal-text"]):focus-visible {
   background: var(--av-surface-control-active-bg) !important;
   border-color: var(--av-surface-control-active-border) !important;
   color: var(--av-surface-control-active-text) !important;
+}
+
+:root[data-theme="light"] {
+  --av-control-card-bg: rgba(255, 255, 255, 0.78);
+  --av-control-card-border: rgba(39, 34, 24, 0.14);
+  --av-control-card-text: rgba(32, 33, 37, 0.88);
+  --av-control-card-muted: rgba(55, 56, 62, 0.66);
+  --av-control-card-active-bg: rgba(142, 103, 33, 0.09);
+  --av-control-card-active-border: rgba(142, 103, 33, 0.34);
+  --av-control-card-active-text: rgba(70, 49, 12, 0.94);
+}
+
+:root[data-theme="dark"] {
+  --av-control-card-bg: rgba(255, 255, 255, 0.045);
+  --av-control-card-border: rgba(255, 255, 255, 0.11);
+  --av-control-card-text: rgba(247, 247, 244, 0.78);
+  --av-control-card-muted: rgba(247, 247, 244, 0.58);
+  --av-control-card-active-bg: rgba(var(--gold), 0.085);
+  --av-control-card-active-border: rgba(var(--gold), 0.3);
+  --av-control-card-active-text: rgba(245, 231, 190, 0.96);
+}
+
+[data-aeonvera-content] .av-control-card,
+[data-aeonvera-content] .av-control-card:hover,
+[data-aeonvera-content] .av-control-card:focus-visible {
+  background: var(--av-control-card-bg) !important;
+  border-color: var(--av-control-card-border) !important;
+  color: var(--av-control-card-text) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+[data-aeonvera-content] .av-control-card.av-control-card-active,
+[data-aeonvera-content] .av-control-card.av-control-card-active:hover,
+[data-aeonvera-content] .av-control-card.av-control-card-active:focus-visible {
+  background: var(--av-control-card-active-bg) !important;
+  border-color: var(--av-control-card-active-border) !important;
+  color: var(--av-control-card-active-text) !important;
+}
+
+[data-aeonvera-content] .av-control-card :is(p, span, div, svg) {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+[data-aeonvera-content] .av-control-card :is(p + p, [class*="text-xs"], [class*="text-white/3"], [class*="text-white/4"]) {
+  color: var(--av-control-card-muted) !important;
+}
+
+[data-aeonvera-content] .av-control-card.av-control-card-active :is(p + p, [class*="text-xs"], [class*="text-white/3"], [class*="text-white/4"]) {
+  color: currentColor !important;
 }
 
 :root[data-theme="dark"] .premium-header :is(.premium-nav-link, [data-premium-brand], a:not(.premium-nav-action)),
