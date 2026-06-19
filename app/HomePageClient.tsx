@@ -78,6 +78,9 @@ export default function HomePage() {
     profile?.plan && isSubscriptionValid(profile.subscription_status)
       ? profile.plan
       : null;
+  const activePlanDetails = activePlan
+    ? PLANS.find((plan) => plan.id === activePlan)
+    : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -287,7 +290,9 @@ export default function HomePage() {
       {activePlan ? (
         <section className="aeon-apple-member">
           <div className="aeon-member-system">
-            <span className="aeon-member-kicker">{activePlan} is active</span>
+            <span className="aeon-member-kicker">
+              {activePlanDetails?.name || activePlan} membership online
+            </span>
             <h2>Your biological future is already online.</h2>
             <p>
               Continue where Aeonvera is learning: today&apos;s signal, your next protocol,
