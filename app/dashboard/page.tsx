@@ -1136,11 +1136,11 @@ export default function DashboardPage() {
               event.preventDefault();
               void handleGenerateReport();
             }}
-            className={`cursor-pointer rounded-lg border p-5 transition hover:border-white/[0.16] ${
-            firstReportPrompt && !report
-              ? "border-white/20 royal-gradient-soft"
-              : "executive-panel-soft"
-          } ${!hasAssessment || generatingReport ? "cursor-not-allowed opacity-75" : ""}`}
+            className={`av-control-card cursor-pointer rounded-lg border p-5 transition ${
+              firstReportPrompt && !report
+                ? "av-control-card-active"
+                : "executive-panel-soft"
+            } ${!hasAssessment || generatingReport ? "cursor-not-allowed opacity-75" : ""}`}
           >
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
@@ -1175,20 +1175,18 @@ export default function DashboardPage() {
           aria-expanded={showAdvancedConsole}
           onClick={() => setShowAdvancedConsole((value) => !value)}
           className={`av-control-card group flex w-full items-center justify-between gap-4 rounded-lg border px-5 py-4 text-left transition ${
-            showAdvancedConsole
-              ? "av-control-card-active border-[rgba(var(--gold),0.28)] bg-[rgba(var(--gold),0.08)]"
-              : "border-white/[0.08] bg-white/[0.025]"
+            showAdvancedConsole ? "av-control-card-active" : ""
           }`}
         >
           <div>
-            <p className="text-sm font-light text-white/76">More detail</p>
-            <p className="mt-1 text-xs leading-5 text-white/38">
+            <p className="text-sm font-light">More detail</p>
+            <p className="av-control-muted mt-1 text-xs leading-5">
               Labs, wearables, simulations, notification delivery, and detailed protocol tools.
             </p>
           </div>
           <ChevronDown
             size={18}
-            className={`shrink-0 text-white/34 transition group-hover:text-white/64 ${
+            className={`shrink-0 transition ${
               showAdvancedConsole ? "rotate-180" : ""
             }`}
           />
@@ -1305,46 +1303,49 @@ export default function DashboardPage() {
         ═══════════════════════════════════════ */}
         <div className="grid md:grid-cols-3 gap-4">
           <button
+            type="button"
             onClick={() => router.push("/assessment")}
-            className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
+            className="av-control-card rounded-lg border p-5 text-left"
           >
-            <p className="av-eyebrow text-white/20 mb-3 group-hover:text-white/30 transition-colors">
+            <p className="av-control-muted av-eyebrow mb-3">
               {hasAssessment ? "Update" : "Initialize"}
             </p>
-            <p className="text-white/60 text-sm font-light">
+            <p className="text-sm font-light">
               {hasAssessment ? "Update your assessment data" : "Start your assessment"}
             </p>
-            <p className="av-eyebrow mt-3 text-white/42 group-hover:text-white/72 transition-colors">
+            <p className="av-eyebrow mt-3">
               {hasAssessment ? "Retake →" : "Start →"}
             </p>
           </button>
 
           <button
+            type="button"
             onClick={() => router.push("/report")}
-            className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
+            className="av-control-card rounded-lg border p-5 text-left"
           >
-            <p className="av-eyebrow text-white/20 mb-3 group-hover:text-white/30 transition-colors">
+            <p className="av-control-muted av-eyebrow mb-3">
               Intelligence
             </p>
-            <p className="text-white/60 text-sm font-light">
+            <p className="text-sm font-light">
               View your full biological profile and 90-day protocol
             </p>
-            <p className="av-eyebrow mt-3 text-white/42 group-hover:text-white/72 transition-colors">
+            <p className="av-eyebrow mt-3">
               Open report →
             </p>
           </button>
 
           <button
+            type="button"
             onClick={() => router.push("/pricing")}
-            className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
+            className="av-control-card rounded-lg border p-5 text-left"
           >
-            <p className="av-eyebrow text-white/20 mb-3 group-hover:text-white/30 transition-colors">
+            <p className="av-control-muted av-eyebrow mb-3">
               Account
             </p>
-            <p className="text-white/60 text-sm font-light">
+            <p className="text-sm font-light">
               {profile?.plan ? `${profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)} plan · ${profile.subscription_status}` : "Manage subscription"}
             </p>
-            <p className="av-eyebrow mt-3 text-white/42 group-hover:text-white/72 transition-colors">
+            <p className="av-eyebrow mt-3">
               Manage →
             </p>
           </button>
@@ -1744,12 +1745,12 @@ function LabImportPanel({
           <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
             <label
               onClick={(event) => event.stopPropagation()}
-              className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.025] px-4 py-3 text-xs text-white/50 transition hover:border-white/[0.16] hover:text-white/70"
+              className="av-control-card flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-lg border px-4 py-3 text-xs transition"
             >
               <span className="min-w-0 truncate">
                 {labImportFileName || "Upload PDF, CSV, text, or image"}
               </span>
-              <span className="av-eyebrow shrink-0 text-white/30">
+              <span className="av-control-muted av-eyebrow shrink-0">
                 Choose
               </span>
               <input
@@ -1780,7 +1781,7 @@ function LabImportPanel({
                 event.stopPropagation();
                 onLabImportFileChange(null);
               }}
-              className="av-eyebrow mt-3 text-left text-white/28 transition hover:text-white/55"
+              className="av-eyebrow premium-action-ghost mt-3 text-left"
             >
               Remove upload
             </button>

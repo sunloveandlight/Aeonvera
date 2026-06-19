@@ -721,10 +721,8 @@ export default function DigitalTwinPage() {
                           setActiveType(type);
                           setTimelineExpanded(false);
                         }}
-                        className={`shrink-0 rounded-md border px-3 py-1.5 av-eyebrow transition ${
-                          activeType === type
-                            ? "border-white/[0.2] bg-white/[0.07] royal-text"
-                            : "border-white/[0.07] bg-white/[0.02] text-white/34 hover:text-white/60"
+                        className={`av-chip-control shrink-0 px-3 py-1.5 av-eyebrow ${
+                          activeType === type ? "av-chip-control-active" : ""
                         }`}
                       >
                         {type.replace(/_/g, " ")}
@@ -758,7 +756,7 @@ export default function DigitalTwinPage() {
                       type="button"
                       aria-expanded={timelineExpanded}
                       onClick={() => setTimelineExpanded((expanded) => !expanded)}
-                      className="inline-flex h-10 w-full items-center justify-center rounded-md border border-white/[0.07] bg-white/[0.025] px-4 text-sm text-white/58 transition hover:border-[rgba(var(--gold),0.24)] hover:bg-white/[0.04] hover:text-white/82"
+                      className="premium-action-secondary inline-flex h-10 w-full items-center justify-center rounded-md px-4 text-sm"
                     >
                       {timelineExpanded
                         ? "Show recent signals only"
@@ -1033,13 +1031,13 @@ function LivingTwinModelPanel({
               type="button"
               onClick={() => void onRunProjection(prompt)}
               disabled={Boolean(runningProjection)}
-              className="quiet-lift block w-full rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 text-left transition hover:border-white/[0.14] disabled:cursor-not-allowed disabled:opacity-55"
+              className="av-control-card block w-full rounded-lg border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-55"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm leading-6 text-white/76">{prompt.question}</p>
-                  <p className="mt-2 text-xs leading-5 text-white/38">{prompt.detail}</p>
-                  <p className="av-eyebrow mt-3 text-white/24">
+                  <p className="text-sm leading-6">{prompt.question}</p>
+                  <p className="av-control-muted mt-2 text-xs leading-5">{prompt.detail}</p>
+                  <p className="av-control-muted av-eyebrow mt-3">
                     {prompt.scenarioIds.length} model lever{prompt.scenarioIds.length === 1 ? "" : "s"}
                   </p>
                 </div>

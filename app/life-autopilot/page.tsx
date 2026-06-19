@@ -446,24 +446,22 @@ export default function LifeAutopilotPage() {
           <div className="space-y-5">
             <Panel title="Behavior Orchestration" icon={Sparkles}>
               <div className="grid gap-3 sm:grid-cols-2">
-                {BEHAVIOR_DOMAINS.map(({ detail, icon: Icon, key, label }) => (
-                  <button
+	                {BEHAVIOR_DOMAINS.map(({ detail, icon: Icon, key, label }) => (
+	                  <button
                     key={key}
                     type="button"
                     aria-pressed={preferences.allowed_reminder_domains[key]}
                     onClick={() => toggleDomain(key)}
                     className={`av-control-card rounded-lg border p-4 text-left transition ${
-                      preferences.allowed_reminder_domains[key]
-                        ? "av-control-card-active border-[rgba(var(--gold),0.26)] bg-[rgba(var(--gold),0.07)]"
-                        : "border-white/[0.07] bg-white/[0.025]"
+                      preferences.allowed_reminder_domains[key] ? "av-control-card-active" : ""
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex gap-3">
                         <Icon size={17} className="mt-0.5 royal-text" />
                         <div>
-                          <p className="text-sm text-white/80">{label}</p>
-                          <p className="mt-1 text-xs leading-5 text-white/40">{detail}</p>
+                          <p className="text-sm">{label}</p>
+                          <p className="av-control-muted mt-1 text-xs leading-5">{detail}</p>
                         </div>
                       </div>
                       {preferences.allowed_reminder_domains[key] ? <Check size={15} className="royal-text" /> : null}
@@ -487,16 +485,14 @@ export default function LifeAutopilotPage() {
               <div className="mt-4">
                 <p className="micro-label mb-3">Training days</p>
                 <div className="flex flex-wrap gap-2">
-                  {DAYS.map((day) => (
-                    <button
+	                  {DAYS.map((day) => (
+	                    <button
                       key={day}
                       type="button"
                       aria-pressed={preferences.training_days.includes(day)}
                       onClick={() => toggleTrainingDay(day)}
                       className={`av-control-card h-9 rounded-md border px-3 text-xs font-semibold transition ${
-                        preferences.training_days.includes(day)
-                          ? "av-control-card-active border-[rgba(var(--gold),0.26)] bg-[rgba(var(--gold),0.08)] royal-text"
-                          : "border-white/[0.07] bg-white/[0.025] text-white/42"
+                        preferences.training_days.includes(day) ? "av-control-card-active" : ""
                       }`}
                     >
                       {day}
@@ -589,9 +585,7 @@ function Segment({
           aria-pressed={active === value}
           onClick={() => onChange(value)}
           className={`av-control-card min-h-9 rounded-md border px-3 text-xs font-semibold transition ${
-            active === value
-              ? "av-control-card-active border-[rgba(var(--gold),0.26)] bg-[rgba(var(--gold),0.08)]"
-              : "border-white/[0.07] bg-white/[0.025] text-white/42"
+            active === value ? "av-control-card-active" : ""
           }`}
         >
           {label}
@@ -618,15 +612,13 @@ function ToggleCard({
       aria-pressed={active}
       onClick={onClick}
       className={`av-control-card rounded-lg border p-4 text-left transition ${
-        active
-          ? "av-control-card-active border-[rgba(var(--gold),0.26)] bg-[rgba(var(--gold),0.07)]"
-          : "border-white/[0.07] bg-white/[0.025]"
+        active ? "av-control-card-active" : ""
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm text-white/80">{label}</p>
-          <p className="mt-1 text-xs leading-5 text-white/40">{detail}</p>
+          <p className="text-sm">{label}</p>
+          <p className="av-control-muted mt-1 text-xs leading-5">{detail}</p>
         </div>
         {active ? <Check size={15} className="royal-text" /> : null}
       </div>

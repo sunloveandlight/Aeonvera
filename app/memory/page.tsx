@@ -383,11 +383,11 @@ export default function MemoryPage() {
                       <h2 className="mt-2 text-sm font-medium leading-5 text-white/78">
                         {item.title || "Remembered signal"}
                       </h2>
-                    </div>
-                    <button
+	                    </div>
+	                    <button
                       type="button"
                       onClick={() => void forgetSemanticMemory(item.id)}
-                      className="inline-flex size-8 items-center justify-center rounded-md border border-white/[0.06] text-white/36 transition hover:border-red-300/30 hover:text-red-200"
+                      className="av-icon-danger size-8"
                       aria-label="Forget this memory"
                     >
                       <Trash2 size={14} />

@@ -5218,6 +5218,120 @@ input[type="number"]::-webkit-inner-spin-button {
   color: currentColor !important;
 }
 
+:root[data-theme="light"] [data-aeonvera-content] .av-control-card [class*="text-white"],
+:root[data-theme="dark"] [data-aeonvera-content] .av-control-card [class*="text-white"],
+[data-aeonvera-content] .av-control-card [class*="text-white"] {
+  color: currentColor !important;
+}
+
+:root[data-theme="light"] [data-aeonvera-content] .av-control-card :is([class*="text-white/3"], [class*="text-white/4"], [class*="text-white/5"], .av-control-muted),
+:root[data-theme="dark"] [data-aeonvera-content] .av-control-card :is([class*="text-white/3"], [class*="text-white/4"], [class*="text-white/5"], .av-control-muted),
+[data-aeonvera-content] .av-control-card :is([class*="text-white/3"], [class*="text-white/4"], [class*="text-white/5"], .av-control-muted) {
+  color: var(--av-control-card-muted) !important;
+}
+
+[data-aeonvera-content] .av-toggle-track {
+  position: relative;
+  display: inline-flex;
+  width: 2.75rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  border: 1px solid var(--av-control-card-border);
+  border-radius: 999px;
+  background: var(--av-control-card-bg);
+  color: var(--av-control-card-muted);
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+[data-aeonvera-content] .av-toggle-track-active {
+  border-color: var(--av-control-card-active-border);
+  background: var(--av-control-card-active-bg);
+  color: var(--av-control-card-active-text);
+}
+
+[data-aeonvera-content] .av-toggle-thumb {
+  position: absolute;
+  left: 0.25rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.72;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+[data-aeonvera-content] .av-toggle-thumb-active {
+  transform: translateX(1.25rem);
+  opacity: 0.96;
+}
+
+[data-aeonvera-content] .av-choice-dot {
+  display: inline-flex;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--av-control-card-border);
+  border-radius: 999px;
+  color: var(--av-control-card-muted);
+}
+
+[data-aeonvera-content] .av-choice-dot-active {
+  border-color: currentColor;
+  background: var(--av-control-card-active-bg);
+  color: var(--av-control-card-active-text);
+}
+
+[data-aeonvera-content] .av-chip-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--av-control-card-border);
+  border-radius: 0.375rem;
+  background: var(--av-control-card-bg);
+  color: var(--av-control-card-muted);
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+[data-aeonvera-content] .av-chip-control:hover,
+[data-aeonvera-content] .av-chip-control:focus-visible {
+  border-color: var(--av-control-card-active-border);
+  color: var(--av-control-card-text);
+}
+
+[data-aeonvera-content] .av-chip-control-active {
+  border-color: var(--av-control-card-active-border);
+  background: var(--av-control-card-active-bg);
+  color: var(--av-control-card-active-text);
+}
+
+[data-aeonvera-content] .av-icon-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--av-control-card-border);
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--av-control-card-muted);
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+[data-aeonvera-content] .av-icon-danger:hover,
+[data-aeonvera-content] .av-icon-danger:focus-visible {
+  border-color: rgba(190, 68, 68, 0.38);
+  background: rgba(190, 68, 68, 0.06);
+  color: rgb(170, 46, 46);
+}
+
+:root[data-theme="dark"] [data-aeonvera-content] .av-icon-danger:hover,
+:root[data-theme="dark"] [data-aeonvera-content] .av-icon-danger:focus-visible {
+  border-color: rgba(252, 165, 165, 0.34);
+  background: rgba(252, 165, 165, 0.08);
+  color: rgb(254, 202, 202);
+}
+
 :root[data-theme="dark"] .premium-header :is(.premium-nav-link, [data-premium-brand], a:not(.premium-nav-action)),
 :root[data-theme="dark"] .premium-header :is(.premium-nav-link, [data-premium-brand], a:not(.premium-nav-action)):hover,
 :root[data-theme="dark"] .premium-header :is(.premium-nav-link, [data-premium-brand], a:not(.premium-nav-action)):focus-visible {

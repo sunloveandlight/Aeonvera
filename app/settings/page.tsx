@@ -166,16 +166,14 @@ export default function SettingsPage() {
                       aria-pressed={selected}
                       onClick={() => changeVoice(voice.id)}
                       className={`av-control-card rounded-lg border p-4 text-left transition ${
-                        selected
-                          ? "av-control-card-active border-[rgba(var(--gold),0.32)] bg-[rgba(var(--gold),0.08)]"
-                          : "border-white/[0.07] bg-white/[0.025]"
+                        selected ? "av-control-card-active" : ""
                       }`}
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm text-white/78">{voice.label}</p>
+                        <p className="text-sm">{voice.label}</p>
                         {selected ? <Check size={16} className="royal-text" /> : null}
                       </div>
-                      <p className="mt-2 text-xs leading-5 text-white/38">{voice.tone}</p>
+                      <p className="av-control-muted mt-2 text-xs leading-5">{voice.tone}</p>
                     </button>
                   );
                 })}
@@ -292,28 +290,19 @@ function SettingsToggle({
       role="switch"
       aria-checked={active}
       onClick={onClick}
-      className="av-control-card flex w-full items-center justify-between gap-4 rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 text-left transition"
+      className={`av-control-card flex w-full items-center justify-between gap-4 rounded-lg border p-4 text-left transition ${
+        active ? "av-control-card-active" : ""
+      }`}
     >
       <div className="flex items-start gap-3">
         <Icon className="mt-0.5 shrink-0 royal-text" size={17} />
         <div>
-          <p className="text-sm text-white/72">{label}</p>
-          <p className="mt-1 text-xs leading-5 text-white/36">{body}</p>
+          <p className="text-sm">{label}</p>
+          <p className="av-control-muted mt-1 text-xs leading-5">{body}</p>
         </div>
       </div>
-      <span
-        className={`relative h-6 w-11 shrink-0 rounded-full border transition ${
-          active
-            ? "border-[rgba(var(--gold),0.34)] bg-[rgba(var(--gold),0.18)]"
-            : "border-white/[0.1] bg-white/[0.035]"
-        }`}
-        aria-hidden
-      >
-        <span
-          className={`absolute top-1 size-4 rounded-full bg-white/80 transition ${
-            active ? "left-5" : "left-1"
-          }`}
-        />
+      <span className={`av-toggle-track ${active ? "av-toggle-track-active" : ""}`} aria-hidden>
+        <span className={`av-toggle-thumb ${active ? "av-toggle-thumb-active" : ""}`} />
       </span>
     </button>
   );

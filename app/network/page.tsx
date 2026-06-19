@@ -367,14 +367,12 @@ export default function NetworkPage() {
                       type="button"
                       aria-pressed={form.role === role}
                       onClick={() => setRole(role)}
-                      className={`rounded-lg border p-3 text-left transition ${
-                        form.role === role
-                          ? "border-[rgba(var(--gold),0.28)] bg-[rgba(var(--gold),0.08)]"
-                          : "border-white/[0.07] bg-white/[0.025]"
+                      className={`av-control-card rounded-lg border p-3 text-left transition ${
+                        form.role === role ? "av-control-card-active" : ""
                       }`}
                     >
-                      <p className="text-sm text-white/76">{ROLE_COPY[role].title}</p>
-                      <p className="mt-2 text-[11px] leading-5 text-white/36">
+                      <p className="text-sm">{ROLE_COPY[role].title}</p>
+                      <p className="av-control-muted mt-2 text-[11px] leading-5">
                         {ROLE_COPY[role].detail}
                       </p>
                     </button>
@@ -410,10 +408,8 @@ export default function NetworkPage() {
                         type="button"
                         aria-pressed={form.permissions.includes(key)}
                         onClick={() => togglePermission(key)}
-                        className={`rounded-md border px-3 py-2 text-left text-xs transition ${
-                          form.permissions.includes(key)
-                            ? "border-[rgba(var(--gold),0.28)] bg-[rgba(var(--gold),0.08)] royal-text"
-                            : "border-white/[0.07] bg-black/20 text-white/38 hover:text-white/60"
+                        className={`av-chip-control px-3 py-2 text-left text-xs ${
+                          form.permissions.includes(key) ? "av-chip-control-active" : ""
                         }`}
                       >
                         {label}
@@ -650,15 +646,15 @@ function NetworkIntelligencePanel({
               key={`${recommendation.role}-${recommendation.title}`}
               type="button"
               onClick={() => onSelectRole(recommendation.role)}
-              className="w-full rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 text-left transition hover:border-[rgba(var(--gold),0.24)] hover:bg-[rgba(var(--gold),0.05)]"
+              className="av-control-card w-full rounded-lg border p-4 text-left transition"
             >
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm text-white/76">{recommendation.title}</p>
-                <span className="av-eyebrow rounded-full border border-white/[0.08] px-2 py-1 text-white/34">
+                <p className="text-sm">{recommendation.title}</p>
+                <span className="av-control-muted av-eyebrow rounded-full border px-2 py-1">
                   {recommendation.role}
                 </span>
               </div>
-              <p className="mt-2 text-xs leading-5 text-white/42">
+              <p className="av-control-muted mt-2 text-xs leading-5">
                 {recommendation.detail}
               </p>
               <p className="mt-3 text-[11px] leading-5 text-[rgba(var(--gold),0.7)]">

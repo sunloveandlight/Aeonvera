@@ -662,18 +662,14 @@ export default function OptimizationPage() {
                         aria-checked={selected}
                         onClick={() => selectAnswer(option)}
                         className={`av-control-card rounded-lg border p-4 text-left transition ${
-                          selected
-                            ? "av-control-card-active border-white/[0.18] bg-white/[0.07]"
-                            : "border-white/[0.07] bg-white/[0.025]"
+                          selected ? "av-control-card-active" : ""
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className={`mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border ${
-                            selected ? "border-white/35 bg-white/10" : "border-white/[0.12]"
-                          }`}>
+                          <div className={`av-choice-dot mt-1 ${selected ? "av-choice-dot-active" : ""}`}>
                             {selected && <Check size={13} />}
                           </div>
-                          <span className="text-sm leading-6 text-white/68">{option}</span>
+                          <span className="text-sm leading-6">{option}</span>
                         </div>
                       </button>
                     );

@@ -713,9 +713,9 @@ function ImportPanel({
         className="executive-input mt-5 h-32 w-full resize-none rounded-lg p-4 text-xs leading-5 placeholder:text-white/16"
       />
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
-        <label className="av-control-card flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.025] px-4 py-3 text-xs text-white/50 transition">
+        <label className="av-control-card flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-lg border px-4 py-3 text-xs transition">
           <span className="min-w-0 truncate">{fileName || "Choose file or picture"}</span>
-          <span className="av-eyebrow shrink-0 text-white/30">
+          <span className="av-control-muted av-eyebrow shrink-0">
             Choose
           </span>
           <input
@@ -738,7 +738,7 @@ function ImportPanel({
         <button
           type="button"
           onClick={() => onFileChange(null)}
-          className="av-eyebrow mt-3 text-left text-white/28 transition hover:text-white/55"
+          className="av-eyebrow premium-action-ghost mt-3 text-left"
         >
           Remove upload
         </button>

@@ -443,17 +443,15 @@ function ShareLinkManager({
             Included sections
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
-            {SHARE_SECTIONS.map(([key, label]) => (
-              <button
+	            {SHARE_SECTIONS.map(([key, label]) => (
+	              <button
                 key={key}
                 type="button"
                 onClick={() => onToggleSection(key)}
-                className={`rounded-md border px-3 py-2 text-left text-xs transition ${
-                  includedSections.includes(key)
-                    ? "border-[rgba(var(--gold),0.28)] bg-[rgba(var(--gold),0.08)] royal-text"
-                    : "border-white/[0.07] bg-black/20 text-white/38 hover:text-white/60"
+                className={`av-chip-control px-3 py-2 text-left text-xs ${
+                  includedSections.includes(key) ? "av-chip-control-active" : ""
                 }`}
-              >
+	              >
                 {label}
               </button>
             ))}
