@@ -6446,6 +6446,21 @@ input[type="number"]::-webkit-inner-spin-button {
   transform: none !important;
 }
 
+:root[data-theme="light"] .apple-cta-primary:hover,
+:root[data-theme="dark"] .apple-cta-primary:hover,
+:root[data-theme="light"] .apple-cta-primary:focus-visible,
+:root[data-theme="dark"] .apple-cta-primary:focus-visible {
+  box-shadow: var(--av-btn-primary-shadow) !important;
+}
+
+:root[data-theme="light"] .apple-cta-primary::after,
+:root[data-theme="dark"] .apple-cta-primary::after,
+:root[data-theme="light"] .apple-cta-primary:hover::after,
+:root[data-theme="dark"] .apple-cta-primary:hover::after {
+  content: none !important;
+  display: none !important;
+}
+
 :root[data-theme="light"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send, [data-aeonvera-button]):not(.aeon-apple-plan-action):not(.apple-cta-link) > *,
 :root[data-theme="dark"] :is(.premium-action, .premium-button-primary, .premium-nav-action, .royal-gradient, .apple-cta-primary, .aeon-orb-send, [data-aeonvera-button]):not(.aeon-apple-plan-action):not(.apple-cta-link) > * {
   position: relative !important;
