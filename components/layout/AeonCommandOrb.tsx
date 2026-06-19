@@ -1313,7 +1313,7 @@ export default function AeonCommandOrb() {
               >
                 <p>{message.content}</p>
                 {message.role === "assistant" && message.mode === "fallback" ? (
-                  <p className="mt-2 text-[9px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.72)]">
+                  <p className="av-eyebrow mt-2 text-[rgba(var(--gold),0.72)]">
                     AI temporarily unavailable. Local fallback response.
                   </p>
                 ) : null}

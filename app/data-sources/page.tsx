@@ -594,7 +594,7 @@ function SourceIntelligencePanel({
                 <p className="line-clamp-3 text-xs leading-5 text-white/38">
                   {prompt.body}
                 </p>
-                <p className="mt-4 text-[9px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.72)]">
+                <p className="av-eyebrow mt-4 text-[rgba(var(--gold),0.72)]">
                   {prompt.actionLabel}
                 </p>
               </Link>
@@ -643,7 +643,7 @@ function SourceCard({
       <h2 className="mt-5 text-2xl font-semibold text-white">{title}</h2>
       <p className="mt-3 flex-1 text-sm leading-7 text-white/48">{detail}</p>
       {href ? (
-        <span className="royal-text mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em]">
+        <span className="av-eyebrow royal-text mt-5 inline-flex items-center gap-2">
           {actionLabel}
           <ArrowRight size={13} />
         </span>
@@ -652,7 +652,7 @@ function SourceCard({
           type="button"
           onClick={onAction}
           disabled={disabled}
-          className="premium-action mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+          className="av-eyebrow premium-action mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 disabled:cursor-not-allowed disabled:opacity-45"
         >
           {disabled && status === "locked" ? (
             <LockKeyhole className="mr-2" size={13} />
@@ -705,7 +705,7 @@ function ImportPanel({
         </div>
       </div>
       <p className="mt-4 text-sm leading-7 text-white/48">{body}</p>
-      <p className="mt-2 text-[9px] uppercase tracking-[0.14em] text-white/28">{accepted}</p>
+      <p className="av-eyebrow mt-2 text-white/28">{accepted}</p>
       <textarea
         value={payload}
         onChange={(event) => onPayloadChange(event.target.value)}
@@ -715,7 +715,7 @@ function ImportPanel({
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
         <label className="av-control-card flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-lg border border-white/[0.08] bg-white/[0.025] px-4 py-3 text-xs text-white/50 transition">
           <span className="min-w-0 truncate">{fileName || "Choose file or picture"}</span>
-          <span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-white/30">
+          <span className="av-eyebrow shrink-0 text-white/30">
             Choose
           </span>
           <input
@@ -729,7 +729,7 @@ function ImportPanel({
           type="button"
           onClick={onSubmit}
           disabled={submitting}
-          className="premium-action inline-flex h-12 items-center justify-center rounded-md px-5 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+          className="av-eyebrow premium-action inline-flex h-12 items-center justify-center rounded-md px-5 disabled:cursor-not-allowed disabled:opacity-45"
         >
           {submitLabel}
         </button>
@@ -738,7 +738,7 @@ function ImportPanel({
         <button
           type="button"
           onClick={() => onFileChange(null)}
-          className="mt-3 text-left text-[9px] uppercase tracking-[0.14em] text-white/28 transition hover:text-white/55"
+          className="av-eyebrow mt-3 text-left text-white/28 transition hover:text-white/55"
         >
           Remove upload
         </button>
@@ -794,7 +794,7 @@ function formatKey(value: string) {
 }
 
 function promptPriorityClassName(priority: "high" | "medium" | "low") {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
   if (priority === "high") return `${base} text-rose-100/62 bg-rose-400/[0.08]`;
   if (priority === "medium") return `${base} royal-text bg-white/[0.035]`;
   return `${base} text-white/34 bg-white/[0.025]`;
@@ -809,7 +809,7 @@ function statusLabel(status: SourceStatus) {
 }
 
 function statusClassName(status: SourceStatus) {
-  const base = "rounded-full border px-3 py-1 text-[8px] uppercase tracking-[0.13em]";
+  const base = "av-eyebrow rounded-full border px-3 py-1";
   if (status === "connected") return `${base} border-[rgba(var(--gold),0.24)] bg-[rgba(var(--gold),0.1)] text-[rgba(var(--gold),0.88)]`;
   if (status === "ready") return `${base} border-white/[0.1] bg-white/[0.04] text-white/55`;
   if (status === "locked") return `${base} border-white/[0.08] bg-white/[0.025] text-white/34`;

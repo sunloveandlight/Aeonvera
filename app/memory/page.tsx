@@ -289,7 +289,7 @@ export default function MemoryPage() {
                   <div key={`${item.domain}-${item.action}`} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <p className="text-sm text-white/72">{item.domain}</p>
-                      <span className="rounded-md bg-white/[0.035] px-2 py-1 text-[8px] uppercase tracking-[0.14em] royal-text">
+                      <span className="av-eyebrow rounded-md bg-white/[0.035] px-2 py-1 royal-text">
                         {item.successCount} responses
                       </span>
                     </div>
@@ -315,7 +315,7 @@ export default function MemoryPage() {
             <div className="grid gap-4 md:grid-cols-2">
               {Object.entries(groupedPreferences).map(([category, rows]) => (
                 <div key={category} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-                  <p className="mb-4 text-[9px] uppercase tracking-[0.14em] text-white/28">
+                  <p className="av-eyebrow mb-4 text-white/28">
                     {formatKey(category)}
                   </p>
                   <div className="space-y-3">
@@ -323,7 +323,7 @@ export default function MemoryPage() {
                       <div key={preference.id}>
                         <div className="flex items-center justify-between gap-3">
                           <p className="text-sm text-white/70">{formatKey(preference.preference_key)}</p>
-                          <span className="text-[9px] uppercase tracking-[0.14em] text-white/26">
+                          <span className="av-eyebrow text-white/26">
                             {Math.round(Number(preference.confidence || 0) * 100)}%
                           </span>
                         </div>
@@ -356,7 +356,7 @@ export default function MemoryPage() {
               <button
                 type="button"
                 onClick={exportSemanticMemories}
-                className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+                className="av-eyebrow premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4"
               >
                 Export
               </button>
@@ -364,7 +364,7 @@ export default function MemoryPage() {
                 type="button"
                 onClick={() => void forgetAllSemanticMemories()}
                 disabled={!semanticMemories.length}
-                className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-40"
+                className="av-eyebrow premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Forget all
               </button>
@@ -377,7 +377,7 @@ export default function MemoryPage() {
                 <article key={item.id} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
                   <div className="mb-3 flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-[9px] uppercase tracking-[0.14em] text-white/28">
+                      <p className="av-eyebrow text-white/28">
                         {formatKey(item.source_type)}
                       </p>
                       <h2 className="mt-2 text-sm font-medium leading-5 text-white/78">
@@ -394,7 +394,7 @@ export default function MemoryPage() {
                     </button>
                   </div>
                   <p className="line-clamp-3 text-xs leading-5 text-white/42">{item.content}</p>
-                  <div className="mt-4 flex items-center justify-between gap-3 text-[9px] uppercase tracking-[0.14em] text-white/24">
+                  <div className="av-eyebrow mt-4 flex items-center justify-between gap-3 text-white/24">
                     <span>{Math.round(Number(item.importance || 0) * 100)}% important</span>
                     <span>{formatFreshness(item.occurred_at || item.created_at)}</span>
                   </div>
@@ -428,7 +428,7 @@ function MemoryMetric({ label, value, detail }: { label: string; value: string; 
 function MemoryStat({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
     <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-      <p className="text-[9px] uppercase tracking-[0.14em] text-white/28">{label}</p>
+      <p className="av-eyebrow text-white/28">{label}</p>
       <p className="mt-2 text-sm text-white/72">{value}</p>
       <p className="mt-1 text-xs leading-5 text-white/34">{detail}</p>
     </div>

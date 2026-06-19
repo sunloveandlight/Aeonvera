@@ -534,7 +534,7 @@ export default function LifeAutopilotPage() {
                       <p className="text-sm text-white/78">{item.label}</p>
                       <p className="mt-1 text-xs leading-5 text-white/42">{item.detail}</p>
                     </div>
-                    <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-white/42">
+                    <span className="av-eyebrow rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-1 text-white/42">
                       {item.status}
                     </span>
                   </div>

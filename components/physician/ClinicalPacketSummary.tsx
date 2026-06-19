@@ -131,7 +131,7 @@ export default function ClinicalPacketSummary({
                       </p>
                     </div>
                     {packet.activeProtocol.status && (
-                      <span className="rounded-md border border-white/[0.08] bg-white/[0.035] px-2 py-1 text-[8px] uppercase tracking-[0.14em] text-white/38 print:border-black/15 print:text-black/55">
+                      <span className="av-eyebrow rounded-md border border-white/[0.08] bg-white/[0.035] px-2 py-1 text-white/38 print:border-black/15 print:text-black/55">
                         {packet.activeProtocol.status}
                       </span>
                     )}
@@ -141,7 +141,7 @@ export default function ClinicalPacketSummary({
                       {packet.activeProtocol.domains.map((domain) => (
                         <span
                           key={domain}
-                          className="rounded-md border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.06)] px-2 py-1 text-[9px] uppercase tracking-[0.12em] royal-text print:border-black/15 print:text-black/60"
+                          className="av-eyebrow rounded-md border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.06)] px-2 py-1 royal-text print:border-black/15 print:text-black/60"
                         >
                           {domain}
                         </span>
@@ -182,7 +182,7 @@ function ClinicalPacketBlock({
 }) {
   return (
     <div>
-      <p className="mb-3 text-[10px] uppercase tracking-[0.14em] text-white/32 print:text-black/45">
+      <p className="av-eyebrow mb-3 text-white/32 print:text-black/45">
         {title}
       </p>
       {children}
@@ -191,7 +191,7 @@ function ClinicalPacketBlock({
 }
 
 function severityClassName(severity: ClinicalPacket["riskFlags"][number]["severity"]) {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
 
   if (severity === "high") return `${base} bg-rose-400/[0.1] text-rose-200/78 print:bg-black/5 print:text-black/70`;
   if (severity === "medium") return `${base} bg-[rgba(var(--gold),0.08)] royal-text print:bg-black/5 print:text-black/70`;
@@ -199,7 +199,7 @@ function severityClassName(severity: ClinicalPacket["riskFlags"][number]["severi
 }
 
 function toneClassName(tone: ClinicalPacket["recentChanges"][number]["tone"]) {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
 
   if (tone === "positive") return `${base} bg-[rgba(var(--gold),0.08)] royal-text print:bg-black/5 print:text-black/70`;
   if (tone === "caution") return `${base} bg-rose-400/[0.1] text-rose-200/78 print:bg-black/5 print:text-black/70`;

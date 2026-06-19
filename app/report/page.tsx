@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import Spinner from "@/components/ui/Spinner";
 import { possessiveName, resolveDisplayName } from "@/lib/profile/displayName";
 import { sentenceDisplay } from "@/lib/text/display";
 
@@ -313,14 +314,8 @@ export default function ReportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6">
-        <div className="relative w-16 h-16">
-          <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
-          <div className="absolute inset-0 rounded-full border-t royal-border animate-spin" />
-        </div>
-        <p className="text-white/20 text-[10px] tracking-[0.14em] uppercase">
-          Loading your report
-        </p>
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner size="lg" label="Loading your report" />
       </div>
     );
   }
@@ -381,7 +376,7 @@ export default function ReportPage() {
             HEADER
         ═══════════════════════════════════════ */}
         <div className="pb-10 border-b border-white/[0.04]">
-          <p className="text-[10px] tracking-[0.14em] text-white/15 uppercase mb-6">
+          <p className="av-eyebrow text-white/15 mb-6">
             Aeonvera — Your report
           </p>
 
@@ -416,7 +411,7 @@ export default function ReportPage() {
                   </span>
                 </div>
                 <div>
-                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/20">Profile completeness</p>
+                  <p className="av-eyebrow text-white/20">Profile completeness</p>
                   <p className={`text-xs font-light ${accuracyColor}`}>{accuracyScore}% complete</p>
                 </div>
               </div>
@@ -424,7 +419,7 @@ export default function ReportPage() {
               <button
                 onClick={handleRegenerate}
                 disabled={regenerating}
-                className="premium-action-secondary inline-flex h-9 items-center justify-center px-5 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em] disabled:opacity-20"
+                className="av-eyebrow premium-action-secondary inline-flex h-9 items-center justify-center px-5 rounded-md transition-all duration-300 disabled:opacity-20"
               >
                 {regenerating ? "Regenerating..." : "Regenerate Report"}
               </button>
@@ -476,7 +471,7 @@ export default function ReportPage() {
                   )}
 
                   {categoryLabel && (
-                    <p className={`text-[10px] uppercase tracking-[0.14em] mb-4 ${bioAgeColor}`}>
+                    <p className={`av-eyebrow mb-4 ${bioAgeColor}`}>
                       {categoryLabel}
                     </p>
                   )}
@@ -515,10 +510,10 @@ export default function ReportPage() {
               <div className="grid grid-cols-2 gap-2 border-t border-white/[0.04] pt-4">
                 {Object.entries(report.risk_profile).map(([key, value]) => (
                   <div key={key} className="flex items-center justify-between">
-                    <span className="text-[9px] uppercase tracking-[0.14em] text-white/20">
+                    <span className="av-eyebrow text-white/20">
                       {key.replace(/_risk/g, "").replace(/_/g, " ")}
                     </span>
-                    <span className="text-[10px] uppercase tracking-[0.14em] text-white/55">
+                    <span className="av-eyebrow text-white/55">
                       {value}
                     </span>
                   </div>
@@ -608,12 +603,12 @@ export default function ReportPage() {
             {report["90_day_plan"].map((item, i) => (
               <div key={i} className="flex items-center justify-between gap-4 rounded-lg border border-white/[0.04] bg-white/[0.02] p-4 transition-colors duration-300 hover:border-white/[0.07]">
                 <div className="flex-1">
-                  <p className="text-[9px] uppercase tracking-[0.14em] royal-text mb-1.5">
+                  <p className="av-eyebrow royal-text mb-1.5">
                     {item.category}
                   </p>
                   <p className="text-white/60 text-sm leading-relaxed">{item.action}</p>
                 </div>
-                <span className="premium-status shrink-0 rounded-md px-3 py-1.5 text-[9px] uppercase tracking-[0.14em]">
+                <span className="av-eyebrow premium-status shrink-0 rounded-md px-3 py-1.5">
                   {item.impact}
                 </span>
               </div>
@@ -647,7 +642,7 @@ export default function ReportPage() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {missingFields.map((field, i) => (
-                    <span key={i} className="premium-status rounded-md px-3 py-1 text-[10px] uppercase tracking-[0.14em]">
+                    <span key={i} className="av-eyebrow premium-status rounded-md px-3 py-1">
                       {field}
                     </span>
                   ))}
@@ -760,7 +755,7 @@ function BioAgeHistoryCard({
                 Current biological age against chronological baseline.
               </p>
             </div>
-            <div className="premium-status-neutral rounded-md px-3 py-2 text-[10px] uppercase tracking-[0.14em]">
+            <div className="av-eyebrow premium-status-neutral rounded-md px-3 py-2">
               {change === 0
                 ? "Baseline active"
                 : change < 0
@@ -808,7 +803,7 @@ function BioAgeHistoryCard({
               ["Baseline", "Chronological"],
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-3">
-                <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">{label}</p>
+                <p className="av-eyebrow text-white/24">{label}</p>
                 <p className="mt-2 text-sm text-white/62">{value}</p>
               </div>
             ))}
@@ -827,7 +822,7 @@ function BioAgeHistoryCard({
                     {latestClinical.clinicalAge}
                     <span className="ml-1 text-sm text-white/25">yrs</span>
                   </p>
-                  <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/25">
+                  <p className="av-eyebrow mt-1 text-white/25">
                     Clinical estimate
                   </p>
                 </div>
@@ -880,7 +875,7 @@ function BioAgeSimulationCard({
               <div key={simulation.id} className="flex items-center justify-between gap-4 rounded-lg border border-white/[0.05] bg-white/[0.02] p-4">
                 <div>
                   <p className="text-sm text-white/68">{simulation.title}</p>
-                  <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/24">
+                  <p className="av-eyebrow mt-1 text-white/24">
                     {simulation.horizon}
                   </p>
                 </div>
@@ -931,7 +926,7 @@ function ImprovementLoopCard({
                 ["90d pace", loop.projected90DayChange == null ? "new" : `${loop.projected90DayChange > 0 ? "+" : ""}${loop.projected90DayChange}`],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
-                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">{label}</p>
+                  <p className="av-eyebrow text-white/22">{label}</p>
                   <p className="mt-2 text-sm text-white/62">{value}</p>
                 </div>
               ))}
@@ -945,7 +940,7 @@ function ImprovementLoopCard({
                 className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4"
               >
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                  <p className="av-eyebrow text-white/24">
                     {driver.label}
                   </p>
                   <span className={driverStatusClassName(driver.status)}>
@@ -986,7 +981,7 @@ function LabTrendsCard({ trends }: { trends: LabTrend[] }) {
               className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4"
             >
               <div className="mb-4 flex items-center justify-between gap-3">
-                <p className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+                <p className="av-eyebrow text-white/25">
                   {trend.label}
                 </p>
                 <span className={labTrendClassName(trend.status)}>
@@ -1000,7 +995,7 @@ function LabTrendsCard({ trends }: { trends: LabTrend[] }) {
               <p className="mt-3 text-xs leading-5 text-white/38">
                 {trend.interpretation}
               </p>
-              <p className="mt-3 border-t border-white/[0.05] pt-3 text-[9px] uppercase tracking-[0.14em] text-white/22">
+              <p className="av-eyebrow mt-3 border-t border-white/[0.05] pt-3 text-white/22">
                 Target: {trend.target}
               </p>
             </div>
@@ -1016,7 +1011,7 @@ function LabTrendsCard({ trends }: { trends: LabTrend[] }) {
 }
 
 function labTrendClassName(status: LabTrend["status"]) {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
 
   if (status === "improving") return `${base} royal-text bg-white/[0.035]`;
   if (status === "worsening") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
@@ -1025,7 +1020,7 @@ function labTrendClassName(status: LabTrend["status"]) {
 }
 
 function improvementStatusClassName(status: ImprovementLoop["status"]) {
-  const base = "rounded-md px-2.5 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2.5 py-1";
 
   if (status === "improving") return `${base} royal-text bg-white/[0.035]`;
   if (status === "declining") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
@@ -1034,7 +1029,7 @@ function improvementStatusClassName(status: ImprovementLoop["status"]) {
 }
 
 function driverStatusClassName(status: ImprovementLoop["drivers"][number]["status"]) {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
 
   if (status === "positive") return `${base} royal-text bg-white/[0.035]`;
   if (status === "negative") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;

@@ -5561,3 +5561,16 @@ input[type="number"]::-webkit-inner-spin-button {
   opacity: 0.5 !important;
   cursor: not-allowed !important;
 }
+
+/* =====================================================================
+   AEONVERA EYEBROW — single source of truth for the uppercase kicker
+   label. Replaces ~209 ad-hoc text-[8-11px] uppercase tracking-[..] combos.
+   Color stays per-instance (gold / silver / etc). Edit once = all change.
+   ===================================================================== */
+.av-eyebrow {
+  font-size: 0.625rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+}

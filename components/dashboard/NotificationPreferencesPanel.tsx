@@ -245,7 +245,7 @@ export default function NotificationPreferencesPanel() {
               label="Push notification delivery"
             />
           </div>
-          <p className="text-[10px] uppercase tracking-[0.14em] text-white/25">
+          <p className="av-eyebrow text-white/25">
             {saving ? "Saving" : "Quiet hours"} {preferences.quiet_hours_start}-
             {preferences.quiet_hours_end}
           </p>
@@ -257,7 +257,7 @@ export default function NotificationPreferencesPanel() {
             type="button"
             onClick={sendTestCoachMessage}
             disabled={saving || testing}
-            className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-40"
+            className="av-eyebrow premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {testing ? "Sending test" : "Send test coach message"}
           </button>

@@ -56,7 +56,7 @@ export default function WearablesPanel({
           )}
           <Link
             href="/data-sources"
-            className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+            className="av-eyebrow premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4"
           >
             Open Data Sources
           </Link>
@@ -115,13 +115,13 @@ export default function WearablesPanel({
                   : "Starts secure OAuth authorization and stores refreshable sync credentials."}
               </p>
               {connectedProviderSet.has(provider) && (
-                <p className="mt-3 text-[9px] uppercase tracking-[0.14em] text-white/38">
+                <p className="av-eyebrow mt-3 text-white/38">
                   Connected
                 </p>
               )}
             </div>
             <span
-              className="premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+              className="av-eyebrow premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4"
             >
               {wearableSyncing === provider
                 ? "Syncing"
@@ -153,7 +153,7 @@ export default function WearablesPanel({
               <span className="min-w-0 truncate">
                 {appleImportFileName || "Upload file or picture"}
               </span>
-              <span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-white/30">
+              <span className="av-eyebrow shrink-0 text-white/30">
                 Choose
               </span>
               <input
@@ -172,7 +172,7 @@ export default function WearablesPanel({
                   event.stopPropagation();
                   onAppleImportFileChange(null);
                 }}
-                className="mt-2 text-left text-[9px] uppercase tracking-[0.14em] text-white/28 transition hover:text-white/55"
+                className="av-eyebrow mt-2 text-left text-white/28 transition hover:text-white/55"
               >
                 Remove upload
               </button>
@@ -184,7 +184,7 @@ export default function WearablesPanel({
               onWearableSync("apple");
             }}
             disabled={Boolean(wearableSyncing)}
-            className="premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+            className="av-eyebrow premium-action mt-5 inline-flex w-full items-center justify-center rounded-md px-4 disabled:cursor-not-allowed disabled:opacity-45"
           >
             {wearableSyncing === "apple" ? "Importing" : "Import Data"}
           </button>

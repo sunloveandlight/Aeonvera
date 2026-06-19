@@ -29,7 +29,7 @@ export default function SectionTitle({
     >
       {/* EYEBROW */}
       {eyebrow && (
-        <p className="text-[10px] uppercase tracking-[0.14em] text-white/25 mb-6">
+        <p className="av-eyebrow text-white/25 mb-6">
           {eyebrow}
         </p>
       )}

@@ -39,7 +39,7 @@ export default function AppShell({ children }: AppShellProps) {
 
       {/* DESIGN SYSTEM OVERLAY INDICATOR */}
       {designToolsEnabled && enabled && (
-        <div className="premium-status-neutral fixed bottom-5 right-5 z-[99999] rounded-md px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.14em]">
+        <div className="av-eyebrow premium-status-neutral fixed bottom-5 right-5 z-[99999] rounded-md px-4 py-2 font-semibold">
           DESIGN SYSTEM MODE
         </div>
       )}

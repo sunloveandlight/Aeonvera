@@ -365,6 +365,7 @@ export default function NetworkPage() {
                     <button
                       key={role}
                       type="button"
+                      aria-pressed={form.role === role}
                       onClick={() => setRole(role)}
                       className={`rounded-lg border p-3 text-left transition ${
                         form.role === role
@@ -397,7 +398,7 @@ export default function NetworkPage() {
                 </select>
 
                 <div>
-                  <p className="mb-3 text-[10px] uppercase tracking-[0.14em] text-white/28">
+                  <p className="av-eyebrow mb-3 text-white/28">
                     Permissions
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -407,6 +408,7 @@ export default function NetworkPage() {
                       <button
                         key={key}
                         type="button"
+                        aria-pressed={form.permissions.includes(key)}
                         onClick={() => togglePermission(key)}
                         className={`rounded-md border px-3 py-2 text-left text-xs transition ${
                           form.permissions.includes(key)
@@ -505,7 +507,7 @@ export default function NetworkPage() {
                     </div>
                     {invitation.status !== "revoked" && (
                       <div className="mt-4 border-t border-white/[0.05] pt-3">
-                        <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-white/28">
+                        <p className="av-eyebrow mb-2 text-white/28">
                           Extend access
                         </p>
                         <div className="flex flex-wrap gap-2">
@@ -526,7 +528,7 @@ export default function NetworkPage() {
                       {invitation.permissions.map((permission) => (
                         <span
                           key={`${invitation.id}-${permission}`}
-                          className="rounded-md border border-white/[0.07] bg-black/20 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-white/36"
+                          className="av-eyebrow rounded-md border border-white/[0.07] bg-black/20 px-2 py-1 text-white/36"
                         >
                           {permission.replace(/_/g, " ")}
                         </span>
@@ -652,7 +654,7 @@ function NetworkIntelligencePanel({
             >
               <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-white/76">{recommendation.title}</p>
-                <span className="rounded-full border border-white/[0.08] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-white/34">
+                <span className="av-eyebrow rounded-full border border-white/[0.08] px-2 py-1 text-white/34">
                   {recommendation.role}
                 </span>
               </div>
@@ -673,7 +675,7 @@ function NetworkIntelligencePanel({
 function MetricPill({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex min-h-[5.5rem] flex-col justify-between rounded-md border border-white/[0.06] bg-black/20 px-3 py-3">
-      <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">{label}</p>
+      <p className="av-eyebrow text-white/28">{label}</p>
       <p className="tabular-nums text-2xl font-light leading-none text-white">{value}</p>
     </div>
   );

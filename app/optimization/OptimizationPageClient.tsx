@@ -744,7 +744,7 @@ export default function OptimizationPage() {
                     <div key={`${item.domain}-${item.action}`} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <p className="text-sm text-white/68">{item.domain}</p>
-                        <span className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+                        <span className="av-eyebrow text-white/28">
                           {item.impact}
                         </span>
                       </div>
@@ -766,7 +766,7 @@ export default function OptimizationPage() {
                   <div className="grid gap-3 sm:grid-cols-3">
                     {protocol.weekly_sequence.slice(0, 3).map((sequence) => (
                       <div key={sequence.week} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
-                        <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+                        <p className="av-eyebrow text-white/28">
                           {sequence.week}
                         </p>
                         <p className="mt-2 text-sm font-medium text-white/70">
@@ -836,7 +836,7 @@ export default function OptimizationPage() {
                     <span className="royal-text text-sm tabular-nums">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <span className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+                    <span className="av-eyebrow text-white/25">
                       {simulation.domain}
                     </span>
                   </div>
@@ -848,7 +848,7 @@ export default function OptimizationPage() {
                   </p>
                   <div className="mt-5 flex items-end justify-between border-t border-white/[0.06] pt-4">
                     <div>
-                      <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">
+                      <p className="av-eyebrow text-white/22">
                         Potential
                       </p>
                       <p className="mt-1 text-2xl font-light royal-text">
@@ -952,7 +952,7 @@ export default function OptimizationPage() {
                     </div>
                     <div className="mt-6 grid gap-3 sm:grid-cols-2">
                       <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-                        <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                        <p className="av-eyebrow text-white/24">
                           Improvement
                         </p>
                         <p className="mt-2 text-2xl font-light royal-text">
@@ -960,7 +960,7 @@ export default function OptimizationPage() {
                         </p>
                       </div>
                       <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-                        <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                        <p className="av-eyebrow text-white/24">
                           Score
                         </p>
                         <p className="mt-2 text-2xl font-light text-white/72">
@@ -1069,7 +1069,7 @@ function FutureSelfComparisonPanel({
             </div>
             <div className="text-left sm:text-right">
               <p className="text-sm text-white/52">{futureSelf.headline}</p>
-              <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/24">
+              <p className="av-eyebrow mt-1 text-white/24">
                 {futureSelf.horizonDays} day horizon
               </p>
             </div>
@@ -1116,7 +1116,7 @@ function FutureSelfComparisonPanel({
               ["Optimized", finalPoint?.optimizedBiologicalAge ?? futureSelf.optimized.biologicalAge],
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
-                <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">
+                <p className="av-eyebrow text-white/22">
                   {label}
                 </p>
                 <p className="mt-2 text-sm text-white/64">{value} yrs</p>
@@ -1217,6 +1217,7 @@ function ScenarioStackPanel({
             <button
               key={scenario.id}
               type="button"
+              aria-pressed={selected}
               onClick={() => onToggleScenario(scenario.id)}
               className={`quiet-lift min-h-52 rounded-lg border p-4 text-left transition ${
                 selected
@@ -1226,7 +1227,7 @@ function ScenarioStackPanel({
             >
               <div className="flex h-full flex-col">
                 <div className="mb-4 flex items-center justify-between gap-3">
-                  <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                  <span className="av-eyebrow text-white/24">
                     {scenario.domain}
                   </span>
                   <span className={selected ? "royal-text text-sm" : "text-sm text-white/22"}>
@@ -1239,7 +1240,7 @@ function ScenarioStackPanel({
                 <p className="mt-3 line-clamp-4 text-xs leading-5 text-white/38">
                   {scenario.description}
                 </p>
-                <p className="mt-auto pt-4 text-[9px] uppercase tracking-[0.14em] text-white/24">
+                <p className="av-eyebrow mt-auto pt-4 text-white/24">
                   {scenario.horizon}
                 </p>
               </div>
@@ -1300,7 +1301,7 @@ function SavedFutureSelfScenariosPanel({
                     className="flex min-h-36 flex-col"
                   >
                     <div className="mb-4 flex items-center justify-between gap-3">
-                      <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                      <span className="av-eyebrow text-white/24">
                         v{scenario.version_number || 1}
                       </span>
                       <span className="royal-text text-sm">
@@ -1313,14 +1314,14 @@ function SavedFutureSelfScenariosPanel({
                     <p className="mt-3 line-clamp-3 text-xs leading-5 text-white/38">
                       {scenario.description || "Saved future-self projection."}
                     </p>
-                    <p className="mt-auto pt-4 text-[9px] uppercase tracking-[0.14em] text-white/24">
+                    <p className="av-eyebrow mt-auto pt-4 text-white/24">
                       {formatScenarioDate(scenario.created_at)}
                     </p>
                   </Link>
                   <button
                     type="button"
                     onClick={() => onToggleComparison(scenario.id)}
-                    className="premium-action-secondary mt-4 inline-flex h-9 w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+                    className="av-eyebrow premium-action-secondary mt-4 inline-flex h-9 w-full items-center justify-center rounded-md px-4"
                   >
                     {selected ? "Selected" : "Compare"}
                   </button>
@@ -1375,7 +1376,7 @@ function ScenarioComparisonPanel({
                 ["Gain", scenario.future_self?.optimized?.projectedBiologicalAgeImprovement ?? scenario.projection?.projectedBiologicalAgeImprovement],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
-                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">
+                  <p className="av-eyebrow text-white/22">
                     {label}
                   </p>
                   <p className="mt-2 text-sm text-white/64">
@@ -1456,7 +1457,7 @@ function buildFutureSelfChart(points: FutureSelfProjection["trajectory"]) {
 }
 
 function futureSelfImpactClassName(impact: "low" | "medium" | "high") {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
 
   if (impact === "high") return `${base} royal-text bg-white/[0.035]`;
   if (impact === "medium") return `${base} text-white/42 bg-white/[0.025]`;

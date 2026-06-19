@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { isUserAllowed } from "@/lib/auth/permissions";
+import Spinner from "@/components/ui/Spinner";
 
 type Plan = "core" | "elite" | "sovereign";
 
@@ -126,7 +127,7 @@ export default function SuccessPage() {
         <h1 className="mb-6 text-5xl font-semibold tracking-tight">Subscription Activated</h1>
 
         <div className="mb-8 flex justify-center">
-          <div className="size-8 animate-spin rounded-full border-2 border-white/20 border-t-[rgb(var(--gold))]" />
+          <Spinner />
         </div>
 
         <p className="text-white/55">{status}</p>

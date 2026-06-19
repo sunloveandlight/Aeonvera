@@ -81,14 +81,14 @@ export default function PricingPlanCard({
           )}
         </div>
         <p className="mt-4 text-sm leading-6 text-white/55">{plan.summary}</p>
-        <p className="pricing-card-depth mt-4 text-[10px] uppercase tracking-[0.14em] royal-text">
+        <p className="av-eyebrow pricing-card-depth mt-4 royal-text">
           {plan.depth}
         </p>
         <button
           type="button"
           aria-expanded={expanded}
           onClick={() => setExpanded((open) => !open)}
-          className="mt-4 text-left text-[10px] uppercase tracking-[0.14em] text-white/30 transition hover:text-white/62"
+          className="av-eyebrow mt-4 text-left text-white/30 transition hover:text-white/62"
         >
           {expanded ? "Show less" : "Explore details"}
         </button>
@@ -102,7 +102,7 @@ export default function PricingPlanCard({
           </p>
         ) : (
           <div>
-            <p className="text-[10px] uppercase tracking-[0.14em] royal-text">
+            <p className="av-eyebrow royal-text">
               {isCurrent ? "Active membership" : "Already unlocked"}
             </p>
             <p className="mt-3 text-2xl font-light text-white/80">

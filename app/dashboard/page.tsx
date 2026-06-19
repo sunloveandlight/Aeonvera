@@ -8,6 +8,7 @@ import { isUserAllowed } from "@/lib/auth/permissions";
 import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import Spinner from "@/components/ui/Spinner";
 import WearablesPanel from "@/components/dashboard/WearablesPanel";
 import NotificationPreferencesPanel from "@/components/dashboard/NotificationPreferencesPanel";
 import TodayBriefing, {
@@ -726,12 +727,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6">
-        <div className="relative w-12 h-12">
-          <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
-          <div className="absolute inset-0 rounded-full border-t royal-border animate-spin" />
-        </div>
-        <p className="text-white/20 text-[10px] tracking-[0.14em] uppercase">Loading</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <Spinner label="Loading" />
       </div>
     );
   }
@@ -912,11 +909,11 @@ export default function DashboardPage() {
                     ? "system-status-stable-dot"
                     : "bg-[rgb(var(--gold))] shadow-[0_0_16px_rgba(var(--gold),0.3)]"
                 }`} />
-                <span className="text-[9px] uppercase tracking-[0.14em] text-white/78">
+                <span className="av-eyebrow text-white/78">
                   {systemStatusLabel}
                 </span>
               </div>
-              <p className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+              <p className="av-eyebrow text-white/25">
                 {membershipLabel}
               </p>
             </div>
@@ -1006,7 +1003,7 @@ export default function DashboardPage() {
                         event.stopPropagation();
                         router.push("/assessment");
                       }}
-                      className="premium-action-ghost mt-3 text-[9px] uppercase tracking-[0.14em] transition-colors duration-300"
+                      className="av-eyebrow premium-action-ghost mt-3 transition-colors duration-300"
                     >
                       Add lab data to improve →
                     </button>
@@ -1080,7 +1077,7 @@ export default function DashboardPage() {
                       event.stopPropagation();
                       router.push("/report");
                     }}
-                    className="premium-action-secondary inline-flex h-9 items-center justify-center px-4 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em]"
+                    className="av-eyebrow premium-action-secondary inline-flex h-9 items-center justify-center px-4 rounded-md transition-all duration-300"
                   >
                     Open Report
                   </button>
@@ -1090,7 +1087,7 @@ export default function DashboardPage() {
                       void handleGenerateReport();
                     }}
                     disabled={generatingReport}
-                    className="premium-action-ghost text-[10px] uppercase tracking-[0.14em] transition-colors duration-300 disabled:opacity-30"
+                    className="av-eyebrow premium-action-ghost transition-colors duration-300 disabled:opacity-30"
                   >
                     {generatingReport ? "Generating..." : "Regenerate"}
                   </button>
@@ -1110,7 +1107,7 @@ export default function DashboardPage() {
                       void handleGenerateReport();
                     }}
                     disabled={generatingReport}
-                    className="premium-action inline-flex h-9 items-center justify-center px-6 rounded-md transition-all duration-300 text-[10px] uppercase tracking-[0.14em] disabled:opacity-30"
+                    className="av-eyebrow premium-action inline-flex h-9 items-center justify-center px-6 rounded-md transition-all duration-300 disabled:opacity-30"
                   >
                     {generatingReport ? "Generating..." : "Generate your report"}
                   </button>
@@ -1285,7 +1282,7 @@ export default function DashboardPage() {
                     <p className="text-white/70 text-sm font-light mb-1">{item.title}</p>
                     <p className="text-white/40 text-xs leading-relaxed">{item.body}</p>
                   </div>
-                  <span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-white/28">
+                  <span className="av-eyebrow shrink-0 text-white/28">
                     {item.status}
                   </span>
                 </div>
@@ -1311,13 +1308,13 @@ export default function DashboardPage() {
             onClick={() => router.push("/assessment")}
             className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
           >
-            <p className="text-[10px] uppercase tracking-[0.14em] text-white/20 mb-3 group-hover:text-white/30 transition-colors">
+            <p className="av-eyebrow text-white/20 mb-3 group-hover:text-white/30 transition-colors">
               {hasAssessment ? "Update" : "Initialize"}
             </p>
             <p className="text-white/60 text-sm font-light">
               {hasAssessment ? "Update your assessment data" : "Start your assessment"}
             </p>
-            <p className="text-[10px] uppercase tracking-[0.14em] mt-3 text-white/42 group-hover:text-white/72 transition-colors">
+            <p className="av-eyebrow mt-3 text-white/42 group-hover:text-white/72 transition-colors">
               {hasAssessment ? "Retake →" : "Start →"}
             </p>
           </button>
@@ -1326,13 +1323,13 @@ export default function DashboardPage() {
             onClick={() => router.push("/report")}
             className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
           >
-            <p className="text-[10px] uppercase tracking-[0.14em] text-white/20 mb-3 group-hover:text-white/30 transition-colors">
+            <p className="av-eyebrow text-white/20 mb-3 group-hover:text-white/30 transition-colors">
               Intelligence
             </p>
             <p className="text-white/60 text-sm font-light">
               View your full biological profile and 90-day protocol
             </p>
-            <p className="text-[10px] uppercase tracking-[0.14em] mt-3 text-white/42 group-hover:text-white/72 transition-colors">
+            <p className="av-eyebrow mt-3 text-white/42 group-hover:text-white/72 transition-colors">
               Open report →
             </p>
           </button>
@@ -1341,13 +1338,13 @@ export default function DashboardPage() {
             onClick={() => router.push("/pricing")}
             className="executive-panel-soft quiet-lift rounded-lg p-5 text-left group"
           >
-            <p className="text-[10px] uppercase tracking-[0.14em] text-white/20 mb-3 group-hover:text-white/30 transition-colors">
+            <p className="av-eyebrow text-white/20 mb-3 group-hover:text-white/30 transition-colors">
               Account
             </p>
             <p className="text-white/60 text-sm font-light">
               {profile?.plan ? `${profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)} plan · ${profile.subscription_status}` : "Manage subscription"}
             </p>
-            <p className="text-[10px] uppercase tracking-[0.14em] mt-3 text-white/42 group-hover:text-white/72 transition-colors">
+            <p className="av-eyebrow mt-3 text-white/42 group-hover:text-white/72 transition-colors">
               Manage →
             </p>
           </button>
@@ -1390,7 +1387,7 @@ function ProtocolPanel({
         <div>
           <div className="mb-3 flex items-center gap-3">
             <p className="micro-label">Active Optimization Protocol</p>
-            <span className="rounded-md border border-white/[0.08] px-2.5 py-1 text-[9px] uppercase tracking-[0.14em] text-white/32">
+            <span className="av-eyebrow rounded-md border border-white/[0.08] px-2.5 py-1 text-white/32">
               {optimizationProtocol ? optimizationProtocol.status : "not built"}
             </span>
           </div>
@@ -1402,7 +1399,7 @@ function ProtocolPanel({
               event.stopPropagation();
               onOpenOptimization();
             }}
-            className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+            className="av-eyebrow premium-action-secondary mt-5 inline-flex h-10 items-center justify-center rounded-md px-4"
           >
             {optimizationProtocol ? "Open protocol" : "Build protocol"}
           </button>
@@ -1419,7 +1416,7 @@ function ProtocolPanel({
                   <p className="text-sm text-white/68">
                     {action.domain || protocolFocus[index] || "Focus"}
                   </p>
-                  <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                  <span className="av-eyebrow text-white/24">
                     {action.impact || "active"}
                   </span>
                 </div>
@@ -1548,10 +1545,10 @@ function BioAgeSimulationPanel({
               </p>
             </div>
             <div className="mt-6 flex items-center justify-between border-t border-white/[0.06] pt-4">
-              <span className="text-[10px] uppercase tracking-[0.14em] text-white/25">
+              <span className="av-eyebrow text-white/25">
                 {topSimulation.horizon}
               </span>
-              <span className="text-[10px] uppercase tracking-[0.14em] text-white/45">
+              <span className="av-eyebrow text-white/45">
                 {topSimulation.confidence}% confidence
               </span>
             </div>
@@ -1567,7 +1564,7 @@ function BioAgeSimulationPanel({
                   <span className="royal-text text-xs tabular-nums">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <span className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+                  <span className="av-eyebrow text-white/25">
                     {simulation.domain}
                   </span>
                 </div>
@@ -1599,7 +1596,7 @@ function BioAgeSimulationPanel({
               if (hasAssessment) onOpenOptimization();
               else onStartAssessment();
             }}
-            className="premium-action inline-flex items-center justify-center text-[10px] uppercase tracking-[0.14em] transition"
+            className="av-eyebrow premium-action inline-flex items-center justify-center transition"
           >
             {hasAssessment ? "Open Optimization" : "Start Assessment"}
           </button>
@@ -1653,7 +1650,7 @@ function ImprovementLoopPanel({
                 ["Next step", loop.phase5Ready ? "ready" : "building"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
-                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">{label}</p>
+                  <p className="av-eyebrow text-white/22">{label}</p>
                   <p className="mt-2 text-sm text-white/62">{value}</p>
                 </div>
               ))}
@@ -1668,7 +1665,7 @@ function ImprovementLoopPanel({
                   className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4"
                 >
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                    <p className="av-eyebrow text-white/24">
                       {driver.label}
                     </p>
                     <span className={driverStatusClassName(driver.status)}>
@@ -1752,7 +1749,7 @@ function LabImportPanel({
               <span className="min-w-0 truncate">
                 {labImportFileName || "Upload PDF, CSV, text, or image"}
               </span>
-              <span className="shrink-0 text-[9px] uppercase tracking-[0.14em] text-white/30">
+              <span className="av-eyebrow shrink-0 text-white/30">
                 Choose
               </span>
               <input
@@ -1771,7 +1768,7 @@ function LabImportPanel({
                 onLabImport();
               }}
               disabled={labImporting}
-              className="premium-action inline-flex h-12 items-center justify-center rounded-md px-5 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+              className="av-eyebrow premium-action inline-flex h-12 items-center justify-center rounded-md px-5 disabled:cursor-not-allowed disabled:opacity-45"
             >
               {labImporting ? "Importing" : "Import Labs"}
             </button>
@@ -1783,7 +1780,7 @@ function LabImportPanel({
                 event.stopPropagation();
                 onLabImportFileChange(null);
               }}
-              className="mt-3 text-left text-[9px] uppercase tracking-[0.14em] text-white/28 transition hover:text-white/55"
+              className="av-eyebrow mt-3 text-left text-white/28 transition hover:text-white/55"
             >
               Remove upload
             </button>
@@ -1793,7 +1790,7 @@ function LabImportPanel({
         <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
           <div className="mb-4 flex items-center justify-between gap-4">
             <p className="micro-label">Clinical Panel</p>
-            <span className="text-[10px] uppercase tracking-[0.14em] text-white/30">
+            <span className="av-eyebrow text-white/30">
               {labRows.length} values
             </span>
           </div>
@@ -1805,7 +1802,7 @@ function LabImportPanel({
                   className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3"
                 >
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+                    <p className="av-eyebrow text-white/25">
                       {trend.label}
                     </p>
                     <span className={labTrendClassName(trend.status)}>
@@ -1825,7 +1822,7 @@ function LabImportPanel({
             <div className="grid gap-2 sm:grid-cols-2">
               {labRows.slice(0, 8).map((row) => (
                 <div key={`${row.id}-${row.canonical_key}`} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
-                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+                  <p className="av-eyebrow text-white/25">
                     {formatLabKey(row.canonical_key)}
                   </p>
                   <p className="mt-2 text-sm text-white/70">
@@ -1913,7 +1910,7 @@ function DataFreshnessPanel({
         <button
           type="button"
           onClick={onOpenDataSources}
-          className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+          className="av-eyebrow premium-action-secondary inline-flex h-10 items-center justify-center rounded-md px-4"
         >
           Open Data Sources
         </button>
@@ -1927,7 +1924,7 @@ function DataFreshnessPanel({
         {sources.map((source) => (
           <div key={source.label} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-[9px] uppercase tracking-[0.14em] text-white/28">
+              <p className="av-eyebrow text-white/28">
                 {source.label}
               </p>
               <span className={dataFreshnessStatusClassName(source.status)}>
@@ -2008,7 +2005,7 @@ function BioAgeTrend({
     <div className="mb-5 rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
       <div className="mb-3 flex items-center justify-between gap-4">
         <p className="micro-label">Age Trajectory</p>
-        <span className="text-[10px] uppercase tracking-[0.14em] text-white/30">
+        <span className="av-eyebrow text-white/30">
           {displayPoints.length} point{displayPoints.length === 1 ? "" : "s"}
         </span>
       </div>
@@ -2087,7 +2084,7 @@ function formatFreshness(value?: string | null) {
 }
 
 function labTrendClassName(status: LabTrend["status"]) {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
 
   if (status === "improving") return `${base} royal-text bg-white/[0.035]`;
   if (status === "worsening") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
@@ -2096,14 +2093,14 @@ function labTrendClassName(status: LabTrend["status"]) {
 }
 
 function dataFreshnessStatusClassName(status: string) {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
   if (status === "active") return `${base} royal-text bg-white/[0.035]`;
   if (status === "ready") return `${base} text-white/34 bg-white/[0.025]`;
   return `${base} text-rose-200/60 bg-rose-400/[0.08]`;
 }
 
 function improvementStatusClassName(status: ImprovementLoop["status"]) {
-  const base = "rounded-md px-2.5 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2.5 py-1";
 
   if (status === "improving") return `${base} royal-text bg-white/[0.035]`;
   if (status === "declining") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
@@ -2112,7 +2109,7 @@ function improvementStatusClassName(status: ImprovementLoop["status"]) {
 }
 
 function driverStatusClassName(status: ImprovementLoop["drivers"][number]["status"]) {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
 
   if (status === "positive") return `${base} royal-text bg-white/[0.035]`;
   if (status === "negative") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;

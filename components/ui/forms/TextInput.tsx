@@ -13,7 +13,7 @@ const TextInput = forwardRef<HTMLInputElement, TextInputProps>(
         data-aeonvera-input
         className={`
           w-full
-          h-10
+          h-11
           px-3
           rounded-lg
           border

@@ -446,7 +446,7 @@ function DomainCard({ domain }: { domain: LifeDomain }) {
           .map(([key, value]) => (
             <span
               key={`${domain.domain}-${key}`}
-              className="rounded-md border border-white/[0.07] bg-black/20 px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-white/36"
+              className="av-eyebrow rounded-md border border-white/[0.07] bg-black/20 px-2 py-1 text-white/36"
             >
               {key.replace(/([A-Z])/g, " $1")} {value}
             </span>
@@ -474,7 +474,7 @@ function PriorityCard({
             {priority.domain.replace(/_/g, " ")} / {priority.status} / {priority.horizonDays} days
           </p>
         </div>
-        <span className="rounded-full border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.07)] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-[rgba(var(--gold),0.72)]">
+        <span className="av-eyebrow rounded-full border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.07)] px-2 py-1 text-[rgba(var(--gold),0.72)]">
           P{priority.priority}
         </span>
       </div>
@@ -534,7 +534,7 @@ function PriorityCard({
 function CopyBlock({ body, title }: { body: string; title: string }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">{title}</p>
+      <p className="av-eyebrow text-white/28">{title}</p>
       <p className="mt-2 text-xs leading-6 text-white/46">{body}</p>
     </div>
   );
@@ -543,7 +543,7 @@ function CopyBlock({ body, title }: { body: string; title: string }) {
 function Signal({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-white/[0.06] bg-white/[0.025] px-3 py-3">
-      <p className="text-[9px] uppercase tracking-[0.14em] text-white/28">{label}</p>
+      <p className="av-eyebrow text-white/28">{label}</p>
       <p className="mt-2 text-sm text-white/70">{value}</p>
     </div>
   );

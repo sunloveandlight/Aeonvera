@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import PageContainer from "@/components/ui/PageContainer";
+import Spinner from "@/components/ui/Spinner";
 import {
   Field as FormField,
   NumberInput,
@@ -803,23 +804,12 @@ export default function AssessmentPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6">
         <div className="text-center max-w-lg">
-          <p className="text-[10px] uppercase tracking-[0.14em] text-white/20 mb-10">
+          <p className="av-eyebrow text-white/20 mb-10">
             AEONVERA
           </p>
 
           <div className="flex justify-center mb-10">
-            <div className="relative w-24 h-24">
-              <div className="absolute inset-0 rounded-full border border-white/[0.06]" />
-              <div className="absolute inset-0 rounded-full border-t royal-border animate-spin" />
-              <div className="absolute inset-4 rounded-full border border-white/[0.04]" />
-              <div
-                className="absolute inset-4 rounded-full border-t royal-border animate-spin"
-                style={{ animationDuration: "1.5s" }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-[rgb(var(--gold))]" />
-              </div>
-            </div>
+            <Spinner size="lg" />
           </div>
 
           <h2 className="text-3xl font-light tracking-tight text-white/80 mb-4">
@@ -847,7 +837,7 @@ export default function AssessmentPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="w-6 h-6 rounded-full border-t royal-border animate-spin" />
+        <Spinner size="sm" />
       </div>
     );
   }
@@ -891,7 +881,7 @@ export default function AssessmentPage() {
                     or return to the dashboard to generate fresh intelligence.
                   </p>
                   {savedAssessment?.created_at && (
-                    <p className="mt-4 text-[10px] uppercase tracking-[0.14em] text-white/30">
+                    <p className="av-eyebrow mt-4 text-white/30">
                       Last updated {new Date(savedAssessment.created_at).toLocaleDateString("en-US", {
                         month: "long",
                         day: "numeric",
@@ -958,7 +948,7 @@ export default function AssessmentPage() {
                       if (!value) return null;
                       return (
                         <div key={key}>
-                          <p className="text-[9px] uppercase tracking-[0.14em] text-white/25">
+                          <p className="av-eyebrow text-white/25">
                             {fieldLabel(key)}
                           </p>
                           <p className="mt-1 text-sm leading-5 text-white/70">{value}</p>
@@ -1030,7 +1020,7 @@ export default function AssessmentPage() {
         {!currentStep.required && (
           <div className="premium-status mb-6 inline-flex items-center gap-2 rounded-md px-4 py-2">
             <div className="h-1.5 w-1.5 rounded-full bg-white/35" />
-            <span className="text-[10px] uppercase tracking-[0.14em] text-white/55">
+            <span className="av-eyebrow text-white/55">
               Optional — improves accuracy
             </span>
           </div>
@@ -1072,7 +1062,7 @@ export default function AssessmentPage() {
           <button
             onClick={handleBack}
             disabled={step === 0}
-            className="premium-action-secondary px-6 py-3 rounded-md transition-all duration-300 text-[11px] uppercase tracking-[0.14em] disabled:opacity-0"
+            className="av-eyebrow premium-action-secondary px-6 py-3 rounded-md transition-all duration-300 disabled:opacity-0"
           >
             Back
           </button>
@@ -1081,7 +1071,7 @@ export default function AssessmentPage() {
             {!currentStep.required && step < STEPS.length - 1 && (
               <button
                 onClick={handleNext}
-                className="premium-action-ghost text-[10px] uppercase tracking-[0.14em] transition-colors duration-300"
+                className="av-eyebrow premium-action-ghost transition-colors duration-300"
               >
                 Skip →
               </button>
@@ -1090,14 +1080,14 @@ export default function AssessmentPage() {
             {step < STEPS.length - 1 ? (
               <button
                 onClick={handleNext}
-                className="premium-action px-7 py-3 rounded-md transition-all duration-300 text-[11px] uppercase tracking-[0.14em]"
+                className="av-eyebrow premium-action px-7 py-3 rounded-md transition-all duration-300"
               >
                 Continue
               </button>
             ) : (
               <button
                 onClick={submit}
-                className="premium-action px-8 py-3 rounded-md transition-all duration-300 text-[11px] uppercase tracking-[0.14em]"
+                className="av-eyebrow premium-action px-8 py-3 rounded-md transition-all duration-300"
               >
                 Build my profile
               </button>
@@ -1122,11 +1112,11 @@ function InputField({
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <label className="text-[10px] uppercase tracking-[0.14em] text-white/30">
+        <label className="av-eyebrow text-white/30">
           {field.label}
         </label>
         {field.optional && (
-          <span className="text-[9px] uppercase tracking-[0.14em] text-white/15">
+          <span className="av-eyebrow text-white/15">
             Optional
           </span>
         )}
@@ -1192,11 +1182,11 @@ function SelectField({
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between mb-3">
-        <label className="text-[10px] uppercase tracking-[0.14em] text-white/30">
+        <label className="av-eyebrow text-white/30">
           {field.label}
         </label>
         {field.optional && (
-          <span className="text-[9px] uppercase tracking-[0.14em] text-white/15">
+          <span className="av-eyebrow text-white/15">
             Optional
           </span>
         )}

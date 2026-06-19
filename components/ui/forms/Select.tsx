@@ -19,7 +19,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
         data-aeonvera-input
         className={`
           w-full
-          min-h-12
+          min-h-11
           px-3
           rounded-lg
           border

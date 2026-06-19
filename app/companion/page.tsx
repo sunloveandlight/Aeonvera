@@ -1019,11 +1019,11 @@ function ProtocolActionsCalendarPanel({
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <span className="rounded-md bg-white/[0.035] px-2 py-1 text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)]">
+                    <span className="av-eyebrow rounded-md bg-white/[0.035] px-2 py-1 text-[rgba(var(--gold),0.8)]">
                       {scopeLabel(scope)}
                     </span>
                     {action.cadence && (
-                      <span className="rounded-md bg-white/[0.025] px-2 py-1 text-[8px] uppercase tracking-[0.14em] text-white/32">
+                      <span className="av-eyebrow rounded-md bg-white/[0.025] px-2 py-1 text-white/32">
                         {action.cadence}
                       </span>
                     )}
@@ -1043,7 +1043,7 @@ function ProtocolActionsCalendarPanel({
                       onRecordOutcome(action, index, "success");
                     }}
                     disabled={Boolean(savingOutcomeKey)}
-                    className="inline-flex h-10 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.04] px-3 text-[10px] uppercase tracking-[0.14em] text-white/68 transition hover:border-[rgba(var(--gold),0.4)] hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+                    className="av-eyebrow inline-flex h-10 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.04] px-3 text-white/68 transition hover:border-[rgba(var(--gold),0.4)] hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     {savingDone ? "Saving" : "Done"}
                   </button>
@@ -1054,7 +1054,7 @@ function ProtocolActionsCalendarPanel({
                       onRecordOutcome(action, index, "failure");
                     }}
                     disabled={Boolean(savingOutcomeKey)}
-                    className="inline-flex h-10 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.025] px-3 text-[10px] uppercase tracking-[0.14em] text-white/48 transition hover:border-white/[0.18] hover:text-white/76 disabled:cursor-not-allowed disabled:opacity-45"
+                    className="av-eyebrow inline-flex h-10 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.025] px-3 text-white/48 transition hover:border-white/[0.18] hover:text-white/76 disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     {savingSkip ? "Saving" : "Skip"}
                   </button>
@@ -1065,7 +1065,7 @@ function ProtocolActionsCalendarPanel({
                       onRecordOutcome(action, index, "unknown");
                     }}
                     disabled={Boolean(savingOutcomeKey)}
-                    className="inline-flex h-10 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.025] px-3 text-[10px] uppercase tracking-[0.14em] text-white/48 transition hover:border-white/[0.18] hover:text-white/76 disabled:cursor-not-allowed disabled:opacity-45"
+                    className="av-eyebrow inline-flex h-10 items-center justify-center rounded-md border border-white/[0.1] bg-white/[0.025] px-3 text-white/48 transition hover:border-white/[0.18] hover:text-white/76 disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     {savingLater ? "Saving" : "Later"}
                   </button>
@@ -1080,7 +1080,7 @@ function ProtocolActionsCalendarPanel({
                       }
                     }}
                     disabled={scheduling || scheduled}
-                    className="premium-action inline-flex h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+                    className="av-eyebrow premium-action inline-flex h-10 items-center justify-center rounded-md px-4 disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     {scheduled
                       ? "Scheduled"
@@ -1193,7 +1193,7 @@ function PersonalHealthAgentPanel({
                 type="button"
                 onClick={() => onSend(suggestion)}
                 disabled={thinking}
-                className="av-control-card inline-flex min-h-9 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-left text-[10px] uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-45"
+                className="av-eyebrow av-control-card inline-flex min-h-9 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-left transition disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {suggestion}
               </button>
@@ -1206,7 +1206,7 @@ function PersonalHealthAgentPanel({
                   key={`${action.type}-${action.label}`}
                   className="rounded-lg border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.045)] p-3"
                 >
-                  <p className="text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)]">
+                  <p className="av-eyebrow text-[rgba(var(--gold),0.8)]">
                     {action.label}
                   </p>
                   <p className="mt-2 text-xs leading-5 text-white/48">{action.detail}</p>
@@ -1227,12 +1227,12 @@ function PersonalHealthAgentPanel({
                     : "border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.045)]"
                 }`}
               >
-                <p className="mb-2 text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.75)]">
+                <p className="av-eyebrow mb-2 text-[rgba(var(--gold),0.75)]">
                   {message.role === "assistant" ? "Aeonvera" : "You"}
                 </p>
                 <p className="text-sm leading-7 text-white/58">{message.content}</p>
                 {message.role === "assistant" && message.mode === "fallback" ? (
-                  <p className="mt-3 text-[9px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.72)]">
+                  <p className="av-eyebrow mt-3 text-[rgba(var(--gold),0.72)]">
                     AI temporarily unavailable. Local fallback response.
                   </p>
                 ) : null}
@@ -1304,7 +1304,7 @@ function TierUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | nul
         </div>
         <Link
           href="/pricing"
-          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)] transition hover:text-[rgb(var(--gold))]"
+          className="av-eyebrow inline-flex items-center gap-2 text-[rgba(var(--gold),0.8)] transition hover:text-[rgb(var(--gold))]"
         >
           Manage access
           <ArrowRight size={13} />
@@ -1317,7 +1317,7 @@ function TierUsagePanel({ usageLimits }: { usageLimits: UsageLimitsPayload | nul
             key={item.meter}
             className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4"
           >
-            <p className="text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.7)]">
+            <p className="av-eyebrow text-[rgba(var(--gold),0.7)]">
               {usageMeterLabel(item.meter)}
             </p>
             <p className="mt-3 text-xl font-light leading-none text-white/90">
@@ -1364,7 +1364,7 @@ function TierEntitlementGroup({
   return (
     <div className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
       <p
-        className={`text-[8px] uppercase tracking-[0.14em] ${
+        className={`av-eyebrow ${
           tone === "included" ? "text-[rgba(var(--gold),0.75)]" : "text-white/38"
         }`}
       >
@@ -1381,7 +1381,7 @@ function TierEntitlementGroup({
             {tone === "locked" ? (
               <Link
                 href="/plan"
-                className="mt-2 inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.75)] transition hover:text-[rgb(var(--gold))]"
+                className="av-eyebrow mt-2 inline-flex items-center gap-2 text-[rgba(var(--gold),0.75)] transition hover:text-[rgb(var(--gold))]"
               >
                 Unlock {item.minimumPlanLabel}
                 <ArrowRight size={12} />
@@ -1419,7 +1419,7 @@ function AdvancedModalitiesPanel({
         </div>
         <Link
           href="/pricing"
-          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)] transition hover:text-[rgb(var(--gold))]"
+          className="av-eyebrow inline-flex items-center gap-2 text-[rgba(var(--gold),0.8)] transition hover:text-[rgb(var(--gold))]"
         >
           Compare tiers
           <ArrowRight size={13} />
@@ -1446,7 +1446,7 @@ function AdvancedModalitiesPanel({
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.7)]">
+                <p className="av-eyebrow text-[rgba(var(--gold),0.7)]">
                   {titleCase(modality.category)} / {titleCase(modality.evidenceGrade)}
                 </p>
                 <h3 className="mt-3 text-xl font-semibold leading-tight text-white/88">
@@ -1454,7 +1454,7 @@ function AdvancedModalitiesPanel({
                 </h3>
               </div>
               <span
-                className={`rounded-full border px-2.5 py-1 text-[8px] uppercase tracking-[0.12em] ${
+                className={`rounded-full border px-2.5 py-1 av-eyebrow ${
                   modality.access === "included"
                     ? "border-[rgba(var(--gold),0.24)] text-[rgba(var(--gold),0.85)]"
                     : "border-white/[0.08] text-white/36"
@@ -1468,7 +1468,7 @@ function AdvancedModalitiesPanel({
               <p className="text-4xl font-semibold leading-none text-white/90">
                 {modality.fitScore}
               </p>
-              <p className="mb-1 text-[9px] uppercase tracking-[0.14em] text-white/30">
+              <p className="av-eyebrow mb-1 text-white/30">
                 fit score
               </p>
             </div>
@@ -1498,7 +1498,7 @@ function AdvancedModalitiesPanel({
 function ModalitySignal({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between rounded-md border border-white/[0.06] bg-black/15 px-3 py-2">
-      <span className="text-[8px] uppercase tracking-[0.13em] text-white/28">{label}</span>
+      <span className="av-eyebrow text-white/28">{label}</span>
       <span className="text-xs text-white/62">{value}</span>
     </div>
   );
@@ -1507,7 +1507,7 @@ function ModalitySignal({ label, value }: { label: string; value: string }) {
 function DailyBriefSignal({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-3">
-      <p className="text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.7)]">
+      <p className="av-eyebrow text-[rgba(var(--gold),0.7)]">
         {label}
       </p>
       <p className="mt-2 line-clamp-3 text-xs leading-5 text-white/44">{value}</p>
@@ -1519,7 +1519,7 @@ function ExecutionStat({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex min-h-[5.5rem] flex-col justify-between rounded-lg border border-white/[0.07] bg-white/[0.025] p-3">
       <p className="tabular-nums text-2xl font-light leading-none text-white/86">{value}</p>
-      <p className="text-[8px] uppercase tracking-[0.14em] text-white/30">
+      <p className="av-eyebrow text-white/30">
         {label}
       </p>
     </div>
@@ -1542,10 +1542,10 @@ function PersonalAgentMemoryPanel({ memory }: { memory: CoachMemory | null }) {
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-md bg-white/[0.035] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)]">
+            <span className="av-eyebrow rounded-md bg-white/[0.035] px-2.5 py-1 text-[rgba(var(--gold),0.8)]">
               {styleLabel}
             </span>
-            <span className="rounded-md bg-white/[0.025] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-white/30">
+            <span className="av-eyebrow rounded-md bg-white/[0.025] px-2.5 py-1 text-white/30">
               {confidence || 0}% confidence
             </span>
           </div>
@@ -1631,10 +1631,10 @@ function ClinicalIntelligenceMemoryPanel({
         <div className="grid gap-6 lg:grid-cols-[1.12fr_0.88fr]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-md bg-white/[0.035] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.8)]">
+              <span className="av-eyebrow rounded-md bg-white/[0.035] px-2.5 py-1 text-[rgba(var(--gold),0.8)]">
                 {clinicalStatusLabel(status)}
               </span>
-              <span className="rounded-md bg-white/[0.025] px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-white/30">
+              <span className="av-eyebrow rounded-md bg-white/[0.025] px-2.5 py-1 text-white/30">
                 {confidence || 0}% confidence
               </span>
             </div>
@@ -1650,7 +1650,7 @@ function ClinicalIntelligenceMemoryPanel({
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="micro-label">Answer follow-up</p>
                   {safetyLevel ? (
-                    <span className="rounded-md border border-white/[0.08] bg-black/20 px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] text-white/42">
+                    <span className="av-eyebrow rounded-md border border-white/[0.08] bg-black/20 px-2.5 py-1 text-white/42">
                       {clinicalSafetyLabel(safetyLevel)}
                     </span>
                   ) : null}
@@ -1671,7 +1671,7 @@ function ClinicalIntelligenceMemoryPanel({
                     type="button"
                     disabled={thinking || !answer.trim() || answeringInsightId === latest.id}
                     onClick={() => onSubmitAnswer(latest.id)}
-                    className="premium-action inline-flex min-h-10 items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+                    className="av-eyebrow premium-action inline-flex min-h-10 items-center justify-center rounded-md px-4 disabled:cursor-not-allowed disabled:opacity-45"
                   >
                     {answeringInsightId === latest.id ? "Updating" : "Answer"}
                   </button>
@@ -1691,7 +1691,7 @@ function ClinicalIntelligenceMemoryPanel({
                 {domains.map((domain) => (
                   <span
                     key={domain}
-                    className="rounded-md border border-white/[0.07] bg-white/[0.025] px-2.5 py-1 text-[9px] uppercase tracking-[0.13em] text-white/42"
+                    className="av-eyebrow rounded-md border border-white/[0.07] bg-white/[0.025] px-2.5 py-1 text-white/42"
                   >
                     {domain}
                   </span>
@@ -2016,7 +2016,7 @@ function InstallCompanionCard({
         ].map(([label, active]) => (
           <span
             key={String(label)}
-            className={`rounded-md px-2.5 py-1 text-[8px] uppercase tracking-[0.14em] ${
+            className={`rounded-md px-2.5 py-1 av-eyebrow ${
               active
                 ? "bg-white/[0.035] royal-text"
                 : "bg-white/[0.02] text-white/26"
@@ -2030,7 +2030,7 @@ function InstallCompanionCard({
         <button
           type="button"
           onClick={onInstall}
-          className="premium-action mt-5 inline-flex h-10 w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em]"
+          className="av-eyebrow premium-action mt-5 inline-flex h-10 w-full items-center justify-center rounded-md px-4"
         >
           Install companion
         </button>
@@ -2099,7 +2099,7 @@ function CalendarAutomationCard({
         type="button"
         onClick={connected ? onSchedule : onConnect}
         disabled={migrationRequired || scheduling}
-        className="premium-action mt-5 inline-flex h-10 w-full items-center justify-center rounded-md px-4 text-[10px] uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-45"
+        className="av-eyebrow premium-action mt-5 inline-flex h-10 w-full items-center justify-center rounded-md px-4 disabled:cursor-not-allowed disabled:opacity-45"
       >
         {migrationRequired
           ? "Migration needed"

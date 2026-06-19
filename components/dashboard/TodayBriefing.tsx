@@ -35,7 +35,7 @@ export default function TodayBriefing({
           <div>
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-3 py-1.5">
               <Sparkles size={14} className="royal-text" />
-              <span className="text-[10px] uppercase tracking-[0.14em] text-white/38">
+              <span className="av-eyebrow text-white/38">
                 Today
               </span>
             </div>
@@ -72,7 +72,7 @@ export default function TodayBriefing({
                 key={signal.label}
                 className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4"
               >
-                <p className="text-[9px] uppercase tracking-[0.14em] text-white/26">
+                <p className="av-eyebrow text-white/26">
                   {signal.label}
                 </p>
                 <p className="mt-2 text-2xl font-light text-white/82">{signal.value}</p>

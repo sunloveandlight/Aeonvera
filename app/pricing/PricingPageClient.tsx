@@ -448,7 +448,7 @@ export default function PricingPage() {
         <div className="aeon-pricing-trust mx-auto mt-16 grid max-w-6xl gap-3 md:grid-cols-2 lg:grid-cols-3">
           {TRUST_POINTS.map((point) => (
             <div key={point.title} className="aeon-pricing-trust-card rounded-lg p-5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[rgba(var(--gold),0.78)]">
+              <p className="av-eyebrow font-semibold text-[rgba(var(--gold),0.78)]">
                 {point.title}
               </p>
               <p className="mt-3 text-sm leading-6 text-white/52">{point.body}</p>

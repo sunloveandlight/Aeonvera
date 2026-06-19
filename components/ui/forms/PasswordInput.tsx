@@ -17,7 +17,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           type={show ? "text" : "password"}
           className={`
             w-full
-            h-10
+            h-11
             px-3
             pr-12
             rounded-lg
@@ -40,7 +40,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           type="button"
           onClick={() => setShow(!show)}
           aria-label={show ? "Hide password" : "Show password"}
-          className="premium-inline-control absolute right-1.5 top-1/2 inline-flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-md text-[10px] uppercase tracking-[0.14em]"
+          className="av-eyebrow premium-inline-control absolute right-1.5 top-1/2 inline-flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-md"
         >
           {show ? "Hide" : "Show"}
         </button>

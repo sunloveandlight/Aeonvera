@@ -716,11 +716,12 @@ export default function DigitalTwinPage() {
                       <button
                         key={type}
                         type="button"
+                        aria-pressed={activeType === type}
                         onClick={() => {
                           setActiveType(type);
                           setTimelineExpanded(false);
                         }}
-                        className={`shrink-0 rounded-md border px-3 py-1.5 text-[10px] uppercase tracking-[0.14em] transition ${
+                        className={`shrink-0 rounded-md border px-3 py-1.5 av-eyebrow transition ${
                           activeType === type
                             ? "border-white/[0.2] bg-white/[0.07] royal-text"
                             : "border-white/[0.07] bg-white/[0.02] text-white/34 hover:text-white/60"
@@ -790,7 +791,7 @@ function DigitalTwinIntelligencePanel({
               {intelligence.modelState} model.
             </h2>
           </div>
-          <div className="premium-status-neutral rounded-md px-3 py-2 text-[10px] uppercase tracking-[0.14em]">
+          <div className="av-eyebrow premium-status-neutral rounded-md px-3 py-2">
             {intelligence.confidence}% confidence
           </div>
         </div>
@@ -845,14 +846,14 @@ function DigitalTwinAuditPanel({ audit }: { audit: TwinAudit }) {
             {audit.recommendationReason}
           </p>
           <div className="mt-5 rounded-lg border border-white/[0.055] bg-black/20 p-4">
-            <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+            <p className="av-eyebrow text-white/28">
               Evidence freshness
             </p>
             <p className="mt-3 text-sm leading-6 text-white/58">
               {audit.freshness.detail}
             </p>
             {audit.freshness.updatedAt && (
-              <p className="mt-2 text-[10px] uppercase tracking-[0.14em] text-white/24">
+              <p className="av-eyebrow mt-2 text-white/24">
                 Latest signal {formatShortDate(audit.freshness.updatedAt)}
               </p>
             )}
@@ -953,7 +954,7 @@ function LivingTwinModelPanel({
               {model.readiness.status}.
             </h2>
           </div>
-          <div className="premium-status-neutral rounded-md px-3 py-2 text-[10px] uppercase tracking-[0.14em]">
+          <div className="av-eyebrow premium-status-neutral rounded-md px-3 py-2">
             {model.readiness.score}% formed
           </div>
         </div>
@@ -970,7 +971,7 @@ function LivingTwinModelPanel({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm text-white/76">{domain.label}</p>
-                  <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/28">
+                  <p className="av-eyebrow mt-1 text-white/28">
                     {domain.status}
                   </p>
                 </div>
@@ -1038,7 +1039,7 @@ function LivingTwinModelPanel({
                 <div>
                   <p className="text-sm leading-6 text-white/76">{prompt.question}</p>
                   <p className="mt-2 text-xs leading-5 text-white/38">{prompt.detail}</p>
-                  <p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-white/24">
+                  <p className="av-eyebrow mt-3 text-white/24">
                     {prompt.scenarioIds.length} model lever{prompt.scenarioIds.length === 1 ? "" : "s"}
                   </p>
                 </div>
@@ -1098,7 +1099,7 @@ function LivingTwinModelPanel({
                     {projectionResult.futureSelf.levers.slice(0, 4).map((lever) => (
                       <span
                         key={`${lever.label}-${lever.optimized}`}
-                        className="rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-white/42"
+                        className="av-eyebrow rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-white/42"
                       >
                         {lever.label} / {lever.impact}
                       </span>
@@ -1158,14 +1159,14 @@ function ProjectionAssumptionsPanel({
             Aeonvera is showing the assumptions behind this projection so the model feels inspectable, not mysterious.
           </p>
         </div>
-        <span className="premium-status-neutral rounded-md px-3 py-2 text-[10px] uppercase tracking-[0.14em]">
+        <span className="av-eyebrow premium-status-neutral rounded-md px-3 py-2">
           {confidence.score}% confidence
         </span>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-white/[0.055] bg-white/[0.022] p-3">
-          <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+          <p className="av-eyebrow text-white/28">
             What changed
           </p>
           <div className="mt-3 space-y-2">
@@ -1184,7 +1185,7 @@ function ProjectionAssumptionsPanel({
         </div>
 
         <div className="rounded-lg border border-white/[0.055] bg-white/[0.022] p-3">
-          <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+          <p className="av-eyebrow text-white/28">
             Most sensitive lever
           </p>
           <p className="mt-3 text-sm leading-6 text-white/62">
@@ -1232,7 +1233,7 @@ function ProjectionIntelligenceTile({
 }) {
   return (
     <div className="rounded-lg border border-white/[0.055] bg-white/[0.022] p-3">
-      <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">{label}</p>
+      <p className="av-eyebrow text-white/28">{label}</p>
       <p className="mt-3 text-sm text-white/66">{value}</p>
       <p className="mt-2 text-xs leading-5 text-white/36">{detail}</p>
     </div>
@@ -1461,7 +1462,7 @@ function ProjectionRealityPanel({
             Aeonvera compares saved simulations against actual outcomes as new data arrives.
           </p>
         </div>
-        <span className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+        <span className="av-eyebrow text-white/28">
           {comparisons.length ? `${comparisons.length} tracked` : "Waiting"}
         </span>
       </div>
@@ -1483,28 +1484,28 @@ function ProjectionRealityPanel({
                 </span>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                <span className="rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-white/46">
+                <span className="av-eyebrow rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-white/46">
                   {comparison.confidence}% confidence
                 </span>
                 {comparison.projected && (
-                  <span className="rounded-md border border-[rgba(var(--gold),0.18)] bg-[rgba(var(--gold),0.055)] px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] royal-text">
+                  <span className="av-eyebrow rounded-md border border-[rgba(var(--gold),0.18)] bg-[rgba(var(--gold),0.055)] px-3 py-1.5 royal-text">
                     {comparison.projected}
                   </span>
                 )}
                 {comparison.actual && (
-                  <span className="rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-white/46">
+                  <span className="av-eyebrow rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-white/46">
                     {comparison.actual}
                   </span>
                 )}
                 {comparison.linkedProtocol && (
-                  <span className="rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-[10px] uppercase tracking-[0.12em] text-white/46">
+                  <span className="av-eyebrow rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-white/46">
                     linked protocol
                   </span>
                 )}
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-lg border border-white/[0.05] bg-black/20 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+                  <p className="av-eyebrow text-white/28">
                     Follow-up question
                   </p>
                   <p className="mt-2 text-xs leading-5 text-white/48">
@@ -1512,7 +1513,7 @@ function ProjectionRealityPanel({
                   </p>
                 </div>
                 <div className="rounded-lg border border-white/[0.05] bg-black/20 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-white/28">
+                  <p className="av-eyebrow text-white/28">
                     Auto-adjust
                   </p>
                   <p className="mt-2 text-xs leading-5 text-white/58">
@@ -1528,7 +1529,7 @@ function ProjectionRealityPanel({
                   {comparison.evidenceMissing.map((item) => (
                     <span
                       key={`${comparison.title}-${item}`}
-                      className="rounded-md border border-rose-300/[0.12] bg-rose-400/[0.045] px-2 py-1 text-[9px] uppercase tracking-[0.12em] text-rose-100/52"
+                      className="av-eyebrow rounded-md border border-rose-300/[0.12] bg-rose-400/[0.045] px-2 py-1 text-rose-100/52"
                     >
                       needs {item}
                     </span>
@@ -1557,7 +1558,7 @@ function ProjectionRealityPanel({
 }
 
 function projectionStatusClassName(status: TwinProjectionComparison["status"]) {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
 
   if (status === "on_track") return `${base} royal-text bg-[rgba(var(--gold),0.08)]`;
   if (status === "off_track") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
@@ -1577,7 +1578,7 @@ function ProjectionMetric({
   return (
     <div className="rounded-lg border border-white/[0.07] bg-black/20 p-3">
       <p className="text-2xl font-light text-white/88">{value}</p>
-      <p className="mt-1 text-[9px] uppercase tracking-[0.14em] text-white/28">
+      <p className="av-eyebrow mt-1 text-white/28">
         {label} / {suffix}
       </p>
     </div>
@@ -1595,7 +1596,7 @@ function SignalList({
 }) {
   return (
     <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-      <p className="mb-4 text-[10px] uppercase tracking-[0.14em] text-white/28">
+      <p className="av-eyebrow mb-4 text-white/28">
         {title}
       </p>
       <div className="space-y-3">
@@ -1620,7 +1621,7 @@ function SignalList({
 }
 
 function changeStatusClassName(direction: TwinChange["direction"]) {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
 
   if (direction === "improving") return `${base} royal-text bg-white/[0.035]`;
   if (direction === "declining") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
@@ -1629,7 +1630,7 @@ function changeStatusClassName(direction: TwinChange["direction"]) {
 }
 
 function freshnessClassName(status: TwinAudit["freshness"]["status"]) {
-  const base = "rounded-md px-3 py-2 text-[10px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-3 py-2";
 
   if (status === "current") return `${base} royal-text bg-[rgba(var(--gold),0.08)]`;
   if (status === "warming") return `${base} text-white/52 bg-white/[0.045]`;
@@ -1649,7 +1650,7 @@ function TimelineEventCard({ event }: { event: TimelineEvent }) {
         </div>
         <div className="text-left sm:text-right">
           <p className="text-xs royal-text">{event.signal || event.type.replace(/_/g, " ")}</p>
-          <p className="mt-1 text-[9px] uppercase tracking-[0.14em] text-white/22">
+          <p className="av-eyebrow mt-1 text-white/22">
             {formatShortDate(event.occurred_at)}
           </p>
         </div>

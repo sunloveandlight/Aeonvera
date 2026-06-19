@@ -81,7 +81,7 @@ export default function DemoPage() {
               <div className="mt-6 space-y-3">
                 {nextActions.map((action, index) => (
                   <div key={action} className="rounded-lg border border-[rgba(var(--gold),0.18)] bg-[rgba(var(--gold),0.045)] p-4">
-                    <p className="text-[10px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.78)]">
+                    <p className="av-eyebrow text-[rgba(var(--gold),0.78)]">
                       Step {index + 1}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-white/68">{action}</p>

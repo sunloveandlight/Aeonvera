@@ -42,7 +42,7 @@ export default function Field({
       {label && (
         <label
           htmlFor={fieldId}
-          className="text-[10px] uppercase tracking-[0.14em] text-white/30 mb-2 flex items-center gap-1"
+          className="av-eyebrow text-white/30 mb-2 flex items-center gap-1"
         >
           {label}
           {required && <span className="text-red-400">*</span>}

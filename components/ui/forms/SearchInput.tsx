@@ -16,7 +16,7 @@ const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           type="search"
           className={`
             w-full
-            h-10
+            h-11
             pl-10
             pr-10
             rounded-lg

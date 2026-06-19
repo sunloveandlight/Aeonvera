@@ -247,7 +247,7 @@ function FeatureGroup({
                 {tone === "locked" ? (
                   <Link
                     href="/pricing"
-                    className="mt-2 inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.75)] transition hover:text-[rgb(var(--gold))]"
+                    className="av-eyebrow mt-2 inline-flex items-center gap-2 text-[rgba(var(--gold),0.75)] transition hover:text-[rgb(var(--gold))]"
                   >
                     Unlock {item.minimumPlanLabel}
                     <ArrowRight size={12} />

@@ -36,7 +36,7 @@ export default function AccessState({
 
         {points.length ? (
           <div className="w-full rounded-lg border border-white/[0.07] bg-black/20 p-4 md:w-80">
-            <p className="text-[8px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.75)]">
+            <p className="av-eyebrow text-[rgba(var(--gold),0.75)]">
               What unlocks
             </p>
             <div className="mt-4 space-y-3">
@@ -90,7 +90,7 @@ export function EmptyState({
       {action ? (
         <Link
           href={action.href}
-          className="premium-action-secondary mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 text-[10px] font-semibold uppercase tracking-[0.14em]"
+          className="av-eyebrow premium-action-secondary mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 font-semibold"
         >
           {action.label}
           <ArrowRight size={13} />

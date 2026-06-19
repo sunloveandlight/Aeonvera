@@ -264,7 +264,7 @@ export default function SharedFutureSelfPage() {
                   <p className="text-sm text-white/52">
                     {scenario.future_self.headline || "Optimized future-self path"}
                   </p>
-                  <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/24">
+                  <p className="av-eyebrow mt-1 text-white/24">
                     {scenario.future_self.horizonDays || 180} day horizon
                   </p>
                 </div>
@@ -311,7 +311,7 @@ export default function SharedFutureSelfPage() {
                   ["Optimized", finalPoint?.optimizedBiologicalAge],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
-                    <p className="text-[9px] uppercase tracking-[0.14em] text-white/22">
+                    <p className="av-eyebrow text-white/22">
                       {label}
                     </p>
                     <p className="mt-2 text-sm text-white/64">{value || "--"} yrs</p>
@@ -357,7 +357,7 @@ export default function SharedFutureSelfPage() {
                     <div key={activeScenario.id} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
                       <div className="mb-2 flex items-center justify-between gap-3">
                         <p className="text-sm text-white/70">{activeScenario.title}</p>
-                        <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                        <span className="av-eyebrow text-white/24">
                           {activeScenario.domain}
                         </span>
                       </div>
@@ -429,7 +429,7 @@ function ProtocolHistoryPanel({ protocols }: { protocols: OptimizationProtocol[]
         {protocols.map((item, index) => (
           <div key={`${item.summary}-${index}`} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <span className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+              <span className="av-eyebrow text-white/24">
                 Protocol {String(index + 1).padStart(2, "0")}
               </span>
               <span className="royal-text text-sm">
@@ -472,7 +472,7 @@ function GeneratedProtocolReport({ protocol }: { protocol: OptimizationProtocol 
                   </span>
                 </div>
                 <p className="text-xs leading-5 text-white/42">{action.action}</p>
-                <p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-white/24">
+                <p className="av-eyebrow mt-3 text-white/24">
                   {action.cadence}
                 </p>
               </div>
@@ -486,7 +486,7 @@ function GeneratedProtocolReport({ protocol }: { protocol: OptimizationProtocol 
             <div className="space-y-3">
               {protocol.weekly_sequence.slice(0, 4).map((week) => (
                 <div key={week.week} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-4">
-                  <p className="text-[9px] uppercase tracking-[0.14em] text-white/24">
+                  <p className="av-eyebrow text-white/24">
                     {week.week}
                   </p>
                   <p className="mt-2 text-sm font-medium text-white/70">{week.focus}</p>
@@ -583,7 +583,7 @@ function buildChart(points: SharedScenario["future_self"]["trajectory"]) {
 }
 
 function impactClassName(impact: "low" | "medium" | "high") {
-  const base = "rounded-md px-2 py-1 text-[8px] uppercase tracking-[0.14em]";
+  const base = "av-eyebrow rounded-md px-2 py-1";
 
   if (impact === "high") return `${base} royal-text bg-white/[0.035]`;
   if (impact === "medium") return `${base} text-white/42 bg-white/[0.025]`;

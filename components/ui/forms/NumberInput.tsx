@@ -14,7 +14,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         type="number"
         className={`
           w-full
-          h-10
+          h-11
           px-3
           rounded-lg
           border

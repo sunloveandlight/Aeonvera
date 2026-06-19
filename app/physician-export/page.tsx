@@ -413,7 +413,7 @@ function ShareLinkManager({
             placeholder="Recipient label, e.g. Dr. Smith or Coach"
           />
           <div>
-            <label className="mb-2 block text-[10px] uppercase tracking-[0.14em] text-white/28">
+            <label className="av-eyebrow mb-2 block text-white/28">
               Link expires
             </label>
             <select
@@ -439,7 +439,7 @@ function ShareLinkManager({
         </div>
 
         <div>
-          <p className="mb-3 text-[10px] uppercase tracking-[0.14em] text-white/28">
+          <p className="av-eyebrow mb-3 text-white/28">
             Included sections
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
@@ -667,7 +667,7 @@ function ExportSection({
 function Metric({ label, value }: { label: string; value: unknown }) {
   return (
     <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 print:border-black/10 print:bg-white">
-      <p className="text-[9px] uppercase tracking-[0.14em] text-white/25 print:text-black/45">
+      <p className="av-eyebrow text-white/25 print:text-black/45">
         {label}
       </p>
       <p className="mt-2 text-xl font-light text-white print:text-black">{String(value)}</p>

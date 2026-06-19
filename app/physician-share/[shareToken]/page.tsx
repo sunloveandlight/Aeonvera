@@ -388,7 +388,7 @@ function ExportSection({
 function Metric({ label, value }: { label: string; value: unknown }) {
   return (
     <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 print:border-black/10 print:bg-white">
-      <p className="text-[9px] uppercase tracking-[0.14em] text-white/25 print:text-black/45">
+      <p className="av-eyebrow text-white/25 print:text-black/45">
         {label}
       </p>
       <p className="mt-2 text-xl font-light text-white print:text-black">{String(value)}</p>
