@@ -6611,58 +6611,15 @@ input[type="number"]::-webkit-inner-spin-button {
   box-shadow: var(--pricing-card-cta-shadow) !important;
   filter: none !important;
   transform: none !important;
-  overflow: hidden !important;
-  isolation: isolate !important;
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease !important;
 }
 
-.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
-:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
-:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action,
-.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
-:root[data-theme="light"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover,
-:root[data-theme="dark"] .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover {
-  box-shadow:
-    var(--pricing-card-cta-shadow),
-    0 0.82rem 1.45rem rgba(24, 22, 16, 0.16),
-    0 0 1.22rem rgba(var(--gold), 0.16) !important;
-}
-
-.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action::before {
+.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action::before,
+.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action::after {
   content: none !important;
   display: none !important;
-}
-
-.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action::after {
-  content: "" !important;
-  display: block !important;
-  position: absolute !important;
-  inset: 0 !important;
-  background: var(--av-btn-shimmer) !important;
-  background-size: 260% 100% !important;
-  background-position: -145% 50% !important;
-  border-radius: inherit !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transform: none !important;
-  z-index: 0 !important;
-  transition:
-    background-position 760ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    opacity 260ms ease !important;
-}
-
-.aeon-apple-pricing .aeon-apple-plan:hover .aeon-apple-plan-action::after,
-.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action:hover::after {
-  opacity: 0.54 !important;
-  background-position: 155% 50% !important;
-  transform: none !important;
-}
-
-.aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action > * {
-  position: relative !important;
-  z-index: 1 !important;
 }
 
 .aeon-apple-pricing .aeon-apple-plan .aeon-apple-plan-action svg,
