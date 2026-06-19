@@ -508,14 +508,14 @@ export default function LifeAutopilotPage() {
           <Panel title="Retention Loop" icon={HeartPulse}>
             <div className="grid gap-3 sm:grid-cols-3">
               {(payload?.recommendations || []).map((item) => (
-                <div key={item.label} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                <div key={item.label} className="av-surface rounded-lg p-4">
                   <p className="micro-label">{item.label}</p>
                   <p className="mt-3 text-xl font-semibold text-white">{item.value}</p>
-                  <p className="mt-2 text-xs leading-5 text-white/42">{item.detail}</p>
+                  <p className="av-muted mt-2 text-xs leading-5">{item.detail}</p>
                 </div>
               ))}
             </div>
-            <p className="mt-4 text-sm leading-7 text-white/45">
+            <p className="av-muted mt-4 text-sm leading-7">
               Aeonvera will use daily one-move focus, streak tracking, friction tracking,
               weekly review, and body-change summaries as the core retention loop.
             </p>
@@ -524,13 +524,13 @@ export default function LifeAutopilotPage() {
           <Panel title="Sovereign White-Glove Layer" icon={Sparkles}>
             <div className="grid gap-3">
               {(payload?.sovereign || []).map((item) => (
-                <div key={item.label} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                <div key={item.label} className="av-surface rounded-lg p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm text-white/78">{item.label}</p>
-                      <p className="mt-1 text-xs leading-5 text-white/42">{item.detail}</p>
+                      <p className="text-sm">{item.label}</p>
+                      <p className="av-muted mt-1 text-xs leading-5">{item.detail}</p>
                     </div>
-                    <span className="av-eyebrow rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-1 text-white/42">
+                    <span className="av-eyebrow av-chip-control rounded-full px-2 py-1">
                       {item.status}
                     </span>
                   </div>
@@ -555,7 +555,7 @@ function Panel({
 }) {
   return (
     <section className="executive-panel rounded-lg p-6 md:p-7">
-      <div className="mb-5 flex items-start justify-between gap-4 border-b border-white/[0.06] pb-5">
+      <div className="av-divider mb-5 flex items-start justify-between gap-4 border-b pb-5">
         <div>
           <p className="micro-label">Aeonvera</p>
           <h2 className="mt-3 text-2xl font-semibold text-white">{title}</h2>
@@ -577,7 +577,7 @@ function Segment({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2 rounded-lg border border-white/[0.06] bg-white/[0.025] p-1">
+    <div className="av-surface-quiet grid grid-cols-2 gap-2 rounded-lg p-1">
       {items.map(([value, label]) => (
         <button
           key={value}
@@ -628,7 +628,7 @@ function ToggleCard({
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+    <div className="av-surface rounded-lg p-4">
       <p className="micro-label">{label}</p>
       <p className="mt-3 text-lg font-semibold text-white">{value}</p>
     </div>
@@ -651,7 +651,7 @@ function TimeInput({
         type="time"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/72 focus:border-[rgba(var(--gold),0.45)] focus:outline-none"
+        className="av-field h-11 w-full rounded-md px-3 text-sm"
       />
     </label>
   );
@@ -673,7 +673,7 @@ function TextInput({
         type="text"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/72 focus:border-[rgba(var(--gold),0.45)] focus:outline-none"
+        className="av-field h-11 w-full rounded-md px-3 text-sm"
       />
     </label>
   );
@@ -695,7 +695,7 @@ function NumberInput({
         type="number"
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
-        className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/72 focus:border-[rgba(var(--gold),0.45)] focus:outline-none"
+        className="av-field h-11 w-full rounded-md px-3 text-sm"
       />
     </label>
   );
@@ -718,7 +718,7 @@ function SelectInput({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-11 w-full rounded-md border border-white/[0.08] bg-black/40 px-3 text-sm text-white/72 focus:border-[rgba(var(--gold),0.45)] focus:outline-none"
+        className="av-field h-11 w-full rounded-md px-3 text-sm"
       >
         {options.map(([optionValue, labelText]) => (
           <option key={optionValue} value={optionValue}>

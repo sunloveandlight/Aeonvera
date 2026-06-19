@@ -553,7 +553,7 @@ function SignalMetric({ label, value, detail }: { label: string; value: string; 
       <p className="micro-label">{label}</p>
       <div className="mt-auto pt-5">
         <p className="tabular-nums text-3xl font-semibold leading-none text-white">{value}</p>
-        <p className="mt-3 min-h-10 text-xs leading-5 text-white/42">{detail}</p>
+        <p className="av-muted mt-3 min-h-10 text-xs leading-5">{detail}</p>
       </div>
     </div>
   );
@@ -565,14 +565,14 @@ function SourceIntelligencePanel({
   intelligence: DataSourceIntelligence;
 }) {
   return (
-    <section className="mt-6 executive-panel-soft rounded-lg border border-white/[0.08] p-5 md:p-6">
+    <section className="av-surface mt-6 rounded-lg p-5 md:p-6">
       <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
         <div>
           <p className="micro-label">Source Intelligence</p>
           <h2 className="mt-3 text-2xl font-semibold leading-tight text-white">
             {intelligence.headline}
           </h2>
-          <p className="mt-4 text-sm leading-7 text-white/48">
+          <p className="av-muted mt-4 text-sm leading-7">
             {intelligence.nextBestAction}
           </p>
         </div>
@@ -583,15 +583,15 @@ function SourceIntelligencePanel({
               <Link
                 key={prompt.title}
                 href={prompt.href}
-                className="quiet-lift rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-white/[0.14]"
+                className="av-control-card block rounded-lg border p-4 transition"
               >
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-sm text-white/70">{prompt.title}</p>
+                  <p className="text-sm">{prompt.title}</p>
                   <span className={promptPriorityClassName(prompt.priority)}>
                     {prompt.priority}
                   </span>
                 </div>
-                <p className="line-clamp-3 text-xs leading-5 text-white/38">
+                <p className="av-control-muted line-clamp-3 text-xs leading-5">
                   {prompt.body}
                 </p>
                 <p className="av-eyebrow mt-4 text-[rgba(var(--gold),0.72)]">
@@ -600,9 +600,9 @@ function SourceIntelligencePanel({
               </Link>
             ))
           ) : (
-            <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 sm:col-span-2">
-              <p className="text-sm text-white/70">Signal is current</p>
-              <p className="mt-2 text-xs leading-5 text-white/38">
+            <div className="av-surface-quiet rounded-lg p-4 sm:col-span-2">
+              <p className="text-sm">Signal is current</p>
+              <p className="av-muted mt-2 text-xs leading-5">
                 Aeonvera has enough current source depth to support advanced protocol decisions.
               </p>
             </div>
@@ -633,15 +633,15 @@ function SourceCard({
   title: string;
 }) {
   const content = (
-    <div className="quiet-lift executive-panel flex h-full flex-col rounded-lg p-5 transition hover:border-white/[0.14]">
+    <div className="av-control-card flex h-full flex-col rounded-lg border p-5 transition">
       <div className="flex items-start justify-between gap-4">
-        <div className="inline-flex size-10 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.035] text-[rgba(var(--gold),0.85)]">
+        <div className="av-surface-quiet inline-flex size-10 items-center justify-center rounded-lg text-[rgba(var(--gold),0.85)]">
           {icon}
         </div>
         <span className={statusClassName(status)}>{statusLabel(status)}</span>
       </div>
       <h2 className="mt-5 text-2xl font-semibold text-white">{title}</h2>
-      <p className="mt-3 flex-1 text-sm leading-7 text-white/48">{detail}</p>
+      <p className="av-control-muted mt-3 flex-1 text-sm leading-7">{detail}</p>
       {href ? (
         <span className="av-eyebrow royal-text mt-5 inline-flex items-center gap-2">
           {actionLabel}
@@ -700,17 +700,17 @@ function ImportPanel({
           <p className="micro-label">{label}</p>
           <h2 className="mt-3 text-2xl font-semibold text-white">Upload or paste data.</h2>
         </div>
-        <div className="inline-flex size-10 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.035] text-[rgba(var(--gold),0.85)]">
+        <div className="av-surface-quiet inline-flex size-10 items-center justify-center rounded-lg text-[rgba(var(--gold),0.85)]">
           {icon}
         </div>
       </div>
-      <p className="mt-4 text-sm leading-7 text-white/48">{body}</p>
-      <p className="av-eyebrow mt-2 text-white/28">{accepted}</p>
+      <p className="av-muted mt-4 text-sm leading-7">{body}</p>
+      <p className="av-eyebrow av-subtle mt-2">{accepted}</p>
       <textarea
         value={payload}
         onChange={(event) => onPayloadChange(event.target.value)}
         placeholder={placeholder}
-        className="executive-input mt-5 h-32 w-full resize-none rounded-lg p-4 text-xs leading-5 placeholder:text-white/16"
+        className="executive-input mt-5 h-32 w-full resize-none rounded-lg p-4 text-xs leading-5"
       />
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
         <label className="av-control-card flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-lg border px-4 py-3 text-xs transition">
@@ -767,10 +767,10 @@ function RecentSignals({
         {rows.map((row) => (
           <div
             key={`${row.label}-${row.value}`}
-            className="flex items-center justify-between gap-4 rounded-lg border border-white/[0.06] bg-white/[0.025] p-3"
+            className="av-surface-quiet flex items-center justify-between gap-4 rounded-lg p-3"
           >
-            <p className="text-sm text-white/68">{row.label}</p>
-            <p className="text-xs text-white/38">{row.value}</p>
+            <p className="text-sm">{row.label}</p>
+            <p className="av-muted text-xs">{row.value}</p>
           </div>
         ))}
       </div>
@@ -794,10 +794,10 @@ function formatKey(value: string) {
 }
 
 function promptPriorityClassName(priority: "high" | "medium" | "low") {
-  const base = "av-eyebrow rounded-md px-2 py-1";
+  const base = "av-eyebrow av-chip-control rounded-md px-2 py-1";
   if (priority === "high") return `${base} text-rose-100/62 bg-rose-400/[0.08]`;
-  if (priority === "medium") return `${base} royal-text bg-white/[0.035]`;
-  return `${base} text-white/34 bg-white/[0.025]`;
+  if (priority === "medium") return `${base} av-chip-control-active`;
+  return base;
 }
 
 function statusLabel(status: SourceStatus) {
@@ -809,10 +809,10 @@ function statusLabel(status: SourceStatus) {
 }
 
 function statusClassName(status: SourceStatus) {
-  const base = "av-eyebrow rounded-full border px-3 py-1";
-  if (status === "connected") return `${base} border-[rgba(var(--gold),0.24)] bg-[rgba(var(--gold),0.1)] text-[rgba(var(--gold),0.88)]`;
-  if (status === "ready") return `${base} border-white/[0.1] bg-white/[0.04] text-white/55`;
-  if (status === "locked") return `${base} border-white/[0.08] bg-white/[0.025] text-white/34`;
-  if (status === "pending") return `${base} border-white/[0.08] bg-black/20 text-white/32`;
+  const base = "av-eyebrow av-chip-control rounded-full px-3 py-1";
+  if (status === "connected") return `${base} av-chip-control-active`;
+  if (status === "ready") return base;
+  if (status === "locked") return base;
+  if (status === "pending") return base;
   return `${base} border-rose-300/12 bg-rose-300/[0.04] text-rose-100/45`;
 }

@@ -286,14 +286,14 @@ export default function MemoryPage() {
             {memory?.bestInterventions?.length ? (
               <div className="space-y-3">
                 {memory.bestInterventions.slice(0, 4).map((item) => (
-                  <div key={`${item.domain}-${item.action}`} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                  <div key={`${item.domain}-${item.action}`} className="av-surface rounded-lg p-4">
                     <div className="mb-2 flex items-center justify-between gap-3">
-                      <p className="text-sm text-white/72">{item.domain}</p>
-                      <span className="av-eyebrow rounded-md bg-white/[0.035] px-2 py-1 royal-text">
+                      <p className="text-sm">{item.domain}</p>
+                      <span className="av-chip-control av-eyebrow px-2 py-1">
                         {item.successCount} responses
                       </span>
                     </div>
-                    <p className="text-xs leading-5 text-white/38">{item.action}</p>
+                    <p className="av-muted text-xs leading-5">{item.action}</p>
                   </div>
                 ))}
               </div>
@@ -314,20 +314,20 @@ export default function MemoryPage() {
           {preferences.length ? (
             <div className="grid gap-4 md:grid-cols-2">
               {Object.entries(groupedPreferences).map(([category, rows]) => (
-                <div key={category} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-                  <p className="av-eyebrow mb-4 text-white/28">
+                <div key={category} className="av-surface rounded-lg p-4">
+                  <p className="av-eyebrow av-subtle mb-4">
                     {formatKey(category)}
                   </p>
                   <div className="space-y-3">
                     {rows.map((preference) => (
                       <div key={preference.id}>
                         <div className="flex items-center justify-between gap-3">
-                          <p className="text-sm text-white/70">{formatKey(preference.preference_key)}</p>
-                          <span className="av-eyebrow text-white/26">
+                          <p className="text-sm">{formatKey(preference.preference_key)}</p>
+                          <span className="av-eyebrow av-subtle">
                             {Math.round(Number(preference.confidence || 0) * 100)}%
                           </span>
                         </div>
-                        <p className="mt-1 text-xs leading-5 text-white/38">
+                        <p className="av-muted mt-1 text-xs leading-5">
                           {preference.preference_value}
                         </p>
                       </div>
@@ -348,7 +348,7 @@ export default function MemoryPage() {
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
               <p className="micro-label">Long-Term Memory</p>
-              <p className="mt-2 text-sm leading-6 text-white/42">
+              <p className="av-muted mt-2 text-sm leading-6">
                 Raw submitted memories and distilled agent memories that can be retrieved by semantic similarity.
               </p>
             </div>
@@ -374,17 +374,17 @@ export default function MemoryPage() {
           {semanticMemories.length ? (
             <div className="grid gap-3 lg:grid-cols-2">
               {semanticMemories.map((item) => (
-                <article key={item.id} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                <article key={item.id} className="av-surface rounded-lg p-4">
                   <div className="mb-3 flex items-start justify-between gap-4">
                     <div>
-                      <p className="av-eyebrow text-white/28">
+                      <p className="av-eyebrow av-subtle">
                         {formatKey(item.source_type)}
                       </p>
-                      <h2 className="mt-2 text-sm font-medium leading-5 text-white/78">
+                      <h2 className="mt-2 text-sm font-medium leading-5">
                         {item.title || "Remembered signal"}
                       </h2>
-	                    </div>
-	                    <button
+                    </div>
+                    <button
                       type="button"
                       onClick={() => void forgetSemanticMemory(item.id)}
                       className="av-icon-danger size-8"
@@ -393,8 +393,8 @@ export default function MemoryPage() {
                       <Trash2 size={14} />
                     </button>
                   </div>
-                  <p className="line-clamp-3 text-xs leading-5 text-white/42">{item.content}</p>
-                  <div className="av-eyebrow mt-4 flex items-center justify-between gap-3 text-white/24">
+                  <p className="av-muted line-clamp-3 text-xs leading-5">{item.content}</p>
+                  <div className="av-eyebrow av-subtle mt-4 flex items-center justify-between gap-3">
                     <span>{Math.round(Number(item.importance || 0) * 100)}% important</span>
                     <span>{formatFreshness(item.occurred_at || item.created_at)}</span>
                   </div>
@@ -419,7 +419,7 @@ function MemoryMetric({ label, value, detail }: { label: string; value: string; 
       <p className="micro-label">{label}</p>
       <div className="mt-auto pt-5">
         <p className="tabular-nums text-2xl font-light leading-none text-white">{value}</p>
-        <p className="mt-3 min-h-10 text-xs leading-5 text-white/42">{detail}</p>
+        <p className="av-muted mt-3 min-h-10 text-xs leading-5">{detail}</p>
       </div>
     </div>
   );
@@ -427,10 +427,10 @@ function MemoryMetric({ label, value, detail }: { label: string; value: string; 
 
 function MemoryStat({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-      <p className="av-eyebrow text-white/28">{label}</p>
-      <p className="mt-2 text-sm text-white/72">{value}</p>
-      <p className="mt-1 text-xs leading-5 text-white/34">{detail}</p>
+    <div className="av-surface rounded-lg p-4">
+      <p className="av-eyebrow av-subtle">{label}</p>
+      <p className="mt-2 text-sm">{value}</p>
+      <p className="av-muted mt-1 text-xs leading-5">{detail}</p>
     </div>
   );
 }

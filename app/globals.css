@@ -4161,6 +4161,69 @@ summary:focus-visible {
   color: var(--text-4);
 }
 
+[data-aeonvera-content] .av-surface {
+  border: 1px solid var(--panel-border) !important;
+  background: var(--panel-2) !important;
+  color: var(--text-1) !important;
+}
+
+[data-aeonvera-content] .av-surface-quiet {
+  border: 1px solid var(--hairline) !important;
+  background: var(--panel-2) !important;
+  color: var(--text-2) !important;
+}
+
+[data-aeonvera-content] .av-surface-strong {
+  border: 1px solid var(--panel-border) !important;
+  background: var(--panel) !important;
+  color: var(--text-1) !important;
+}
+
+[data-aeonvera-content] .av-divider {
+  border-color: var(--hairline) !important;
+}
+
+[data-aeonvera-content] .av-muted {
+  color: var(--text-2) !important;
+}
+
+[data-aeonvera-content] .av-subtle {
+  color: var(--text-3) !important;
+}
+
+[data-aeonvera-content] .av-faint {
+  color: var(--text-4) !important;
+}
+
+[data-aeonvera-content] .av-field {
+  border: 1px solid var(--panel-border) !important;
+  background: var(--panel-2) !important;
+  color: var(--text-1) !important;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease !important;
+}
+
+[data-aeonvera-content] .av-field:focus {
+  border-color: rgba(var(--gold), 0.45) !important;
+  background: var(--panel) !important;
+  box-shadow: 0 0 0 3px rgba(var(--gold), 0.12) !important;
+  outline: none !important;
+}
+
+[data-aeonvera-content] .av-field::placeholder {
+  color: var(--text-4) !important;
+}
+
+[data-aeonvera-content] :is(.av-surface, .av-surface-quiet, .av-surface-strong) :is([class*="text-white/3"], [class*="text-white/4"], [class*="text-white/5"], .av-muted) {
+  color: var(--text-2) !important;
+}
+
+[data-aeonvera-content] :is(.av-surface, .av-surface-quiet, .av-surface-strong) :is([class*="text-white/2"], .av-subtle) {
+  color: var(--text-3) !important;
+}
+
 .assessment-input {
   height: 3.25rem;
   min-height: 3.25rem;
@@ -5293,6 +5356,10 @@ input[type="number"]::-webkit-inner-spin-button {
   background: var(--av-control-card-bg);
   color: var(--av-control-card-muted);
   transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+:root[data-theme="light"] [data-aeonvera-content] .av-chip-control {
+  color: rgba(42, 43, 48, 0.78) !important;
 }
 
 [data-aeonvera-content] .av-chip-control:hover,

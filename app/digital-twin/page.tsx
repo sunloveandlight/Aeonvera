@@ -627,13 +627,13 @@ export default function DigitalTwinPage() {
                   <p className="micro-label mb-5">Model Inputs</p>
                   <div className="space-y-3">
                     {MODEL_INPUTS.map(([label, key, Icon]) => (
-                      <div key={String(label)} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                      <div key={String(label)} className="av-surface rounded-lg p-4">
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
                             <Icon size={16} className="royal-text" />
-                            <p className="text-sm text-white/68">{String(label)}</p>
+                            <p className="text-sm">{String(label)}</p>
                           </div>
-                          <p className="text-sm text-white/44">{String(payload.counts[key] || 0)}</p>
+                          <p className="av-muted text-sm">{String(payload.counts[key] || 0)}</p>
                         </div>
                       </div>
                     ))}
@@ -649,7 +649,7 @@ export default function DigitalTwinPage() {
                       onChange={(event) =>
                         setOutcomeForm((current) => ({ ...current, domain: event.target.value }))
                       }
-                      className="h-11 w-full rounded-md border border-white/[0.08] bg-black/40 px-3 text-sm text-white/70 focus:border-[rgba(var(--gold),0.6)] focus:outline-none"
+                      className="av-field h-11 w-full rounded-md px-3 text-sm"
                     >
                       {["Recovery", "Movement", "Nutrition", "Metabolic", "Stress", "Sleep"].map((domain) => (
                         <option key={domain}>{domain}</option>
@@ -661,7 +661,7 @@ export default function DigitalTwinPage() {
                       onChange={(event) =>
                         setOutcomeForm((current) => ({ ...current, action: event.target.value }))
                       }
-                      className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/70 focus:border-[rgba(var(--gold),0.6)] focus:outline-none"
+                      className="av-field h-11 w-full rounded-md px-3 text-sm"
                       placeholder="Action tested"
                     />
                     <select
@@ -670,7 +670,7 @@ export default function DigitalTwinPage() {
                       onChange={(event) =>
                         setOutcomeForm((current) => ({ ...current, outcome: event.target.value }))
                       }
-                      className="h-11 w-full rounded-md border border-white/[0.08] bg-black/40 px-3 text-sm text-white/70 focus:border-[rgba(var(--gold),0.6)] focus:outline-none"
+                      className="av-field h-11 w-full rounded-md px-3 text-sm"
                     >
                       <option value="success">Improved</option>
                       <option value="failure">Did not improve</option>
@@ -682,7 +682,7 @@ export default function DigitalTwinPage() {
                       onChange={(event) =>
                         setOutcomeForm((current) => ({ ...current, notes: event.target.value }))
                       }
-                      className="min-h-24 w-full resize-none rounded-md border border-white/[0.08] bg-white/[0.025] p-3 text-sm leading-6 text-white/70 focus:border-[rgba(var(--gold),0.6)] focus:outline-none"
+                      className="av-field min-h-24 w-full resize-none rounded-md p-3 text-sm leading-6"
                       placeholder="Before / after notes, symptom changes, adherence, or metric shift"
                     />
                     <button
@@ -694,20 +694,20 @@ export default function DigitalTwinPage() {
                       {savingOutcome ? "Saving outcome" : "Save outcome"}
                     </button>
                     {outcomeMessage && (
-                      <p className="text-sm leading-6 text-white/45">{outcomeMessage}</p>
+                      <p className="av-muted text-sm leading-6">{outcomeMessage}</p>
                     )}
                   </div>
                 </div>
               </div>
 
               <div className="executive-panel rounded-lg p-6 md:p-7">
-                <div className="mb-5 flex flex-col gap-5 border-b border-white/[0.06] pb-5">
+                <div className="av-divider mb-5 flex flex-col gap-5 border-b pb-5">
                   <div>
                     <p className="micro-label">Recent Signals</p>
                     <h2 className="mt-3 text-2xl font-semibold text-white md:text-3xl">
                       The changes worth noticing.
                     </h2>
-                    <p className="mt-3 max-w-xl text-sm leading-6 text-white/42">
+                    <p className="av-muted mt-3 max-w-xl text-sm leading-6">
                       A concise view of what is teaching your Digital Twin. The full history stays tucked away until you need it.
                     </p>
                   </div>
@@ -751,7 +751,7 @@ export default function DigitalTwinPage() {
                   )}
                 </div>
                 {timeline.length > TIMELINE_INITIAL_COUNT ? (
-                  <div className="mt-4 border-t border-white/[0.06] pt-4">
+                  <div className="av-divider mt-4 border-t pt-4">
                     <button
                       type="button"
                       aria-expanded={timelineExpanded}
@@ -782,7 +782,7 @@ function DigitalTwinIntelligencePanel({
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
       <div className="executive-panel rounded-lg p-6 md:p-7">
-        <div className="mb-6 flex flex-col gap-4 border-b border-white/[0.06] pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="av-divider mb-6 flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="micro-label">Twin Intelligence</p>
             <h2 className="mt-3 text-3xl font-semibold text-white">
@@ -793,7 +793,7 @@ function DigitalTwinIntelligencePanel({
             {intelligence.confidence}% confidence
           </div>
         </div>
-        <p className="text-xl font-light leading-8 text-white/78">
+        <p className="text-xl font-light leading-8">
           {intelligence.summary}
         </p>
 
@@ -805,7 +805,7 @@ function DigitalTwinIntelligencePanel({
 
       <Link
         href={intelligence.nextMove.href}
-        className="quiet-lift executive-panel block rounded-lg p-6 transition hover:border-white/[0.14] md:p-7"
+        className="av-control-card block rounded-lg border p-6 transition md:p-7"
       >
         <div className="mb-6 flex items-center justify-between gap-3">
           <p className="micro-label">Next Best Move</p>
@@ -814,7 +814,7 @@ function DigitalTwinIntelligencePanel({
         <h3 className="text-3xl font-semibold leading-tight text-white">
           {intelligence.nextMove.title}
         </h3>
-        <p className="mt-5 text-sm leading-7 text-white/48">
+        <p className="av-control-muted mt-5 text-sm leading-7">
           {intelligence.nextMove.detail}
         </p>
       </Link>
@@ -825,7 +825,7 @@ function DigitalTwinIntelligencePanel({
 function DigitalTwinAuditPanel({ audit }: { audit: TwinAudit }) {
   return (
     <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
-      <div className="mb-6 flex flex-col gap-4 border-b border-white/[0.06] pb-5 lg:flex-row lg:items-end lg:justify-between">
+      <div className="av-divider mb-6 flex flex-col gap-4 border-b pb-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="micro-label">Model Audit</p>
           <h2 className="mt-3 text-3xl font-semibold text-white">
@@ -838,20 +838,20 @@ function DigitalTwinAuditPanel({ audit }: { audit: TwinAudit }) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+        <div className="av-surface rounded-lg p-5">
           <p className="micro-label">Recommendation reason</p>
-          <p className="mt-4 text-sm leading-7 text-white/62">
+          <p className="mt-4 text-sm leading-7">
             {audit.recommendationReason}
           </p>
-          <div className="mt-5 rounded-lg border border-white/[0.055] bg-black/20 p-4">
-            <p className="av-eyebrow text-white/28">
+          <div className="av-surface-quiet mt-5 rounded-lg p-4">
+            <p className="av-eyebrow av-subtle">
               Evidence freshness
             </p>
-            <p className="mt-3 text-sm leading-6 text-white/58">
+            <p className="av-muted mt-3 text-sm leading-6">
               {audit.freshness.detail}
             </p>
             {audit.freshness.updatedAt && (
-              <p className="av-eyebrow mt-2 text-white/24">
+              <p className="av-eyebrow av-subtle mt-2">
                 Latest signal {formatShortDate(audit.freshness.updatedAt)}
               </p>
             )}
@@ -859,7 +859,7 @@ function DigitalTwinAuditPanel({ audit }: { audit: TwinAudit }) {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+          <div className="av-surface rounded-lg p-5">
             <p className="micro-label">Blind Spots</p>
             <div className="mt-4 space-y-3">
               {audit.blindSpots.length ? (
@@ -867,12 +867,12 @@ function DigitalTwinAuditPanel({ audit }: { audit: TwinAudit }) {
                   <Link
                     key={spot.label}
                     href={spot.actionHref}
-                    className="quiet-lift block rounded-lg border border-white/[0.055] bg-black/20 p-3 transition hover:border-white/[0.14]"
+                    className="av-control-card block rounded-lg border p-3 transition"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm text-white/72">{spot.label}</p>
-                        <p className="mt-2 text-xs leading-5 text-white/38">
+                        <p className="text-sm">{spot.label}</p>
+                        <p className="av-control-muted mt-2 text-xs leading-5">
                           {spot.detail}
                         </p>
                       </div>
@@ -881,27 +881,27 @@ function DigitalTwinAuditPanel({ audit }: { audit: TwinAudit }) {
                   </Link>
                 ))
               ) : (
-                <p className="text-sm leading-6 text-white/42">
+                <p className="av-muted text-sm leading-6">
                   The model has enough signal for the current recommendation layer.
                 </p>
               )}
             </div>
           </div>
 
-          <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
+          <div className="av-surface rounded-lg p-5">
             <p className="micro-label">Next Evidence</p>
             <div className="mt-4 space-y-3">
               {audit.evidencePriorities.length ? (
                 audit.evidencePriorities.map((priority) => (
                   <div
                     key={priority}
-                    className="rounded-lg border border-white/[0.055] bg-black/20 p-3"
+                    className="av-surface-quiet rounded-lg p-3"
                   >
-                    <p className="text-xs leading-5 text-white/48">{priority}</p>
+                    <p className="av-muted text-xs leading-5">{priority}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm leading-6 text-white/42">
+                <p className="av-muted text-sm leading-6">
                   Keep executing and logging outcomes. The next improvement is higher signal density, not more complexity.
                 </p>
               )}
@@ -945,7 +945,7 @@ function LivingTwinModelPanel({
   return (
     <div className="mt-6 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
       <div className="executive-panel rounded-lg p-6 md:p-7">
-        <div className="mb-6 flex flex-col gap-4 border-b border-white/[0.06] pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="av-divider mb-6 flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="micro-label">Living Twin Map</p>
             <h2 className="mt-3 text-3xl font-semibold text-white">
@@ -956,7 +956,7 @@ function LivingTwinModelPanel({
             {model.readiness.score}% formed
           </div>
         </div>
-        <p className="text-sm leading-7 text-white/50">
+        <p className="av-muted text-sm leading-7">
           {model.readiness.detail}
         </p>
 
@@ -964,24 +964,24 @@ function LivingTwinModelPanel({
           {model.domains.map((domain) => (
             <div
               key={domain.label}
-              className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4"
+              className="av-surface rounded-lg p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm text-white/76">{domain.label}</p>
-                  <p className="av-eyebrow mt-1 text-white/28">
+                  <p className="text-sm">{domain.label}</p>
+                  <p className="av-eyebrow av-subtle mt-1">
                     {domain.status}
                   </p>
                 </div>
                 <p className="royal-text text-xl font-light">{domain.score}</p>
               </div>
-              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+              <div className="av-surface-quiet mt-4 h-1.5 overflow-hidden rounded-full">
                 <div
                   className="h-full rounded-full bg-[rgb(var(--gold))]"
                   style={{ width: `${Math.max(8, Math.min(domain.score, 100))}%` }}
                 />
               </div>
-              <p className="mt-4 text-xs leading-5 text-white/38">{domain.detail}</p>
+              <p className="av-muted mt-4 text-xs leading-5">{domain.detail}</p>
             </div>
           ))}
         </div>
@@ -990,7 +990,7 @@ function LivingTwinModelPanel({
       </div>
 
       <div className="executive-panel rounded-lg p-6 md:p-7">
-        <div className="mb-6 border-b border-white/[0.06] pb-5">
+        <div className="av-divider mb-6 border-b pb-5">
           <p className="micro-label">Scenarios</p>
           <h2 className="mt-3 text-3xl font-semibold text-white">
             Ask what your future self becomes.
@@ -1005,11 +1005,11 @@ function LivingTwinModelPanel({
             id="digital-twin-what-if"
             value={customWhatIf}
             onChange={(event) => onCustomWhatIfChange(event.target.value)}
-            className="mt-3 min-h-24 w-full resize-none rounded-md border border-white/[0.08] bg-black/20 p-3 text-sm leading-6 text-white/72 outline-none placeholder:text-white/24"
+            className="av-field mt-3 min-h-24 w-full resize-none rounded-md p-3 text-sm leading-6"
             placeholder="What happens if I stop alcohol, add Zone 2 three times a week, and sleep 45 minutes longer?"
           />
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs leading-5 text-white/38">
+            <p className="av-muted text-xs leading-5">
               Aeonvera converts your question into model levers, saves the projection, then can turn it into a protocol.
             </p>
             <button
@@ -1061,7 +1061,7 @@ function LivingTwinModelPanel({
           <div className="mt-5 rounded-lg border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.055)] p-5">
             <p className="micro-label">Projection Result</p>
             {projectionMessage && (
-              <p className="mt-3 text-sm leading-6 text-white/52">{projectionMessage}</p>
+              <p className="av-muted mt-3 text-sm leading-6">{projectionMessage}</p>
             )}
             {projectionSavedMessage && (
               <p className="mt-2 text-xs uppercase tracking-[0.14em] royal-text">
@@ -1087,7 +1087,7 @@ function LivingTwinModelPanel({
                     suffix="score"
                   />
                 </div>
-                <p className="mt-5 text-sm leading-7 text-white/58">
+                <p className="av-muted mt-5 text-sm leading-7">
                   {projectionResult.futureSelf?.summary ||
                     projectionResult.futureSelf?.headline ||
                     "Aeonvera projected this scenario against your current biological-age model."}
@@ -1097,7 +1097,7 @@ function LivingTwinModelPanel({
                     {projectionResult.futureSelf.levers.slice(0, 4).map((lever) => (
                       <span
                         key={`${lever.label}-${lever.optimized}`}
-                        className="av-eyebrow rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-white/42"
+                        className="av-eyebrow av-chip-control rounded-md px-3 py-1.5"
                       >
                         {lever.label} / {lever.impact}
                       </span>
@@ -1121,7 +1121,7 @@ function LivingTwinModelPanel({
                       : "Generate linked protocol"}
                 </button>
                 {projectionProtocolMessage && (
-                  <p className="mt-3 text-xs leading-5 text-white/48">
+                  <p className="av-muted mt-3 text-xs leading-5">
                     {projectionProtocolMessage}
                   </p>
                 )}
@@ -1149,11 +1149,11 @@ function ProjectionAssumptionsPanel({
   const realityCheck = buildProjectionRealityCheck(model, projectionResult);
 
   return (
-    <div className="mt-5 rounded-lg border border-white/[0.06] bg-black/20 p-4">
-      <div className="mb-4 flex flex-col gap-3 border-b border-white/[0.045] pb-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="av-surface mt-5 rounded-lg p-4">
+      <div className="av-divider mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="micro-label">Twin Assumptions</p>
-          <p className="mt-2 text-xs leading-5 text-white/40">
+          <p className="av-muted mt-2 text-xs leading-5">
             Aeonvera is showing the assumptions behind this projection so the model feels inspectable, not mysterious.
           </p>
         </div>
@@ -1163,36 +1163,36 @@ function ProjectionAssumptionsPanel({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-lg border border-white/[0.055] bg-white/[0.022] p-3">
-          <p className="av-eyebrow text-white/28">
+        <div className="av-surface-quiet rounded-lg p-3">
+          <p className="av-eyebrow av-subtle">
             What changed
           </p>
           <div className="mt-3 space-y-2">
             {visibleLevers.length ? (
               visibleLevers.map((lever) => (
-                <p key={`${lever.label}-${lever.optimized}`} className="text-xs leading-5 text-white/44">
+                <p key={`${lever.label}-${lever.optimized}`} className="av-muted text-xs leading-5">
                   {lever.label}: {formatProjectionValue(lever.current)} to {formatProjectionValue(lever.optimized)}
                 </p>
               ))
             ) : (
-              <p className="text-xs leading-5 text-white/36">
+              <p className="av-muted text-xs leading-5">
                 Aeonvera used the selected scenario levers without a detailed lever map.
               </p>
             )}
           </div>
         </div>
 
-        <div className="rounded-lg border border-white/[0.055] bg-white/[0.022] p-3">
-          <p className="av-eyebrow text-white/28">
+        <div className="av-surface-quiet rounded-lg p-3">
+          <p className="av-eyebrow av-subtle">
             Most sensitive lever
           </p>
-          <p className="mt-3 text-sm leading-6 text-white/62">
+          <p className="mt-3 text-sm leading-6">
             {sensitiveLever
               ? `${sensitiveLever.label} is carrying the strongest modeled effect.`
               : "The model needs another scenario run to isolate the strongest lever."}
           </p>
           {sensitiveLever && (
-            <p className="mt-2 text-xs leading-5 text-white/36">
+            <p className="av-muted mt-2 text-xs leading-5">
               Modeled shift: {formatProjectionValue(sensitiveLever.current)} to {formatProjectionValue(sensitiveLever.optimized)}.
             </p>
           )}
@@ -1230,10 +1230,10 @@ function ProjectionIntelligenceTile({
   value: string;
 }) {
   return (
-    <div className="rounded-lg border border-white/[0.055] bg-white/[0.022] p-3">
-      <p className="av-eyebrow text-white/28">{label}</p>
-      <p className="mt-3 text-sm text-white/66">{value}</p>
-      <p className="mt-2 text-xs leading-5 text-white/36">{detail}</p>
+    <div className="av-surface-quiet rounded-lg p-3">
+      <p className="av-eyebrow av-subtle">{label}</p>
+      <p className="mt-3 text-sm">{value}</p>
+      <p className="av-muted mt-2 text-xs leading-5">{detail}</p>
     </div>
   );
 }
@@ -1388,7 +1388,7 @@ function LivingHumanStatus({ payload }: { payload: DigitalTwinPayload }) {
           <h2 className="mt-3 text-3xl font-semibold text-white">
             Aeonvera is watching your trajectory.
           </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-white/48">
+          <p className="av-muted mt-3 max-w-2xl text-sm leading-7">
             Your twin is not just storing data. It is looking for drift, recovery pressure,
             missing evidence, and the next behavior that could move your projected future.
           </p>
@@ -1438,10 +1438,10 @@ function LivingStatusMetric({
   value: string;
 }) {
   return (
-    <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+    <div className="av-surface rounded-lg p-4">
       <p className="micro-label">{label}</p>
       <p className="mt-3 text-lg font-semibold capitalize text-white">{value}</p>
-      <p className="mt-2 text-xs leading-5 text-white/40">{detail}</p>
+      <p className="av-muted mt-2 text-xs leading-5">{detail}</p>
     </div>
   );
 }
@@ -1452,15 +1452,15 @@ function ProjectionRealityPanel({
   comparisons: TwinProjectionComparison[];
 }) {
   return (
-    <div className="mt-6 rounded-lg border border-white/[0.06] bg-black/20 p-5">
-      <div className="mb-4 flex flex-col gap-2 border-b border-white/[0.05] pb-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="av-surface mt-6 rounded-lg p-5">
+      <div className="av-divider mb-4 flex flex-col gap-2 border-b pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="micro-label">Projection vs Reality</p>
-          <p className="mt-2 text-sm text-white/58">
+          <p className="av-muted mt-2 text-sm">
             Aeonvera compares saved simulations against actual outcomes as new data arrives.
           </p>
         </div>
-        <span className="av-eyebrow text-white/28">
+        <span className="av-eyebrow av-subtle">
           {comparisons.length ? `${comparisons.length} tracked` : "Waiting"}
         </span>
       </div>
@@ -1470,19 +1470,19 @@ function ProjectionRealityPanel({
           comparisons.map((comparison) => (
             <div
               key={`${comparison.title}-${comparison.projected || comparison.actual || comparison.status}`}
-              className="rounded-lg border border-white/[0.055] bg-white/[0.022] p-4"
+              className="av-surface-quiet rounded-lg p-4"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-sm text-white/76">{comparison.title}</p>
-                  <p className="mt-2 text-xs leading-5 text-white/40">{comparison.detail}</p>
+                  <p className="text-sm">{comparison.title}</p>
+                  <p className="av-muted mt-2 text-xs leading-5">{comparison.detail}</p>
                 </div>
                 <span className={projectionStatusClassName(comparison.status)}>
                   {comparison.status.replace(/_/g, " ")}
                 </span>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                <span className="av-eyebrow rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-white/46">
+                <span className="av-eyebrow av-chip-control rounded-md px-3 py-1.5">
                   {comparison.confidence}% confidence
                 </span>
                 {comparison.projected && (
@@ -1491,33 +1491,33 @@ function ProjectionRealityPanel({
                   </span>
                 )}
                 {comparison.actual && (
-                  <span className="av-eyebrow rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-white/46">
+                  <span className="av-eyebrow av-chip-control rounded-md px-3 py-1.5">
                     {comparison.actual}
                   </span>
                 )}
                 {comparison.linkedProtocol && (
-                  <span className="av-eyebrow rounded-md border border-white/[0.07] bg-black/20 px-3 py-1.5 text-white/46">
+                  <span className="av-eyebrow av-chip-control rounded-md px-3 py-1.5">
                     linked protocol
                   </span>
                 )}
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-white/[0.05] bg-black/20 p-3">
-                  <p className="av-eyebrow text-white/28">
+                <div className="av-surface-quiet rounded-lg p-3">
+                  <p className="av-eyebrow av-subtle">
                     Follow-up question
                   </p>
-                  <p className="mt-2 text-xs leading-5 text-white/48">
+                  <p className="av-muted mt-2 text-xs leading-5">
                     {comparison.followUpQuestion}
                   </p>
                 </div>
-                <div className="rounded-lg border border-white/[0.05] bg-black/20 p-3">
-                  <p className="av-eyebrow text-white/28">
+                <div className="av-surface-quiet rounded-lg p-3">
+                  <p className="av-eyebrow av-subtle">
                     Auto-adjust
                   </p>
-                  <p className="mt-2 text-xs leading-5 text-white/58">
+                  <p className="mt-2 text-xs leading-5">
                     {comparison.adjustment.title}
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-white/36">
+                  <p className="av-muted mt-1 text-xs leading-5">
                     {comparison.adjustment.detail}
                   </p>
                 </div>
@@ -1535,9 +1535,9 @@ function ProjectionRealityPanel({
                 </div>
               ) : null}
               {comparison.actions?.length ? (
-                <div className="mt-3 space-y-2 border-t border-white/[0.045] pt-3">
+                <div className="av-divider mt-3 space-y-2 border-t pt-3">
                   {comparison.actions.map((action) => (
-                    <p key={`${comparison.title}-${action}`} className="text-[11px] leading-5 text-white/38">
+                    <p key={`${comparison.title}-${action}`} className="av-muted text-[11px] leading-5">
                       {action}
                     </p>
                   ))}
@@ -1546,7 +1546,7 @@ function ProjectionRealityPanel({
             </div>
           ))
         ) : (
-          <p className="text-sm leading-6 text-white/38">
+          <p className="av-muted text-sm leading-6">
             Run and save a projection, then add outcomes or another biological-age update. Aeonvera will begin comparing the simulation against reality here.
           </p>
         )}
@@ -1556,12 +1556,11 @@ function ProjectionRealityPanel({
 }
 
 function projectionStatusClassName(status: TwinProjectionComparison["status"]) {
-  const base = "av-eyebrow rounded-md px-2 py-1";
+  const base = "av-eyebrow av-chip-control rounded-md px-2 py-1";
 
-  if (status === "on_track") return `${base} royal-text bg-[rgba(var(--gold),0.08)]`;
+  if (status === "on_track") return `${base} av-chip-control-active`;
   if (status === "off_track") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
-  if (status === "tracking") return `${base} text-white/50 bg-white/[0.045]`;
-  return `${base} text-white/28 bg-white/[0.025]`;
+  return base;
 }
 
 function ProjectionMetric({
@@ -1574,9 +1573,9 @@ function ProjectionMetric({
   value: string;
 }) {
   return (
-    <div className="rounded-lg border border-white/[0.07] bg-black/20 p-3">
+    <div className="av-surface-quiet rounded-lg p-3">
       <p className="text-2xl font-light text-white/88">{value}</p>
-      <p className="av-eyebrow mt-1 text-white/28">
+      <p className="av-eyebrow av-subtle mt-1">
         {label} / {suffix}
       </p>
     </div>
@@ -1593,25 +1592,25 @@ function SignalList({
   empty: string;
 }) {
   return (
-    <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-      <p className="av-eyebrow mb-4 text-white/28">
+    <div className="av-surface rounded-lg p-4">
+      <p className="av-eyebrow av-subtle mb-4">
         {title}
       </p>
       <div className="space-y-3">
         {items.length ? (
           items.map((item) => (
-            <div key={`${title}-${item.metric}-${item.signal}`} className="border-t border-white/[0.05] pt-3 first:border-t-0 first:pt-0">
+            <div key={`${title}-${item.metric}-${item.signal}`} className="av-divider border-t pt-3 first:border-t-0 first:pt-0">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm text-white/70">{item.metric}</p>
+                <p className="text-sm">{item.metric}</p>
                 <span className={changeStatusClassName(item.direction)}>
                   {item.signal}
                 </span>
               </div>
-              <p className="mt-2 text-xs leading-5 text-white/38">{item.detail}</p>
+              <p className="av-muted mt-2 text-xs leading-5">{item.detail}</p>
             </div>
           ))
         ) : (
-          <p className="text-sm leading-6 text-white/38">{empty}</p>
+          <p className="av-muted text-sm leading-6">{empty}</p>
         )}
       </div>
     </div>
@@ -1619,36 +1618,35 @@ function SignalList({
 }
 
 function changeStatusClassName(direction: TwinChange["direction"]) {
-  const base = "av-eyebrow rounded-md px-2 py-1";
+  const base = "av-eyebrow av-chip-control rounded-md px-2 py-1";
 
-  if (direction === "improving") return `${base} royal-text bg-white/[0.035]`;
+  if (direction === "improving") return `${base} av-chip-control-active`;
   if (direction === "declining") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
-  if (direction === "stable") return `${base} text-white/34 bg-white/[0.025]`;
-  return `${base} text-white/28 bg-white/[0.02]`;
+  return base;
 }
 
 function freshnessClassName(status: TwinAudit["freshness"]["status"]) {
-  const base = "av-eyebrow rounded-md px-3 py-2";
+  const base = "av-eyebrow av-chip-control rounded-md px-3 py-2";
 
-  if (status === "current") return `${base} royal-text bg-[rgba(var(--gold),0.08)]`;
-  if (status === "warming") return `${base} text-white/52 bg-white/[0.045]`;
+  if (status === "current") return `${base} av-chip-control-active`;
+  if (status === "warming") return base;
   return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
 }
 
 function TimelineEventCard({ event }: { event: TimelineEvent }) {
   const content = (
-    <div className="quiet-lift rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 transition hover:border-white/[0.14]">
+    <div className="av-control-card rounded-lg border p-4 transition">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="mb-2 flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--gold))]" />
-            <p className="text-sm text-white/74">{event.title}</p>
+            <p className="text-sm">{event.title}</p>
           </div>
-          <p className="text-xs leading-5 text-white/38">{event.detail}</p>
+          <p className="av-control-muted text-xs leading-5">{event.detail}</p>
         </div>
         <div className="text-left sm:text-right">
           <p className="text-xs royal-text">{event.signal || event.type.replace(/_/g, " ")}</p>
-          <p className="av-eyebrow mt-1 text-white/22">
+          <p className="av-eyebrow av-control-muted mt-1">
             {formatShortDate(event.occurred_at)}
           </p>
         </div>
@@ -1685,7 +1683,7 @@ function TwinSummaryCard({ card }: { card: TwinSummaryCardData }) {
         <p className={valueClassName}>
           {value}
         </p>
-        <p className="pb-1 text-right text-xs uppercase tracking-[0.14em] text-white/24">
+        <p className="av-subtle pb-1 text-right text-xs uppercase tracking-[0.14em]">
           {suffix}
         </p>
       </div>

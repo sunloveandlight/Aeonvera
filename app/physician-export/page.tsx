@@ -332,7 +332,7 @@ export default function PhysicianExportPage() {
         ) : message ? (
           <div className="executive-panel rounded-lg p-8">
             <p className="micro-label">Unavailable</p>
-            <p className="mt-4 text-sm leading-7 text-white/50">{message}</p>
+            <p className="av-muted mt-4 text-sm leading-7">{message}</p>
           </div>
         ) : bundle ? (
           <>
@@ -393,7 +393,7 @@ function ShareLinkManager({
 }) {
   return (
     <div className="mb-8 rounded-lg border border-[rgba(var(--gold),0.18)] bg-[rgba(var(--gold),0.045)] p-6 print:hidden">
-      <div className="mb-5 flex flex-col gap-3 border-b border-white/[0.06] pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="av-divider mb-5 flex flex-col gap-3 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="micro-label">Secure Clinical Sharing</p>
           <h2 className="mt-3 text-3xl font-semibold text-white">
@@ -408,18 +408,18 @@ function ShareLinkManager({
           <input
             value={recipientLabel}
             onChange={(event) => onRecipientChange(event.target.value)}
-            className="h-11 w-full rounded-md border border-white/[0.08] bg-black/20 px-3 text-sm text-white/70 outline-none placeholder:text-white/24"
+            className="av-field h-11 w-full rounded-md px-3 text-sm"
             aria-label="Recipient label"
             placeholder="Recipient label, e.g. Dr. Smith or Coach"
           />
           <div>
-            <label className="av-eyebrow mb-2 block text-white/28">
+            <label className="av-eyebrow av-subtle mb-2 block">
               Link expires
             </label>
             <select
               value={expiresInDays}
               onChange={(event) => onExpiresChange(Number(event.target.value))}
-              className="h-11 w-full rounded-md border border-white/[0.08] bg-black/20 px-3 text-sm text-white/70 outline-none"
+              className="av-field h-11 w-full rounded-md px-3 text-sm"
             >
               <option value={7}>7 days</option>
               <option value={14}>14 days</option>
@@ -435,23 +435,23 @@ function ShareLinkManager({
           >
             <Link2 size={16} /> {creatingShare ? "Creating link" : "Create secure link"}
           </button>
-          {message && <p className="text-sm leading-6 text-white/48">{message}</p>}
+          {message && <p className="av-muted text-sm leading-6">{message}</p>}
         </div>
 
         <div>
-          <p className="av-eyebrow mb-3 text-white/28">
+          <p className="av-eyebrow av-subtle mb-3">
             Included sections
           </p>
           <div className="grid gap-2 sm:grid-cols-2">
-	            {SHARE_SECTIONS.map(([key, label]) => (
-	              <button
+            {SHARE_SECTIONS.map(([key, label]) => (
+              <button
                 key={key}
                 type="button"
                 onClick={() => onToggleSection(key)}
                 className={`av-chip-control px-3 py-2 text-left text-xs ${
                   includedSections.includes(key) ? "av-chip-control-active" : ""
                 }`}
-	              >
+              >
                 {label}
               </button>
             ))}
@@ -463,14 +463,14 @@ function ShareLinkManager({
         {links.map((link) => (
           <div
             key={link.id}
-            className="rounded-lg border border-white/[0.06] bg-black/20 p-4"
+            className="av-surface rounded-lg p-4"
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-sm text-white/72">
+                <p className="text-sm">
                   {link.recipientLabel || "Secure export link"}
                 </p>
-                <p className="mt-1 text-xs text-white/36">
+                <p className="av-muted mt-1 text-xs">
                   {link.status} / expires {formatDate(link.expiresAt)} / opened {link.accessCount} time{link.accessCount === 1 ? "" : "s"}
                 </p>
                 <ShareAccessHint link={link} />
@@ -526,7 +526,7 @@ function ShareAccessHint({ link }: { link: ShareLink }) {
         <p className="inline-flex rounded-md border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.06)] px-2 py-1 text-xs text-[rgba(var(--gold),0.8)]">
           Access code: {link.accessCode}
         </p>
-        <p className="text-xs leading-5 text-white/34">
+        <p className="av-subtle text-xs leading-5">
           Send the message to your clinician.
         </p>
       </div>
@@ -535,7 +535,7 @@ function ShareAccessHint({ link }: { link: ShareLink }) {
 
   if (link.requiresAccessCode) {
     return (
-      <p className="mt-2 text-xs text-white/34">
+      <p className="av-subtle mt-2 text-xs">
         Protected by an access code shown when this link was created.
       </p>
     );

@@ -604,7 +604,7 @@ export default function OptimizationPage() {
 
               <div className="mt-9 grid gap-5 sm:grid-cols-[auto_1fr] sm:items-center">
                 <VitalSignalClock />
-                <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
+                <div className="av-surface rounded-lg p-5">
                   <div className="living-dashboard-pulse mb-5 flex size-14 items-center justify-center rounded-lg">
                     <HeartbeatMonitor />
                   </div>
@@ -626,8 +626,8 @@ export default function OptimizationPage() {
                   ["Domains", "8"],
                   ["Mode", complete ? "Map" : "Intake"],
                 ].map(([label, value]) => (
-                  <div key={label} className="flex min-h-[5.75rem] flex-col justify-between rounded-lg border border-white/[0.06] bg-white/[0.035] p-4">
-                    <p className="text-sm text-white/40">{label}</p>
+                  <div key={label} className="av-surface-quiet flex min-h-[5.75rem] flex-col justify-between rounded-lg p-4">
+                    <p className="av-muted text-sm">{label}</p>
                     <p className="tabular-nums text-2xl font-light leading-none text-white">{value}</p>
                   </div>
                 ))}
@@ -636,7 +636,7 @@ export default function OptimizationPage() {
           </div>
 
           <div className="executive-panel rounded-lg p-6 md:p-7">
-            <div className="mb-6 flex items-center justify-between gap-4 border-b border-white/[0.06] pb-5">
+            <div className="av-divider mb-6 flex items-center justify-between gap-4 border-b pb-5">
               <div>
                 <p className="micro-label">{question.domain}</p>
                 <h2 className="mt-3 text-3xl font-semibold text-white md:text-4xl">
@@ -684,7 +684,7 @@ export default function OptimizationPage() {
                     id="optimization-context"
                     value={context}
                     onChange={(event) => setContext(event.target.value)}
-                    className="mt-3 min-h-28 w-full resize-none rounded-lg border border-white/[0.08] bg-white/[0.025] p-4 text-sm leading-6 text-white/70 outline-none transition focus:border-white/[0.18] focus:bg-white/[0.04]"
+                    className="av-field mt-3 min-h-28 w-full resize-none rounded-lg p-4 text-sm leading-6"
                     placeholder="Constraints, goals, labs, travel, injuries, family rhythm, or anything the optimizer should respect."
                   />
                 </div>
@@ -714,21 +714,21 @@ export default function OptimizationPage() {
                 </div>
 
                 {protocolMessage && (
-                  <p className="mt-4 rounded-lg border border-white/[0.08] bg-white/[0.025] p-4 text-sm leading-6 text-white/55">
+                  <p className="av-surface av-muted mt-4 rounded-lg p-4 text-sm leading-6">
                     {protocolMessage}
                   </p>
                 )}
               </>
             ) : (
               <div className="space-y-5">
-                <div className="rounded-lg border border-white/[0.08] bg-white/[0.025] p-5">
+                <div className="av-surface rounded-lg p-5">
                   <div className="flex items-center gap-3">
                     <div className="premium-status flex size-10 items-center justify-center rounded-lg">
                       <Sparkles size={18} />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-white/80">Optimization protocol is ready</p>
-                      <p className="mt-1 text-xs leading-5 text-white/40">
+                      <p className="text-sm font-medium">Optimization protocol is ready</p>
+                      <p className="av-muted mt-1 text-xs leading-5">
                         {protocol?.coach_message || protocol?.summary || "Aeonvera generated your first adaptive optimization protocol."}
                       </p>
                     </div>
@@ -737,14 +737,14 @@ export default function OptimizationPage() {
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   {(protocol?.primary_protocol || []).map((item, index) => (
-                    <div key={`${item.domain}-${item.action}`} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                    <div key={`${item.domain}-${item.action}`} className="av-surface rounded-lg p-4">
                       <div className="mb-3 flex items-center justify-between gap-3">
-                        <p className="text-sm text-white/68">{item.domain}</p>
-                        <span className="av-eyebrow text-white/28">
+                        <p className="text-sm">{item.domain}</p>
+                        <span className="av-eyebrow av-subtle">
                           {item.impact}
                         </span>
                       </div>
-                      <p className="mb-3 text-xs leading-5 text-white/42">{item.action}</p>
+                      <p className="av-muted mb-3 text-xs leading-5">{item.action}</p>
                       <p className="mb-3 text-[11px] leading-5 text-[rgba(var(--gold),0.7)]">
                         {item.why}
                       </p>
@@ -761,11 +761,11 @@ export default function OptimizationPage() {
                 {protocol?.weekly_sequence?.length ? (
                   <div className="grid gap-3 sm:grid-cols-3">
                     {protocol.weekly_sequence.slice(0, 3).map((sequence) => (
-                      <div key={sequence.week} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
-                        <p className="av-eyebrow text-white/28">
+                      <div key={sequence.week} className="av-surface rounded-lg p-4">
+                        <p className="av-eyebrow av-subtle">
                           {sequence.week}
                         </p>
-                        <p className="mt-2 text-sm font-medium text-white/70">
+                        <p className="mt-2 text-sm font-medium">
                           {sequence.focus}
                         </p>
                       </div>
@@ -774,13 +774,13 @@ export default function OptimizationPage() {
                 ) : null}
 
                 {protocol?.tracking_metrics?.length ? (
-                  <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                  <div className="av-surface rounded-lg p-4">
                     <p className="micro-label">Tracking</p>
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       {protocol.tracking_metrics.slice(0, 4).map((metric) => (
                         <div key={metric.metric}>
-                          <p className="text-sm text-white/68">{metric.metric}</p>
-                          <p className="mt-1 text-xs leading-5 text-white/38">
+                          <p className="text-sm">{metric.metric}</p>
+                          <p className="av-muted mt-1 text-xs leading-5">
                             {metric.target}
                           </p>
                         </div>
@@ -810,14 +810,14 @@ export default function OptimizationPage() {
 
         {bioAgeSimulations.length > 0 && (
           <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
-            <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+            <div className="av-divider mb-6 flex flex-col gap-3 border-b pb-5 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="micro-label">Biological age levers</p>
                 <h2 className="mt-3 text-3xl font-semibold text-white">
                   Highest-impact changes from your current baseline.
                 </h2>
               </div>
-              <p className="max-w-sm text-sm leading-6 text-white/38">
+              <p className="av-muted max-w-sm text-sm leading-6">
                 These projections use the same engine as your biological age score.
               </p>
             </div>
@@ -826,32 +826,32 @@ export default function OptimizationPage() {
               {bioAgeSimulations.slice(0, 3).map((simulation, index) => (
                 <div
                   key={simulation.id}
-                  className="quiet-lift rounded-lg border border-white/[0.07] bg-white/[0.025] p-5"
+                  className="av-surface rounded-lg p-5"
                 >
                   <div className="mb-5 flex items-center justify-between gap-3">
                     <span className="royal-text text-sm tabular-nums">
                       {String(index + 1).padStart(2, "0")}
                     </span>
-                    <span className="av-eyebrow text-white/25">
+                    <span className="av-eyebrow av-subtle">
                       {simulation.domain}
                     </span>
                   </div>
-                  <p className="text-lg font-light leading-7 text-white/80">
+                  <p className="text-lg font-light leading-7">
                     {simulation.title}
                   </p>
-                  <p className="mt-3 min-h-20 text-sm leading-7 text-white/42">
+                  <p className="av-muted mt-3 min-h-20 text-sm leading-7">
                     {simulation.action}
                   </p>
-                  <div className="mt-5 flex items-end justify-between border-t border-white/[0.06] pt-4">
+                  <div className="av-divider mt-5 flex items-end justify-between border-t pt-4">
                     <div>
-                      <p className="av-eyebrow text-white/22">
+                      <p className="av-eyebrow av-subtle">
                         Potential
                       </p>
                       <p className="mt-1 text-2xl font-light royal-text">
                         {simulation.projectedAgeDeltaImprovement.toFixed(1)}
                       </p>
                     </div>
-                    <p className="text-xs text-white/34">{simulation.horizon}</p>
+                    <p className="av-muted text-xs">{simulation.horizon}</p>
                   </div>
                 </div>
               ))}
@@ -891,7 +891,7 @@ export default function OptimizationPage() {
 
         {simulatorControls && (
           <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
-            <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+            <div className="av-divider mb-6 flex flex-col gap-3 border-b pb-5 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="micro-label">Future self simulator</p>
                 <h2 className="mt-3 text-3xl font-semibold text-white">
@@ -911,9 +911,9 @@ export default function OptimizationPage() {
             <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="grid gap-4 sm:grid-cols-2">
                 {SIMULATOR_FIELDS.map((field) => (
-                  <div key={field.key} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+                  <div key={field.key} className="av-surface rounded-lg p-4">
                     <div className="mb-3 flex items-center justify-between">
-                      <p className="text-sm text-white/64">{field.label}</p>
+                      <p className="text-sm">{field.label}</p>
                       <span className="text-sm royal-text">
                         {simulatorControls[field.key]}
                         {field.suffix ? ` ${field.suffix}` : ""}
@@ -934,7 +934,7 @@ export default function OptimizationPage() {
                 ))}
               </div>
 
-              <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
+              <div className="av-surface rounded-lg p-5">
                 <p className="micro-label mb-5">Projection result</p>
                 {simulatorProjection ? (
                   <>
@@ -942,29 +942,29 @@ export default function OptimizationPage() {
                       <p className="text-6xl font-semibold leading-none text-white/88">
                         {simulatorProjection.biologicalAge}
                       </p>
-                      <p className="mb-1 text-sm uppercase tracking-[0.14em] text-white/24">
+                      <p className="av-subtle mb-1 text-sm uppercase tracking-[0.14em]">
                         yrs projected
                       </p>
                     </div>
                     <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-                        <p className="av-eyebrow text-white/24">
+                      <div className="av-surface-quiet rounded-lg p-4">
+                        <p className="av-eyebrow av-subtle">
                           Improvement
                         </p>
                         <p className="mt-2 text-2xl font-light royal-text">
                           {simulatorProjection.projectedAgeDeltaImprovement.toFixed(1)} yrs
                         </p>
                       </div>
-                      <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-                        <p className="av-eyebrow text-white/24">
+                      <div className="av-surface-quiet rounded-lg p-4">
+                        <p className="av-eyebrow av-subtle">
                           Score
                         </p>
-                        <p className="mt-2 text-2xl font-light text-white/72">
+                        <p className="mt-2 text-2xl font-light">
                           {simulatorProjection.score}
                         </p>
                       </div>
                     </div>
-                    <p className="mt-5 text-sm leading-7 text-white/42">
+                    <p className="av-muted mt-5 text-sm leading-7">
                       This is a deterministic projection from your current assessment, not a medical diagnosis.
                     </p>
                     <button
@@ -984,7 +984,7 @@ export default function OptimizationPage() {
                   />
                 )}
                 {projectionMessage && (
-                  <p className="mt-4 rounded-lg border border-white/[0.08] bg-white/[0.025] p-4 text-sm leading-6 text-white/55">
+                  <p className="av-surface av-muted mt-4 rounded-lg p-4 text-sm leading-6">
                     {projectionMessage}
                   </p>
                 )}
@@ -1042,30 +1042,30 @@ function FutureSelfComparisonPanel({
 
   return (
     <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
-      <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+      <div className="av-divider mb-6 flex flex-col gap-3 border-b pb-5 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="micro-label">Future self simulator</p>
           <h2 className="mt-3 text-3xl font-semibold text-white">
             Current trajectory versus optimized trajectory.
           </h2>
         </div>
-        <p className="max-w-sm text-sm leading-6 text-white/38">
+        <p className="av-muted max-w-sm text-sm leading-6">
           {futureSelf.summary}
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
-        <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
+        <div className="av-surface rounded-lg p-5">
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm text-white/52">Projected separation</p>
+              <p className="av-muted text-sm">Projected separation</p>
               <p className="mt-2 text-3xl font-semibold leading-none royal-text">
                 {finalPoint?.gap?.toFixed(1) || "0.0"} yrs
               </p>
             </div>
             <div className="text-left sm:text-right">
-              <p className="text-sm text-white/52">{futureSelf.headline}</p>
-              <p className="av-eyebrow mt-1 text-white/24">
+              <p className="av-muted text-sm">{futureSelf.headline}</p>
+              <p className="av-eyebrow av-subtle mt-1">
                 {futureSelf.horizonDays} day horizon
               </p>
             </div>
@@ -1111,35 +1111,35 @@ function FutureSelfComparisonPanel({
               ["Current", finalPoint?.currentBiologicalAge ?? futureSelf.baseline.biologicalAge],
               ["Optimized", finalPoint?.optimizedBiologicalAge ?? futureSelf.optimized.biologicalAge],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
-                <p className="av-eyebrow text-white/22">
+              <div key={label} className="av-surface-quiet rounded-lg p-3">
+                <p className="av-eyebrow av-subtle">
                   {label}
                 </p>
-                <p className="mt-2 text-sm text-white/64">{value} yrs</p>
+                <p className="mt-2 text-sm">{value} yrs</p>
               </div>
             ))}
           </div>
         </div>
 
         <div className="flex flex-col gap-3">
-          <div className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
+          <div className="av-surface rounded-lg p-5">
             <p className="micro-label mb-4">Dominant levers</p>
             <div className="space-y-3">
               {futureSelf.levers.slice(0, 4).map((lever) => (
-                <div key={lever.key} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-4">
+                <div key={lever.key} className="av-surface-quiet rounded-lg p-4">
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <p className="text-sm text-white/68">{lever.label}</p>
+                    <p className="text-sm">{lever.label}</p>
                     <span className={futureSelfImpactClassName(lever.impact)}>
                       {lever.impact}
                     </span>
                   </div>
-                  <p className="text-xs leading-5 text-white/36">
+                  <p className="av-muted text-xs leading-5">
                     {lever.current} → {lever.optimized}
                   </p>
                 </div>
               ))}
               {!futureSelf.levers.length && (
-                <p className="text-sm leading-7 text-white/38">
+                <p className="av-muted text-sm leading-7">
                   Move a simulator lever to create a stronger optimized path.
                 </p>
               )}
@@ -1163,7 +1163,7 @@ function FutureSelfComparisonPanel({
             {savingScenario ? "Saving scenario" : "Save shareable scenario"}
           </button>
           {saveMessage && (
-            <p className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4 text-sm leading-6 text-white/48">
+            <p className="av-surface av-muted rounded-lg p-4 text-sm leading-6">
               {saveMessage}
             </p>
           )}
@@ -1188,7 +1188,7 @@ function ScenarioStackPanel({
 }) {
   return (
     <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
-      <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+      <div className="av-divider mb-6 flex flex-col gap-3 border-b pb-5 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="micro-label">Scenario stack</p>
           <h2 className="mt-3 text-3xl font-semibold text-white">
@@ -1215,28 +1215,26 @@ function ScenarioStackPanel({
               type="button"
               aria-pressed={selected}
               onClick={() => onToggleScenario(scenario.id)}
-              className={`quiet-lift min-h-52 rounded-lg border p-4 text-left transition ${
-                selected
-                  ? "border-white/[0.18] bg-white/[0.065]"
-                  : "border-white/[0.07] bg-white/[0.025]"
+              className={`av-control-card min-h-52 rounded-lg border p-4 text-left transition ${
+                selected ? "av-control-card-active" : ""
               }`}
             >
               <div className="flex h-full flex-col">
                 <div className="mb-4 flex items-center justify-between gap-3">
-                  <span className="av-eyebrow text-white/24">
+                  <span className="av-eyebrow av-control-muted">
                     {scenario.domain}
                   </span>
-                  <span className={selected ? "royal-text text-sm" : "text-sm text-white/22"}>
+                  <span className={selected ? "royal-text text-sm" : "av-control-muted text-sm"}>
                     {selected ? "on" : "off"}
                   </span>
                 </div>
-                <p className="text-base font-light leading-6 text-white/78">
+                <p className="text-base font-light leading-6">
                   {scenario.title}
                 </p>
-                <p className="mt-3 line-clamp-4 text-xs leading-5 text-white/38">
+                <p className="av-control-muted mt-3 line-clamp-4 text-xs leading-5">
                   {scenario.description}
                 </p>
-                <p className="av-eyebrow mt-auto pt-4 text-white/24">
+                <p className="av-eyebrow av-control-muted mt-auto pt-4">
                   {scenario.horizon}
                 </p>
               </div>
@@ -1265,7 +1263,7 @@ function SavedFutureSelfScenariosPanel({
 
   return (
     <div className="mt-6 executive-panel rounded-lg p-6 md:p-7">
-      <div className="mb-6 flex flex-col gap-3 border-b border-white/[0.06] pb-5 md:flex-row md:items-end md:justify-between">
+      <div className="av-divider mb-6 flex flex-col gap-3 border-b pb-5 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="micro-label">Saved Future Selves</p>
           <h2 className="mt-3 text-3xl font-semibold text-white">
@@ -1273,7 +1271,7 @@ function SavedFutureSelfScenariosPanel({
           </h2>
         </div>
         {message && (
-          <p className="max-w-sm text-sm leading-6 text-white/42">
+          <p className="av-muted max-w-sm text-sm leading-6">
             {message}
           </p>
         )}
@@ -1288,8 +1286,8 @@ function SavedFutureSelfScenariosPanel({
               return (
                 <div
                   key={scenario.id}
-                  className={`quiet-lift rounded-lg border bg-white/[0.025] p-5 transition ${
-                    selected ? "border-white/[0.18]" : "border-white/[0.07] hover:border-white/[0.16]"
+                  className={`av-control-card rounded-lg border p-5 transition ${
+                    selected ? "av-control-card-active" : ""
                   }`}
                 >
                   <Link
@@ -1297,20 +1295,20 @@ function SavedFutureSelfScenariosPanel({
                     className="flex min-h-36 flex-col"
                   >
                     <div className="mb-4 flex items-center justify-between gap-3">
-                      <span className="av-eyebrow text-white/24">
+                      <span className="av-eyebrow av-control-muted">
                         v{scenario.version_number || 1}
                       </span>
                       <span className="royal-text text-sm">
                         {scenario.scenario_ids.length || 1}
                       </span>
                     </div>
-                    <p className="text-lg font-light leading-7 text-white/80">
+                    <p className="text-lg font-light leading-7">
                       {scenario.title}
                     </p>
-                    <p className="mt-3 line-clamp-3 text-xs leading-5 text-white/38">
+                    <p className="av-control-muted mt-3 line-clamp-3 text-xs leading-5">
                       {scenario.description || "Saved future-self projection."}
                     </p>
-                    <p className="av-eyebrow mt-auto pt-4 text-white/24">
+                    <p className="av-eyebrow av-control-muted mt-auto pt-4">
                       {formatScenarioDate(scenario.created_at)}
                     </p>
                   </Link>
@@ -1331,7 +1329,7 @@ function SavedFutureSelfScenariosPanel({
           )}
         </>
       ) : (
-        <p className="text-sm leading-7 text-white/42">
+        <p className="av-muted text-sm leading-7">
           Save a future-self projection to create a public read-only scenario page.
         </p>
       )}
@@ -1345,24 +1343,24 @@ function ScenarioComparisonPanel({
   scenarios: SavedFutureSelfScenario[];
 }) {
   return (
-    <div className="mt-5 rounded-lg border border-white/[0.07] bg-white/[0.025] p-5">
+    <div className="av-surface mt-5 rounded-lg p-5">
       <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="micro-label">Scenario comparison</p>
-          <p className="mt-3 text-xl font-light text-white/82">
+          <p className="mt-3 text-xl font-light">
             Compare saved future-self versions.
           </p>
         </div>
-        <p className="text-sm text-white/34">
+        <p className="av-muted text-sm">
           Select two saved scenarios for the clearest contrast.
         </p>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
         {scenarios.map((scenario) => (
-          <div key={scenario.id} className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
+          <div key={scenario.id} className="av-surface-quiet rounded-lg p-4">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <p className="text-sm text-white/72">{scenario.title}</p>
+              <p className="text-sm">{scenario.title}</p>
               <span className="royal-text text-sm">v{scenario.version_number || 1}</span>
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -1371,17 +1369,17 @@ function ScenarioComparisonPanel({
                 ["Score", scenario.future_self?.optimized?.score ?? scenario.projection?.score],
                 ["Gain", scenario.future_self?.optimized?.projectedBiologicalAgeImprovement ?? scenario.projection?.projectedBiologicalAgeImprovement],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-3">
-                  <p className="av-eyebrow text-white/22">
+                <div key={label} className="av-surface rounded-lg p-3">
+                  <p className="av-eyebrow av-subtle">
                     {label}
                   </p>
-                  <p className="mt-2 text-sm text-white/64">
+                  <p className="mt-2 text-sm">
                     {typeof value === "number" ? value.toFixed(label === "Score" ? 0 : 1) : "--"}
                   </p>
                 </div>
               ))}
             </div>
-            <p className="mt-4 text-xs leading-5 text-white/36">
+            <p className="av-muted mt-4 text-xs leading-5">
               {scenario.future_self?.headline || scenario.description || "Saved projection"}
             </p>
           </div>
@@ -1453,11 +1451,10 @@ function buildFutureSelfChart(points: FutureSelfProjection["trajectory"]) {
 }
 
 function futureSelfImpactClassName(impact: "low" | "medium" | "high") {
-  const base = "av-eyebrow rounded-md px-2 py-1";
+  const base = "av-eyebrow av-chip-control rounded-md px-2 py-1";
 
-  if (impact === "high") return `${base} royal-text bg-white/[0.035]`;
-  if (impact === "medium") return `${base} text-white/42 bg-white/[0.025]`;
-  return `${base} text-white/28 bg-white/[0.02]`;
+  if (impact === "high") return `${base} av-chip-control-active`;
+  return base;
 }
 
 function formatScenarioDate(value: string) {

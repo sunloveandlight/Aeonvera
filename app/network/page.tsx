@@ -327,13 +327,13 @@ export default function NetworkPage() {
 
           <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr]">
             <div className="executive-panel rounded-lg p-6 md:p-7">
-              <div className="mb-6 flex items-start justify-between gap-4 border-b border-white/[0.06] pb-5">
+              <div className="av-divider mb-6 flex items-start justify-between gap-4 border-b pb-5">
                 <div>
                   <p className="micro-label">Invite Role</p>
                   <h1 className="mt-3 text-5xl md:text-6xl font-semibold text-white">
                     Build your longevity network.
                   </h1>
-                  <p className="mt-4 text-sm leading-7 text-white/48">
+                  <p className="av-muted mt-4 text-sm leading-7">
                     Invite the right people into scoped, read-only intelligence views.
                   </p>
                 </div>
@@ -346,7 +346,7 @@ export default function NetworkPage() {
                   onChange={(event) =>
                     setForm((current) => ({ ...current, memberEmail: event.target.value }))
                   }
-                  className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/70 outline-none placeholder:text-white/24"
+                  className="av-field h-11 w-full rounded-md px-3 text-sm"
                   aria-label="Member email"
                   placeholder="Member email"
                 />
@@ -355,7 +355,7 @@ export default function NetworkPage() {
                   onChange={(event) =>
                     setForm((current) => ({ ...current, memberName: event.target.value }))
                   }
-                  className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/70 outline-none placeholder:text-white/24"
+                  className="av-field h-11 w-full rounded-md px-3 text-sm"
                   aria-label="Name or label"
                   placeholder="Name or label"
                 />
@@ -387,7 +387,7 @@ export default function NetworkPage() {
                       expiresInDays: Number(event.target.value),
                     }))
                   }
-                  className="h-11 w-full rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-sm text-white/70 outline-none"
+                  className="av-field h-11 w-full rounded-md px-3 text-sm"
                 >
                   <option value={7}>Expires in 7 days</option>
                   <option value={14}>Expires in 14 days</option>
@@ -396,7 +396,7 @@ export default function NetworkPage() {
                 </select>
 
                 <div>
-                  <p className="av-eyebrow mb-3 text-white/28">
+                  <p className="av-eyebrow av-subtle mb-3">
                     Permissions
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -416,7 +416,7 @@ export default function NetworkPage() {
                       </button>
                     ))}
                   </div>
-                  <p className="mt-3 text-xs leading-5 text-white/34">
+                  <p className="av-subtle mt-3 text-xs leading-5">
                     Aeonvera limits each role to the minimum useful information surface. Change the role to change the available scope.
                   </p>
                 </div>
@@ -430,12 +430,12 @@ export default function NetworkPage() {
                   <ShieldCheck size={16} />
                   {creating ? "Creating invitation" : "Create invitation"}
                 </button>
-                {message && <p className="text-sm leading-6 text-white/48">{message}</p>}
+                {message && <p className="av-muted text-sm leading-6">{message}</p>}
               </div>
             </div>
 
             <div className="executive-panel rounded-lg p-6 md:p-7">
-              <div className="mb-6 border-b border-white/[0.06] pb-5">
+              <div className="av-divider mb-6 border-b pb-5">
                 <p className="micro-label">Active Network</p>
                 <h2 className="mt-3 text-3xl font-semibold text-white">
                   Roles, access, and revocation.
@@ -446,20 +446,20 @@ export default function NetworkPage() {
                 {invitations.map((invitation) => (
                   <div
                     key={invitation.id}
-                    className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4"
+                    className="av-surface rounded-lg p-4"
                   >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm text-white/76">
+                        <p className="text-sm">
                           {invitation.memberName || invitation.memberEmail}
                         </p>
-                        <p className="mt-1 text-xs text-white/38">
+                        <p className="av-muted mt-1 text-xs">
                           {ROLE_COPY[invitation.role].title} / {invitation.status} / opened {invitation.accessCount} time{invitation.accessCount === 1 ? "" : "s"}
                         </p>
-                        <p className="mt-2 text-xs text-white/32">
+                        <p className="av-subtle mt-2 text-xs">
                           Expires {formatDate(invitation.expiresAt)}
                         </p>
-                        <p className="mt-1 text-xs text-white/32">
+                        <p className="av-subtle mt-1 text-xs">
                           Last opened {formatDateTime(invitation.lastAccessedAt)}
                         </p>
                         <InvitationAccessHint invitation={invitation} />
@@ -502,8 +502,8 @@ export default function NetworkPage() {
                       </div>
                     </div>
                     {invitation.status !== "revoked" && (
-                      <div className="mt-4 border-t border-white/[0.05] pt-3">
-                        <p className="av-eyebrow mb-2 text-white/28">
+                      <div className="av-divider mt-4 border-t pt-3">
+                        <p className="av-eyebrow av-subtle mb-2">
                           Extend access
                         </p>
                         <div className="flex flex-wrap gap-2">
@@ -524,7 +524,7 @@ export default function NetworkPage() {
                       {invitation.permissions.map((permission) => (
                         <span
                           key={`${invitation.id}-${permission}`}
-                          className="av-eyebrow rounded-md border border-white/[0.07] bg-black/20 px-2 py-1 text-white/36"
+                          className="av-chip-control av-eyebrow px-2 py-1"
                         >
                           {permission.replace(/_/g, " ")}
                         </span>
@@ -534,8 +534,8 @@ export default function NetworkPage() {
                 ))}
 
                 {!invitations.length && (
-                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-5">
-                    <p className="text-sm text-white/58">
+                  <div className="av-surface rounded-lg p-5">
+                    <p className="av-muted text-sm">
                       No care network roles yet. Invite a physician, coach, or family member to open the first controlled view.
                     </p>
                   </div>
@@ -557,7 +557,7 @@ function InvitationAccessHint({ invitation }: { invitation: CareInvitation }) {
         <p className="inline-flex rounded-md border border-[rgba(var(--gold),0.2)] bg-[rgba(var(--gold),0.06)] px-2 py-1 text-xs text-[rgba(var(--gold),0.8)]">
           Access code: {invitation.accessCode}
         </p>
-        <p className="text-xs leading-5 text-white/34">
+        <p className="av-subtle text-xs leading-5">
           Send the message to this person.
         </p>
       </div>
@@ -566,7 +566,7 @@ function InvitationAccessHint({ invitation }: { invitation: CareInvitation }) {
 
   if (invitation.requiresAccessCode) {
     return (
-      <p className="mt-2 text-xs text-white/34">
+        <p className="av-subtle mt-2 text-xs">
         Protected by an access code shown when this invite was created.
       </p>
     );
@@ -600,7 +600,7 @@ function NetworkIntelligencePanel({
   return (
     <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
       <div className="executive-panel rounded-lg p-6 md:p-7">
-        <div className="mb-5 flex items-start justify-between gap-4 border-b border-white/[0.06] pb-4">
+        <div className="av-divider mb-5 flex items-start justify-between gap-4 border-b pb-4">
           <div>
             <p className="micro-label">Network Activity</p>
             <h2 className="mt-3 text-3xl font-semibold text-white">Who has seen what.</h2>
@@ -618,13 +618,13 @@ function NetworkIntelligencePanel({
           {activity.map((item) => (
             <div
               key={item}
-              className="rounded-md border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-sm leading-6 text-white/50"
+              className="av-surface-quiet rounded-md px-3 py-2 text-sm leading-6"
             >
               {item}
             </div>
           ))}
           {!activity.length && (
-            <div className="rounded-md border border-white/[0.06] bg-white/[0.025] px-3 py-3 text-sm leading-6 text-white/45">
+            <div className="av-surface-quiet rounded-md px-3 py-3 text-sm leading-6">
               No network activity yet. Aeonvera will show openings, expirations, and pending invites here.
             </div>
           )}
@@ -632,7 +632,7 @@ function NetworkIntelligencePanel({
       </div>
 
       <div className="executive-panel rounded-lg p-6 md:p-7">
-        <div className="mb-5 flex items-start justify-between gap-4 border-b border-white/[0.06] pb-4">
+        <div className="av-divider mb-5 flex items-start justify-between gap-4 border-b pb-4">
           <div>
             <p className="micro-label">Recommended Roles</p>
             <h2 className="mt-3 text-3xl font-semibold text-white">Invite with intent.</h2>
@@ -670,8 +670,8 @@ function NetworkIntelligencePanel({
 
 function MetricPill({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex min-h-[5.5rem] flex-col justify-between rounded-md border border-white/[0.06] bg-black/20 px-3 py-3">
-      <p className="av-eyebrow text-white/28">{label}</p>
+    <div className="av-surface-quiet flex min-h-[5.5rem] flex-col justify-between rounded-md px-3 py-3">
+      <p className="av-eyebrow av-subtle">{label}</p>
       <p className="tabular-nums text-2xl font-light leading-none text-white">{value}</p>
     </div>
   );
