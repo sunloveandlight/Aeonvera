@@ -351,9 +351,9 @@ export default function PricingPage() {
         <div className="aeon-apple-copy aeon-apple-copy-center">
           {activePlan && ownedCopy && activePlanDetails ? (
             <>
-              <h1>Your {activePlanDetails.name} membership is online.</h1>
+              <h1>Your {activePlanDetails.name} membership.</h1>
               <p>
-                Your tier stays online until you choose otherwise. Manage billing
+                Your tier stays in place until you choose otherwise. Manage billing
                 or move into any other plan.
               </p>
             </>
@@ -399,7 +399,7 @@ export default function PricingPage() {
                 <span className="aeon-apple-plan-body">{plan.summary}</span>
                 <span className="aeon-apple-plan-divider" aria-hidden />
                 {activePlan && plan.id === activePlan ? (
-                  <span className="aeon-apple-plan-price">Online</span>
+                  <span className="aeon-apple-plan-price">Current</span>
                 ) : (
                   <span className="aeon-apple-plan-price">
                     {plan.price}
@@ -407,7 +407,7 @@ export default function PricingPage() {
                   </span>
                 )}
                 <span className="aeon-apple-plan-depth">
-                  {activePlan && plan.id === activePlan ? "Membership online" : "Billed monthly"}
+                  {activePlan && plan.id === activePlan ? "Your membership" : "Billed monthly"}
                 </span>
                 <span className="aeon-apple-plan-feature-list">
                   {plan.features.slice(0, 4).map((feature) => (

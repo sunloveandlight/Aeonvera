@@ -806,15 +806,15 @@ export default function DashboardPage() {
   const activationMessage = activatedPlan
     ? {
         core: {
-          title: "Core membership online",
+          title: "Core membership",
           body: "Your baseline, assessment, biological age, and first longevity report are ready to build from.",
         },
         elite: {
-          title: "Elite membership online",
+          title: "Elite membership",
           body: "Your optimization tier is live with proactive coach delivery, wearable-state updates, and deeper regeneration paths.",
         },
         sovereign: {
-          title: "Sovereign membership online",
+          title: "Sovereign membership",
           body: "Your executive tier is live with the complete digital-twin path, exports, and concierge-grade intelligence layer.",
         },
       }[activatedPlan]

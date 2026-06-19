@@ -291,7 +291,7 @@ export default function HomePage() {
         <section className="aeon-apple-member">
           <div className="aeon-member-system">
             <span className="aeon-member-kicker">
-              {activePlanDetails?.name || activePlan} membership online
+              {activePlanDetails?.name || activePlan} membership
             </span>
             <h2>Your biological future is already online.</h2>
             <p>
