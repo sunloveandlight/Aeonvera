@@ -11,20 +11,17 @@ export default function SubmitButton({ children, loading }: SubmitButtonProps) {
     <button
       type="submit"
       disabled={loading}
+      aria-busy={loading}
       className={`
+        premium-action
         inline-flex w-full items-center justify-center
         h-11
         rounded-lg
         text-sm
         font-medium
         tracking-normal
-        transition-all
-        duration-300
-        ${
-          loading
-            ? "bg-white/10 text-white/30 cursor-not-allowed"
-            : "premium-action"
-        }
+        transition
+        disabled:cursor-not-allowed
       `}
     >
       {loading ? "Processing..." : children}

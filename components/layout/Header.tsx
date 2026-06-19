@@ -220,7 +220,7 @@ export default function Header() {
       className="premium-header fixed inset-x-0 top-0 z-50"
       onMouseLeave={() => setActiveMenu(null)}
     >
-      <div className="mx-auto flex h-11 max-w-6xl items-center justify-between px-5 lg:px-8">
+      <div className="mx-auto grid h-11 max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-5 lg:px-8">
         <Link
           href="/"
           onClick={() => {
@@ -228,14 +228,14 @@ export default function Header() {
             setActiveMenu(null);
             setMobileOpen(false);
           }}
-          className="group inline-flex min-h-11 items-center gap-2.5 text-[0.69rem] font-medium tracking-[0.18em] transition-colors duration-300"
+          className="group inline-flex min-h-11 justify-self-start items-center gap-2.5 text-[0.69rem] font-medium tracking-[0.18em] transition-colors duration-300"
           data-premium-brand
         >
           <span className="brand-mark" aria-hidden />
           <span>AEONVERA</span>
         </Link>
 
-        <nav className="hidden items-center gap-0.5 md:flex" aria-label="Primary navigation">
+        <nav className="hidden items-center gap-0.5 justify-self-center md:flex" aria-label="Primary navigation">
           {navGroups.map((group) => {
             const active = isActive(pathname, group.href);
             const expanded = activeMenuLabel === group.label;
@@ -257,7 +257,7 @@ export default function Header() {
           })}
         </nav>
 
-        <div className="flex min-h-11 items-center gap-1.5">
+        <div className="flex min-h-11 items-center justify-end gap-1.5 justify-self-end">
           <Link
             href="/companion"
             onClick={() => {

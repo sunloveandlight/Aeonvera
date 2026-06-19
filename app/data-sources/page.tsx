@@ -379,7 +379,7 @@ export default function DataSourcesPage() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="micro-label">Data Sources</p>
-              <h1 className="mt-5 max-w-4xl leading-tight text-white text-5xl md:text-6xl font-semibold">
+              <h1 className="data-sources-title mt-5 max-w-full font-semibold text-white md:max-w-4xl">
                 Your health intelligence starts with clean signal.
               </h1>
               <p className="mt-5 max-w-3xl text-sm leading-7 text-white/52">

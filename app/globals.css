@@ -5562,6 +5562,65 @@ input[type="number"]::-webkit-inner-spin-button {
   cursor: not-allowed !important;
 }
 
+[data-aeonvera-content] .data-sources-title {
+  font-size: 2.15rem !important;
+  line-height: 1.08 !important;
+  letter-spacing: 0 !important;
+  overflow-wrap: normal;
+}
+
+@media (min-width: 640px) {
+  [data-aeonvera-content] .data-sources-title {
+    font-size: 3rem !important;
+    line-height: 1.06 !important;
+  }
+}
+
+@media (min-width: 768px) {
+  [data-aeonvera-content] .data-sources-title {
+    font-size: var(--text-6xl) !important;
+    line-height: 1.04 !important;
+  }
+}
+
+/* Final mobile orb contract: keep voice reachable without covering copy/cards. */
+@media (max-width: 767px) {
+  body:has(.aeon-orb-system) main {
+    padding-bottom: max(7rem, calc(env(safe-area-inset-bottom) + 6.25rem));
+  }
+
+  .aeon-orb-system {
+    left: auto !important;
+    right: max(0.85rem, env(safe-area-inset-right)) !important;
+    bottom: max(0.8rem, calc(env(safe-area-inset-bottom) + 0.75rem)) !important;
+    align-items: flex-start !important;
+    max-width: calc(100vw - 1.7rem) !important;
+    transform: none !important;
+  }
+
+  .aeon-orb-system-idle .aeon-command-orb,
+  .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb {
+    opacity: 0.42 !important;
+    filter: saturate(0.76) brightness(0.98) !important;
+    transform: translateY(0.1rem) scale(0.68) !important;
+  }
+
+  .aeon-orb-system-idle .aeon-command-orb::before,
+  .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb::before {
+    opacity: 0.02 !important;
+  }
+
+  .aeon-orb-system-idle:hover .aeon-command-orb,
+  .aeon-orb-system-idle:focus-within .aeon-command-orb,
+  .aeon-orb-system-content-aware:hover .aeon-command-orb,
+  .aeon-orb-system-content-aware:focus-within .aeon-command-orb,
+  .aeon-command-orb-open {
+    opacity: 1 !important;
+    filter: saturate(0.96) brightness(1.08) !important;
+    transform: translateY(-0.04rem) scale(0.94) !important;
+  }
+}
+
 /* =====================================================================
    AEONVERA EYEBROW — single source of truth for the uppercase kicker
    label. Replaces ~209 ad-hoc text-[8-11px] uppercase tracking-[..] combos.
