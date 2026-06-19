@@ -5534,12 +5534,12 @@ input[type="number"]::-webkit-inner-spin-button {
   transition: none !important;
 }
 
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
   position: relative !important;
   isolation: auto !important;
   overflow: visible !important;
@@ -5567,28 +5567,28 @@ input[type="number"]::-webkit-inner-spin-button {
   transition: color 140ms ease, opacity 140ms ease !important;
 }
 
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
   color: rgba(245, 231, 190, 0.96) !important;
   text-shadow:
     0 1px 0 rgba(0, 0, 0, 0.32),
     0 0 1.1rem rgba(0, 0, 0, 0.2) !important;
 }
 
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
   color: rgba(72, 51, 16, 0.98) !important;
 }
 
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
   color: rgba(255, 244, 214, 0.98) !important;
 }
 
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
   color: rgba(245, 231, 190, 0.96) !important;
   text-shadow:
     0 1px 0 rgba(0, 0, 0, 0.32),
@@ -5623,10 +5623,10 @@ input[type="number"]::-webkit-inner-spin-button {
   color: rgba(126, 99, 57, 0.82) !important;
 }
 
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after {
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::after,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::after {
   content: none !important;
   display: none !important;
 }
@@ -5813,20 +5813,20 @@ input[type="number"]::-webkit-inner-spin-button {
   transition: opacity 140ms ease, outline-color 140ms ease !important;
 }
 
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible,
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible,
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.aeon-apple-section-dark, .aeon-apple-hero, .aeon-member-actions, .aeon-orb-showcase) :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
   color: var(--av-btn-secondary-dark) !important;
   text-shadow: var(--av-btn-secondary-shadow) !important;
 }
 
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::before,
-:root[data-theme="dark"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action)::after {
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::after,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::before,
+:root[data-theme="dark"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action)::after {
   content: none !important;
   display: none !important;
 }
@@ -5922,6 +5922,15 @@ input[type="number"]::-webkit-inner-spin-button {
 
 /* Button system v3: single final authority. Keep material stable on hover. */
 :root {
+  --av-surface-control-bg: rgba(255, 255, 255, 0.72);
+  --av-surface-control-border: rgba(39, 34, 24, 0.12);
+  --av-surface-control-text: rgba(32, 33, 37, 0.84);
+  --av-surface-control-active-bg: rgba(142, 103, 33, 0.09);
+  --av-surface-control-active-border: rgba(142, 103, 33, 0.3);
+  --av-surface-control-active-text: rgba(70, 49, 12, 0.94);
+}
+
+:root[data-theme="dark"] {
   --av-surface-control-bg: rgba(255, 255, 255, 0.045);
   --av-surface-control-border: rgba(255, 255, 255, 0.11);
   --av-surface-control-text: rgba(247, 247, 244, 0.72);
@@ -6005,9 +6014,9 @@ input[type="number"]::-webkit-inner-spin-button {
   letter-spacing: 0 !important;
 }
 
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action),
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):hover,
-:root[data-theme="light"] :is(.premium-action-secondary, .premium-action-ghost, .premium-button-secondary, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action),
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):hover,
+:root[data-theme="light"] :is(.premium-action-ghost, .apple-cta-link):not(.aeon-apple-plan-action):focus-visible {
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
@@ -6267,4 +6276,12 @@ input[type="number"]::-webkit-inner-spin-button {
 :root[data-theme="dark"] :is(.premium-action-secondary, .premium-button-secondary):not(.aeon-apple-plan-action) > * {
   color: currentColor !important;
   stroke: currentColor !important;
+}
+
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-button-secondary):not(.aeon-apple-plan-action)::before,
+:root[data-theme="light"] :is(.premium-action-secondary, .premium-button-secondary):not(.aeon-apple-plan-action)::after,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-button-secondary):not(.aeon-apple-plan-action)::before,
+:root[data-theme="dark"] :is(.premium-action-secondary, .premium-button-secondary):not(.aeon-apple-plan-action)::after {
+  content: none !important;
+  display: none !important;
 }

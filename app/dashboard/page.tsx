@@ -1175,8 +1175,13 @@ export default function DashboardPage() {
 
         <button
           type="button"
+          aria-expanded={showAdvancedConsole}
           onClick={() => setShowAdvancedConsole((value) => !value)}
-          className="group flex w-full items-center justify-between gap-4 rounded-lg border border-white/[0.08] bg-white/[0.025] px-5 py-4 text-left transition hover:border-white/[0.14] hover:bg-white/[0.04]"
+          className={`av-control-card group flex w-full items-center justify-between gap-4 rounded-lg border px-5 py-4 text-left transition ${
+            showAdvancedConsole
+              ? "av-control-card-active border-[rgba(var(--gold),0.28)] bg-[rgba(var(--gold),0.08)]"
+              : "border-white/[0.08] bg-white/[0.025]"
+          }`}
         >
           <div>
             <p className="text-sm font-light text-white/76">More detail</p>

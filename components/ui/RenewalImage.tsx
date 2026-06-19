@@ -26,7 +26,7 @@ export default function RenewalImage({
     <figure
       className={`relative overflow-hidden rounded-3xl border border-white/[0.08] ${className}`}
     >
-      <div className="aspect-[4/5] w-full">
+      <div className="relative aspect-[4/5] w-full">
         {failed ? (
           <div className="renewal-placeholder flex h-full w-full flex-col items-center justify-center gap-2 px-6 text-center">
             <span className="text-sm font-medium text-white/70">{alt}</span>

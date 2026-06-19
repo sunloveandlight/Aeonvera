@@ -7,8 +7,9 @@ Last updated: 2026-06-18
 - Consolidated dashboard-style card controls under `av-control-card`.
 - Verified signed-in routes across light/dark and desktop/mobile with a disposable Sovereign QA account.
 - Latest authenticated visual audit artifact: 16 routes x 2 themes x 2 viewport classes, 0 scripted button/control issues, 0 protected-route redirects.
-- Verification artifact: `/tmp/aeonvera-auth-audit-v9/audit.json`.
+- Verification artifact: `/tmp/aeonvera-auth-audit-v10/audit.json`.
 - Manual computed-style review later found cascade-contract issues that the script did not catch; the button/control system should be judged by both screenshot review and computed style checks.
+- Follow-up cleanup confirmed legacy product pages still carry many `text-white/*`, `bg-white/*`, and `border-white/*` utilities, so global utility normalizers should be narrowed only after those pages are migrated to explicit product-surface classes.
 
 ## Audit Decisions
 

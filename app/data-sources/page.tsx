@@ -643,7 +643,7 @@ function SourceCard({
       <h2 className="mt-5 text-2xl font-semibold text-white">{title}</h2>
       <p className="mt-3 flex-1 text-sm leading-7 text-white/48">{detail}</p>
       {href ? (
-        <span className="mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em] text-[rgba(var(--gold),0.78)]">
+        <span className="royal-text mt-5 inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.14em]">
           {actionLabel}
           <ArrowRight size={13} />
         </span>

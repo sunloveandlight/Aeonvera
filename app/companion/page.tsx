@@ -1193,7 +1193,7 @@ function PersonalHealthAgentPanel({
                 type="button"
                 onClick={() => onSend(suggestion)}
                 disabled={thinking}
-                className="inline-flex min-h-9 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-left text-[10px] uppercase tracking-[0.12em] text-white/48 transition hover:border-[rgba(var(--gold),0.35)] hover:text-white/78 disabled:cursor-not-allowed disabled:opacity-45"
+                className="av-control-card inline-flex min-h-9 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.025] px-3 text-left text-[10px] uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {suggestion}
               </button>
