@@ -18,6 +18,8 @@ export default function robots(): MetadataRoute.Robots {
         "/report",
         "/memory",
         "/settings",
+        "/login",
+        "/physician-export",
         "/onboarding",
         "/success",
         "/care-network/",

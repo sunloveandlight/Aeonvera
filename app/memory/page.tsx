@@ -171,14 +171,14 @@ export default function MemoryPage() {
   if (loading) {
     return (
       <PageContainer>
-        <main className="py-14">
+        <div className="py-14">
           <AccessState
             eyebrow="Agent Memory"
             title="Reading the personal model."
             body="Aeonvera is loading coaching style, execution patterns, and remembered preferences."
             actions={[]}
           />
-        </main>
+        </div>
       </PageContainer>
     );
   }
@@ -186,14 +186,14 @@ export default function MemoryPage() {
   if (authenticated === false) {
     return (
       <PageContainer>
-        <main className="py-14">
+        <div className="py-14">
           <AccessState
             eyebrow="Agent Memory"
             title="Sign in to view what Aeonvera knows."
             body="Your memory model belongs inside your private account."
             actions={[{ href: "/login?mode=signin", label: "Sign in" }]}
           />
-        </main>
+        </div>
       </PageContainer>
     );
   }
@@ -201,21 +201,21 @@ export default function MemoryPage() {
   if (locked) {
     return (
       <PageContainer>
-        <main className="py-14">
+        <div className="py-14">
           <AccessState
             eyebrow="Agent Memory"
             title="Adaptive memory unlocks with Elite."
             body="Persistent preferences, coaching style, and proactive personalization are part of the higher intelligence tiers."
             actions={[{ href: "/pricing", label: "View plans" }]}
           />
-        </main>
+        </div>
       </PageContainer>
     );
   }
 
   return (
     <PageContainer>
-      <main className="py-14 md:py-16">
+      <div className="py-14 md:py-16">
         <section className="executive-panel rounded-lg p-6 md:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -408,7 +408,7 @@ export default function MemoryPage() {
             />
           )}
         </section>
-      </main>
+      </div>
     </PageContainer>
   );
 }

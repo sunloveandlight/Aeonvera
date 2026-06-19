@@ -955,18 +955,18 @@ export default function DashboardPage() {
           <Card title="BIOLOGICAL AGE" glow className="min-h-[340px]">
             {bioAge ? (
               <div className="flex h-full flex-col">
-                <div className="dashboard-hero-metric-block grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8">
+                <div className="dashboard-hero-metric-block grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-8">
                     <div>
                       <p className="micro-label mb-2">Biological</p>
                       <div className="flex items-baseline gap-3">
-                        <p className={`metric-display text-7xl md:text-8xl font-semibold tracking-tight leading-none ${bioAgeColor}`}>
+                        <p className={`metric-display text-6xl sm:text-7xl md:text-8xl font-semibold tracking-tight leading-none ${bioAgeColor}`}>
                           {bioAge}
                         </p>
                         <span className="text-2xl font-light leading-none text-white/24">yrs</span>
                       </div>
                     </div>
                     {assessmentAge && (
-                      <div className="min-w-[8rem] border-l border-white/[0.07] pl-5">
+                      <div className="border-t border-white/[0.07] pt-4 sm:min-w-[8rem] sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
                         <p className="micro-label mb-2">Chronological</p>
                         <div className="flex items-baseline gap-2">
                           <p className="text-3xl font-semibold leading-none text-white/58">{assessmentAge}</p>

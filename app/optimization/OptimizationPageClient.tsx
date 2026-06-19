@@ -508,14 +508,14 @@ export default function OptimizationPage() {
   if (!authChecked) {
     return (
       <PageContainer>
-        <main className="py-14">
+        <div className="py-14">
           <AccessState
             eyebrow="Optimization"
             title="Preparing your private intake."
             body="Aeonvera is checking your account before opening advanced optimization."
             actions={[{ href: "/pricing", label: "View tiers", variant: "secondary" }]}
           />
-        </main>
+        </div>
       </PageContainer>
     );
   }
@@ -523,7 +523,7 @@ export default function OptimizationPage() {
   if (signedOut) {
     return (
       <PageContainer>
-        <main className="py-14">
+        <div className="py-14">
           <AccessState
             eyebrow="Optimization"
             title="Sign in to build a personal protocol."
@@ -538,7 +538,7 @@ export default function OptimizationPage() {
               { href: "/pricing", label: "Compare tiers", variant: "secondary" },
             ]}
           />
-        </main>
+        </div>
       </PageContainer>
     );
   }
@@ -546,7 +546,7 @@ export default function OptimizationPage() {
   if (locked) {
     return (
       <PageContainer>
-        <main className="py-14">
+        <div className="py-14">
           <AccessState
             eyebrow="Optimization"
             title="Choose a plan to build protocols."
@@ -561,7 +561,7 @@ export default function OptimizationPage() {
               { href: "/assessment", label: "Complete assessment", variant: "secondary" },
             ]}
           />
-        </main>
+        </div>
       </PageContainer>
     );
   }

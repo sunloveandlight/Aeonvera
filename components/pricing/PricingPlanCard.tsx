@@ -49,21 +49,8 @@ export default function PricingPlanCard({
 
   return (
     <div
-      role="button"
-      tabIndex={disabled ? -1 : 0}
-      aria-disabled={disabled}
-      onClick={() => {
-        if (!disabled) onSelect(plan.id);
-      }}
-      onKeyDown={(event) => {
-        if (disabled) return;
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onSelect(plan.id);
-        }
-      }}
-      className={`pricing-plan-card flex h-full min-h-[31rem] cursor-pointer flex-col rounded-lg border p-7 ${
-        disabled ? "pointer-events-none opacity-60" : ""
+      className={`pricing-plan-card flex h-full min-h-[31rem] flex-col rounded-lg border p-7 ${
+        disabled ? "opacity-60" : ""
       } ${
         isCurrent
           ? "pricing-plan-card-current"
@@ -99,10 +86,8 @@ export default function PricingPlanCard({
         </p>
         <button
           type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            setExpanded((open) => !open);
-          }}
+          aria-expanded={expanded}
+          onClick={() => setExpanded((open) => !open)}
           className="mt-4 text-left text-[10px] uppercase tracking-[0.14em] text-white/30 transition hover:text-white/62"
         >
           {expanded ? "Show less" : "Explore details"}
@@ -160,10 +145,7 @@ export default function PricingPlanCard({
 
       <button
         type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          onSelect(plan.id);
-        }}
+        onClick={() => onSelect(plan.id)}
         disabled={disabled}
         className="premium-action mt-9 inline-flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
       >

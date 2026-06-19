@@ -246,13 +246,13 @@ export default function LifeOsPage() {
 
   return (
     <PageContainer>
-      <main className="py-14 md:py-16">
+      <div className="py-14 md:py-16">
         {loading ? (
           <AccessState
             eyebrow="Life OS"
             title="Loading your trajectory."
             body="Aeonvera is assembling health, capability, behavior, and support signals into a whole-life operating model."
-            actions={[{ href: "/digital-twin", label: "Digital Twin", variant: "secondary" }]}
+            actions={[]}
           />
         ) : signedOut ? (
           <AccessState
@@ -407,7 +407,7 @@ export default function LifeOsPage() {
             </section>
           </div>
         )}
-      </main>
+      </div>
     </PageContainer>
   );
 }

@@ -15,7 +15,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <main className="flex min-h-[72vh] flex-col items-center justify-center px-6 pt-24 pb-16 text-center">
+    <div className="flex min-h-[72vh] flex-col items-center justify-center px-6 pt-24 pb-16 text-center">
       <p className="text-eyebrow">Something went wrong</p>
       <h1 className="mt-5 text-5xl md:text-6xl font-semibold tracking-tight text-white">
         We hit a snag.
@@ -38,6 +38,6 @@ export default function Error({
           Back to home
         </Link>
       </div>
-    </main>
+    </div>
   );
 }

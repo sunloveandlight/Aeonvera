@@ -292,7 +292,7 @@ export default function NetworkPage() {
             eyebrow="Care Network"
             title="Loading your private network."
             body="Aeonvera is preparing role-based access for physicians, coaches, and family support."
-            actions={[{ href: "/digital-twin", label: "Digital Twin", variant: "secondary" }]}
+            actions={[]}
           />
         ) : signedOut ? (
           <AccessState

@@ -859,6 +859,7 @@ export default function CompanionPage() {
             <div className="flex justify-center pt-2">
               <button
                 type="button"
+                aria-expanded={showAllPanels}
                 onClick={() => setShowAllPanels((v) => !v)}
                 className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-full px-6 text-sm font-medium"
               >

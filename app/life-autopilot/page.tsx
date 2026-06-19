@@ -275,14 +275,14 @@ export default function LifeAutopilotPage() {
   if (loading) {
     return (
       <PageContainer>
-        <main className="py-16">
+        <div className="py-16">
           <AccessState
             eyebrow="Life Autopilot"
             title="Loading your behavior operating system."
             body="Aeonvera is reading your coach delivery, quiet hours, reminders, and schedule permissions."
-            actions={[{ href: "/plan", label: "View plan", variant: "secondary" }]}
+            actions={[]}
           />
-        </main>
+        </div>
       </PageContainer>
     );
   }
@@ -290,7 +290,7 @@ export default function LifeAutopilotPage() {
   if (locked) {
     return (
       <PageContainer>
-        <main className="py-16">
+        <div className="py-16">
           <AccessState
             eyebrow="Life Autopilot"
             title="Unlock proactive behavior orchestration."
@@ -305,14 +305,14 @@ export default function LifeAutopilotPage() {
               { href: "/login?mode=signin", label: "Sign in", variant: "secondary" },
             ]}
           />
-        </main>
+        </div>
       </PageContainer>
     );
   }
 
   return (
     <PageContainer>
-      <main className="py-16">
+      <div className="py-16">
         <section className="mb-8 grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
           <div className="executive-panel rounded-lg p-6 md:p-8">
             <p className="micro-label">Life Autopilot</p>
@@ -541,7 +541,7 @@ export default function LifeAutopilotPage() {
             </div>
           </Panel>
         </section>
-      </main>
+      </div>
     </PageContainer>
   );
 }

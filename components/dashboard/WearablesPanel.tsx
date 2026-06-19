@@ -1,6 +1,5 @@
 "use client";
 
-import { KeyboardEvent, MouseEvent } from "react";
 import Link from "next/link";
 
 type WearableProvider = "oura" | "whoop" | "apple";
@@ -23,12 +22,6 @@ type WearablesPanelProps = {
   onWearableSync: (provider: WearableProvider) => void;
 };
 
-function isInteractiveTarget(target: EventTarget | null) {
-  return target instanceof HTMLElement
-    ? Boolean(target.closest("button, input, label, select, textarea, a"))
-    : false;
-}
-
 export default function WearablesPanel({
   wearableMessage,
   connectedProvidersCount,
@@ -46,28 +39,6 @@ export default function WearablesPanel({
   onProviderAction,
   onWearableSync,
 }: WearablesPanelProps) {
-  function handleKeyboardAction(
-    event: KeyboardEvent<HTMLElement>,
-    action: () => void,
-    disabled = false
-  ) {
-    if (
-      disabled ||
-      isInteractiveTarget(event.target) ||
-      (event.key !== "Enter" && event.key !== " ")
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-    action();
-  }
-
-  function handleAppleCardClick(event: MouseEvent<HTMLDivElement>) {
-    if (Boolean(wearableSyncing) || isInteractiveTarget(event.target)) return;
-    onWearableSync("apple");
-  }
-
   return (
     <div className="executive-panel rounded-lg p-6">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -162,19 +133,8 @@ export default function WearablesPanel({
         ))}
 
         <div
-          role="button"
-          tabIndex={wearableSyncing ? -1 : 0}
-          aria-label="Import Apple Health data"
-          onClick={handleAppleCardClick}
-          onKeyDown={(event) =>
-            handleKeyboardAction(
-              event,
-              () => onWearableSync("apple"),
-              Boolean(wearableSyncing)
-            )
-          }
           className={`executive-panel-soft quiet-lift flex min-h-[20rem] flex-col rounded-lg p-5 ${
-            wearableSyncing ? "cursor-not-allowed opacity-55" : "cursor-pointer"
+            wearableSyncing ? "opacity-55" : ""
           }`}
         >
           <div className="flex-1">

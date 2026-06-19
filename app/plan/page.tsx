@@ -119,13 +119,13 @@ export default function PlanPage() {
 
   return (
     <PageContainer>
-      <main className="py-14 md:py-16">
+      <div className="py-14 md:py-16">
         {loading ? (
           <AccessState
             eyebrow="Your Plan"
             title="Loading your private access layer."
             body="Aeonvera is checking your membership, usage, and unlocked intelligence."
-            actions={[{ href: "/pricing", label: "View tiers", variant: "secondary" }]}
+            actions={[]}
           />
         ) : authenticated === false ? (
           <AccessState
@@ -208,7 +208,7 @@ export default function PlanPage() {
             </section>
           </div>
         )}
-      </main>
+      </div>
     </PageContainer>
   );
 }

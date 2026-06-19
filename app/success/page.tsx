@@ -117,7 +117,7 @@ export default function SuccessPage() {
   }, [router]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 text-white">
+    <div className="flex min-h-screen items-center justify-center px-6 text-white">
       <div className="premium-surface max-w-xl rounded-lg p-8 text-center">
         <p className="mb-6 text-eyebrow">
           Aeonvera
@@ -131,6 +131,6 @@ export default function SuccessPage() {
 
         <p className="text-white/55">{status}</p>
       </div>
-    </main>
+    </div>
   );
 }

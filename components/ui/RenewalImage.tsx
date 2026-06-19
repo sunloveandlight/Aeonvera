@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 type RenewalImageProps = {
   src: string;
@@ -32,13 +33,13 @@ export default function RenewalImage({
             <span className="text-xs text-white/45">{src}</span>
           </div>
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={src}
             alt={alt}
-            loading="lazy"
+            fill
+            sizes="(min-width: 768px) 40vw, 90vw"
             onError={() => setFailed(true)}
-            className="h-full w-full object-cover"
+            className="object-cover"
           />
         )}
       </div>

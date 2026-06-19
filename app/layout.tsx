@@ -67,6 +67,20 @@ export default function RootLayout({
     >
       <body>
         <Script
+          id="aeonvera-organization-jsonld"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Aeonvera",
+              url: "https://www.aeonvera.com",
+              logo: "https://www.aeonvera.com/aeonvera-app-icon.svg",
+              description: "Longevity Intelligence Platform",
+            }),
+          }}
+        />
+        <Script
           id="aeonvera-theme"
           strategy="beforeInteractive"
           // No-flash theme: apply stored/system theme before first paint.

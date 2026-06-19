@@ -618,7 +618,7 @@ export default function DigitalTwinPage() {
               />
             )}
 
-            <div className="flex justify-center pt-2"><button type="button" onClick={() => setShowAllPanels((v) => !v)} className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-full px-6 text-sm font-medium">{showAllPanels ? "Show less" : "Show more"}</button></div>
+            <div className="flex justify-center pt-2"><button type="button" aria-expanded={showAllPanels} onClick={() => setShowAllPanels((v) => !v)} className="premium-action-secondary inline-flex h-10 items-center justify-center rounded-full px-6 text-sm font-medium">{showAllPanels ? "Show less" : "Show more"}</button></div>
 
             {showAllPanels && (<>
             <div className="mt-6 grid gap-6 lg:grid-cols-[0.78fr_1.22fr]">
@@ -755,6 +755,7 @@ export default function DigitalTwinPage() {
                   <div className="mt-4 border-t border-white/[0.06] pt-4">
                     <button
                       type="button"
+                      aria-expanded={timelineExpanded}
                       onClick={() => setTimelineExpanded((expanded) => !expanded)}
                       className="inline-flex h-10 w-full items-center justify-center rounded-md border border-white/[0.07] bg-white/[0.025] px-4 text-sm text-white/58 transition hover:border-[rgba(var(--gold),0.24)] hover:bg-white/[0.04] hover:text-white/82"
                     >

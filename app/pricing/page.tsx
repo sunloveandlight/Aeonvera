@@ -22,6 +22,49 @@ export const metadata: Metadata = {
   },
 };
 
+const pricingJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: "Aeonvera Membership",
+  description:
+    "Private longevity intelligence memberships — Core, Elite, and Sovereign — with AI coaching, lab analysis, and digital twin features.",
+  brand: {
+    "@type": "Brand",
+    name: "Aeonvera",
+  },
+  offers: [
+    {
+      "@type": "Offer",
+      name: "Core",
+      price: "49",
+      priceCurrency: "USD",
+      url: "https://www.aeonvera.com/pricing",
+    },
+    {
+      "@type": "Offer",
+      name: "Elite",
+      price: "199",
+      priceCurrency: "USD",
+      url: "https://www.aeonvera.com/pricing",
+    },
+    {
+      "@type": "Offer",
+      name: "Sovereign",
+      price: "999",
+      priceCurrency: "USD",
+      url: "https://www.aeonvera.com/pricing",
+    },
+  ],
+};
+
 export default function PricingPage() {
-  return <PricingPageClient />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingJsonLd) }}
+      />
+      <PricingPageClient />
+    </>
+  );
 }

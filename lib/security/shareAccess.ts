@@ -13,7 +13,9 @@ function shareSalt() {
 }
 
 export function createShareAccessCode() {
-  return randomBytes(4).toString("hex").toUpperCase();
+  // 64-bit code (was 32-bit). This is the sole secret gating PHI share bundles,
+  // and the token endpoints are only IP-throttled, so entropy is the real defense.
+  return randomBytes(8).toString("hex").toUpperCase();
 }
 
 export function normalizeShareAccessCode(value: unknown) {

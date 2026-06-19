@@ -107,7 +107,7 @@ const sections = [
 export default function TermsPage() {
   return (
     <PageContainer>
-      <main className="py-14 md:py-20">
+      <div className="py-14 md:py-20">
         <section className="executive-panel rounded-lg p-6 md:p-10">
           <p className="micro-label">Terms of Service</p>
           <h1 className="legal-hero-title mt-5 max-w-4xl font-semibold text-white">
@@ -147,7 +147,7 @@ export default function TermsPage() {
             </article>
           ))}
         </section>
-      </main>
+      </div>
     </PageContainer>
   );
 }

@@ -342,14 +342,14 @@ export default function DataSourcesPage() {
   if (loading) {
     return (
       <PageContainer>
-        <main className="py-14">
+        <div className="py-14">
           <AccessState
             eyebrow="Data Sources"
             title="Reading your connected health layer."
             body="Aeonvera is checking wearable, lab, calendar, notification, and health-state freshness."
             actions={[{ href: "/dashboard", label: "Dashboard", variant: "secondary" }]}
           />
-        </main>
+        </div>
       </PageContainer>
     );
   }
@@ -357,7 +357,7 @@ export default function DataSourcesPage() {
   if (authenticated === false) {
     return (
       <PageContainer>
-        <main className="py-14">
+        <div className="py-14">
           <AccessState
             eyebrow="Data Sources"
             title="Sign in to connect your health data."
@@ -367,14 +367,14 @@ export default function DataSourcesPage() {
               { href: "/pricing", label: "Compare tiers", variant: "secondary" },
             ]}
           />
-        </main>
+        </div>
       </PageContainer>
     );
   }
 
   return (
     <PageContainer>
-      <main className="py-14 md:py-16">
+      <div className="py-14 md:py-16">
         <section className="executive-panel rounded-lg p-6 md:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -542,7 +542,7 @@ export default function DataSourcesPage() {
             title="Recent Lab Signals"
           />
         </section>
-      </main>
+      </div>
     </PageContainer>
   );
 }
