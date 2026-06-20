@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
 
 export async function GET() {
   try {
@@ -18,6 +19,10 @@ export async function GET() {
 
     const admin = getSupabaseAdmin();
     const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
 
     if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
       return NextResponse.json(
@@ -36,7 +41,7 @@ export async function GET() {
       );
     }
 
-    const memory = await loadOrBuildCoachMemoryProfile(admin, user.id);
+    const memory = await loadOrBuildCoachMemoryProfile(admin, user.id, healthProfileContext);
 
     return NextResponse.json({
       memory,

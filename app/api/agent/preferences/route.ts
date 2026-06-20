@@ -3,6 +3,10 @@ import { canAccess } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import {
+  getHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export async function GET() {
   try {
@@ -17,6 +21,11 @@ export async function GET() {
 
     const admin = getSupabaseAdmin();
     const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
     if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
       return NextResponse.json(
@@ -36,7 +45,7 @@ export async function GET() {
     const { data, error } = await admin
       .from("agent_preferences")
       .select("id,category,preference_key,preference_value,source,confidence,metadata,created_at,updated_at")
-      .eq("user_id", user.id)
+      .eq(healthFilter.column, healthFilter.value)
       .order("updated_at", { ascending: false })
       .limit(80);
 

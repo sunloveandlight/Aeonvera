@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 const ACTION_TYPES = [
   "action_error",
@@ -36,10 +41,15 @@ export async function GET() {
     }
 
     const admin = getSupabaseAdmin();
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
     const { data, error } = await admin
       .from("command_orb_action_events")
       .select("id,action_type,title,detail,tone,metadata,created_at")
-      .eq("user_id", user.id)
+      .eq(healthFilter.column, healthFilter.value)
       .order("created_at", { ascending: false })
       .limit(12);
 
@@ -82,6 +92,10 @@ export async function POST(request: Request) {
     }
 
     const admin = getSupabaseAdmin();
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
     const { data, error } = await admin
       .from("command_orb_action_events")
       .insert({
@@ -92,6 +106,7 @@ export async function POST(request: Request) {
         title,
         tone,
         user_id: user.id,
+        ...healthSubjectInsertFields(healthProfileContext),
       })
       .select("id,action_type,title,detail,tone,metadata,created_at")
       .single();

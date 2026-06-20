@@ -1,4 +1,9 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import {
+  createLegacyActiveHealthProfileContext,
+  healthSubjectInsertFields,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export type ExecutionItem = {
   type: "immediate" | "proactive";
@@ -21,9 +26,12 @@ export type ExecutionResult = {
  */
 export async function executeAeonveraActions(params: {
   userId: string;
+  healthProfileContext?: ActiveHealthProfileContext | null;
   priorityQueue: ExecutionItem[];
 }) {
   const { userId, priorityQueue } = params;
+  const healthProfileContext =
+    params.healthProfileContext || createLegacyActiveHealthProfileContext(userId);
   const supabase = getSupabaseAdmin();
 
   let notificationsTriggered = 0;
@@ -39,10 +47,10 @@ export async function executeAeonveraActions(params: {
    * STEP 2 — EXECUTE EACH ITEM
    */
   for (const item of sorted) {
-    await storeEvent(supabase, userId, item);
+    await storeEvent(supabase, userId, healthProfileContext, item);
 
     if (shouldNotify(item)) {
-      await triggerNotification(supabase, userId, item);
+      await triggerNotification(supabase, userId, healthProfileContext, item);
       notificationsTriggered++;
     }
   }
@@ -62,10 +70,12 @@ export async function executeAeonveraActions(params: {
 async function storeEvent(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
+  healthProfileContext: ActiveHealthProfileContext,
   item: ExecutionItem
 ) {
   const { error } = await supabase.from("behavior_events").insert({
     user_id: userId,
+    ...healthSubjectInsertFields(healthProfileContext),
     type: item.type,
     event_type: item.type,
     domain: item.domain,
@@ -103,6 +113,7 @@ function shouldNotify(item: ExecutionItem): boolean {
 async function triggerNotification(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
+  healthProfileContext: ActiveHealthProfileContext,
   item: ExecutionItem
 ) {
   const title = `${item.domain.toUpperCase()} ALERT`;
@@ -110,6 +121,7 @@ async function triggerNotification(
 
   const { error } = await supabase.from("notification_deliveries").insert({
     user_id: userId,
+    ...healthSubjectInsertFields(healthProfileContext),
     channel: "in_app",
     status: "pending",
     title,

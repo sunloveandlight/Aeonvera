@@ -9,6 +9,12 @@ import { buildExecutionSummary, getExecutionWindow } from "@/lib/execution/execu
 import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
 import { canAccess } from "@/lib/auth/permissions";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import {
+  createLegacyActiveHealthProfileContext,
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 import type { LongevityAlert } from "./longevityCoach";
 import {
   buildAdaptiveCoachDecision,
@@ -24,10 +30,16 @@ import {
  * 2. Run coaching engine using REAL intelligence
  * 3. Store alerts
  */
-export async function runCoachPipeline(userId: string) {
+export async function runCoachPipeline(
+  userId: string,
+  healthProfileContext?: ActiveHealthProfileContext | null
+) {
   if (!userId) throw new Error("Missing userId");
 
   const supabase = getSupabaseAdmin();
+  const activeHealthProfileContext =
+    healthProfileContext || createLegacyActiveHealthProfileContext(userId);
+  const healthFilter = getHealthSubjectFilter(activeHealthProfileContext);
   const subscription = await getUserPlanForUsage({ supabase, userId });
 
   if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
@@ -47,7 +59,7 @@ export async function runCoachPipeline(userId: string) {
   const { data: state, error: stateError } = await supabase
     .from("health_states")
     .select("*")
-    .eq("user_id", userId)
+    .eq(healthFilter.column, healthFilter.value)
     .single();
 
   if (stateError || !state) {
@@ -76,8 +88,16 @@ export async function runCoachPipeline(userId: string) {
    * 3. RUN COACH ENGINE
    */
   const alerts = runLongevityCoach(enrichedMetrics);
-  const latestOptimization = await loadLatestOptimizationProtocol(supabase, userId);
-  const adaptiveContext = await loadAdaptiveCoachContext(supabase, userId);
+  const latestOptimization = await loadLatestOptimizationProtocol(
+    supabase,
+    userId,
+    activeHealthProfileContext
+  );
+  const adaptiveContext = await loadAdaptiveCoachContext(
+    supabase,
+    userId,
+    activeHealthProfileContext
+  );
   const adaptiveDecision = buildAdaptiveCoachDecision({
     baseAlerts: alerts,
     optimizationProtocol: latestOptimization?.protocol,
@@ -109,6 +129,7 @@ export async function runCoachPipeline(userId: string) {
       .insert(
         adaptiveDecision.alerts.map((a) => ({
           user_id: userId,
+          ...healthSubjectInsertFields(activeHealthProfileContext),
           type: a.type,
           severity: a.severity,
           title: a.title,
@@ -135,7 +156,11 @@ export async function runCoachPipeline(userId: string) {
       .select("display_name")
       .eq("user_id", userId)
       .maybeSingle();
-    const dailyBrief = await buildDailyIntelligenceBrief(supabase, userId);
+    const dailyBrief = await buildDailyIntelligenceBrief(
+      supabase,
+      userId,
+      activeHealthProfileContext
+    );
 
     const jarvis = generateJarvisMessage({
       userName: profile?.display_name || undefined,
@@ -153,6 +178,7 @@ export async function runCoachPipeline(userId: string) {
     await deliverCoachNotifications({
       supabase,
       userId,
+      healthProfileContext: activeHealthProfileContext,
       alerts: storedAlerts,
       jarvis,
       memoryTags: adaptiveDecision.memoryTags,
@@ -160,6 +186,7 @@ export async function runCoachPipeline(userId: string) {
 
     await executeAeonveraActions({
       userId,
+      healthProfileContext: activeHealthProfileContext,
       priorityQueue: interventions.map((intervention) => ({
         type: "proactive",
         domain: intervention.domain,
@@ -171,6 +198,7 @@ export async function runCoachPipeline(userId: string) {
 
     await recordCoachOutput({
       userId,
+      healthProfileContext: activeHealthProfileContext,
       mode: adaptiveDecision.mode,
       tone: jarvis.tone,
       message: jarvis.message,
@@ -189,12 +217,14 @@ export async function runCoachPipeline(userId: string) {
 
 async function loadLatestOptimizationProtocol(
   supabase: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ) {
+  const filter = getHealthSubjectFilter(healthProfileContext);
   const { data, error } = await supabase
     .from("optimization_protocols")
     .select("id, protocol, created_at")
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -212,9 +242,11 @@ async function loadLatestOptimizationProtocol(
 
 async function loadAdaptiveCoachContext(
   supabase: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ): Promise<AdaptiveCoachContext> {
   const since = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
+  const filter = getHealthSubjectFilter(healthProfileContext);
 
   const [
     metricsResult,
@@ -229,33 +261,33 @@ async function loadAdaptiveCoachContext(
       supabase
         .from("health_metrics")
         .select("metric, value, measured_at")
-        .eq("user_id", userId)
+        .eq(filter.column, filter.value)
         .gte("measured_at", since)
         .order("measured_at", { ascending: false })
         .limit(240),
       supabase
         .from("notification_deliveries")
         .select("title, message, created_at, payload")
-        .eq("user_id", userId)
+        .eq(filter.column, filter.value)
         .eq("channel", "in_app")
         .order("created_at", { ascending: false })
         .limit(20),
       supabase
         .from("longevity_reports")
         .select("risk_score, primary_goal, report, created_at")
-        .eq("user_id", userId)
+        .eq(filter.column, filter.value)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
       supabase
         .from("behavior_events")
         .select("domain, action, outcome, created_at")
-        .eq("user_id", userId)
+        .eq(filter.column, filter.value)
         .order("created_at", { ascending: false })
         .limit(20),
-      loadLabTrendsForUser(supabase, userId),
-      loadExecutionSummaryForCoach(supabase, userId),
-      loadOrBuildCoachMemoryProfile(supabase, userId),
+      loadLabTrendsForUser(supabase, userId, healthProfileContext.healthProfileId),
+      loadExecutionSummaryForCoach(supabase, userId, healthProfileContext),
+      loadOrBuildCoachMemoryProfile(supabase, userId, healthProfileContext),
     ]);
 
   return {
@@ -271,21 +303,23 @@ async function loadAdaptiveCoachContext(
 
 async function loadExecutionSummaryForCoach(
   supabase: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ) {
   const window = getExecutionWindow();
+  const filter = getHealthSubjectFilter(healthProfileContext);
   const [outcomesResult, calendarResult] = await Promise.all([
     supabase
       .from("intervention_outcomes")
       .select("domain, action, outcome, success, notes, measured_at, created_at")
-      .eq("user_id", userId)
+      .eq(filter.column, filter.value)
       .gte("created_at", window.startIso)
       .order("created_at", { ascending: false })
       .limit(80),
     supabase
       .from("calendar_events")
       .select("action, action_scope, recurrence, scheduled_for, status, created_at")
-      .eq("user_id", userId)
+      .eq(filter.column, filter.value)
       .gte("scheduled_for", window.startIso)
       .order("scheduled_for", { ascending: false })
       .limit(80),
@@ -307,12 +341,14 @@ async function loadExecutionSummaryForCoach(
 
 async function recordCoachOutput({
   userId,
+  healthProfileContext,
   mode,
   tone,
   message,
   actions,
 }: {
   userId: string;
+  healthProfileContext: ActiveHealthProfileContext;
   mode: string;
   tone: string;
   message: string;
@@ -321,6 +357,7 @@ async function recordCoachOutput({
   const supabase = getSupabaseAdmin();
   const { error } = await supabase.from("coach_outputs").insert({
     user_id: userId,
+    ...healthSubjectInsertFields(healthProfileContext),
     mode,
     tone,
     message,

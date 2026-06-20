@@ -3,6 +3,11 @@ import { canAccess } from "@/lib/auth/permissions";
 import { deliverUserNotification } from "@/lib/notifications/coachDelivery";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import { buildDataSourceIntelligence } from "./dataSourceIntelligence";
+import {
+  createLegacyActiveHealthProfileContext,
+  getHealthSubjectFilter,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type FollowUpStatus =
   | "sent"
@@ -20,10 +25,12 @@ export async function runProactiveDataSourceFollowUps({
   force = false,
   supabase,
   userId,
+  healthProfileContext,
 }: {
   force?: boolean;
   supabase: SupabaseClient;
   userId: string;
+  healthProfileContext?: ActiveHealthProfileContext | null;
 }): Promise<{
   status: FollowUpStatus;
   delivery?: unknown;
@@ -31,6 +38,8 @@ export async function runProactiveDataSourceFollowUps({
   score?: number;
 }> {
   const subscription = await getUserPlanForUsage({ supabase, userId });
+  const activeHealthProfileContext =
+    healthProfileContext || createLegacyActiveHealthProfileContext(userId);
 
   if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
     return {
@@ -39,7 +48,7 @@ export async function runProactiveDataSourceFollowUps({
     };
   }
 
-  const sourceData = await loadSourceData(supabase, userId);
+  const sourceData = await loadSourceData(supabase, userId, activeHealthProfileContext);
   if (sourceData.missingRequiredTable) {
     return {
       status: "missing_tables",
@@ -66,7 +75,11 @@ export async function runProactiveDataSourceFollowUps({
     };
   }
 
-  const recentNotifications = await loadRecentDataSourceNotifications(supabase, userId);
+  const recentNotifications = await loadRecentDataSourceNotifications(
+    supabase,
+    userId,
+    activeHealthProfileContext
+  );
   if (!force && hasSentToday(recentNotifications.rows)) {
     return {
       status: "recently_sent",
@@ -78,6 +91,7 @@ export async function runProactiveDataSourceFollowUps({
   const delivery = await deliverUserNotification({
     supabase,
     userId,
+    healthProfileContext: activeHealthProfileContext,
     title: `Aeonvera signal: ${prompt.title}`,
     message: buildMessage(prompt.body, intelligence.score),
     actions: [prompt.actionLabel],
@@ -101,13 +115,18 @@ export async function runProactiveDataSourceFollowUps({
   };
 }
 
-async function loadSourceData(supabase: SupabaseClient, userId: string) {
+async function loadSourceData(
+  supabase: SupabaseClient,
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
+) {
+  const filter = getHealthSubjectFilter(healthProfileContext);
   const [wearableResult, connectionResult, labResult, healthStateResult, calendarResult] =
     await Promise.all([
       supabase
         .from("wearable_metrics")
         .select("provider,recorded_at")
-        .eq("user_id", userId)
+        .eq(filter.column, filter.value)
         .order("recorded_at", { ascending: false })
         .limit(80),
       supabase
@@ -119,13 +138,13 @@ async function loadSourceData(supabase: SupabaseClient, userId: string) {
       supabase
         .from("lab_biomarkers")
         .select("canonical_key,measured_at")
-        .eq("user_id", userId)
+        .eq(filter.column, filter.value)
         .order("measured_at", { ascending: false })
         .limit(32),
       supabase
         .from("health_states")
         .select("updated_at")
-        .eq("user_id", userId)
+        .eq(filter.column, filter.value)
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
@@ -168,12 +187,17 @@ async function loadSourceData(supabase: SupabaseClient, userId: string) {
   };
 }
 
-async function loadRecentDataSourceNotifications(supabase: SupabaseClient, userId: string) {
+async function loadRecentDataSourceNotifications(
+  supabase: SupabaseClient,
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
+) {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const filter = getHealthSubjectFilter(healthProfileContext);
   const { data, error } = await supabase
     .from("notification_deliveries")
     .select("created_at,payload")
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .eq("channel", "in_app")
     .gte("created_at", since)
     .order("created_at", { ascending: false })

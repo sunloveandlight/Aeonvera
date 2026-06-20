@@ -6,6 +6,7 @@ import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import { ingestWearableMetrics } from "@/lib/wearables/ingestWearableMetrics";
 import { fetchOuraMetrics } from "@/lib/wearables/oura";
 import { getValidWearableAccessToken } from "@/lib/wearables/oauth";
+import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +18,11 @@ export async function POST(request: NextRequest) {
 
     const admin = getSupabaseAdmin();
     const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
+    });
 
     if (!canAccess(subscription.plan, subscription.status, "elite_features")) {
       return NextResponse.json(
@@ -52,6 +58,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       provider: "oura",
       metrics,
+      healthProfileContext,
     });
 
     await admin

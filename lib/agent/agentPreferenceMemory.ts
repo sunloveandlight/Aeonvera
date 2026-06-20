@@ -1,4 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  getHealthSubjectFilter,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export type AgentPreferenceMemory = {
   avoidMorningTraining: boolean;
@@ -17,14 +21,19 @@ export type AgentPreferenceMemory = {
 export async function getAgentPreferenceMemory({
   supabase,
   userId,
+  healthProfileContext,
 }: {
   supabase: SupabaseClient;
   userId: string;
+  healthProfileContext?: ActiveHealthProfileContext | null;
 }): Promise<AgentPreferenceMemory> {
+  const filter = healthProfileContext
+    ? getHealthSubjectFilter(healthProfileContext)
+    : { column: "user_id" as const, value: userId };
   const { data, error } = await supabase
     .from("agent_preferences")
     .select("category,preference_key,preference_value,confidence,updated_at")
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .order("updated_at", { ascending: false })
     .limit(40);
 

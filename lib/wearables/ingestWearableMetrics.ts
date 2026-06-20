@@ -1,6 +1,7 @@
 import { buildHealthState } from "@/lib/state/healthStateEngine";
 import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
 import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAge";
+import { healthSubjectInsertFields, type ActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { WearableProvider, WearableRawMetric, WearableIngestionResult } from "./types";
 
@@ -9,12 +10,20 @@ export async function ingestWearableMetrics({
   userId,
   provider,
   metrics,
+  healthProfileContext,
 }: {
+  healthProfileContext?: ActiveHealthProfileContext | null;
   supabase: SupabaseClient;
   userId: string;
   provider: WearableProvider;
   metrics: WearableRawMetric[];
 }): Promise<WearableIngestionResult> {
+  const healthProfileId = healthProfileContext?.healthProfileId || null;
+  const subjectFields = healthProfileContext
+    ? healthSubjectInsertFields(healthProfileContext)
+    : { health_profile_id: null };
+  const subjectColumn = healthProfileId ? "health_profile_id" : "user_id";
+  const subjectValue = healthProfileId || userId;
   const validMetrics = metrics.filter(
     (metric) =>
       metric.metricName &&
@@ -28,6 +37,7 @@ export async function ingestWearableMetrics({
 
   const rawRows = validMetrics.map((metric) => ({
     user_id: userId,
+    ...subjectFields,
     provider,
     metric_name: metric.metricName,
     metric_value: metric.value,
@@ -54,6 +64,7 @@ export async function ingestWearableMetrics({
     const { error: normalizedError } = await supabase.from("health_metrics").upsert(
       normalized.map((metric) => ({
         user_id: metric.userId,
+        ...subjectFields,
         metric: metric.metric,
         value: metric.value,
         measured_at: metric.measured_at,
@@ -69,7 +80,7 @@ export async function ingestWearableMetrics({
   const { data: canonicalMetrics, error: canonicalError } = await supabase
     .from("health_metrics")
     .select("*")
-    .eq("user_id", userId)
+    .eq(subjectColumn, subjectValue)
     .order("measured_at", { ascending: true });
 
   if (canonicalError) {
@@ -99,18 +110,24 @@ export async function ingestWearableMetrics({
       new Date(current) > new Date(max) ? current : max
     );
 
-  const { error: stateError } = await supabase.from("health_states").upsert(
-    {
-      user_id: userId,
-      baseline: state.baseline,
-      trends: state.trends,
-      risk_scores: state.riskScores,
-      insights: state.insights,
-      updated_at: state.updatedAt,
-      last_processed_at: latestTimestamp,
-    },
-    { onConflict: "user_id" }
-  );
+  const statePayload = {
+    user_id: userId,
+    ...subjectFields,
+    baseline: state.baseline,
+    trends: state.trends,
+    risk_scores: state.riskScores,
+    insights: state.insights,
+    updated_at: state.updatedAt,
+    last_processed_at: latestTimestamp,
+  };
+
+  const stateError = healthProfileId
+    ? await updateOrInsertByHealthProfile(supabase, "health_states", healthProfileId, statePayload)
+    : (
+        await supabase
+          .from("health_states")
+          .upsert(statePayload, { onConflict: "user_id" })
+      ).error;
 
   if (stateError) {
     throw new Error(stateError.message);
@@ -118,6 +135,7 @@ export async function ingestWearableMetrics({
 
   await supabase.from("health_alerts").insert({
     user_id: userId,
+    ...subjectFields,
     type: "wearable_sync",
     severity: "low",
     title: "Wearable data synced",
@@ -129,6 +147,7 @@ export async function ingestWearableMetrics({
   const biologicalAge = await refreshBiologicalAgeForUser({
     supabase,
     userId,
+    healthProfileId,
     source: "wearable",
   });
 
@@ -139,4 +158,23 @@ export async function ingestWearableMetrics({
     state,
     biologicalAge,
   };
+}
+
+async function updateOrInsertByHealthProfile(
+  supabase: SupabaseClient,
+  table: string,
+  healthProfileId: string,
+  payload: Record<string, unknown>
+) {
+  const { data, error } = await supabase
+    .from(table)
+    .update(payload)
+    .eq("health_profile_id", healthProfileId)
+    .select("id")
+    .limit(1);
+
+  if (error) return error;
+  if (Array.isArray(data) && data.length > 0) return null;
+
+  return (await supabase.from(table).insert(payload)).error;
 }

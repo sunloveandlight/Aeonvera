@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
+import {
+  getHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+  type HealthSubjectFilter,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type LifeDomainKey =
   | "health"
@@ -75,12 +80,17 @@ export async function GET() {
     });
     if (!entitlement.allowed) return entitlement.response;
 
-    const signals = await loadSignals(admin, user.id);
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
+    const signals = await loadSignals(admin, user.id, healthFilter);
     const derived = deriveDomains(signals);
     const { data, error } = await admin
       .from("life_os_domain_profiles")
       .select("domain,score,direction,current_state,desired_state,key_risk,next_action,confidence,evidence")
-      .eq("user_id", user.id);
+      .eq(healthFilter.column, healthFilter.value);
 
     const migrationRequired = Boolean(error && isMissingLifeOsTable(error));
     if (error && !migrationRequired) throw error;
@@ -114,7 +124,11 @@ export async function GET() {
   }
 }
 
-async function loadSignals(admin: ReturnType<typeof getSupabaseAdmin>, userId: string) {
+async function loadSignals(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  healthFilter: HealthSubjectFilter
+) {
   const [
     labs,
     wearables,
@@ -127,16 +141,16 @@ async function loadSignals(admin: ReturnType<typeof getSupabaseAdmin>, userId: s
     careNetwork,
     biologicalAge,
   ] = await Promise.all([
-    safeCount(admin, "lab_biomarkers", userId),
-    safeCount(admin, "wearable_metrics", userId),
-    safeCount(admin, "optimization_protocols", userId),
-    safeCount(admin, "intervention_outcomes", userId),
-    safeCount(admin, "future_self_scenarios", userId),
-    safeCount(admin, "clinical_insights", userId),
-    safeCount(admin, "agent_preferences", userId),
-    safeCount(admin, "daily_execution_plans", userId),
+    safeCount(admin, "lab_biomarkers", healthFilter.value, healthFilter.column),
+    safeCount(admin, "wearable_metrics", healthFilter.value, healthFilter.column),
+    safeCount(admin, "optimization_protocols", healthFilter.value, healthFilter.column),
+    safeCount(admin, "intervention_outcomes", healthFilter.value, healthFilter.column),
+    safeCount(admin, "future_self_scenarios", healthFilter.value, healthFilter.column),
+    safeCount(admin, "clinical_insights", healthFilter.value, healthFilter.column),
+    safeCount(admin, "agent_preferences", healthFilter.value, healthFilter.column),
+    safeCount(admin, "daily_execution_plans", healthFilter.value, healthFilter.column),
     safeCount(admin, "care_network_memberships", userId, "owner_user_id"),
-    safeCount(admin, "biological_age_history", userId),
+    safeCount(admin, "biological_age_history", healthFilter.value, healthFilter.column),
   ]);
 
   return {

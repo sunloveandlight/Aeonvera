@@ -5,6 +5,7 @@ import { canAccess } from "@/lib/auth/permissions";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +17,10 @@ export async function POST(request: NextRequest) {
 
     const admin = getSupabaseAdmin();
     const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
 
     if (!canAccess(subscription.plan, subscription.status, "clinical_intelligence")) {
       return NextResponse.json(
@@ -56,6 +61,7 @@ export async function POST(request: NextRequest) {
     const result = await runProactiveClinicalFollowUps({
       supabase: admin,
       userId: user.id,
+      healthProfileContext,
       force,
     });
 

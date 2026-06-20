@@ -4,6 +4,10 @@ import { runCoachPipeline } from "@/lib/coach/runCoachPipeline";
 import { runProactiveClinicalFollowUps } from "@/lib/clinical/proactiveClinicalFollowUps";
 import { runProactiveDataSourceFollowUps } from "@/lib/data/proactiveDataSourceFollowUps";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import {
+  createLegacyActiveHealthProfileContext,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 /**
  * Aeonvera Daily Automation Job
@@ -55,28 +59,28 @@ export async function GET(req: Request) {
       await Promise.all([
         supabase
           .from("health_states")
-          .select("user_id"),
+          .select("user_id,health_profile_id"),
         supabase
           .from("optimization_protocols")
-          .select("user_id")
+          .select("user_id,health_profile_id")
           .order("created_at", { ascending: false })
           .limit(5000),
         supabase
           .from("autopilot_preferences")
-          .select("user_id")
+          .select("user_id,health_profile_id")
           .limit(5000),
         supabase
           .from("clinical_insights")
-          .select("user_id")
+          .select("user_id,health_profile_id")
           .in("concern_status", ["active", "unresolved", "monitoring"])
           .limit(5000),
         supabase
           .from("wearable_metrics")
-          .select("user_id")
+          .select("user_id,health_profile_id")
           .limit(5000),
         supabase
           .from("lab_biomarkers")
-          .select("user_id")
+          .select("user_id,health_profile_id")
           .limit(5000),
       ]);
 
@@ -98,15 +102,9 @@ export async function GET(req: Request) {
     }
 
     /**
-     * STEP 2: DEDUPLICATE USERS
+     * STEP 2: DEDUPLICATE USER/PROFILE WORK ITEMS
      */
-    const uniqueUsers: string[] = [
-      ...new Set(
-        users
-          .map((u) => u.user_id)
-          .filter((id): id is string => typeof id === "string")
-      ),
-    ];
+    const workItems = buildProfileWorkItems(users);
 
     let processed = 0;
     let autopilotPrepared = 0;
@@ -117,17 +115,22 @@ export async function GET(req: Request) {
     let dataSourceFollowUpsSkipped = 0;
 
     /**
-     * STEP 3: RUN COACH PIPELINE PER USER
+     * STEP 3: RUN COACH PIPELINE PER USER/PROFILE
      */
-    for (const userId of uniqueUsers) {
+    for (const item of workItems) {
+      const { userId, healthProfileContext } = item;
       try {
-        await runCoachPipeline(userId);
+        await runCoachPipeline(userId, healthProfileContext);
       } catch (err) {
         console.error(`Coach failed for user ${userId}`, err);
       }
 
       try {
-        const autopilot = await runMorningAutopilotBrief({ supabase, userId });
+        const autopilot = await runMorningAutopilotBrief({
+          supabase,
+          userId,
+          healthProfileContext,
+        });
         if (autopilot.status === "prepared") {
           autopilotPrepared++;
         } else {
@@ -139,7 +142,11 @@ export async function GET(req: Request) {
       }
 
       try {
-        const clinicalFollowUp = await runProactiveClinicalFollowUps({ supabase, userId });
+        const clinicalFollowUp = await runProactiveClinicalFollowUps({
+          supabase,
+          userId,
+          healthProfileContext,
+        });
         if (clinicalFollowUp.status === "sent") {
           clinicalFollowUpsSent++;
         } else {
@@ -151,7 +158,11 @@ export async function GET(req: Request) {
       }
 
       try {
-        const dataSourceFollowUp = await runProactiveDataSourceFollowUps({ supabase, userId });
+        const dataSourceFollowUp = await runProactiveDataSourceFollowUps({
+          supabase,
+          userId,
+          healthProfileContext,
+        });
         if (dataSourceFollowUp.status === "sent") {
           dataSourceFollowUpsSent++;
         } else {
@@ -168,7 +179,8 @@ export async function GET(req: Request) {
     return NextResponse.json({
       success: true,
       processed,
-      users: uniqueUsers.length,
+      users: new Set(workItems.map((item) => item.userId)).size,
+      profiles: workItems.length,
       autopilot_prepared: autopilotPrepared,
       autopilot_skipped: autopilotSkipped,
       clinical_followups_sent: clinicalFollowUpsSent,
@@ -180,4 +192,35 @@ export async function GET(req: Request) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+}
+
+function buildProfileWorkItems(
+  rows: Array<{ user_id?: string | null; health_profile_id?: string | null }>
+) {
+  const items = new Map<
+    string,
+    { userId: string; healthProfileContext: ActiveHealthProfileContext }
+  >();
+
+  for (const row of rows) {
+    if (!row.user_id) continue;
+    const key = `${row.user_id}:${row.health_profile_id || "legacy"}`;
+    if (items.has(key)) continue;
+
+    items.set(key, {
+      userId: row.user_id,
+      healthProfileContext: row.health_profile_id
+        ? {
+            loginUserId: row.user_id,
+            workspaceId: null,
+            healthProfileId: row.health_profile_id,
+            legacyUserId: row.user_id,
+            mode: "health_profile",
+            role: "owner",
+          }
+        : createLegacyActiveHealthProfileContext(row.user_id),
+    });
+  }
+
+  return Array.from(items.values());
 }

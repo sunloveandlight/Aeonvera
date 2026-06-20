@@ -8,6 +8,12 @@ import {
 import { sendCoachEmail } from "@/lib/notifications/email";
 import { sendCoachPushNotifications } from "@/lib/notifications/push";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import {
+  createLegacyActiveHealthProfileContext,
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type AutopilotMode = "manual" | "suggest" | "approve" | "autopilot" | "sovereign";
 type ActionScope = "today" | "week" | "check_in" | "later";
@@ -87,11 +93,15 @@ type MorningEmailResult =
 export async function runMorningAutopilotBrief({
   supabase,
   userId,
+  healthProfileContext,
 }: {
   supabase: SupabaseClient;
   userId: string;
+  healthProfileContext?: ActiveHealthProfileContext | null;
 }) {
   const today = toDateKey(new Date());
+  const activeHealthProfileContext =
+    healthProfileContext || createLegacyActiveHealthProfileContext(userId);
   const subscription = await getUserPlanForUsage({ supabase, userId });
 
   if (!canAccess(subscription.plan, subscription.status, "autopilot_calendar")) {
@@ -102,11 +112,15 @@ export async function runMorningAutopilotBrief({
   }
 
   const [autopilotPreferences, protocol, userResult, executionMemory, preferenceMemory] = await Promise.all([
-    getOrCreateAutopilotPreferences(supabase, userId),
-    getLatestProtocol(supabase, userId),
+    getOrCreateAutopilotPreferences(supabase, userId, activeHealthProfileContext),
+    getLatestProtocol(supabase, userId, activeHealthProfileContext),
     supabase.auth.admin.getUserById(userId),
-    getRecentExecutionMemory(supabase, userId),
-    getAgentPreferenceMemory({ supabase, userId }),
+    getRecentExecutionMemory(supabase, userId, activeHealthProfileContext),
+    getAgentPreferenceMemory({
+      supabase,
+      userId,
+      healthProfileContext: activeHealthProfileContext,
+    }),
   ]);
 
   if (autopilotPreferences.mode === "manual") {
@@ -129,29 +143,31 @@ export async function runMorningAutopilotBrief({
     return { status: "skipped", reason: "No eligible actions for today" };
   }
 
-  const existingPlan = await getExistingPlan(supabase, userId, today);
+  const existingPlan = await getExistingPlan(
+    supabase,
+    userId,
+    today,
+    activeHealthProfileContext
+  );
   const alreadyAccepted =
     existingPlan?.status === "accepted" || existingPlan?.status === "auto_scheduled";
   const status = alreadyAccepted ? existingPlan.status : "prepared";
 
-  const { data: plan, error: planError } = await supabase
-    .from("daily_execution_plans")
-    .upsert(
-      {
-        user_id: userId,
-        protocol_id: protocol.id,
-        plan_date: today,
-        status,
-        autopilot_mode: autopilotPreferences.mode,
-        summary: prepared.summary,
-        plan: prepared.plan,
-        scheduled_event_ids: existingPlan?.scheduled_event_ids || [],
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,plan_date" }
-    )
-    .select("id,status,summary,plan_date")
-    .single();
+  const { data: plan, error: planError } = await upsertDailyExecutionPlan({
+    supabase,
+    userId,
+    healthProfileContext: activeHealthProfileContext,
+    payload: {
+      protocol_id: protocol.id,
+      plan_date: today,
+      status,
+      autopilot_mode: autopilotPreferences.mode,
+      summary: prepared.summary,
+      plan: prepared.plan,
+      scheduled_event_ids: existingPlan?.scheduled_event_ids || [],
+      updated_at: new Date().toISOString(),
+    },
+  });
 
   if (planError) {
     if (isMissingAutopilotTable(planError)) {
@@ -161,9 +177,14 @@ export async function runMorningAutopilotBrief({
     throw planError;
   }
 
+  if (!plan) {
+    return { status: "skipped", reason: "Daily plan could not be prepared" };
+  }
+
   const delivery = await deliverMorningPlan({
     supabase,
     userId,
+    healthProfileContext: activeHealthProfileContext,
     user: userResult.data.user,
     title: "Aeonvera Autopilot: Today is prepared",
     message: buildMorningMessage(prepared.plan.items),
@@ -173,6 +194,7 @@ export async function runMorningAutopilotBrief({
 
   await supabase.from("behavior_events").insert({
     user_id: userId,
+    ...healthSubjectInsertFields(activeHealthProfileContext),
     type: "autopilot_plan",
     event_type: "morning_autopilot_prepared",
     domain: "Execution",
@@ -197,6 +219,7 @@ export async function runMorningAutopilotBrief({
 async function deliverMorningPlan({
   supabase,
   userId,
+  healthProfileContext,
   user,
   title,
   message,
@@ -205,13 +228,14 @@ async function deliverMorningPlan({
 }: {
   supabase: SupabaseClient;
   userId: string;
+  healthProfileContext: ActiveHealthProfileContext;
   user?: { email?: string; user_metadata?: { notification_preferences?: NotificationPreferences } } | null;
   title: string;
   message: string;
   planId: string;
   planSummary: string;
 }) {
-  const prefs = await loadNotificationPreferences(supabase, userId, user);
+  const prefs = await loadNotificationPreferences(supabase, userId, user, healthProfileContext);
   const quietHoursActive = isQuietHoursActive(prefs);
   const emailEnabled = prefs.email_enabled !== false;
   const pushEnabled = prefs.push_enabled === true;
@@ -227,6 +251,7 @@ async function deliverMorningPlan({
   await recordDelivery({
     supabase,
     userId,
+    healthProfileContext,
     channel: "in_app",
     status: "sent",
     title,
@@ -255,6 +280,7 @@ async function deliverMorningPlan({
   await recordDelivery({
     supabase,
     userId,
+    healthProfileContext,
     channel: "push",
     status: push.status,
     provider: "push",
@@ -292,6 +318,7 @@ async function deliverMorningPlan({
   await recordDelivery({
     supabase,
     userId,
+    healthProfileContext,
     channel: "email",
     status: email.status,
     provider: email.provider,
@@ -315,12 +342,14 @@ async function deliverMorningPlan({
 
 async function getOrCreateAutopilotPreferences(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ) {
+  const filter = getHealthSubjectFilter(healthProfileContext);
   const { data, error } = await supabase
     .from("autopilot_preferences")
     .select("*")
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .maybeSingle();
 
   if (error) {
@@ -333,7 +362,10 @@ async function getOrCreateAutopilotPreferences(
   const next = defaultAutopilotPreferences(userId);
   const { data: created } = await supabase
     .from("autopilot_preferences")
-    .insert(next)
+    .insert({
+      ...next,
+      ...healthSubjectInsertFields(healthProfileContext),
+    })
     .select("*")
     .maybeSingle();
 
@@ -342,12 +374,14 @@ async function getOrCreateAutopilotPreferences(
 
 async function getLatestProtocol(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ): Promise<ProtocolRow | null> {
+  const filter = getHealthSubjectFilter(healthProfileContext);
   const { data, error } = await supabase
     .from("optimization_protocols")
     .select("id,protocol,summary,focus_domains,status,created_at,updated_at")
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -356,11 +390,17 @@ async function getLatestProtocol(
   return (data as ProtocolRow | null) || null;
 }
 
-async function getExistingPlan(supabase: SupabaseClient, userId: string, today: string) {
+async function getExistingPlan(
+  supabase: SupabaseClient,
+  userId: string,
+  today: string,
+  healthProfileContext: ActiveHealthProfileContext
+) {
+  const filter = getHealthSubjectFilter(healthProfileContext);
   const { data, error } = await supabase
     .from("daily_execution_plans")
     .select("status,scheduled_event_ids")
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .eq("plan_date", today)
     .maybeSingle();
 
@@ -368,17 +408,53 @@ async function getExistingPlan(supabase: SupabaseClient, userId: string, today: 
   return data as { status?: string; scheduled_event_ids?: string[] | null } | null;
 }
 
+async function upsertDailyExecutionPlan({
+  supabase,
+  userId,
+  healthProfileContext,
+  payload,
+}: {
+  supabase: SupabaseClient;
+  userId: string;
+  healthProfileContext: ActiveHealthProfileContext;
+  payload: Record<string, unknown>;
+}) {
+  const filter = getHealthSubjectFilter(healthProfileContext);
+  const updateResult = await supabase
+    .from("daily_execution_plans")
+    .update(payload)
+    .eq(filter.column, filter.value)
+    .eq("plan_date", String(payload.plan_date))
+    .select("id,status,summary,plan_date")
+    .maybeSingle();
+
+  if (updateResult.error) return updateResult;
+  if (updateResult.data) return updateResult;
+
+  return supabase
+    .from("daily_execution_plans")
+    .insert({
+      user_id: userId,
+      ...healthSubjectInsertFields(healthProfileContext),
+      ...payload,
+    })
+    .select("id,status,summary,plan_date")
+    .single();
+}
+
 async function getRecentExecutionMemory(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ): Promise<ExecutionMemory> {
   const since = new Date();
   since.setDate(since.getDate() - 21);
+  const filter = getHealthSubjectFilter(healthProfileContext);
 
   const { data, error } = await supabase
     .from("intervention_outcomes")
     .select("domain,action,outcome,success,created_at,measured_at")
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .gte("created_at", since.toISOString())
     .order("created_at", { ascending: false })
     .limit(60);
@@ -610,12 +686,16 @@ function buildMorningMessage(items: Array<ProtocolAction & { recommended_time?: 
 async function loadNotificationPreferences(
   supabase: SupabaseClient,
   userId: string,
-  user?: { user_metadata?: { notification_preferences?: NotificationPreferences } } | null
+  user?: { user_metadata?: { notification_preferences?: NotificationPreferences } } | null,
+  healthProfileContext?: ActiveHealthProfileContext | null
 ) {
+  const filter = healthProfileContext
+    ? getHealthSubjectFilter(healthProfileContext)
+    : { column: "user_id" as const, value: userId };
   const { data, error } = await supabase
     .from("notification_preferences")
     .select("email_enabled,push_enabled,quiet_hours_start,quiet_hours_end,timezone")
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .maybeSingle();
 
   if (error && !isMissingNotificationTable(error)) {
@@ -632,6 +712,7 @@ async function loadNotificationPreferences(
 async function recordDelivery({
   supabase,
   userId,
+  healthProfileContext,
   channel,
   status,
   provider,
@@ -643,6 +724,7 @@ async function recordDelivery({
 }: {
   supabase: SupabaseClient;
   userId: string;
+  healthProfileContext: ActiveHealthProfileContext;
   channel: "email" | "push" | "in_app";
   status: "pending" | "sent" | "skipped" | "failed";
   provider?: string;
@@ -654,6 +736,7 @@ async function recordDelivery({
 }) {
   const { error: deliveryError } = await supabase.from("notification_deliveries").insert({
     user_id: userId,
+    ...healthSubjectInsertFields(healthProfileContext),
     channel,
     status,
     provider,

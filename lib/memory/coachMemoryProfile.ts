@@ -1,4 +1,5 @@
 import { buildExecutionSummary, getExecutionWindow } from "@/lib/execution/executionSummary";
+import { healthSubjectInsertFields, type ActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 type SupabaseAdmin = ReturnType<typeof getSupabaseAdmin>;
@@ -66,9 +67,10 @@ export type CoachMemoryProfile = {
 
 export async function loadOrBuildCoachMemoryProfile(
   supabase: SupabaseAdmin,
-  userId: string
+  userId: string,
+  healthProfileContext?: ActiveHealthProfileContext | null
 ): Promise<CoachMemoryProfile | null> {
-  const existing = await loadStoredProfile(supabase, userId);
+  const existing = await loadStoredProfile(supabase, userId, healthProfileContext);
   const isFresh =
     existing &&
     existing.motivationProfile.version === COACH_MEMORY_PROFILE_VERSION &&
@@ -76,44 +78,47 @@ export async function loadOrBuildCoachMemoryProfile(
 
   if (isFresh) return existing;
 
-  const profile = await buildCoachMemoryProfile(supabase, userId);
-  await storeCoachMemoryProfile(supabase, userId, profile);
+  const profile = await buildCoachMemoryProfile(supabase, userId, healthProfileContext);
+  await storeCoachMemoryProfile(supabase, userId, profile, healthProfileContext);
   return profile;
 }
 
 export async function buildCoachMemoryProfile(
   supabase: SupabaseAdmin,
-  userId: string
+  userId: string,
+  healthProfileContext?: ActiveHealthProfileContext | null
 ): Promise<CoachMemoryProfile> {
   const window = getExecutionWindow();
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const subjectColumn = healthProfileContext?.healthProfileId ? "health_profile_id" : "user_id";
+  const subjectValue = healthProfileContext?.healthProfileId || userId;
 
   const [outcomesResult, calendarResult, coachResult, feedbackResult] = await Promise.all([
     supabase
       .from("intervention_outcomes")
       .select("domain, action, outcome, success, notes, measured_at, created_at")
-      .eq("user_id", userId)
+      .eq(subjectColumn, subjectValue)
       .gte("created_at", since)
       .order("created_at", { ascending: false })
       .limit(160),
     supabase
       .from("calendar_events")
       .select("action, action_scope, recurrence, scheduled_for, status, created_at")
-      .eq("user_id", userId)
+      .eq(subjectColumn, subjectValue)
       .gte("scheduled_for", window.startIso)
       .order("scheduled_for", { ascending: false })
       .limit(100),
     supabase
       .from("coach_outputs")
       .select("tone, message, actions, created_at")
-      .eq("user_id", userId)
+      .eq(subjectColumn, subjectValue)
       .gte("created_at", since)
       .order("created_at", { ascending: false })
       .limit(80),
     supabase
       .from("behavior_learning_events")
       .select("domain, action, outcome, confidence, created_at")
-      .eq("user_id", userId)
+      .eq(subjectColumn, subjectValue)
       .gte("created_at", since)
       .order("created_at", { ascending: false })
       .limit(120),
@@ -170,14 +175,17 @@ export async function buildCoachMemoryProfile(
 
 async function loadStoredProfile(
   supabase: SupabaseAdmin,
-  userId: string
+  userId: string,
+  healthProfileContext?: ActiveHealthProfileContext | null
 ): Promise<CoachMemoryProfile | null> {
+  const subjectColumn = healthProfileContext?.healthProfileId ? "health_profile_id" : "user_id";
+  const subjectValue = healthProfileContext?.healthProfileId || userId;
   const { data, error } = await supabase
     .from("coach_memory_profiles")
     .select(
       "communication_style, motivation_profile, failure_patterns, best_interventions, domain_scores, morning_brief, confidence, last_computed_at"
     )
-    .eq("user_id", userId)
+    .eq(subjectColumn, subjectValue)
     .maybeSingle();
 
   if (error) {
@@ -204,10 +212,14 @@ async function loadStoredProfile(
 async function storeCoachMemoryProfile(
   supabase: SupabaseAdmin,
   userId: string,
-  profile: CoachMemoryProfile
+  profile: CoachMemoryProfile,
+  healthProfileContext?: ActiveHealthProfileContext | null
 ) {
-  const { error } = await supabase.from("coach_memory_profiles").upsert({
+  const payload = {
     user_id: userId,
+    ...(healthProfileContext
+      ? healthSubjectInsertFields(healthProfileContext)
+      : { health_profile_id: null }),
     communication_style: profile.communicationStyle,
     motivation_profile: profile.motivationProfile,
     failure_patterns: profile.failurePatterns,
@@ -217,11 +229,34 @@ async function storeCoachMemoryProfile(
     confidence: profile.confidence,
     last_computed_at: profile.lastComputedAt,
     updated_at: new Date().toISOString(),
-  });
+  };
+  const healthProfileId = healthProfileContext?.healthProfileId || null;
+  const result = healthProfileId
+    ? await updateOrInsertByHealthProfile(supabase, healthProfileId, payload)
+    : await supabase.from("coach_memory_profiles").upsert(payload, { onConflict: "user_id" });
+  const error = result.error;
 
   if (error && !isMissingMemoryTable(error)) {
     console.error("[Coach Memory Store Error]", error.message);
   }
+}
+
+async function updateOrInsertByHealthProfile(
+  supabase: SupabaseAdmin,
+  healthProfileId: string,
+  payload: Record<string, unknown>
+) {
+  const { data, error } = await supabase
+    .from("coach_memory_profiles")
+    .update(payload)
+    .eq("health_profile_id", healthProfileId)
+    .select("id")
+    .maybeSingle();
+
+  if (error && !isMissingMemoryTable(error)) return { error };
+  if (data) return { error: null };
+
+  return await supabase.from("coach_memory_profiles").insert(payload);
 }
 
 function chooseCommunicationStyle({

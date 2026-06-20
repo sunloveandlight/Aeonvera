@@ -3,6 +3,11 @@ import type { JarvisMessage } from "@/lib/voice/jarvisResponseEngine";
 import type { LongevityAlert } from "@/lib/coach/longevityCoach";
 import { sendCoachEmail } from "./email";
 import { sendCoachPushNotifications } from "./push";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type StoredAlert = LongevityAlert & {
   id?: string;
@@ -39,12 +44,14 @@ type DeliveryResult = {
 export async function deliverCoachNotifications({
   supabase,
   userId,
+  healthProfileContext,
   alerts,
   jarvis,
   memoryTags = [],
 }: {
   supabase: SupabaseClient;
   userId: string;
+  healthProfileContext?: ActiveHealthProfileContext | null;
   alerts: StoredAlert[];
   jarvis: JarvisMessage;
   memoryTags?: string[];
@@ -60,6 +67,7 @@ export async function deliverCoachNotifications({
   return deliverUserNotification({
     supabase,
     userId,
+    healthProfileContext,
     alertId: primaryAlert.id,
     title,
     message,
@@ -73,6 +81,7 @@ export async function deliverCoachNotifications({
 export async function deliverUserNotification({
   supabase,
   userId,
+  healthProfileContext,
   alertId,
   title,
   message,
@@ -83,6 +92,7 @@ export async function deliverUserNotification({
 }: {
   supabase: SupabaseClient;
   userId: string;
+  healthProfileContext?: ActiveHealthProfileContext | null;
   alertId?: string;
   title: string;
   message: string;
@@ -100,7 +110,7 @@ export async function deliverUserNotification({
     supabase.auth.admin.getUserById(userId),
   ]);
 
-  const prefs = await loadPreferences(supabase, userId, userResult.data.user);
+  const prefs = await loadPreferences(supabase, userId, userResult.data.user, healthProfileContext);
   const emailEnabled = prefs.email_enabled !== false;
   const pushEnabled = prefs.push_enabled === true;
   const quietHoursActive = isQuietHoursActive(prefs);
@@ -110,6 +120,7 @@ export async function deliverUserNotification({
   await recordDelivery({
     supabase,
     userId,
+    healthProfileContext,
     alertId,
     channel: "in_app",
     status: "sent",
@@ -134,6 +145,7 @@ export async function deliverUserNotification({
     await recordDelivery({
       supabase,
       userId,
+      healthProfileContext,
       alertId,
       channel: "email",
       status: emailResult.status,
@@ -157,6 +169,7 @@ export async function deliverUserNotification({
     await recordDelivery({
       supabase,
       userId,
+      healthProfileContext,
       alertId,
       channel: "email",
       status: "skipped",
@@ -198,6 +211,7 @@ export async function deliverUserNotification({
   await recordDelivery({
     supabase,
     userId,
+    healthProfileContext,
     alertId,
     channel: "push",
     status: pushResult.status,
@@ -228,6 +242,7 @@ export async function deliverUserNotification({
 async function recordDelivery({
   supabase,
   userId,
+  healthProfileContext,
   alertId,
   channel,
   status,
@@ -240,6 +255,7 @@ async function recordDelivery({
 }: {
   supabase: SupabaseClient;
   userId: string;
+  healthProfileContext?: ActiveHealthProfileContext | null;
   alertId?: string;
   channel: "email" | "push" | "in_app";
   status: "pending" | "sent" | "skipped" | "failed";
@@ -252,6 +268,16 @@ async function recordDelivery({
 }) {
   const { error: deliveryError } = await supabase.from("notification_deliveries").insert({
     user_id: userId,
+    ...healthSubjectInsertFields(
+      healthProfileContext || {
+        loginUserId: userId,
+        workspaceId: null,
+        healthProfileId: null,
+        legacyUserId: userId,
+        mode: "legacy_user",
+        role: "owner",
+      }
+    ),
     alert_id: alertId,
     channel,
     status,
@@ -272,12 +298,16 @@ async function recordDelivery({
 async function loadPreferences(
   supabase: SupabaseClient,
   userId: string,
-  user?: { user_metadata?: { notification_preferences?: NotificationPreferences } } | null
+  user?: { user_metadata?: { notification_preferences?: NotificationPreferences } } | null,
+  healthProfileContext?: ActiveHealthProfileContext | null
 ) {
+  const filter = healthProfileContext
+    ? getHealthSubjectFilter(healthProfileContext)
+    : { column: "user_id" as const, value: userId };
   const { data, error } = await supabase
     .from("notification_preferences")
     .select("email_enabled, push_enabled, quiet_hours_start, quiet_hours_end, timezone")
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .maybeSingle();
 
   if (error && !isMissingNotificationTable(error)) {

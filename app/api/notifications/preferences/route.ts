@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type Preferences = {
   user_id: string;
@@ -33,11 +39,16 @@ export async function GET() {
     });
     if (!entitlement.allowed) return entitlement.response;
 
-    const sleepSchedule = await deriveQuietHours(admin, user.id);
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
+    const sleepSchedule = await deriveQuietHours(admin, user.id, healthProfileContext);
     const { data, error } = await admin
       .from("notification_preferences")
       .select("*")
-      .eq("user_id", user.id)
+      .eq(healthFilter.column, healthFilter.value)
       .maybeSingle();
 
     if (error) {
@@ -91,7 +102,11 @@ export async function POST(request: NextRequest) {
     });
     if (!entitlement.allowed) return entitlement.response;
 
-    const sleepSchedule = await deriveQuietHours(admin, user.id);
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const sleepSchedule = await deriveQuietHours(admin, user.id, healthProfileContext);
     const nextPreferences: Preferences = {
       user_id: user.id,
       email_enabled: Boolean(body.email_enabled),
@@ -101,17 +116,15 @@ export async function POST(request: NextRequest) {
       timezone: body.timezone || "UTC",
     };
 
-    const { data, error } = await admin
-      .from("notification_preferences")
-      .upsert(
-        {
-          ...nextPreferences,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" }
-      )
-      .select()
-      .single();
+    const { data, error } = await upsertNotificationPreferences(
+      admin,
+      healthProfileContext,
+      {
+        ...nextPreferences,
+        ...healthSubjectInsertFields(healthProfileContext),
+        updated_at: new Date().toISOString(),
+      }
+    );
 
     if (error) {
       if (!isMissingPreferencesTable(error)) {
@@ -166,22 +179,50 @@ function metadataPreferences(
   };
 }
 
+async function upsertNotificationPreferences(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  healthProfileContext: ActiveHealthProfileContext,
+  payload: Record<string, unknown> & { user_id: string }
+) {
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
+  const { data: updated, error: updateError } = await supabase
+    .from("notification_preferences")
+    .update(payload)
+    .eq(healthFilter.column, healthFilter.value)
+    .select()
+    .maybeSingle();
+
+  if (updateError && !isMissingPreferencesTable(updateError)) {
+    return { data: null, error: updateError };
+  }
+
+  if (updated) return { data: updated, error: null };
+
+  return await supabase
+    .from("notification_preferences")
+    .insert(payload)
+    .select()
+    .single();
+}
+
 async function deriveQuietHours(
   supabase: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ) {
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
   const [{ data: state }, { data: assessment }] = await Promise.all([
     supabase
       .from("health_states")
       .select("baseline")
-      .eq("user_id", userId)
+      .eq(healthFilter.column, healthFilter.value)
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
     supabase
       .from("longevity_assessments")
       .select("sleep_hours")
-      .eq("user_id", userId)
+      .eq(healthFilter.column, healthFilter.value)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),

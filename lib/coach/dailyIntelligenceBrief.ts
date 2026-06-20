@@ -1,4 +1,5 @@
 import { buildExecutionSummary, getExecutionWindow } from "@/lib/execution/executionSummary";
+import type { ActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
 import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
@@ -60,40 +61,43 @@ export type DailyIntelligenceBrief = {
 
 export async function buildDailyIntelligenceBrief(
   supabase: SupabaseAdmin,
-  userId: string
+  userId: string,
+  healthProfileContext?: ActiveHealthProfileContext | null
 ): Promise<DailyIntelligenceBrief> {
   const now = new Date();
   const window = getExecutionWindow(now);
   const nextDay = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
 
+  const subjectColumn = healthProfileContext?.healthProfileId ? "health_profile_id" : "user_id";
+  const subjectValue = healthProfileContext?.healthProfileId || userId;
   const [memory, outcomesResult, calendarResult, protocolResult, healthResult] =
     await Promise.all([
-      loadOrBuildCoachMemoryProfile(supabase, userId),
+      loadOrBuildCoachMemoryProfile(supabase, userId, healthProfileContext),
       supabase
         .from("intervention_outcomes")
         .select("domain, action, outcome, success, notes, measured_at, created_at")
-        .eq("user_id", userId)
+        .eq(subjectColumn, subjectValue)
         .gte("created_at", window.startIso)
         .order("created_at", { ascending: false })
         .limit(80),
       supabase
         .from("calendar_events")
         .select("action, action_scope, recurrence, scheduled_for, status, created_at")
-        .eq("user_id", userId)
+        .eq(subjectColumn, subjectValue)
         .gte("scheduled_for", window.startIso)
         .order("scheduled_for", { ascending: true })
         .limit(80),
       supabase
         .from("optimization_protocols")
         .select("id, protocol, summary, focus_domains")
-        .eq("user_id", userId)
+        .eq(subjectColumn, subjectValue)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
       supabase
         .from("health_states")
         .select("risk_scores, baseline, updated_at")
-        .eq("user_id", userId)
+        .eq(subjectColumn, subjectValue)
         .maybeSingle(),
     ]);
 

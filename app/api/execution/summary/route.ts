@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import { buildExecutionSummary, getExecutionWindow } from "@/lib/execution/executionSummary";
+import {
+  getHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,13 +25,18 @@ export async function GET(request: NextRequest) {
     });
     if (!entitlement.allowed) return entitlement.response;
 
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
     const window = getExecutionWindow();
     const [outcomeRes, calendarRes] = await Promise.all([
       safeQuery(() =>
         admin
           .from("intervention_outcomes")
           .select("domain,action,outcome,success,notes,measured_at,created_at")
-          .eq("user_id", user.id)
+          .eq(healthFilter.column, healthFilter.value)
           .gte("created_at", window.startIso)
           .order("created_at", { ascending: false })
           .limit(80)
@@ -36,7 +45,7 @@ export async function GET(request: NextRequest) {
         admin
           .from("calendar_events")
           .select("action,action_scope,recurrence,scheduled_for,status,created_at")
-          .eq("user_id", user.id)
+          .eq(healthFilter.column, healthFilter.value)
           .gte("scheduled_for", window.startIso)
           .order("scheduled_for", { ascending: false })
           .limit(80)

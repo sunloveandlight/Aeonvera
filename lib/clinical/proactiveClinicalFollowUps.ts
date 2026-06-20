@@ -2,6 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { canAccess } from "@/lib/auth/permissions";
 import { deliverUserNotification } from "@/lib/notifications/coachDelivery";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import {
+  createLegacyActiveHealthProfileContext,
+  getHealthSubjectFilter,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type ClinicalInsightRow = {
   id: string;
@@ -33,10 +38,12 @@ type FollowUpStatus =
 export async function runProactiveClinicalFollowUps({
   supabase,
   userId,
+  healthProfileContext,
   force = false,
 }: {
   supabase: SupabaseClient;
   userId: string;
+  healthProfileContext?: ActiveHealthProfileContext | null;
   force?: boolean;
 }): Promise<{
   status: FollowUpStatus;
@@ -45,6 +52,8 @@ export async function runProactiveClinicalFollowUps({
   message?: string;
 }> {
   const subscription = await getUserPlanForUsage({ supabase, userId });
+  const activeHealthProfileContext =
+    healthProfileContext || createLegacyActiveHealthProfileContext(userId);
 
   if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
     return {
@@ -53,7 +62,7 @@ export async function runProactiveClinicalFollowUps({
     };
   }
 
-  const insights = await loadOpenClinicalInsights(supabase, userId);
+  const insights = await loadOpenClinicalInsights(supabase, userId, activeHealthProfileContext);
 
   if (insights.missingMigration) {
     return {
@@ -66,7 +75,11 @@ export async function runProactiveClinicalFollowUps({
     return { status: "no_insights", message: "No active clinical insights need follow-up." };
   }
 
-  const recentNotifications = await loadRecentClinicalNotifications(supabase, userId);
+  const recentNotifications = await loadRecentClinicalNotifications(
+    supabase,
+    userId,
+    activeHealthProfileContext
+  );
   if (!force && hasUserLevelFollowUpToday(recentNotifications.rows)) {
     return {
       status: "recently_sent",
@@ -86,6 +99,7 @@ export async function runProactiveClinicalFollowUps({
   const delivery = await deliverUserNotification({
     supabase,
     userId,
+    healthProfileContext: activeHealthProfileContext,
     title: followUp.title,
     message: followUp.message,
     actions: followUp.actions,
@@ -114,13 +128,18 @@ export async function runProactiveClinicalFollowUps({
   };
 }
 
-async function loadOpenClinicalInsights(supabase: SupabaseClient, userId: string) {
+async function loadOpenClinicalInsights(
+  supabase: SupabaseClient,
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
+) {
+  const filter = getHealthSubjectFilter(healthProfileContext);
   const { data, error } = await supabase
     .from("clinical_insights")
     .select(
       "id,source_question,answer_summary,domains,concern_status,confidence,range_flags,follow_up_questions,recommended_actions,metadata,created_at,updated_at"
     )
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .in("concern_status", ["active", "unresolved", "monitoring"])
     .order("updated_at", { ascending: false })
     .limit(8);
@@ -140,12 +159,17 @@ async function loadOpenClinicalInsights(supabase: SupabaseClient, userId: string
   };
 }
 
-async function loadRecentClinicalNotifications(supabase: SupabaseClient, userId: string) {
+async function loadRecentClinicalNotifications(
+  supabase: SupabaseClient,
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
+) {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const filter = getHealthSubjectFilter(healthProfileContext);
   const { data, error } = await supabase
     .from("notification_deliveries")
     .select("created_at,payload")
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .eq("channel", "in_app")
     .gte("created_at", since)
     .order("created_at", { ascending: false })

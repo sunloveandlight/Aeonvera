@@ -3,6 +3,7 @@ import { runProactiveDataSourceFollowUps } from "@/lib/data/proactiveDataSourceF
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
+import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,11 +25,16 @@ export async function POST(request: NextRequest) {
       userId: mobileUser.id,
     });
     if (!entitlement.allowed) return entitlement.response;
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: mobileUser.id,
+    });
 
     const result = await runProactiveDataSourceFollowUps({
       force: true,
       supabase: admin,
       userId: mobileUser.id,
+      healthProfileContext,
     });
 
     return NextResponse.json({

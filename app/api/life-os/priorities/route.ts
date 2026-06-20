@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type LifeDomainKey =
   | "health"
@@ -53,10 +59,11 @@ export async function GET() {
     if (auth.response) return auth.response;
 
     const admin = getSupabaseAdmin();
+    const healthFilter = getHealthSubjectFilter(auth.healthProfileContext);
     const { data, error } = await admin
       .from("life_os_priorities")
       .select(SELECT_FIELDS)
-      .eq("user_id", auth.userId)
+      .eq(healthFilter.column, healthFilter.value)
       .neq("status", "archived")
       .order("priority", { ascending: false })
       .order("updated_at", { ascending: false })
@@ -103,6 +110,7 @@ export async function POST(request: NextRequest) {
       .from("life_os_priorities")
       .insert({
         user_id: auth.userId,
+        ...healthSubjectInsertFields(auth.healthProfileContext),
         desired_outcome: sanitizeText(body?.desiredOutcome, 220),
         domain,
         horizon_days: clampNumber(body?.horizonDays, 7, 365, 90),
@@ -150,6 +158,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const healthFilter = getHealthSubjectFilter(auth.healthProfileContext);
     const { data, error } = await admin
       .from("life_os_priorities")
       .update({
@@ -158,7 +167,7 @@ export async function PATCH(request: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
-      .eq("user_id", auth.userId)
+      .eq(healthFilter.column, healthFilter.value)
       .select(SELECT_FIELDS)
       .single();
 
@@ -173,6 +182,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 async function requireLifeOsAccess(): Promise<{
+  healthProfileContext: ActiveHealthProfileContext;
   response: NextResponse | null;
   userId: string;
 }> {
@@ -183,6 +193,7 @@ async function requireLifeOsAccess(): Promise<{
 
   if (!user) {
     return {
+      healthProfileContext: null as never,
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
       userId: "",
     };
@@ -197,10 +208,15 @@ async function requireLifeOsAccess(): Promise<{
   });
 
   if (!entitlement.allowed) {
-    return { response: entitlement.response, userId: "" };
+    return { healthProfileContext: null as never, response: entitlement.response, userId: "" };
   }
 
-  return { response: null, userId: user.id };
+  const healthProfileContext = await resolveActiveHealthProfileContext({
+    supabase: admin,
+    loginUserId: user.id,
+  });
+
+  return { healthProfileContext, response: null, userId: user.id };
 }
 
 function mapPriorities(rows: PriorityRow[]) {
