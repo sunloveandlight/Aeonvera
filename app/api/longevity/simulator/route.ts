@@ -28,6 +28,7 @@ import {
   getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type CookieToSet = {
   name: string;
@@ -107,14 +108,16 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    const message =
-      error instanceof Error ? error.message : "Failed to run biological age simulator.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Biological age simulator failed:", error);
+    return NextResponse.json({ error: "Failed to run biological age simulator." }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "longevity-simulator-custom", 30, 60_000);
+    if (limited) return limited;
+
     const context = await getLatestAssessmentContext();
     const usage = await checkAndRecordUsage({
       metadata: { source: "future_self_custom" },
@@ -167,9 +170,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    const message =
-      error instanceof Error ? error.message : "Failed to run custom simulator.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Custom simulator failed:", error);
+    return NextResponse.json({ error: "Failed to run custom simulator." }, { status: 500 });
   }
 }
 

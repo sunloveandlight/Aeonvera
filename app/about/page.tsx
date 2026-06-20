@@ -59,6 +59,7 @@ export default function AboutPage() {
             src="/marketing/rejuvenation-man.png"
             alt="A man, renewed"
             caption="Vitality is not given back by time. It is reclaimed."
+            priority
           />
         </div>
       </section>

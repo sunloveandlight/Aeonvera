@@ -86,7 +86,8 @@ export async function GET(req: Request) {
       ]);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("[Cron] Health user query failed:", error);
+      return NextResponse.json({ error: "Daily coach job failed." }, { status: 500 });
     }
 
     const users = [
@@ -190,8 +191,8 @@ export async function GET(req: Request) {
       data_source_followups_skipped: dataSourceFollowUpsSkipped,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[Cron] Daily coach job failed:", err);
+    return NextResponse.json({ error: "Daily coach job failed." }, { status: 500 });
   }
 }
 

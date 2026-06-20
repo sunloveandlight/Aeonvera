@@ -45,14 +45,14 @@ export async function GET() {
         return NextResponse.json({ notifications: [] });
       }
 
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Notification deliveries load failed:", error);
+      return NextResponse.json({ error: "Failed to load notifications." }, { status: 500 });
     }
 
     return NextResponse.json({ notifications: data || [] });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to load notifications.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Notification deliveries load failed:", error);
+    return NextResponse.json({ error: "Failed to load notifications." }, { status: 500 });
   }
 }
 

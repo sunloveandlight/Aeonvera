@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import {
@@ -7,6 +7,7 @@ import {
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 const ACTION_TYPES = [
   "action_error",
@@ -70,8 +71,11 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "agent-activity-write", 120, 60_000);
+    if (limited) return limited;
+
     const supabase = await createClient();
     const {
       data: { user },

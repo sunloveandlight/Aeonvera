@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { ACTIVE_HEALTH_PROFILE_COOKIE } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "health-profile-active", 90, 60_000);
+    if (limited) return limited;
+
     const supabase = await createClient();
     const {
       data: { user },

@@ -15,6 +15,7 @@ import {
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type AutopilotMode = "manual" | "suggest" | "approve" | "autopilot" | "sovereign";
 type ActionScope = "today" | "week" | "check_in" | "later";
@@ -172,6 +173,9 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "autopilot-preferences-update", 40, 60_000);
+    if (limited) return limited;
+
     const user = await getAuthenticatedUser(request);
 
     if (!user) {
@@ -222,6 +226,9 @@ export async function PATCH(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "autopilot-plan-update", 60, 60_000);
+    if (limited) return limited;
+
     const user = await getAuthenticatedUser(request);
 
     if (!user) {

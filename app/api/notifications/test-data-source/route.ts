@@ -8,9 +8,13 @@ import {
   getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "test-data-source-notification", 12, 60_000);
+    if (limited) return limited;
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -48,9 +52,8 @@ export async function POST(request: NextRequest) {
       ...result,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to send data source follow-up.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Data source follow-up failed:", error);
+    return NextResponse.json({ error: "Failed to send data source follow-up." }, { status: 500 });
   }
 }
 

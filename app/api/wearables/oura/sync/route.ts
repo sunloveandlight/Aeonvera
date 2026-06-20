@@ -11,9 +11,13 @@ import {
   getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "oura-sync", 10, 60_000);
+    if (limited) return limited;
+
     const user = await getAuthenticatedUser(request);
 
     if (!user) {
@@ -80,8 +84,8 @@ export async function POST(request: NextRequest) {
       ...result,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Oura sync failed.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Oura sync failed:", error);
+    return NextResponse.json({ error: "Oura sync failed." }, { status: 500 });
   }
 }
 

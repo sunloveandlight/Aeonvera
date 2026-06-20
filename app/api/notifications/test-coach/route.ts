@@ -16,6 +16,7 @@ import {
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type OptimizationProtocol = {
   summary?: string;
@@ -31,6 +32,9 @@ type OptimizationProtocol = {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "test-coach-notification", 12, 60_000);
+    if (limited) return limited;
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -126,7 +130,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (alertError) {
-      return NextResponse.json({ error: alertError.message }, { status: 500 });
+      console.error("Test coach alert save failed:", alertError);
+      return NextResponse.json({ error: "Failed to send test coach message." }, { status: 500 });
     }
 
     const jarvis = generateJarvisMessage({
@@ -170,9 +175,8 @@ export async function POST(request: NextRequest) {
       communication_style: coachMemory?.communicationStyle || null,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to send test coach message.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Test coach message failed:", error);
+    return NextResponse.json({ error: "Failed to send test coach message." }, { status: 500 });
   }
 }
 

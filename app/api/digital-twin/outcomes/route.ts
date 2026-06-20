@@ -9,6 +9,7 @@ import {
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 const BASE_SELECT =
   "id,domain,action,success,confidence,created_at";
@@ -66,14 +67,16 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    const message =
-      error instanceof Error ? error.message : "Could not load intervention outcomes.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Intervention outcomes load failed:", error);
+    return NextResponse.json({ error: "Could not load intervention outcomes." }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "digital-twin-outcome-create", 30, 60_000);
+    if (limited) return limited;
+
     const user = await requireUser();
     const body = await readJson(request);
     const outcome = normalizeOutcome(body.outcome);
@@ -185,9 +188,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    const message =
-      error instanceof Error ? error.message : "Could not save intervention outcome.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Intervention outcome save failed:", error);
+    return NextResponse.json({ error: "Could not save intervention outcome." }, { status: 500 });
   }
 }
 

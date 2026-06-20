@@ -11,6 +11,7 @@ import {
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type CookieToSet = {
   name: string;
@@ -70,14 +71,16 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    const message =
-      error instanceof Error ? error.message : "Could not load saved scenarios.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Future-self scenarios load failed:", error);
+    return NextResponse.json({ error: "Could not load saved scenarios." }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "future-self-scenario-create", 20, 60_000);
+    if (limited) return limited;
+
     const user = await requireUser();
     const admin = getSupabaseAdmin();
     await requireFutureSelfAccess(admin, user.id);
@@ -178,9 +181,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    const message =
-      error instanceof Error ? error.message : "Could not save future-self scenario.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Future-self scenario save failed:", error);
+    return NextResponse.json({ error: "Could not save future-self scenario." }, { status: 500 });
   }
 }
 

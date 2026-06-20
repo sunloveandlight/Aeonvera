@@ -18,6 +18,7 @@ import {
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type ShareLinkRow = {
   access_count?: number;
@@ -74,6 +75,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "physician-share-link-create", 20, 60_000);
+    if (limited) return limited;
+
     const auth = await requirePhysicianExportAccess(request);
     if (auth.response) return auth.response;
     if (!auth.healthProfileContext) throw new Error("Active health profile not found.");
@@ -133,6 +137,9 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "physician-share-link-update", 40, 60_000);
+    if (limited) return limited;
+
     const auth = await requirePhysicianExportAccess(request);
     if (auth.response) return auth.response;
     if (!auth.healthProfileContext) throw new Error("Active health profile not found.");

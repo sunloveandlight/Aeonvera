@@ -13,6 +13,7 @@ import {
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type CalendarBody = {
   title?: string;
@@ -29,6 +30,9 @@ type CalendarBody = {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "calendar-event-create", 30, 60_000);
+    if (limited) return limited;
+
     const user = await getAuthenticatedUser(request);
 
     if (!user) {

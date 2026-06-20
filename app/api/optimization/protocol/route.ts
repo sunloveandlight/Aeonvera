@@ -16,6 +16,7 @@ import {
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type Question = {
   id: string;
@@ -80,6 +81,9 @@ function getOpenAI() {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "optimization-protocol", 10, 60_000);
+    if (limited) return limited;
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -217,8 +221,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (protocolResult.error) {
+      console.error("Optimization protocol save failed:", protocolResult.error);
       return NextResponse.json(
-        { error: protocolResult.error.message },
+        { error: "Failed to save optimization protocol." },
         { status: 500 }
       );
     }

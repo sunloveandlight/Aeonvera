@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isHealthProfileFrozen } from "@/lib/health-profiles/profileEntitlements";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type WorkspaceRole = "owner" | "admin" | "member" | "viewer";
 type ProfileRole = "owner" | "editor" | "viewer";
@@ -79,6 +80,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "workspace-member-grant", 20, 60_000);
+    if (limited) return limited;
+
     const auth = await requireUser();
     if (auth.response) return auth.response;
 
@@ -198,6 +202,9 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "workspace-member-update", 40, 60_000);
+    if (limited) return limited;
+
     const auth = await requireUser();
     if (auth.response) return auth.response;
 

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import OpenAI from "openai";
@@ -19,6 +19,7 @@ import {
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 let openaiClient: OpenAI | null = null;
 
@@ -83,8 +84,11 @@ async function getSupabase() {
   );
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "longevity-report", 8, 60_000);
+    if (limited) return limited;
+
     const supabase = await getSupabase();
     const cookieStore = await cookies();
 
@@ -304,8 +308,9 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
         assessment as Record<string, unknown> | null
       );
     } catch {
+      console.error("[Longevity Report] Invalid AI JSON output");
       return NextResponse.json(
-        { error: "Invalid AI JSON output", raw: cleaned },
+        { error: "Failed to generate longevity report." },
         { status: 500 }
       );
     }
@@ -327,7 +332,8 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("[Longevity Report] Save failed:", error);
+      return NextResponse.json({ error: "Failed to save longevity report." }, { status: 500 });
     }
 
     const alertSeverity =
@@ -381,8 +387,9 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
       usage: serializeUsage(usage),
     });
   } catch (err: unknown) {
+    console.error("[Longevity Report] Generation failed:", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Server error" },
+      { error: "Failed to generate longevity report." },
       { status: 500 }
     );
   }

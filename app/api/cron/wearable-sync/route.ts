@@ -44,7 +44,8 @@ async function syncWearables(request: NextRequest) {
       .eq("status", "connected");
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("[Wearable Cron] Connection query failed:", error);
+      return NextResponse.json({ error: "Wearable cron sync failed." }, { status: 500 });
     }
 
     const window = getSyncWindow();
@@ -125,10 +126,8 @@ async function syncWearables(request: NextRequest) {
       results,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Wearable cron sync failed.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[Wearable Cron] Sync failed:", error);
+    return NextResponse.json({ error: "Wearable cron sync failed." }, { status: 500 });
   }
 }
 

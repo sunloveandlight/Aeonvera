@@ -7,6 +7,7 @@ import {
   syncUserSubscriptionState,
 } from "@/lib/billing/subscriptionSync";
 import type { Plan } from "@/lib/auth/permissions";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -32,6 +33,9 @@ function getPlanFromPriceId(priceId?: string | null): Plan | null {
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = await rateLimitRequest(req, "stripe-sync-subscription", 12, 60_000);
+    if (limited) return limited;
+
     const supabaseUser = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

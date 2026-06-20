@@ -9,9 +9,13 @@ import {
   getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "autopilot-morning-brief", 20, 60_000);
+    if (limited) return limited;
+
     const user = await getAuthenticatedUser(request);
 
     if (!user) {
@@ -51,9 +55,8 @@ export async function POST(request: NextRequest) {
       result,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Could not run Morning Autopilot.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Morning Autopilot failed:", error);
+    return NextResponse.json({ error: "Could not run Morning Autopilot." }, { status: 500 });
   }
 }
 

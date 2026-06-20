@@ -11,9 +11,13 @@ import {
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = await rateLimitRequest(req, "health-state-process", 20, 60_000);
+    if (limited) return limited;
+
     const body = await req.json();
     const requestedUserId = body.userId;
     const authorization = await resolveAuthorizedUserId(req, requestedUserId);
@@ -78,8 +82,9 @@ export async function POST(req: NextRequest) {
     const { data: rawMetrics, error: rawError } = await query;
 
     if (rawError) {
+      console.error("Raw wearable metric query failed:", rawError);
       return NextResponse.json(
-        { error: rawError.message },
+        { error: "Could not load wearable metrics." },
         { status: 500 }
       );
     }
@@ -178,8 +183,9 @@ export async function POST(req: NextRequest) {
         ).error;
 
     if (stateError) {
+      console.error("Health state save failed:", stateError);
       return NextResponse.json(
-        { error: stateError.message },
+        { error: "Failed to save health state." },
         { status: 500 }
       );
     }
@@ -199,11 +205,9 @@ export async function POST(req: NextRequest) {
       biologicalAge,
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Unknown error";
-
+    console.error("Health state processing failed:", err);
     return NextResponse.json(
-      { error: message },
+      { error: "Failed to process health state." },
       { status: 500 }
     );
   }

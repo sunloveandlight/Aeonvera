@@ -3,6 +3,7 @@ import { getCommandOrbToolMeta, type CommandOrbToolId } from "@/lib/agent/comman
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 import {
   getHealthSubjectFilter,
   getRequestedHealthProfileId,
@@ -70,6 +71,9 @@ type UserStatePacket = {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "agent-planner", 60, 60_000);
+    if (limited) return limited;
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -102,9 +106,8 @@ export async function POST(request: NextRequest) {
     const plan = planCommand(command, currentPage, userState);
     return NextResponse.json(plan);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Could not plan that action.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Could not plan agent action:", error);
+    return NextResponse.json({ error: "Could not plan that action." }, { status: 500 });
   }
 }
 

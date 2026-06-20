@@ -11,6 +11,7 @@ import {
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
 import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type ChatMessage = {
   role?: unknown;
@@ -24,6 +25,9 @@ type SanitizedChatMessage = {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "agent-chat", 40, 60_000);
+    if (limited) return limited;
+
     const user = await getAuthenticatedUser(request);
 
     if (!user) {
@@ -95,9 +99,11 @@ export async function POST(request: NextRequest) {
       usage: serializeUsage(usage),
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Aeonvera could not answer right now.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Aeonvera chat failed:", error);
+    return NextResponse.json(
+      { error: "Aeonvera could not answer right now." },
+      { status: 500 }
+    );
   }
 }
 

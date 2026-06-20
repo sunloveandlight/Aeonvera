@@ -15,6 +15,7 @@ import {
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type CookieToSet = {
   name: string;
@@ -76,19 +77,22 @@ export async function GET() {
         return NextResponse.json({ history: [] });
       }
 
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Biological age history load failed:", error);
+      return NextResponse.json({ error: "Failed to load biological age history." }, { status: 500 });
     }
 
     return NextResponse.json({ history: data || [] });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to load biological age history.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Biological age history load failed:", error);
+    return NextResponse.json({ error: "Failed to load biological age history." }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "biological-age-refresh", 20, 60_000);
+    if (limited) return limited;
+
     const supabaseUser = await getSupabaseUser();
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
 
@@ -173,9 +177,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, result, history: historyPoint || null });
   } catch (err: unknown) {
     console.error("Biological age error:", err);
-    const message = err instanceof Error ? err.message : "Server error";
     return NextResponse.json(
-      { error: message },
+      { error: "Failed to calculate biological age." },
       { status: 500 }
     );
   }

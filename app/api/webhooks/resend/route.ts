@@ -104,7 +104,8 @@ export async function POST(request: NextRequest) {
     .eq("id", existing.id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[Resend Webhook] Delivery update failed:", error);
+    return NextResponse.json({ error: "Webhook processing failed." }, { status: 500 });
   }
 
   return NextResponse.json({

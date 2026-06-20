@@ -10,6 +10,7 @@ import {
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type LifeDomainKey =
   | "health"
@@ -93,6 +94,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "life-os-priority-create", 30, 60_000);
+    if (limited) return limited;
+
     const auth = await requireLifeOsAccess(request);
     if (auth.response) return auth.response;
     if (auth.healthProfileContext.isFrozen) {
@@ -151,6 +155,9 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "life-os-priority-update", 60, 60_000);
+    if (limited) return limited;
+
     const auth = await requireLifeOsAccess(request);
     if (auth.response) return auth.response;
 

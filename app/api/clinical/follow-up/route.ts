@@ -10,9 +10,13 @@ import {
   getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "clinical-follow-up", 20, 60_000);
+    if (limited) return limited;
+
     const user = await getAuthenticatedUser(request);
 
     if (!user) {
@@ -76,9 +80,8 @@ export async function POST(request: NextRequest) {
       ...result,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Clinical follow-up could not run.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Clinical follow-up failed:", error);
+    return NextResponse.json({ error: "Clinical follow-up could not run." }, { status: 500 });
   }
 }
 

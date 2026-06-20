@@ -12,6 +12,7 @@ import {
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
 import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type ChatMessage = {
   role?: unknown;
@@ -42,6 +43,9 @@ function getOpenAI() {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "agent-voice", 20, 60_000);
+    if (limited) return limited;
+
     const user = await getAuthenticatedUser(request);
 
     if (!user) {
@@ -137,9 +141,11 @@ export async function POST(request: NextRequest) {
       usage: serializeUsage(usage),
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Aeonvera could not process voice right now.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Aeonvera voice failed:", error);
+    return NextResponse.json(
+      { error: "Aeonvera could not process voice right now." },
+      { status: 500 }
+    );
   }
 }
 

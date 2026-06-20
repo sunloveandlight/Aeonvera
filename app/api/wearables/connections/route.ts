@@ -36,14 +36,13 @@ export async function GET() {
       .order("connected_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Wearable connections load failed:", error);
+      return NextResponse.json({ error: "Failed to load wearable connections." }, { status: 500 });
     }
 
     return NextResponse.json({ connections: data || [] });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to load wearable connections.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Wearable connections load failed:", error);
+    return NextResponse.json({ error: "Failed to load wearable connections." }, { status: 500 });
   }
 }

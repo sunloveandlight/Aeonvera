@@ -7,6 +7,7 @@ import {
   getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 const ALLOWED_SOURCE_TYPES = new Set([
   "assessment",
@@ -20,6 +21,9 @@ const ALLOWED_SOURCE_TYPES = new Set([
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "semantic-memory-write", 40, 60_000);
+    if (limited) return limited;
+
     const user = await requireUser();
     const body = await request.json().catch(() => ({}));
     const sourceType = sanitizeSourceType(body.sourceType);
@@ -56,12 +60,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not store memory.";
+    if (message !== "Unauthorized") console.error("Could not store memory:", error);
     return NextResponse.json({ error: message }, { status: message === "Unauthorized" ? 401 : 500 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "semantic-memory-delete", 20, 60_000);
+    if (limited) return limited;
+
     const user = await requireUser();
     const body = await request.json().catch(() => ({}));
     const admin = getSupabaseAdmin();
@@ -90,6 +98,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not forget memory.";
+    if (message !== "Unauthorized") console.error("Could not forget memory:", error);
     return NextResponse.json({ error: message }, { status: message === "Unauthorized" ? 401 : 500 });
   }
 }

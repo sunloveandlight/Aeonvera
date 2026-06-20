@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type PushPlatform = "web" | "ios" | "android";
 
@@ -13,6 +14,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "push-subscription-save", 30, 60_000);
+    if (limited) return limited;
+
     const user = await getAuthenticatedUser(request);
 
     if (!user) {
@@ -91,19 +95,22 @@ export async function POST(request: NextRequest) {
     const { data, error } = result;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Push subscription save failed:", error);
+      return NextResponse.json({ error: "Failed to save push subscription." }, { status: 500 });
     }
 
     return NextResponse.json({ subscription: data });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to save push subscription.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Push subscription save failed:", error);
+    return NextResponse.json({ error: "Failed to save push subscription." }, { status: 500 });
   }
 }
 
 export async function PATCH(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "push-subscription-update", 60, 60_000);
+    if (limited) return limited;
+
     const user = await getAuthenticatedUser(request);
 
     if (!user) {
@@ -130,14 +137,14 @@ export async function PATCH(request: NextRequest) {
       .select();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("Push subscription update failed:", error);
+      return NextResponse.json({ error: "Failed to update push subscriptions." }, { status: 500 });
     }
 
     return NextResponse.json({ subscriptions: data || [] });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to update push subscriptions.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Push subscription update failed:", error);
+    return NextResponse.json({ error: "Failed to update push subscriptions." }, { status: 500 });
   }
 }
 

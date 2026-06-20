@@ -11,6 +11,7 @@ import {
   getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 let openaiClient: OpenAI | null = null;
 
@@ -30,6 +31,9 @@ function getOpenAI() {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "apple-health-import", 10, 60_000);
+    if (limited) return limited;
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -78,10 +82,8 @@ export async function POST(request: NextRequest) {
       ...result,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Apple Health import failed.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Apple Health import failed:", error);
+    return NextResponse.json({ error: "Apple Health import failed." }, { status: 500 });
   }
 }
 

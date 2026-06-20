@@ -11,6 +11,7 @@ import {
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type AutopilotMode = "manual" | "suggest" | "approve" | "autopilot" | "sovereign";
 type Intensity = "quiet" | "balanced" | "high_touch";
@@ -116,6 +117,9 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "autopilot-preferences-v2-update", 40, 60_000);
+    if (limited) return limited;
+
     const supabase = await createClient();
     const {
       data: { user },

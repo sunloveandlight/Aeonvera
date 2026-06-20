@@ -53,6 +53,8 @@ function getPlanFromSubscription(sub: Stripe.Subscription): Plan | null {
 }
 
 export async function POST(req: NextRequest) {
+  let insertedStripeEventId: string | null = null;
+
   try {
     const stripe = getStripe();
     const supabase = getSupabaseAdmin();
@@ -96,7 +98,15 @@ export async function POST(req: NextRequest) {
 
     if (insertError) {
       console.error("Stripe event insert error:", insertError);
+      if (insertError.code === "23505") {
+        return NextResponse.json({ received: true });
+      }
+      return NextResponse.json(
+        { error: "Could not record Stripe event" },
+        { status: 500 }
+      );
     }
+    insertedStripeEventId = event.id;
 
     // ----------------------------
     // EVENT HANDLING
@@ -241,6 +251,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (err) {
     console.error("Webhook error:", err);
+
+    if (insertedStripeEventId) {
+      const { error } = await getSupabaseAdmin()
+        .from("stripe_events")
+        .delete()
+        .eq("id", insertedStripeEventId);
+
+      if (error) {
+        console.error("Stripe event rollback failed:", error);
+      }
+    }
 
     return NextResponse.json(
       { error: "Webhook handler failed" },

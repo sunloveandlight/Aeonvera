@@ -7,6 +7,7 @@ import {
   getWorkspaceProfileEntitlements,
   isHealthProfileFrozen,
 } from "@/lib/health-profiles/profileEntitlements";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type AccessRow = {
   health_profile_id: string;
@@ -61,6 +62,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "health-profile-create", 20, 60_000);
+    if (limited) return limited;
+
     const auth = await requireUser();
     if (auth.response) return auth.response;
 
@@ -145,6 +149,9 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "health-profile-update", 60, 60_000);
+    if (limited) return limited;
+
     const auth = await requireUser();
     if (auth.response) return auth.response;
 

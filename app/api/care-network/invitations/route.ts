@@ -14,6 +14,7 @@ import {
   createShareAccessCode,
   hashShareAccessCode,
 } from "@/lib/security/shareAccess";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type CareNetworkRow = {
   accepted_at?: string | null;
@@ -82,6 +83,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "care-network-invitation", 20, 60_000);
+    if (limited) return limited;
+
     const auth = await requireNetworkAccess();
     if (auth.response) return auth.response;
 
@@ -149,6 +153,9 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "care-network-invitation-update", 40, 60_000);
+    if (limited) return limited;
+
     const auth = await requireNetworkAccess();
     if (auth.response) return auth.response;
 

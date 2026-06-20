@@ -10,6 +10,7 @@ import {
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type Preferences = {
   user_id: string;
@@ -56,7 +57,8 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       if (!isMissingPreferencesTable(error)) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error("Notification preferences load failed:", error);
+        return NextResponse.json({ error: "Failed to load preferences." }, { status: 500 });
       }
 
       return NextResponse.json({
@@ -78,14 +80,16 @@ export async function GET(request: NextRequest) {
           },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to load preferences.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Notification preferences load failed:", error);
+    return NextResponse.json({ error: "Failed to load preferences." }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "notification-preferences-save", 40, 60_000);
+    if (limited) return limited;
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -135,7 +139,8 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       if (!isMissingPreferencesTable(error)) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error("Notification preferences save failed:", error);
+        return NextResponse.json({ error: "Failed to save preferences." }, { status: 500 });
       }
 
       await admin.auth.admin.updateUserById(user.id, {
@@ -152,9 +157,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ preferences: { ...data, source: "table" } });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to save preferences.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Notification preferences save failed:", error);
+    return NextResponse.json({ error: "Failed to save preferences." }, { status: 500 });
   }
 }
 
