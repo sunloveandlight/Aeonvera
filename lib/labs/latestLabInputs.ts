@@ -21,18 +21,22 @@ const LAB_TO_INPUT_KEY: Partial<Record<ClinicalBiomarkerKey, keyof AssessmentInp
 };
 
 export async function loadLatestLabInputValues({
+  healthProfileId,
   supabase,
   userId,
 }: {
+  healthProfileId?: string | null;
   supabase: SupabaseClient;
   userId: string;
 }) {
-  const { data, error } = await supabase
+  const query = supabase
     .from("lab_biomarkers")
     .select("canonical_key, value, measured_at")
-    .eq("user_id", userId)
+    .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
     .order("measured_at", { ascending: false })
     .limit(80);
+
+  const { data, error } = await query;
 
   if (error) {
     if (isMissingLabTable(error)) return {};

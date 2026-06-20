@@ -9,6 +9,11 @@ import {
 import { buildAssessmentInput } from "@/lib/longevity/assessmentInput";
 import { loadLatestLabInputValues } from "@/lib/labs/latestLabInputs";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type CookieToSet = {
   name: string;
@@ -52,10 +57,16 @@ export async function GET() {
     });
     if (!entitlement.allowed) return entitlement.response;
 
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase,
+      loginUserId: user.id,
+    });
+
+    const historyFilter = getHealthSubjectFilter(healthProfileContext);
     const { data, error } = await supabase
       .from("biological_age_history")
       .select("id, chronological_age, biological_age, age_delta, score, accuracy_score, category, source, result, created_at")
-      .eq("user_id", user.id)
+      .eq(historyFilter.column, historyFilter.value)
       .order("created_at", { ascending: false })
       .limit(24);
 
@@ -94,6 +105,11 @@ export async function POST(request: NextRequest) {
     });
     if (!entitlement.allowed) return entitlement.response;
 
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase,
+      loginUserId: userId,
+    });
+
     const { data: assessment, error: assessmentError } = await supabase
       .from("longevity_assessments")
       .select("*")
@@ -111,7 +127,11 @@ export async function POST(request: NextRequest) {
 
     const input = {
       ...buildAssessmentInput(assessment),
-      ...(await loadLatestLabInputValues({ supabase, userId })),
+      ...(await loadLatestLabInputValues({
+        healthProfileId: healthProfileContext.healthProfileId,
+        supabase,
+        userId,
+      })),
     };
     const result = computeBiologicalAge(input);
     const body = await readJsonBody(request);
@@ -128,6 +148,7 @@ export async function POST(request: NextRequest) {
     const { data: historyPoint } = await supabase
       .from("biological_age_history")
       .insert({
+        ...healthSubjectInsertFields(healthProfileContext),
         user_id: userId,
         assessment_id: assessment.id,
         chronological_age: result.chronologicalAge,

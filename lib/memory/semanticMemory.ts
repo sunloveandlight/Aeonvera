@@ -86,6 +86,7 @@ export async function listRecentSemanticMemories({
 
 export async function storeSemanticMemory({
   content,
+  healthProfileId,
   importance = 0.55,
   metadata = {},
   occurredAt,
@@ -96,6 +97,7 @@ export async function storeSemanticMemory({
   userId,
 }: {
   content: string;
+  healthProfileId?: string | null;
   importance?: number;
   metadata?: Record<string, unknown>;
   occurredAt?: string;
@@ -116,7 +118,7 @@ export async function storeSemanticMemory({
       const { data: existing, error: lookupError } = await supabase
         .from("semantic_memories")
         .select("id, content")
-        .eq("user_id", userId)
+        .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
         .eq("source_type", sourceType)
         .eq("source_id", sourceId)
         .maybeSingle();
@@ -143,7 +145,7 @@ export async function storeSemanticMemory({
       const { data: dupe, error: dupeError } = await supabase
         .from("semantic_memories")
         .select("id")
-        .eq("user_id", userId)
+        .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
         .eq("source_type", sourceType)
         .eq("content", normalized)
         .limit(1)
@@ -161,6 +163,7 @@ export async function storeSemanticMemory({
   const { error } = await supabase.from("semantic_memories").insert({
     content: normalized,
     embedding,
+    ...(healthProfileId ? { health_profile_id: healthProfileId } : {}),
     importance: clampImportance(importance),
     metadata,
     occurred_at: occurredAt || new Date().toISOString(),

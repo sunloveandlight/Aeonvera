@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
 
 export async function GET() {
   try {
@@ -35,8 +36,17 @@ export async function GET() {
       );
     }
 
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+
     return NextResponse.json({
-      trends: await loadLabTrendsForUser(admin, user.id),
+      trends: await loadLabTrendsForUser(
+        admin,
+        user.id,
+        healthProfileContext.healthProfileId
+      ),
     });
   } catch (error) {
     const message =

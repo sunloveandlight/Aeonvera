@@ -17,6 +17,10 @@ import {
 } from "@/lib/labs/clinicalBiomarkers";
 import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAge";
 import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
+import {
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 let openaiClient: OpenAI | null = null;
 
@@ -47,7 +51,12 @@ export async function POST(request: NextRequest) {
 
     const admin = getSupabaseAdmin();
     const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
     const usage = await checkAndRecordUsage({
+      healthProfileId: healthProfileContext.healthProfileId,
       metadata: { source: "lab_import" },
       meter: "lab_import",
       plan: subscription.plan,
@@ -77,6 +86,7 @@ export async function POST(request: NextRequest) {
 
     const measuredAt = new Date().toISOString();
     const rows = biomarkers.map((biomarker) => ({
+      ...healthSubjectInsertFields(healthProfileContext),
       user_id: user.id,
       canonical_key: biomarker.canonicalKey,
       value: biomarker.value,
@@ -104,11 +114,13 @@ export async function POST(request: NextRequest) {
     }
 
     const biologicalAge = await refreshBiologicalAgeForUser({
+      healthProfileId: healthProfileContext.healthProfileId,
       supabase: admin,
       userId: user.id,
       source: "system",
     });
     const clinicalIntelligence = await createClinicalInsightFromLabs({
+      healthProfileId: healthProfileContext.healthProfileId,
       sourceQuestion: "Clinical lab import",
       supabase: admin,
       userId: user.id,
@@ -122,6 +134,7 @@ export async function POST(request: NextRequest) {
           }`
         ),
       ].join("\n"),
+      healthProfileId: healthProfileContext.healthProfileId,
       importance: 0.86,
       metadata: {
         biomarkerCount: biomarkers.length,

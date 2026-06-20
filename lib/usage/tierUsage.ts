@@ -64,6 +64,7 @@ export async function getUserPlanForUsage({
 }
 
 export async function checkAndRecordUsage({
+  healthProfileId,
   metadata = {},
   meter,
   plan,
@@ -71,6 +72,7 @@ export async function checkAndRecordUsage({
   supabase,
   userId,
 }: {
+  healthProfileId?: string | null;
   metadata?: Record<string, unknown>;
   meter: UsageMeter;
   plan: Plan | null;
@@ -89,6 +91,7 @@ export async function checkAndRecordUsage({
   if (!check.allowed || check.migrationRequired) return check;
 
   const { error } = await supabase.from("usage_events").insert({
+    ...(healthProfileId ? { health_profile_id: healthProfileId } : {}),
     user_id: userId,
     meter,
     plan,

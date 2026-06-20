@@ -31,10 +31,12 @@ export type BiologicalAgeRefreshResult = {
 };
 
 export async function refreshBiologicalAgeForUser({
+  healthProfileId,
   supabase,
   userId,
   source = "system",
 }: {
+  healthProfileId?: string | null;
   supabase: SupabaseClient;
   userId: string;
   source?: RefreshSource;
@@ -54,6 +56,7 @@ export async function refreshBiologicalAgeForUser({
   if (!assessment) return null;
 
   const input = await buildWearableEnhancedInput({
+    healthProfileId,
     supabase,
     userId,
     assessment,
@@ -71,6 +74,7 @@ export async function refreshBiologicalAgeForUser({
   const { data: historyPoint, error: historyError } = await supabase
     .from("biological_age_history")
     .insert({
+      ...(healthProfileId ? { health_profile_id: healthProfileId } : {}),
       user_id: userId,
       assessment_id: assessment.id,
       chronological_age: result.chronologicalAge,
@@ -96,20 +100,26 @@ export async function refreshBiologicalAgeForUser({
 }
 
 async function buildWearableEnhancedInput({
+  healthProfileId,
   supabase,
   userId,
   assessment,
 }: {
+  healthProfileId?: string | null;
   supabase: SupabaseClient;
   userId: string;
   assessment: Record<string, unknown>;
 }) {
   const input = buildAssessmentInput(assessment);
-  const labInput = await loadLatestLabInputValues({ supabase, userId });
-  const { data } = await supabase
+  const labInput = await loadLatestLabInputValues({
+    healthProfileId,
+    supabase,
+    userId,
+  });
+  const query = supabase
     .from("health_metrics")
     .select("metric, value, measured_at")
-    .eq("user_id", userId)
+    .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
     .in("metric", [
       "sleep_hours",
       "resting_heart_rate",
@@ -118,6 +128,8 @@ async function buildWearableEnhancedInput({
     ])
     .order("measured_at", { ascending: false })
     .limit(80);
+
+  const { data } = await query;
 
   const latest = latestMetricsByName((data || []) as HealthMetricRow[]);
 

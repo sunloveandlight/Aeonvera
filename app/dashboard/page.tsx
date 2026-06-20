@@ -18,6 +18,10 @@ import {
   buildDataSourceIntelligence,
   type DataSourceIntelligence,
 } from "@/lib/data/dataSourceIntelligence";
+import {
+  applyHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 import { resolveDisplayName } from "@/lib/profile/displayName";
 import { sentenceDisplay } from "@/lib/text/display";
 
@@ -293,6 +297,10 @@ export default function DashboardPage() {
         }
 
         setProfile(profileData);
+        const healthProfileContext = await resolveActiveHealthProfileContext({
+          supabase,
+          loginUserId: user.id,
+        });
 
         const [
           reportRes,
@@ -326,25 +334,31 @@ export default function DashboardPage() {
             .limit(1)
             .maybeSingle(),
 
-          supabase
-            .from("health_alerts")
-            .select("*")
-            .eq("user_id", user.id)
+          applyHealthSubjectFilter(
+            supabase
+              .from("health_alerts")
+              .select("*"),
+            healthProfileContext
+          )
             .order("created_at", { ascending: false })
             .limit(3),
 
-          supabase
-            .from("health_states")
-            .select("baseline, risk_scores, insights, updated_at")
-            .eq("user_id", user.id)
+          applyHealthSubjectFilter(
+            supabase
+              .from("health_states")
+              .select("baseline, risk_scores, insights, updated_at"),
+            healthProfileContext
+          )
             .order("updated_at", { ascending: false })
             .limit(1)
             .maybeSingle(),
 
-          supabase
-            .from("wearable_metrics")
-            .select("provider, recorded_at")
-            .eq("user_id", user.id)
+          applyHealthSubjectFilter(
+            supabase
+              .from("wearable_metrics")
+              .select("provider, recorded_at"),
+            healthProfileContext
+          )
             .order("recorded_at", { ascending: false })
             .limit(50),
 
@@ -356,10 +370,12 @@ export default function DashboardPage() {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
 
-          supabase
-            .from("optimization_protocols")
-            .select("id, protocol, summary, focus_domains, status, created_at")
-            .eq("user_id", user.id)
+          applyHealthSubjectFilter(
+            supabase
+              .from("optimization_protocols")
+              .select("id, protocol, summary, focus_domains, status, created_at"),
+            healthProfileContext
+          )
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle(),
@@ -376,10 +392,12 @@ export default function DashboardPage() {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
 
-          supabase
-            .from("lab_biomarkers")
-            .select("id, canonical_key, value, unit, measured_at")
-            .eq("user_id", user.id)
+          applyHealthSubjectFilter(
+            supabase
+              .from("lab_biomarkers")
+              .select("id, canonical_key, value, unit, measured_at"),
+            healthProfileContext
+          )
             .order("measured_at", { ascending: false })
             .limit(18),
 

@@ -8,7 +8,7 @@ export type ActiveHealthProfileContext = {
   healthProfileId: string | null;
   legacyUserId: string;
   mode: "legacy_user" | "health_profile";
-  role: "owner" | "member" | "viewer";
+  role: "owner" | "editor" | "viewer";
 };
 
 export type HealthSubjectFilter =
@@ -95,4 +95,24 @@ export function getHealthSubjectFilter(
     value: context.legacyUserId,
     mode: "legacy_user",
   };
+}
+
+type HealthSubjectFilterable = {
+  eq(column: string, value: string): unknown;
+};
+
+export function applyHealthSubjectFilter<T>(
+  query: T & HealthSubjectFilterable,
+  context: ActiveHealthProfileContext
+): T {
+  const filter = getHealthSubjectFilter(context);
+  return query.eq(filter.column, filter.value) as T;
+}
+
+export function healthSubjectInsertFields(
+  context: ActiveHealthProfileContext
+) {
+  return context.healthProfileId
+    ? { health_profile_id: context.healthProfileId }
+    : {};
 }

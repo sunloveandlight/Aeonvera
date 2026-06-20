@@ -3,14 +3,17 @@ import { buildLabTrends, type LabTrend, type LabTrendRow } from "@/lib/labs/labT
 
 export async function loadLabTrendsForUser(
   supabase: SupabaseClient,
-  userId: string
+  userId: string,
+  healthProfileId?: string | null
 ): Promise<LabTrend[]> {
-  const { data, error } = await supabase
+  const query = supabase
     .from("lab_biomarkers")
     .select("canonical_key, value, unit, measured_at")
-    .eq("user_id", userId)
+    .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
     .order("measured_at", { ascending: false })
     .limit(180);
+
+  const { data, error } = await query;
 
   if (error) {
     if (!isMissingLabTable(error)) {

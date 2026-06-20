@@ -23,10 +23,16 @@ export async function getUserSubscription() {
     };
   }
 
+  const workspaceSubscription = await getWorkspaceSubscriptionForUser({
+    supabase,
+    userId: user.id,
+  });
+
   /**
-   * Fetch subscription/profile
+   * Fetch legacy profile context. Workspace billing is allowed to stand on its
+   * own so a missing profile row does not hide a valid workspace subscription.
    */
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("profiles")
     .select(`
       plan,
@@ -36,28 +42,14 @@ export async function getUserSubscription() {
       life_stage
     `)
     .eq("user_id", user.id)
-    .single();
-
-  if (error || !data) {
-    return {
-      user,
-      plan: null,
-      subscriptionStatus: null,
-      allowed: false,
-      isPaidUser: false,
-    };
-  }
-
-  const workspaceSubscription = await getWorkspaceSubscriptionForUser({
-    supabase,
-    userId: user.id,
-  });
+    .maybeSingle();
 
   const plan =
-    workspaceSubscription?.plan || (data.plan as Plan | null);
+    workspaceSubscription?.plan || ((data?.plan as Plan | null) ?? null);
 
   const status =
-    workspaceSubscription?.status || (data.subscription_status as SubscriptionStatus | null);
+    workspaceSubscription?.status ||
+    ((data?.subscription_status as SubscriptionStatus | null) ?? null);
 
   return {
     user,

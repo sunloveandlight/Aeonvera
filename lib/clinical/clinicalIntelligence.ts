@@ -300,20 +300,24 @@ export function buildClinicalIntelligenceWithContext(
 }
 
 export async function createClinicalInsightFromLabs({
+  healthProfileId,
   sourceQuestion = "Clinical lab import",
   supabase,
   userId,
 }: {
+  healthProfileId?: string | null;
   sourceQuestion?: string;
   supabase: SupabaseClient;
   userId: string;
 }) {
-  const { data, error } = await supabase
+  const query = supabase
     .from("lab_biomarkers")
     .select("canonical_key,value,unit,raw_label,measured_at")
-    .eq("user_id", userId)
+    .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
     .order("measured_at", { ascending: false })
     .limit(160);
+
+  const { data, error } = await query;
 
   const context = await loadClinicalProfileContext(supabase, userId);
   const assessmentRows = context.assessment
@@ -335,6 +339,7 @@ export async function createClinicalInsightFromLabs({
   if (!intelligence.rangeFlags.length && intelligence.confidence < 20) return null;
 
   const { error: insertError } = await supabase.from("clinical_insights").insert({
+    ...(healthProfileId ? { health_profile_id: healthProfileId } : {}),
     user_id: userId,
     source: "system",
     source_question: sourceQuestion,
