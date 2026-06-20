@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Page from "@/components/ui/Page";
 import PageContainer from "@/components/ui/PageContainer";
+import ProfileManagementPanel from "@/components/health-profiles/ProfileManagementPanel";
 import { supabase } from "@/lib/supabase/client";
 import { VOICE_OPTIONS, type VoiceId } from "@/components/layout/commandOrb/config";
 
@@ -139,6 +140,10 @@ export default function SettingsPage() {
             <div className="hidden rounded-full border border-white/[0.08] bg-white/[0.03] p-3 text-white/42 md:block">
               <UserCircle size={28} />
             </div>
+          </div>
+
+          <div className="mb-5">
+            <ProfileManagementPanel />
           </div>
 
           <div className="grid gap-5 lg:grid-cols-[1.08fr_0.92fr]">

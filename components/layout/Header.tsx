@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, Search, UserCircle, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import ProfileSwitcher from "@/components/health-profiles/ProfileSwitcher";
 import ThemeToggle from "./ThemeToggle";
 
 type NavLink = {
@@ -270,6 +271,7 @@ export default function Header() {
             <Search size={15} />
           </Link>
           <ThemeToggle className="premium-theme-toggle" />
+          <ProfileSwitcher authenticated={authenticated} compact />
           <button
             onClick={() => setMobileOpen((open) => !open)}
             className="premium-icon-link inline-flex min-h-11 min-w-11 items-center justify-center rounded-md md:hidden"
@@ -402,6 +404,9 @@ export default function Header() {
             ))}
             {!authChecked ? null : authenticated ? (
               <div>
+                <div className="mb-4">
+                  <ProfileSwitcher authenticated={authenticated} />
+                </div>
                 <p className="premium-mega-label mb-2">Account</p>
                 <div className="grid gap-0.5">
                   {ACCOUNT_LINKS.map((item) => (
