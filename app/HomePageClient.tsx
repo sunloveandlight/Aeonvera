@@ -198,7 +198,7 @@ export default function HomePage() {
             src="/marketing/rejuvenation-woman.png"
             alt=""
             fill
-            priority
+            loading="eager"
             sizes="100vw"
             className="object-cover"
           />
