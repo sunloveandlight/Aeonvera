@@ -7,6 +7,7 @@ import {
   type SubscriptionStatus,
   type UsageMeter,
 } from "@/lib/auth/permissions";
+import { getWorkspaceSubscriptionForUser } from "@/lib/auth/workspaceSubscription";
 
 type ProfileRow = {
   plan?: Plan | null;
@@ -36,6 +37,18 @@ export async function getUserPlanForUsage({
   plan: Plan | null;
   status: SubscriptionStatus | null;
 }> {
+  const workspaceSubscription = await getWorkspaceSubscriptionForUser({
+    supabase,
+    userId,
+  });
+
+  if (workspaceSubscription) {
+    return {
+      plan: workspaceSubscription.plan,
+      status: workspaceSubscription.status,
+    };
+  }
+
   const { data } = await supabase
     .from("profiles")
     .select("plan,subscription_status")

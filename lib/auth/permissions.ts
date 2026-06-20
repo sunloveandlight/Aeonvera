@@ -18,6 +18,7 @@ export type Feature =
   | "advanced_modalities"
   | "clinical_intelligence"
   | "lab_trends"
+  | "household_profiles"
   | "digital_twin"
   | "physician_exports"
   | "life_os"
@@ -41,6 +42,7 @@ const PLAN_PERMISSIONS: Record<Plan, Feature[]> = {
     "advanced_modalities",
     "clinical_intelligence",
     "lab_trends",
+    "household_profiles",
   ],
 
   sovereign: [
@@ -54,6 +56,7 @@ const PLAN_PERMISSIONS: Record<Plan, Feature[]> = {
     "advanced_modalities",
     "clinical_intelligence",
     "lab_trends",
+    "household_profiles",
     "digital_twin",
     "physician_exports",
     "life_os",
@@ -131,6 +134,12 @@ export const FEATURE_ENTITLEMENTS: FeatureEntitlement[] = [
     description: "Longitudinal lab trend intelligence beyond one-off lab import.",
   },
   {
+    feature: "household_profiles",
+    label: "Household profiles",
+    minimumPlan: "elite",
+    description: "Multiple health profiles under one billing workspace.",
+  },
+  {
     feature: "digital_twin",
     label: "Digital twin",
     minimumPlan: "sovereign",
@@ -204,6 +213,26 @@ export const PLAN_USAGE_LIMITS: Record<Plan, Record<UsageMeter, UsageLimit>> = {
   },
 };
 
+export type HealthProfileLimit = {
+  maxProfiles: number;
+  label: string;
+};
+
+export const PLAN_HEALTH_PROFILE_LIMITS: Record<Plan, HealthProfileLimit> = {
+  core: {
+    maxProfiles: 1,
+    label: "1 health profile",
+  },
+  elite: {
+    maxProfiles: 4,
+    label: "Up to 4 health profiles",
+  },
+  sovereign: {
+    maxProfiles: 10,
+    label: "Up to 10 health profiles",
+  },
+};
+
 export function isSubscriptionValid(
   status?: SubscriptionStatus | null
 ) {
@@ -255,6 +284,17 @@ export function getUsageLimit(
 ) {
   if (!plan || !isSubscriptionValid(status)) return null;
   return PLAN_USAGE_LIMITS[plan][meter];
+}
+
+export function getHealthProfileLimit(
+  plan: Plan | null,
+  status: SubscriptionStatus | null
+) {
+  if (!plan || !isSubscriptionValid(status)) {
+    return PLAN_HEALTH_PROFILE_LIMITS.core;
+  }
+
+  return PLAN_HEALTH_PROFILE_LIMITS[plan];
 }
 
 /**

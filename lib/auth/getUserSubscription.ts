@@ -5,6 +5,7 @@ import {
   Plan,
   SubscriptionStatus,
 } from "@/lib/auth/permissions";
+import { getWorkspaceSubscriptionForUser } from "@/lib/auth/workspaceSubscription";
 
 export async function getUserSubscription() {
   const {
@@ -47,11 +48,16 @@ export async function getUserSubscription() {
     };
   }
 
+  const workspaceSubscription = await getWorkspaceSubscriptionForUser({
+    supabase,
+    userId: user.id,
+  });
+
   const plan =
-    data.plan as Plan | null;
+    workspaceSubscription?.plan || (data.plan as Plan | null);
 
   const status =
-    data.subscription_status as SubscriptionStatus | null;
+    workspaceSubscription?.status || (data.subscription_status as SubscriptionStatus | null);
 
   return {
     user,
