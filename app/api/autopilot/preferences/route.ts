@@ -7,6 +7,7 @@ import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 import {
   frozenHealthProfilePayload,
   getHealthSubjectFilter,
+  getRequestedHealthProfileId,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
@@ -74,7 +75,7 @@ const DEFAULT_DOMAINS: ReminderDomains = {
 
 const DAYS = new Set(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
@@ -91,11 +92,12 @@ export async function GET() {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
 
     const [preferences, notificationPreferences, recentPlan, deliveries] = await Promise.all([
       getOrCreatePreferences(admin, user.id, healthProfileContext),
-      getNotificationPreferences(admin, user.id),
+      getNotificationPreferences(admin, healthProfileContext),
       getRecentPlan(admin, user.id, healthProfileContext),
       getRecentDeliveries(admin, user.id, healthProfileContext),
     ]);
@@ -136,6 +138,7 @@ export async function PATCH(request: NextRequest) {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
     if (healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
@@ -170,7 +173,7 @@ export async function PATCH(request: NextRequest) {
       throw error;
     }
 
-    await syncNotificationPreferences(admin, next);
+    await syncNotificationPreferences(admin, healthProfileContext, next);
     await recordPreferenceEvent(admin, user.id, healthProfileContext, next);
     await storeSemanticMemory({
       content: summarizeAutopilotPreferences(next),
@@ -276,12 +279,13 @@ async function getOrCreatePreferences(
 
 async function getNotificationPreferences(
   supabase: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
+  healthProfileContext: ActiveHealthProfileContext
 ) {
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
   const { data, error } = await supabase
     .from("notification_preferences")
     .select("email_enabled,push_enabled,quiet_hours_start,quiet_hours_end,timezone")
-    .eq("user_id", userId)
+    .eq(healthFilter.column, healthFilter.value)
     .maybeSingle();
 
   if (error) return null;
@@ -325,20 +329,30 @@ async function getRecentDeliveries(
 
 async function syncNotificationPreferences(
   supabase: ReturnType<typeof getSupabaseAdmin>,
+  healthProfileContext: ActiveHealthProfileContext,
   prefs: LifeAutopilotPreferences
 ) {
-  await supabase.from("notification_preferences").upsert(
-    {
-      email_enabled: prefs.notifications_enabled,
-      push_enabled: prefs.notifications_enabled && prefs.intensity !== "quiet",
-      quiet_hours_end: prefs.quiet_hours_end,
-      quiet_hours_start: prefs.quiet_hours_start,
-      timezone: prefs.timezone,
-      updated_at: new Date().toISOString(),
-      user_id: prefs.user_id,
-    },
-    { onConflict: "user_id" }
-  );
+  const payload = {
+    email_enabled: prefs.notifications_enabled,
+    push_enabled: prefs.notifications_enabled && prefs.intensity !== "quiet",
+    quiet_hours_end: prefs.quiet_hours_end,
+    quiet_hours_start: prefs.quiet_hours_start,
+    timezone: prefs.timezone,
+    updated_at: new Date().toISOString(),
+    user_id: prefs.user_id,
+    ...healthSubjectInsertFields(healthProfileContext),
+  };
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
+  const { data: updated } = await supabase
+    .from("notification_preferences")
+    .update(payload)
+    .eq(healthFilter.column, healthFilter.value)
+    .select("id")
+    .maybeSingle();
+
+  if (!updated) {
+    await supabase.from("notification_preferences").insert(payload);
+  }
 }
 
 async function recordPreferenceEvent(

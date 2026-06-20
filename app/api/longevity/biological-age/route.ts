@@ -12,6 +12,7 @@ import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import {
   frozenHealthProfilePayload,
   getHealthSubjectFilter,
+  getRequestedHealthProfileId,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
@@ -41,7 +42,7 @@ async function getSupabaseUser() {
   );
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabaseUser = await getSupabaseUser();
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
@@ -62,6 +63,7 @@ export async function GET() {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
 
     const historyFilter = getHealthSubjectFilter(healthProfileContext);
@@ -113,6 +115,7 @@ export async function POST(request: NextRequest) {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase,
       loginUserId: userId,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
     if (healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });

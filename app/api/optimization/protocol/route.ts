@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
 
     if (sourceScenarioShareToken) {
       await linkScenarioProtocol({
-        userId: user.id,
+        healthProfileContext,
         shareToken: sourceScenarioShareToken,
         protocolId: protocolResult.data.id,
       });
@@ -259,20 +259,21 @@ export async function POST(request: NextRequest) {
 }
 
 async function linkScenarioProtocol({
-  userId,
+  healthProfileContext,
   shareToken,
   protocolId,
 }: {
-  userId: string;
+  healthProfileContext: Awaited<ReturnType<typeof resolveActiveHealthProfileContext>>;
   shareToken: string;
   protocolId: string;
 }) {
   try {
     const admin = getSupabaseAdmin();
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
     const { error } = await admin
       .from("future_self_scenarios")
       .update({ protocol_id: protocolId })
-      .eq("user_id", userId)
+      .eq(healthFilter.column, healthFilter.value)
       .eq("share_token", shareToken);
 
     if (error && !isMissingScenarioLinkColumn(error)) {

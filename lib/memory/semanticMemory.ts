@@ -27,12 +27,14 @@ function getOpenAI() {
 }
 
 export async function retrieveSemanticMemories({
+  healthProfileId,
   limit = 12,
   query,
   supabase,
   threshold = 0.62,
   userId,
 }: {
+  healthProfileId?: string | null;
   limit?: number;
   query: string;
   supabase: SupabaseAdmin;
@@ -42,12 +44,19 @@ export async function retrieveSemanticMemories({
   const embedding = await embedText(query);
   if (!embedding) return [];
 
-  const { data, error } = await supabase.rpc("match_semantic_memories_for_user", {
-    match_count: limit,
-    match_threshold: threshold,
-    query_embedding: embedding,
-    target_user_id: userId,
-  });
+  const { data, error } = healthProfileId
+    ? await supabase.rpc("match_semantic_memories_for_health_profile", {
+        match_count: limit,
+        match_threshold: threshold,
+        query_embedding: embedding,
+        target_health_profile_id: healthProfileId,
+      })
+    : await supabase.rpc("match_semantic_memories_for_user", {
+        match_count: limit,
+        match_threshold: threshold,
+        query_embedding: embedding,
+        target_user_id: userId,
+      });
 
   if (error) {
     if (isSemanticMemoryMissing(error)) return [];
@@ -59,10 +68,12 @@ export async function retrieveSemanticMemories({
 }
 
 export async function listRecentSemanticMemories({
+  healthProfileId,
   limit = 10,
   supabase,
   userId,
 }: {
+  healthProfileId?: string | null;
   limit?: number;
   supabase: SupabaseAdmin;
   userId: string;
@@ -70,7 +81,7 @@ export async function listRecentSemanticMemories({
   const { data, error } = await supabase
     .from("semantic_memories")
     .select("id, source_type, source_id, title, content, metadata, importance, occurred_at")
-    .eq("user_id", userId)
+    .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
     .order("importance", { ascending: false })
     .order("occurred_at", { ascending: false, nullsFirst: false })
     .limit(Math.min(Math.max(limit, 1), 24));

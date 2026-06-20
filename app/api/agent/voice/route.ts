@@ -114,6 +114,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
     });
     const result = await answerPersonalHealthAgent({
+      healthProfileContext,
       history,
       question: transcript,
       supabase: admin,

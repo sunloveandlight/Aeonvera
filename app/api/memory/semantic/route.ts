@@ -76,9 +76,19 @@ export async function DELETE(request: NextRequest) {
     const user = await requireUser();
     const body = await request.json().catch(() => ({}));
     const admin = getSupabaseAdmin();
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
+    });
+    const subjectColumn = healthProfileContext.healthProfileId ? "health_profile_id" : "user_id";
+    const subjectValue = healthProfileContext.healthProfileId || user.id;
 
     if (body.all === true) {
-      const { error } = await admin.from("semantic_memories").delete().eq("user_id", user.id);
+      const { error } = await admin
+        .from("semantic_memories")
+        .delete()
+        .eq(subjectColumn, subjectValue);
       if (error) throw error;
       return NextResponse.json({ ok: true });
     }
@@ -94,7 +104,7 @@ export async function DELETE(request: NextRequest) {
     const { error } = await admin
       .from("semantic_memories")
       .delete()
-      .eq("user_id", user.id)
+      .eq(subjectColumn, subjectValue)
       .in("id", ids);
 
     if (error) throw error;

@@ -8,6 +8,11 @@ import {
 } from "@/lib/memory/semanticMemory";
 import type { Plan, SubscriptionStatus } from "@/lib/auth/permissions";
 import type { getSupabaseAdmin } from "@/lib/supabase/admin";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type SupabaseAdmin = ReturnType<typeof getSupabaseAdmin>;
 
@@ -370,42 +375,48 @@ function getXAI() {
 }
 
 export async function answerPersonalHealthAgent({
+  healthProfileContext,
   history,
   question,
   supabase,
   userId,
 }: {
+  healthProfileContext: ActiveHealthProfileContext;
   history: AgentMessage[];
   question: string;
   supabase: SupabaseAdmin;
   userId: string;
 }) {
   await storeUserSemanticMemory({
+    healthProfileContext,
     history,
     question,
     supabase,
     userId,
   });
 
-  const context = await loadAgentContext(supabase, userId);
-  const actions = await applyAgentInstructions({ context, question, supabase, userId });
-  const updatedContext = actions.length ? await loadAgentContext(supabase, userId) : context;
+  const context = await loadAgentContext(supabase, userId, healthProfileContext);
+  const actions = await applyAgentInstructions({ context, healthProfileContext, question, supabase, userId });
+  const updatedContext = actions.length ? await loadAgentContext(supabase, userId, healthProfileContext) : context;
   const toolResults = buildAgentToolResults(updatedContext, question);
   const toolActions = await applyAgentToolActions({
     context: updatedContext,
+    healthProfileContext,
     question,
     supabase,
     toolResults,
     userId,
   });
-  const finalContext = toolActions.length ? await loadAgentContext(supabase, userId) : updatedContext;
+  const finalContext = toolActions.length ? await loadAgentContext(supabase, userId, healthProfileContext) : updatedContext;
   const allActions = dedupeActions([...actions, ...toolActions]);
   const semanticMemories = await retrieveSemanticMemories({
+    healthProfileId: healthProfileContext.healthProfileId,
     query: question,
     supabase,
     userId,
   });
   const recentSemanticMemories = await listRecentSemanticMemories({
+    healthProfileId: healthProfileContext.healthProfileId,
     limit: 10,
     supabase,
     userId,
@@ -417,6 +428,7 @@ export async function answerPersonalHealthAgent({
     await storeClinicalInsight({
       answer: xaiClinicalReview,
       context: finalContext,
+      healthProfileContext,
       question,
       source: "agent_chat",
       supabase,
@@ -425,6 +437,7 @@ export async function answerPersonalHealthAgent({
     });
     await storeAgentSemanticMemory({
       answer: xaiClinicalReview,
+      healthProfileContext,
       mode: "generated",
       question,
       supabase,
@@ -444,6 +457,7 @@ export async function answerPersonalHealthAgent({
     await storeClinicalInsight({
       answer: fallbackAnswer,
       context: finalContext,
+      healthProfileContext,
       question,
       source: "agent_chat",
       supabase,
@@ -452,6 +466,7 @@ export async function answerPersonalHealthAgent({
     });
     await storeAgentSemanticMemory({
       answer: fallbackAnswer,
+      healthProfileContext,
       mode: "fallback",
       question,
       supabase,
@@ -494,6 +509,7 @@ export async function answerPersonalHealthAgent({
       await storeClinicalInsight({
         answer,
         context: finalContext,
+        healthProfileContext,
         question,
         source: "agent_chat",
         supabase,
@@ -502,6 +518,7 @@ export async function answerPersonalHealthAgent({
       });
       await storeAgentSemanticMemory({
         answer,
+        healthProfileContext,
         mode: "generated",
         question,
         supabase,
@@ -526,6 +543,7 @@ export async function answerPersonalHealthAgent({
   await storeClinicalInsight({
     answer: fallbackAnswer,
     context: finalContext,
+    healthProfileContext,
     question,
     source: "agent_chat",
     supabase,
@@ -534,6 +552,7 @@ export async function answerPersonalHealthAgent({
   });
   await storeAgentSemanticMemory({
     answer: fallbackAnswer,
+    healthProfileContext,
     mode: "fallback",
     question,
     supabase,
@@ -603,12 +622,14 @@ function summarizeSemanticMemories(
 
 async function storeAgentSemanticMemory({
   answer,
+  healthProfileContext,
   mode,
   question,
   supabase,
   userId,
 }: {
   answer: string;
+  healthProfileContext: ActiveHealthProfileContext;
   mode: "generated" | "fallback";
   question: string;
   supabase: SupabaseAdmin;
@@ -616,6 +637,7 @@ async function storeAgentSemanticMemory({
 }) {
   await storeSemanticMemory({
     content: [`User asked: ${question}`, `Aeonvera answered: ${answer}`].join("\n\n"),
+    healthProfileId: healthProfileContext.healthProfileId,
     importance: inferSemanticImportance(question, answer),
     metadata: {
       answer_mode: mode,
@@ -629,11 +651,13 @@ async function storeAgentSemanticMemory({
 }
 
 async function storeUserSemanticMemory({
+  healthProfileContext,
   history,
   question,
   supabase,
   userId,
 }: {
+  healthProfileContext: ActiveHealthProfileContext;
   history: AgentMessage[];
   question: string;
   supabase: SupabaseAdmin;
@@ -641,6 +665,7 @@ async function storeUserSemanticMemory({
 }) {
   await storeSemanticMemory({
     content: question,
+    healthProfileId: healthProfileContext.healthProfileId,
     importance: inferUserMemoryImportance(question),
     metadata: {
       recent_context: history.slice(-4).map((message) => ({
@@ -681,6 +706,7 @@ function inferUserMemoryImportance(question: string) {
 async function storeClinicalInsight({
   answer,
   context,
+  healthProfileContext,
   question,
   source,
   supabase,
@@ -689,6 +715,7 @@ async function storeClinicalInsight({
 }: {
   answer: string;
   context: AgentContext;
+  healthProfileContext: ActiveHealthProfileContext;
   question: string;
   source: "agent_chat" | "voice_agent" | "system";
   supabase: SupabaseAdmin;
@@ -704,6 +731,7 @@ async function storeClinicalInsight({
   const concernStatus = inferConcernStatus(context, toolResults);
 
   const { error } = await supabase.from("clinical_insights").insert({
+    ...healthSubjectInsertFields(healthProfileContext),
     user_id: userId,
     source,
     source_question: question.slice(0, 1200),
@@ -739,10 +767,12 @@ async function storeClinicalInsight({
 
 async function loadAgentContext(
   supabase: SupabaseAdmin,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ): Promise<AgentContext> {
   const today = new Date().toISOString().slice(0, 10);
   const since = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString();
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
   const [
     memory,
@@ -761,7 +791,7 @@ async function loadAgentContext(
     healthStateRes,
     clinicalInsightRes,
   ] = await Promise.all([
-      loadOrBuildCoachMemoryProfile(supabase, userId),
+      loadOrBuildCoachMemoryProfile(supabase, userId, healthProfileContext),
       safeQuery(() =>
         supabase
           .from("profiles")
@@ -773,7 +803,7 @@ async function loadAgentContext(
         supabase
           .from("optimization_protocols")
           .select("id,summary,focus_domains,status,protocol,created_at")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle()
@@ -782,7 +812,7 @@ async function loadAgentContext(
         supabase
           .from("daily_execution_plans")
           .select("id,plan_date,status,autopilot_mode,summary,plan,updated_at")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .eq("plan_date", today)
           .maybeSingle()
       ),
@@ -790,7 +820,7 @@ async function loadAgentContext(
         supabase
           .from("intervention_outcomes")
           .select("domain,action,outcome,success,notes,measured_at,created_at")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .gte("created_at", since)
           .order("created_at", { ascending: false })
           .limit(24)
@@ -799,7 +829,7 @@ async function loadAgentContext(
         supabase
           .from("calendar_events")
           .select("title,action,action_scope,recurrence,scheduled_for,status")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .gte("scheduled_for", since)
           .order("scheduled_for", { ascending: false })
           .limit(18)
@@ -808,7 +838,7 @@ async function loadAgentContext(
         supabase
           .from("notification_deliveries")
           .select("title,message,channel,status,created_at")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .order("created_at", { ascending: false })
           .limit(8)
       ),
@@ -816,7 +846,7 @@ async function loadAgentContext(
         supabase
           .from("agent_preferences")
           .select("category,preference_key,preference_value,confidence,updated_at")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .order("updated_at", { ascending: false })
           .limit(20)
       ),
@@ -824,7 +854,7 @@ async function loadAgentContext(
         supabase
           .from("lab_biomarkers")
           .select("canonical_key,raw_label,value,unit,measured_at")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .order("measured_at", { ascending: false })
           .limit(40)
       ),
@@ -832,7 +862,7 @@ async function loadAgentContext(
         supabase
           .from("health_metrics")
           .select("metric,value,source,measured_at")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .order("measured_at", { ascending: false })
           .limit(80)
       ),
@@ -840,7 +870,7 @@ async function loadAgentContext(
         supabase
           .from("wearable_metrics")
           .select("provider,metric_name,metric_value,recorded_at")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .order("recorded_at", { ascending: false })
           .limit(80)
       ),
@@ -848,7 +878,7 @@ async function loadAgentContext(
         supabase
           .from("biological_age_history")
           .select("biological_age,chronological_age,age_delta,score,category,source,created_at")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle()
@@ -857,7 +887,7 @@ async function loadAgentContext(
         supabase
           .from("longevity_assessments")
           .select("*")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle()
@@ -866,7 +896,7 @@ async function loadAgentContext(
         supabase
           .from("health_states")
           .select("baseline,risk_scores,insights,updated_at")
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .order("updated_at", { ascending: false })
           .limit(1)
           .maybeSingle()
@@ -877,7 +907,7 @@ async function loadAgentContext(
           .select(
             "id,source_question,answer_summary,domains,concern_status,confidence,signal_map,range_flags,follow_up_questions,recommended_actions,metadata,created_at,updated_at"
           )
-          .eq("user_id", userId)
+          .eq(healthFilter.column, healthFilter.value)
           .order("created_at", { ascending: false })
           .limit(8)
       ),
@@ -904,11 +934,13 @@ async function loadAgentContext(
 
 async function applyAgentInstructions({
   context,
+  healthProfileContext,
   question,
   supabase,
   userId,
 }: {
   context: AgentContext;
+  healthProfileContext: ActiveHealthProfileContext;
   question: string;
   supabase: SupabaseAdmin;
   userId: string;
@@ -917,7 +949,7 @@ async function applyAgentInstructions({
   const actions: AgentAction[] = [];
 
   if (/(make|lighter|simpler|too much|overwhelming|less|reduce|easy)/.test(lower)) {
-    const simplified = await simplifyDailyPlan({ context, supabase, userId });
+    const simplified = await simplifyDailyPlan({ context, healthProfileContext, supabase });
     if (simplified) actions.push(simplified);
 
     const saved = await saveAgentPreference({
@@ -925,6 +957,7 @@ async function applyAgentInstructions({
       confidence: 0.84,
       key: "prefers_lighter_daily_plan",
       metadata: { trigger: question },
+      healthProfileContext,
       supabase,
       userId,
       value: "Prefer fewer, higher-leverage daily actions when the plan feels heavy.",
@@ -941,6 +974,7 @@ async function applyAgentInstructions({
       confidence: 0.82,
       key: /morning/.test(lower) ? "avoid_morning_training" : stablePreferenceKey(question),
       metadata: { trigger: question },
+      healthProfileContext,
       supabase,
       userId,
       value,
@@ -954,6 +988,7 @@ async function applyAgentInstructions({
       confidence: 0.8,
       key: "prefers_after_lunch_nudges",
       metadata: { trigger: question },
+      healthProfileContext,
       supabase,
       userId,
       value: "Prefer reminders and nudges after lunch or early afternoon when possible.",
@@ -975,6 +1010,7 @@ async function applyAgentInstructions({
         trigger: question,
         latest_calendar_action: context.calendarEvents[0]?.action || null,
       },
+      healthProfileContext,
       supabase,
       userId,
       value: `Reschedule request captured: ${question.slice(0, 220)}`,
@@ -994,12 +1030,14 @@ async function applyAgentInstructions({
 
 async function applyAgentToolActions({
   context,
+  healthProfileContext,
   question,
   supabase,
   toolResults,
   userId,
 }: {
   context: AgentContext;
+  healthProfileContext: ActiveHealthProfileContext;
   question: string;
   supabase: SupabaseAdmin;
   toolResults: AgentToolResults;
@@ -1009,6 +1047,7 @@ async function applyAgentToolActions({
 
   const prepared = await prepareClinicalDailyPlan({
     context,
+    healthProfileContext,
     supabase,
     toolResults,
     userId,
@@ -1019,11 +1058,13 @@ async function applyAgentToolActions({
 
 async function prepareClinicalDailyPlan({
   context,
+  healthProfileContext,
   supabase,
   toolResults,
   userId,
 }: {
   context: AgentContext;
+  healthProfileContext: ActiveHealthProfileContext;
   supabase: SupabaseAdmin;
   toolResults: AgentToolResults;
   userId: string;
@@ -1066,20 +1107,31 @@ async function prepareClinicalDailyPlan({
     },
   };
 
-  const { error } = await supabase.from("daily_execution_plans").upsert(
-    {
-      id: context.dailyPlan?.id || undefined,
-      user_id: userId,
-      protocol_id: context.protocol?.id || null,
-      plan_date: context.dailyPlan?.plan_date || today,
-      status: "prepared",
-      autopilot_mode: context.dailyPlan?.autopilot_mode || "approve",
-      summary: plan.summary,
-      plan,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,plan_date" }
-  );
+  const payload = {
+    ...(context.dailyPlan?.id ? { id: context.dailyPlan.id } : {}),
+    ...healthSubjectInsertFields(healthProfileContext),
+    user_id: userId,
+    protocol_id: context.protocol?.id || null,
+    plan_date: context.dailyPlan?.plan_date || today,
+    status: "prepared",
+    autopilot_mode: context.dailyPlan?.autopilot_mode || "approve",
+    summary: plan.summary,
+    plan,
+    updated_at: new Date().toISOString(),
+  };
+
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
+  const { data: updated, error: updateError } = await supabase
+    .from("daily_execution_plans")
+    .update(payload)
+    .eq(healthFilter.column, healthFilter.value)
+    .eq("plan_date", context.dailyPlan?.plan_date || today)
+    .select("id")
+    .maybeSingle();
+
+  const { error } = updateError || updated
+    ? { error: updateError }
+    : await supabase.from("daily_execution_plans").insert(payload);
 
   if (error) {
     if (isMissingTableError(error) || error.message?.includes("daily_execution_plans")) {
@@ -1099,12 +1151,12 @@ async function prepareClinicalDailyPlan({
 
 async function simplifyDailyPlan({
   context,
+  healthProfileContext,
   supabase,
-  userId,
 }: {
   context: AgentContext;
+  healthProfileContext: ActiveHealthProfileContext;
   supabase: SupabaseAdmin;
-  userId: string;
 }): Promise<AgentAction | null> {
   const items = context.dailyPlan?.plan?.items || [];
   if (!context.dailyPlan || items.length <= 2) return null;
@@ -1125,6 +1177,7 @@ async function simplifyDailyPlan({
     },
   };
 
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
   const { error } = await supabase
     .from("daily_execution_plans")
     .update({
@@ -1133,7 +1186,7 @@ async function simplifyDailyPlan({
       plan: nextPlan,
       updated_at: new Date().toISOString(),
     })
-    .eq("user_id", userId)
+    .eq(healthFilter.column, healthFilter.value)
     .eq("plan_date", context.dailyPlan.plan_date || new Date().toISOString().slice(0, 10));
 
   if (error) {
@@ -1151,6 +1204,7 @@ async function simplifyDailyPlan({
 async function saveAgentPreference({
   category,
   confidence,
+  healthProfileContext,
   key,
   metadata,
   supabase,
@@ -1159,25 +1213,37 @@ async function saveAgentPreference({
 }: {
   category: string;
   confidence: number;
+  healthProfileContext: ActiveHealthProfileContext;
   key: string;
   metadata: Record<string, unknown>;
   supabase: SupabaseAdmin;
   userId: string;
   value: string;
 }): Promise<AgentAction | null> {
-  const { error } = await supabase.from("agent_preferences").upsert(
-    {
-      user_id: userId,
-      category,
-      preference_key: key,
-      preference_value: value,
-      source: "agent_chat",
-      confidence,
-      metadata,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,category,preference_key" }
-  );
+  const payload = {
+    ...healthSubjectInsertFields(healthProfileContext),
+    user_id: userId,
+    category,
+    preference_key: key,
+    preference_value: value,
+    source: "agent_chat",
+    confidence,
+    metadata,
+    updated_at: new Date().toISOString(),
+  };
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
+  const { data: updated, error: updateError } = await supabase
+    .from("agent_preferences")
+    .update(payload)
+    .eq(healthFilter.column, healthFilter.value)
+    .eq("category", category)
+    .eq("preference_key", key)
+    .select("id")
+    .maybeSingle();
+
+  const { error } = updateError || updated
+    ? { error: updateError }
+    : await supabase.from("agent_preferences").insert(payload);
 
   if (error) {
     if (isMissingTableError(error) || error.message?.includes("agent_preferences")) {

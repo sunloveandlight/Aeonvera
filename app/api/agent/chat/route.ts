@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
     });
 
     const result = await answerPersonalHealthAgent({
+      healthProfileContext,
       history: sanitizeHistory(body.history),
       question,
       supabase: admin,
