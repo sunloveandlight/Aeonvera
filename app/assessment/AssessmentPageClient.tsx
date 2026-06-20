@@ -922,7 +922,7 @@ export default function AssessmentPage() {
 
                 <div className="grid grid-cols-3 gap-3 text-right">
                   <div className="executive-panel-soft rounded-lg p-4">
-                    <p className="micro-label mb-2">Bio Age</p>
+                    <p className="micro-label mb-2">Biological age</p>
                     <p className="text-3xl font-light text-white/86">
                       {profileResult?.biological_age ?? "—"}
                     </p>

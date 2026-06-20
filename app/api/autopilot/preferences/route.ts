@@ -523,7 +523,7 @@ function buildSovereignSurface(prefs: LifeAutopilotPreferences) {
       detail: "Roll up biomarkers, adherence, outcomes, and projection drift.",
     },
     {
-      label: "Family account path",
+      label: "Family profile path",
       status: "planned",
       detail: "Spouse and children access model belongs behind Sovereign controls.",
     },

@@ -27,9 +27,9 @@ const PUBLIC_NAV_GROUPS: NavGroup[] = [
     href: "/about",
     items: [
       { href: "/about", label: "How Aeonvera works", description: "Private longevity intelligence, explained simply." },
-      { href: "/demo", label: "Demo workspace", description: "Preview Aeonvera with sample health signals." },
-      { href: "/login?mode=signup", label: "Create account", description: "Start a private workspace for your health." },
-      { href: "/login?mode=signin", label: "Sign in", description: "Return to your Aeonvera workspace." },
+      { href: "/demo", label: "Demo profile", description: "Preview Aeonvera with sample health signals." },
+      { href: "/login?mode=signup", label: "Create account", description: "Start private health profiles." },
+      { href: "/login?mode=signin", label: "Sign in", description: "Return to your Aeonvera account." },
     ],
   },
   {

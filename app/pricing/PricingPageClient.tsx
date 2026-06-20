@@ -115,7 +115,7 @@ const PLANS: PricingPlan[] = [
       "Physician-ready exports",
       "Concierge data integration",
       "HBOT and epigenetic/telomere experiment strategy",
-      "Family account readiness",
+      "Family profile readiness",
       "Executive-level scenario modeling",
     ],
     depth: "Executive digital twin",
@@ -136,7 +136,7 @@ const PLANS: PricingPlan[] = [
         label: "Operating Model",
         items: [
           "Concierge-level data integration",
-          "Family/account expansion path",
+          "Family profile expansion path",
           "Most complete intervention and longitudinal tracking tier",
           "Sovereign-only regenerative protocol strategy and longitudinal experiment review",
         ],
@@ -197,7 +197,7 @@ const OWNED_TIER_COPY: Record<Plan, {
 const TRUST_POINTS = [
   {
     title: "Private by default",
-    body: "Your health workspace is protected behind your account. Future-self scenarios are not public unless you explicitly share them.",
+    body: "Your health profiles are protected behind your account. Future-self scenarios are not public unless you explicitly share them.",
   },
   {
     title: "You control sharing",
@@ -205,7 +205,7 @@ const TRUST_POINTS = [
   },
   {
     title: "Your data stays yours",
-    body: "Labs, wearable signals, reports, and plan history are used to power your Aeonvera workspace, not to sell your health profile.",
+    body: "Labs, wearable signals, reports, and plan history are used to power your Aeonvera profile experience, not to sell your health data.",
   },
   {
     title: "Cancel or change tiers",
@@ -223,7 +223,7 @@ const TRUST_POINTS = [
 
 const CHECKOUT_REASSURANCE = [
   "Secure Stripe checkout",
-  "Private health workspace",
+  "Private health profiles",
   "Doctor sharing stays under your control",
 ];
 

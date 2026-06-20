@@ -7,7 +7,7 @@ const FOOTER_GROUPS = [
     title: "Product",
     links: [
       { href: "/about", label: "How it works" },
-      { href: "/demo", label: "Demo workspace" },
+      { href: "/demo", label: "Demo profile" },
       { href: "/pricing", label: "Pricing" },
       { href: "/optimization", label: "Optimization" },
       { href: "/life-autopilot", label: "Life Autopilot" },

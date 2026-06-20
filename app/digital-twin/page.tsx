@@ -1696,7 +1696,7 @@ function buildSummaryCards(
   latestBioAge?: number | null
 ): TwinSummaryCardData[] {
   return [
-    { Icon: Dna, label: "Bio Age", suffix: "years", value: latestBioAge ? `${latestBioAge}` : "--" },
+    { Icon: Dna, label: "Biological age", suffix: "years", value: latestBioAge ? `${latestBioAge}` : "--" },
     { Icon: Sparkles, label: "Protocols", suffix: "generated", value: `${payload.counts.protocols || 0}` },
     { Icon: Activity, label: "Signals", suffix: "events", value: `${totalSignals(payload.counts)}` },
     {

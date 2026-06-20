@@ -29,6 +29,8 @@ const RELATIONSHIPS = [
 export default function ProfileManagementPanel() {
   const [activeProfileId, setActiveProfileId] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [relationship, setRelationship] = useState("family");
   const [profiles, setProfiles] = useState<HealthProfile[]>([]);
   const [profileLimit, setProfileLimit] = useState<ProfileLimit>({ maxHealthProfiles: 1 });
@@ -48,14 +50,23 @@ export default function ProfileManagementPanel() {
   }, []);
 
   async function loadProfiles() {
+    setLoading(true);
+    setLoadError("");
+
     const response = await fetch("/api/health-profiles", { cache: "no-store" });
-    if (!response.ok) return;
+    if (!response.ok) {
+      setLoadError("Could not load health profiles.");
+      setLoading(false);
+      return;
+    }
+
     const payload = await response.json();
     setProfiles(Array.isArray(payload.profiles) ? payload.profiles : []);
     setProfileLimit({
       maxHealthProfiles: Number(payload.profileLimit?.maxHealthProfiles) || 1,
     });
     setActiveProfileId(payload.activeProfileId || "");
+    setLoading(false);
   }
 
   async function createProfile() {
@@ -161,7 +172,20 @@ export default function ProfileManagementPanel() {
 
       <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-2">
-          {profiles.map((profile) => {
+          {loading ? (
+            <div className="av-control-card rounded-lg border p-4 text-sm text-white/44">
+              Loading health profiles...
+            </div>
+          ) : loadError ? (
+            <div className="rounded-lg border border-rose-300/[0.16] bg-rose-400/[0.05] p-4 text-sm text-rose-100/72">
+              {loadError}
+            </div>
+          ) : profiles.length < 1 ? (
+            <div className="av-control-card rounded-lg border p-4 text-sm text-white/44">
+              No health profiles are available yet.
+            </div>
+          ) : (
+            profiles.map((profile) => {
             const active = profile.id === activeProfileId;
             return (
               <button
@@ -183,7 +207,8 @@ export default function ProfileManagementPanel() {
                 {active ? <Check className="royal-text" size={16} /> : null}
               </button>
             );
-          })}
+            })
+          )}
         </div>
 
         <div className="space-y-4">
@@ -194,14 +219,14 @@ export default function ProfileManagementPanel() {
                 <input
                   value={activeProfile.displayName}
                   onChange={(event) => updateActiveProfile({ displayName: event.target.value })}
-                  className="h-10 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-white/[0.22]"
+                  className="h-11 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-white/[0.22]"
                   aria-label="Profile display name"
                   disabled={activeProfile.isFrozen}
                 />
                 <select
                   value={activeProfile.relationship}
                   onChange={(event) => updateActiveProfile({ relationship: event.target.value })}
-                  className="h-10 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm capitalize text-white outline-none transition focus:border-white/[0.22]"
+                  className="h-11 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm capitalize text-white outline-none transition focus:border-white/[0.22]"
                   aria-label="Profile relationship"
                   disabled={activeProfile.isFrozen}
                 >
@@ -215,7 +240,7 @@ export default function ProfileManagementPanel() {
                   type="button"
                   onClick={() => void saveActiveProfile()}
                   disabled={saving || activeProfile.role === "viewer" || activeProfile.isFrozen}
-                  className="premium-action-secondary inline-flex h-10 items-center justify-center px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                  className="premium-action-secondary inline-flex h-11 items-center justify-center px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Save
                 </button>
@@ -239,13 +264,13 @@ export default function ProfileManagementPanel() {
                 value={displayName}
                 onChange={(event) => setDisplayName(event.target.value)}
                 placeholder="Profile name"
-                className="h-10 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none transition placeholder:text-white/28 focus:border-white/[0.22]"
+                className="h-11 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none transition placeholder:text-white/28 focus:border-white/[0.22]"
                 aria-label="New profile name"
               />
               <select
                 value={relationship}
                 onChange={(event) => setRelationship(event.target.value)}
-                className="h-10 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm capitalize text-white outline-none transition focus:border-white/[0.22]"
+                className="h-11 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm capitalize text-white outline-none transition focus:border-white/[0.22]"
                 aria-label="New profile relationship"
               >
                 {RELATIONSHIPS.map((item) => (
@@ -258,7 +283,7 @@ export default function ProfileManagementPanel() {
                 type="button"
                 onClick={() => void createProfile()}
                 disabled={saving || !displayName.trim() || remainingProfiles < 1}
-                className="premium-action inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                className="premium-action inline-flex h-11 items-center justify-center gap-2 px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <UserPlus size={15} />
                 Add

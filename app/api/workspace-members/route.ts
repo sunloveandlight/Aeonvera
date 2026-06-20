@@ -115,8 +115,8 @@ export async function POST(request: NextRequest) {
     const targetProfile = await findProfileByEmail(admin, email);
     if (!targetProfile?.user_id) {
       return NextResponse.json(
-        { error: "Could not grant access to that account." },
-        { status: 404 }
+        { error: "Could not grant access. Confirm the email and try again." },
+        { status: 400 }
       );
     }
 

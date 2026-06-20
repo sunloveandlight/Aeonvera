@@ -66,7 +66,7 @@ test.describe("launch shell", () => {
     await expect(overview).toBeVisible();
 
     await overview.hover();
-    await expect(page.locator(".premium-mega-menu")).toContainText("Demo workspace");
+    await expect(page.locator(".premium-mega-menu")).toContainText("Demo profile");
 
     await page.mouse.click(20, 900);
     await expect(page.locator(".premium-mega-menu")).toHaveCount(0);
@@ -81,7 +81,7 @@ test.describe("launch shell", () => {
     await expect(menuButton).toBeVisible();
     await menuButton.click();
 
-    await expect(page.locator(".premium-mobile-menu")).toContainText("Demo workspace");
+    await expect(page.locator(".premium-mobile-menu")).toContainText("Demo profile");
     await expect(page.locator(".premium-mobile-menu")).toContainText("Connect your data");
     await expect(page.locator(".premium-mobile-menu")).toContainText("Life Autopilot");
     await expect(page.locator(".premium-mobile-menu")).toContainText("Physician export");

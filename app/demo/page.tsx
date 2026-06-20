@@ -51,12 +51,12 @@ export default function DemoPage() {
       <section className="pt-24 pb-12 md:pt-32">
         <PageContainer>
           <div className="mx-auto max-w-4xl text-center">
-            <p className="micro-label">Demo workspace</p>
+            <p className="micro-label">Demo profile</p>
             <h1 className="mt-5 text-5xl font-semibold leading-[0.98] tracking-tight md:text-7xl">
               See the system before your data connects.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/58">
-              This sample workspace shows how Aeonvera turns labs, wearables,
+              This sample profile shows how Aeonvera turns labs, wearables,
               daily execution, and clinician sharing into one private operating
               system for longevity.
             </p>

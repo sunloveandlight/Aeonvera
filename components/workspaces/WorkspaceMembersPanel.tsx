@@ -52,8 +52,10 @@ const PROFILE_ROLE_OPTIONS: Array<{ label: string; value: ProfileRole }> = [
 
 export default function WorkspaceMembersPanel() {
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
   const [message, setMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [profileRole, setProfileRole] = useState<ProfileRole>("viewer");
   const [profiles, setProfiles] = useState<HealthProfile[]>([]);
   const [saving, setSaving] = useState(false);
@@ -80,8 +82,15 @@ export default function WorkspaceMembersPanel() {
   }, []);
 
   async function loadMembers() {
+    setLoading(true);
+    setLoadError("");
+
     const response = await fetch("/api/workspace-members", { cache: "no-store" });
-    if (!response.ok) return;
+    if (!response.ok) {
+      setLoadError("Could not load workspace access.");
+      setLoading(false);
+      return;
+    }
 
     const payload = await response.json() as WorkspaceMembersPayload;
     const nextProfiles = Array.isArray(payload.profiles) ? payload.profiles : [];
@@ -90,6 +99,7 @@ export default function WorkspaceMembersPanel() {
     setProfiles(nextProfiles);
     setWorkspace(payload.workspace || null);
     setSelectedProfileIds(nextProfiles.map((profile) => profile.id));
+    setLoading(false);
   }
 
   async function grantAccess() {
@@ -167,7 +177,20 @@ export default function WorkspaceMembersPanel() {
 
       <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
         <div className="space-y-2">
-          {members.map((member) => {
+          {loading ? (
+            <div className="av-control-card rounded-lg border p-4 text-sm text-white/44">
+              Loading workspace access...
+            </div>
+          ) : loadError ? (
+            <div className="rounded-lg border border-rose-300/[0.16] bg-rose-400/[0.05] p-4 text-sm text-rose-100/72">
+              {loadError}
+            </div>
+          ) : members.length < 1 ? (
+            <div className="av-control-card rounded-lg border p-4 text-sm text-white/44">
+              No additional accounts have access yet.
+            </div>
+          ) : (
+            members.map((member) => {
             const profileNames = member.profileAccess
               .map((access) => profileById.get(access.healthProfileId)?.displayName)
               .filter(Boolean)
@@ -195,7 +218,7 @@ export default function WorkspaceMembersPanel() {
                     type="button"
                     onClick={() => void removeAccess(member.userId)}
                     disabled={saving}
-                    className="mt-4 inline-flex items-center gap-2 text-xs text-white/42 transition hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="mt-4 inline-flex items-center gap-2 rounded-md border border-rose-300/[0.16] bg-rose-400/[0.05] px-3 py-2 text-xs text-rose-100/72 transition hover:border-rose-300/[0.28] hover:bg-rose-400/[0.08] hover:text-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <X size={13} />
                     Remove
@@ -203,7 +226,8 @@ export default function WorkspaceMembersPanel() {
                 ) : null}
               </div>
             );
-          })}
+            })
+          )}
         </div>
 
         <div className="space-y-4">
@@ -218,14 +242,14 @@ export default function WorkspaceMembersPanel() {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="name@example.com"
-                className="h-10 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none transition placeholder:text-white/28 focus:border-white/[0.22]"
+                className="h-11 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none transition placeholder:text-white/28 focus:border-white/[0.22]"
                 aria-label="Member email"
                 disabled={!workspace?.canManage}
               />
               <select
                 value={workspaceRole}
                 onChange={(event) => setWorkspaceRole(event.target.value as WorkspaceRole)}
-                className="h-10 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-white/[0.22]"
+                className="h-11 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-white/[0.22]"
                 aria-label="Workspace role"
                 disabled={!workspace?.canManage}
               >
@@ -238,7 +262,7 @@ export default function WorkspaceMembersPanel() {
               <select
                 value={profileRole}
                 onChange={(event) => setProfileRole(event.target.value as ProfileRole)}
-                className="h-10 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-white/[0.22]"
+                className="h-11 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-white/[0.22]"
                 aria-label="Profile role"
                 disabled={!workspace?.canManage}
               >
@@ -251,7 +275,16 @@ export default function WorkspaceMembersPanel() {
             </div>
 
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {profiles.map((profile) => {
+              {loading ? (
+                <div className="av-control-card rounded-lg border p-3 text-sm text-white/40">
+                  Loading profiles...
+                </div>
+              ) : profiles.length < 1 ? (
+                <div className="av-control-card rounded-lg border p-3 text-sm text-white/40">
+                  Create a profile before granting access.
+                </div>
+              ) : (
+                profiles.map((profile) => {
                 const selected = selectedProfileIds.includes(profile.id);
                 return (
                   <button
@@ -274,7 +307,8 @@ export default function WorkspaceMembersPanel() {
                     {selected ? <Check className="royal-text" size={15} /> : null}
                   </button>
                 );
-              })}
+                })
+              )}
             </div>
 
             <button
@@ -286,7 +320,7 @@ export default function WorkspaceMembersPanel() {
                 !email.trim() ||
                 selectedProfileIds.length < 1
               }
-              className="premium-action mt-4 inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+              className="premium-action mt-4 inline-flex h-11 items-center justify-center gap-2 px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
             >
               <UserPlus size={15} />
               Grant access
