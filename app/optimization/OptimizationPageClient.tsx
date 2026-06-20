@@ -921,6 +921,7 @@ export default function OptimizationPage() {
                     </div>
                     <input
                       type="range"
+                      aria-label={`${field.label} simulator control`}
                       min={field.min}
                       max={field.max}
                       step={field.step}

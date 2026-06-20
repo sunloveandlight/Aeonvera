@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Activity, CreditCard, Database, ShieldCheck, UsersRound } from "lucide-react";
 
@@ -8,6 +9,14 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  robots: {
+    follow: false,
+    index: false,
+  },
+  title: "Ops",
+};
 
 export default async function OpsPage() {
   const supabase = await createClient();

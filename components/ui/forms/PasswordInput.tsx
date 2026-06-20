@@ -41,6 +41,7 @@ const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
           onClick={() => setShow(!show)}
           aria-label={show ? "Hide password" : "Show password"}
           className="av-eyebrow premium-inline-control absolute right-1.5 top-1/2 inline-flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-md"
+          style={{ transform: "translateY(-50%)", translate: "none" }}
         >
           {show ? "Hide" : "Show"}
         </button>

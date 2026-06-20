@@ -381,6 +381,7 @@ export default function NetworkPage() {
 
                 <select
                   value={form.expiresInDays}
+                  aria-label="Invitation expiration"
                   onChange={(event) =>
                     setForm((current) => ({
                       ...current,

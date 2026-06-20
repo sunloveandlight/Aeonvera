@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createServerClient } from "@supabase/ssr";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type Plan = "core" | "elite" | "sovereign";
 
@@ -20,6 +21,9 @@ function getPriceIds() {
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = await rateLimitRequest(req, "stripe-customer-portal", 20, 60_000);
+    if (limited) return limited;
+
     const stripe = getStripe();
     const body = await req.json().catch(() => ({}));
     const targetPlan = sanitizePlan(body?.plan);
@@ -142,12 +146,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ url: portalSession.url });
   } catch (error) {
     console.error("Customer Portal Error:", error);
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Could not open Stripe billing management.";
     return NextResponse.json(
-      { error: message },
+      { error: "Could not open Stripe billing management." },
       { status: 500 }
     );
   }

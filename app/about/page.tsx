@@ -53,6 +53,7 @@ export default function AboutPage() {
             src="/marketing/rejuvenation-woman.png"
             alt="A woman, renewed"
             caption="Feeling years younger — not by chance, but by understanding."
+            priority
           />
           <RenewalImage
             src="/marketing/rejuvenation-man.png"

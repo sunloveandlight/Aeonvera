@@ -8,6 +8,7 @@ type RenewalImageProps = {
   alt: string;
   caption?: string;
   className?: string;
+  priority?: boolean;
 };
 
 /**
@@ -19,6 +20,7 @@ export default function RenewalImage({
   alt,
   caption,
   className = "",
+  priority = false,
 }: RenewalImageProps) {
   const [failed, setFailed] = useState(false);
 
@@ -37,6 +39,7 @@ export default function RenewalImage({
             src={src}
             alt={alt}
             fill
+            priority={priority}
             sizes="(min-width: 768px) 40vw, 90vw"
             onError={() => setFailed(true)}
             className="object-cover"

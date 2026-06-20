@@ -54,9 +54,8 @@ export async function GET(request: NextRequest) {
       remainingProfiles: Math.max(profileLimit.maxHealthProfiles - profiles.length, 0),
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Could not load health profiles.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Could not load health profiles:", error);
+    return NextResponse.json({ error: "Could not load health profiles." }, { status: 500 });
   }
 }
 
@@ -139,9 +138,8 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Could not create health profile.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Could not create health profile:", error);
+    return NextResponse.json({ error: "Could not create health profile." }, { status: 500 });
   }
 }
 
@@ -205,9 +203,8 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ profile: formatProfile(data, access) });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Could not update health profile.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Could not update health profile:", error);
+    return NextResponse.json({ error: "Could not update health profile." }, { status: 500 });
   }
 }
 

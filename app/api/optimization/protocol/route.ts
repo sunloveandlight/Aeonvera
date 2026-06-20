@@ -180,11 +180,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (intakeResult.error) {
+      console.error("Optimization intake insert failed:", intakeResult.error);
       return NextResponse.json(
         {
           error:
             "Optimization tables are not live yet. Apply supabase/migrations/20260610130000_optimization_protocols.sql in Supabase, then try again.",
-          details: intakeResult.error.message,
         },
         { status: 500 }
       );

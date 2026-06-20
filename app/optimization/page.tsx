@@ -16,12 +16,21 @@ export const metadata: Metadata = {
     description:
       "Turn health signals into clear longevity protocols and daily execution.",
     url: "/optimization",
+    images: [
+      {
+        url: "/marketing/rejuvenation-woman.png",
+        width: 1536,
+        height: 1024,
+        alt: "Aeonvera longevity optimization.",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Aeonvera Optimization",
     description:
       "Personalized longevity protocols from your labs, wearables, and assessment.",
+    images: ["/marketing/rejuvenation-woman.png"],
   },
 };
 

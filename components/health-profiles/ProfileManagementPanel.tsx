@@ -258,7 +258,7 @@ export default function ProfileManagementPanel() {
                 type="button"
                 onClick={() => void createProfile()}
                 disabled={saving || !displayName.trim() || remainingProfiles < 1}
-                className="premium-action-primary inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                className="premium-action inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <UserPlus size={15} />
                 Add

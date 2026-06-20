@@ -45,12 +45,21 @@ export const metadata: Metadata = {
     siteName: "Aeonvera",
     type: "website",
     url: "https://www.aeonvera.com",
+    images: [
+      {
+        url: "/marketing/rejuvenation-woman.png",
+        width: 1536,
+        height: 1024,
+        alt: "Aeonvera longevity intelligence.",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Aeonvera",
     description:
       "Private longevity intelligence for labs, wearables, biological age, protocols, and adaptive health coaching.",
+    images: ["/marketing/rejuvenation-woman.png"],
   },
 };
 

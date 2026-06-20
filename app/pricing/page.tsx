@@ -13,12 +13,21 @@ export const metadata: Metadata = {
     description:
       "Choose the Aeonvera membership that fits your longevity intelligence and execution needs.",
     url: "/pricing",
+    images: [
+      {
+        url: "/marketing/rejuvenation-woman.png",
+        width: 1536,
+        height: 1024,
+        alt: "Aeonvera membership plans.",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Aeonvera Pricing",
     description:
       "Compare Core, Elite, and Sovereign longevity intelligence memberships.",
+    images: ["/marketing/rejuvenation-woman.png"],
   },
 };
 

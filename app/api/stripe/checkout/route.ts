@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createServerClient } from "@supabase/ssr";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type CheckoutPlan = "core" | "elite" | "sovereign";
 
@@ -12,6 +13,9 @@ function getStripe() {
 
 export async function POST(req: NextRequest) {
   try {
+    const limited = await rateLimitRequest(req, "stripe-checkout", 20, 60_000);
+    if (limited) return limited;
+
     const stripe = getStripe();
 
     const PRICE_IDS = {

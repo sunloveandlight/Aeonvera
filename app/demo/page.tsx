@@ -14,6 +14,21 @@ export const metadata: Metadata = {
     description:
       "See how Aeonvera turns labs, wearables, and daily execution into private longevity intelligence.",
     url: "/demo",
+    images: [
+      {
+        url: "/marketing/rejuvenation-woman.png",
+        width: 1536,
+        height: 1024,
+        alt: "Aeonvera demo workspace.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Aeonvera Demo Workspace",
+    description:
+      "See how Aeonvera turns labs, wearables, and daily execution into private longevity intelligence.",
+    images: ["/marketing/rejuvenation-woman.png"],
   },
 };
 

@@ -13,6 +13,7 @@ import {
   serializeUsage,
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type ContextRow = Record<string, unknown>;
 
@@ -24,6 +25,9 @@ const ALLOWED_REALTIME_VOICES = new Set(["marin", "cedar", "alloy", "verse", "sh
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "agent-realtime", 30, 60_000);
+    if (limited) return limited;
+
     const user = await getAuthenticatedUser(request);
 
     if (!user) {
@@ -119,9 +123,14 @@ export async function POST(request: NextRequest) {
     const answerSdp = await response.text();
 
     if (!response.ok) {
+      console.error("OpenAI realtime voice session failed:", {
+        body: answerSdp,
+        status: response.status,
+        userId: user.id,
+      });
       return NextResponse.json(
         {
-          error: answerSdp || "OpenAI realtime voice session could not start.",
+          error: "OpenAI realtime voice session could not start.",
           usage: serializeUsage(usage),
         },
         { status: response.status }
@@ -136,9 +145,11 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Aeonvera realtime voice could not start.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Aeonvera realtime voice could not start:", error);
+    return NextResponse.json(
+      { error: "Aeonvera realtime voice could not start." },
+      { status: 500 }
+    );
   }
 }
 

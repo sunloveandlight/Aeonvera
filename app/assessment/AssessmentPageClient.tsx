@@ -566,8 +566,8 @@ const STEPS: Step[] = [
         label: "Primary Optimization Target",
         type: "select",
         options: [
-          { label: "Extend healthy lifespan", value: "extend healthy lifespan" },
-          { label: "Reduce biological age", value: "reduce biological age" },
+          { label: "Support healthy lifespan", value: "support healthy lifespan" },
+          { label: "Support biological-age improvement", value: "support biological-age improvement" },
           { label: "Optimize energy and performance", value: "optimize energy and performance" },
           { label: "Improve cardiovascular health", value: "improve cardiovascular health" },
           { label: "Optimize body composition", value: "optimize body composition" },

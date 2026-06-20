@@ -5704,6 +5704,12 @@ input[type="number"]::-webkit-inner-spin-button {
   stroke: currentColor !important;
 }
 
+:root .premium-inline-control.absolute {
+  position: absolute !important;
+  transform: translateY(-50%) !important;
+  translate: none !important;
+}
+
 /* Header CTA = primary at a compact size */
 :root .premium-nav-action {
   position: relative !important;

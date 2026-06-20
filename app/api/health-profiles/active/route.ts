@@ -54,8 +54,7 @@ export async function POST(request: NextRequest) {
     });
     return response;
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Could not switch health profile.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Could not switch health profile:", error);
+    return NextResponse.json({ error: "Could not switch health profile." }, { status: 500 });
   }
 }

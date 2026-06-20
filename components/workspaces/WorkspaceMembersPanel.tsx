@@ -286,7 +286,7 @@ export default function WorkspaceMembersPanel() {
                 !email.trim() ||
                 selectedProfileIds.length < 1
               }
-              className="premium-action-primary mt-4 inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+              className="premium-action mt-4 inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
             >
               <UserPlus size={15} />
               Grant access

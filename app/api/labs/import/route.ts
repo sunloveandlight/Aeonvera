@@ -22,6 +22,7 @@ import {
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 let openaiClient: OpenAI | null = null;
 
@@ -41,6 +42,9 @@ function getOpenAI() {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "labs-import", 12, 60_000);
+    if (limited) return limited;
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -105,11 +109,11 @@ export async function POST(request: NextRequest) {
       .select("id, canonical_key, value, unit, raw_label, measured_at");
 
     if (insertError) {
+      console.error("Lab biomarker insert failed:", insertError);
       return NextResponse.json(
         {
           error:
             "Lab tables are not live yet. Apply supabase/migrations/20260610150000_lab_biomarkers.sql in Supabase, then try again.",
-          details: insertError.message,
         },
         { status: 500 }
       );
@@ -159,10 +163,9 @@ export async function POST(request: NextRequest) {
       usage: serializeUsage(usage),
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Lab import failed.";
+    console.error("Lab import failed:", error);
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Lab import failed." }, { status: 500 });
   }
 }
 

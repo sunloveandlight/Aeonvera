@@ -72,9 +72,8 @@ export async function GET() {
       },
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Could not load workspace members.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Could not load workspace members:", error);
+    return NextResponse.json({ error: "Could not load workspace members." }, { status: 500 });
   }
 }
 
@@ -112,7 +111,7 @@ export async function POST(request: NextRequest) {
     const targetProfile = await findProfileByEmail(admin, email);
     if (!targetProfile?.user_id) {
       return NextResponse.json(
-        { error: "That account does not exist yet." },
+        { error: "Could not grant access to that account." },
         { status: 404 }
       );
     }
@@ -192,9 +191,8 @@ export async function POST(request: NextRequest) {
       members,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Could not grant workspace access.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Could not grant workspace access:", error);
+    return NextResponse.json({ error: "Could not grant workspace access." }, { status: 500 });
   }
 }
 
@@ -246,9 +244,8 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ members: await listMembers(admin, workspace.id) });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Could not update workspace access.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("Could not update workspace access:", error);
+    return NextResponse.json({ error: "Could not update workspace access." }, { status: 500 });
   }
 }
 
