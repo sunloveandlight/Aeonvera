@@ -232,7 +232,7 @@ export default function ReportPage() {
           )
             .order("created_at", { ascending: false })
             .limit(1)
-            .single(),
+            .maybeSingle(),
           supabase
             .from("profiles")
             .select("display_name, biological_age")
@@ -246,7 +246,7 @@ export default function ReportPage() {
           )
             .order("created_at", { ascending: false })
             .limit(1)
-            .single(),
+            .maybeSingle(),
           fetch("/api/longevity/biological-age", {
             credentials: "include",
           }).then((response) => response.json()).catch(() => null),
@@ -362,7 +362,7 @@ export default function ReportPage() {
   }
 
   const chronologicalAge = assessment?.age ? Number(assessment.age) : null;
-  const ageDelta = bioAge && chronologicalAge ? bioAge - chronologicalAge : null;
+  const ageDelta = bioAge && chronologicalAge ? roundAgeDelta(bioAge - chronologicalAge) : null;
 
   const bioAgeColor = "text-white/86";
   const riskColor = "text-white/86";
@@ -1029,6 +1029,10 @@ function labTrendClassName(status: LabTrend["status"]) {
   if (status === "worsening") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
   if (status === "stable") return `${base} text-white/34 bg-white/[0.025]`;
   return `${base} text-white/28 bg-white/[0.02]`;
+}
+
+function roundAgeDelta(value: number) {
+  return Math.round(value * 10) / 10;
 }
 
 function improvementStatusClassName(status: ImprovementLoop["status"]) {

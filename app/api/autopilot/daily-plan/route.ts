@@ -167,7 +167,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not prepare autopilot plan.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error(message, error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
 
@@ -220,7 +221,8 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not save autopilot preferences.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error(message, error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
 
@@ -307,7 +309,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not update daily plan.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error(message, error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
 

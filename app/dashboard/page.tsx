@@ -764,7 +764,7 @@ export default function DashboardPage() {
   }
 
   const bioAge = profile?.biological_age ?? null;
-  const ageDelta = bioAge && assessmentAge ? bioAge - assessmentAge : null;
+  const ageDelta = bioAge && assessmentAge ? roundAgeDelta(bioAge - assessmentAge) : null;
   const latestPriority =
     report?.report?.top_priorities?.[0] || report?.primary_goal || null;
   const latestPriorityDisplay = sentenceDisplay(latestPriority);
@@ -2081,6 +2081,10 @@ function BioAgeTrend({
 
 function formatYears(value: number) {
   return value > 0 ? value.toFixed(1) : "0.0";
+}
+
+function roundAgeDelta(value: number) {
+  return Math.round(value * 10) / 10;
 }
 
 function formatLabKey(value: string) {

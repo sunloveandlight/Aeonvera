@@ -46,11 +46,11 @@ export default async function OpsPage() {
   return (
     <Page density="compact">
       <PageContainer className="py-14 md:py-16">
-        <section className="mx-auto max-w-6xl">
+        <section className="mx-auto max-w-6xl min-w-0">
           <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-            <div>
+            <div className="min-w-0">
               <p className="micro-label">Operations</p>
-              <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-tight text-white md:text-6xl">
+              <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-white sm:text-5xl md:text-6xl">
                 Workspace diagnostics.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-white/46">
@@ -93,7 +93,7 @@ export default async function OpsPage() {
             />
           </div>
 
-          <div className="mt-5 grid gap-5 lg:grid-cols-[1.08fr_0.92fr]">
+          <div className="mt-5 grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
             <section className="executive-panel rounded-lg p-6 md:p-7">
               <div className="mb-6 flex items-start justify-between gap-5 border-b border-white/[0.06] pb-5">
                 <div>
@@ -136,7 +136,7 @@ export default async function OpsPage() {
               </div>
               <div className="grid gap-3">
                 {diagnostics.planLimits.map((limit) => (
-                  <div key={limit.plan} className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                  <div key={limit.plan} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
                     <p className="text-sm capitalize text-white/76">{limit.plan}</p>
                     <p className="text-sm royal-text">{limit.label}</p>
                   </div>
@@ -149,7 +149,7 @@ export default async function OpsPage() {
                   <BooleanRow label="Customer" value={diagnostics.stripe.customerLinked} />
                   <BooleanRow label="Subscription" value={diagnostics.stripe.subscriptionLinked} />
                   <BooleanRow label="Price" value={diagnostics.stripe.priceLinked} />
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex min-w-0 items-center justify-between gap-4">
                     <span>Latest event</span>
                     <span className="max-w-[13rem] truncate text-white/38">
                       {diagnostics.stripe.latestEventId || "None"}
@@ -169,8 +169,8 @@ export default async function OpsPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {diagnostics.env.map((item) => (
-                <div key={item.name} className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-                  <span className="text-xs text-white/58">{item.name}</span>
+                <div key={item.name} className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
+                  <span className="min-w-0 break-all text-xs text-white/58">{item.name}</span>
                   <StatusPill tone={item.configured ? "ok" : "warn"}>
                     {item.configured ? "Set" : "Missing"}
                   </StatusPill>

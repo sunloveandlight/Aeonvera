@@ -61,7 +61,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not store memory.";
     if (message !== "Unauthorized") console.error("Could not store memory:", error);
-    return NextResponse.json({ error: message }, { status: message === "Unauthorized" ? 401 : 500 });
+    return NextResponse.json(
+      { error: message === "Unauthorized" ? "Unauthorized" : "Internal server error." },
+      { status: message === "Unauthorized" ? 401 : 500 }
+    );
   }
 }
 
@@ -99,7 +102,10 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not forget memory.";
     if (message !== "Unauthorized") console.error("Could not forget memory:", error);
-    return NextResponse.json({ error: message }, { status: message === "Unauthorized" ? 401 : 500 });
+    return NextResponse.json(
+      { error: message === "Unauthorized" ? "Unauthorized" : "Internal server error." },
+      { status: message === "Unauthorized" ? 401 : 500 }
+    );
   }
 }
 

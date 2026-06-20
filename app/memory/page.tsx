@@ -220,7 +220,7 @@ export default function MemoryPage() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <p className="micro-label">Agent Memory</p>
-              <h1 className="mt-5 max-w-4xl leading-tight text-white text-5xl md:text-6xl font-semibold">
+              <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-tight text-white sm:text-5xl md:text-6xl">
                 What Aeonvera is learning about you.
               </h1>
               <p className="mt-5 max-w-3xl text-sm leading-7 text-white/52">
@@ -345,14 +345,14 @@ export default function MemoryPage() {
         </section>
 
         <section className="mt-6 executive-panel rounded-lg p-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div>
+          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <p className="micro-label">Long-Term Memory</p>
               <p className="av-muted mt-2 text-sm leading-6">
                 Raw submitted memories and distilled agent memories that can be retrieved by semantic similarity.
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               <button
                 type="button"
                 onClick={exportSemanticMemories}

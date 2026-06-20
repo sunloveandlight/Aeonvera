@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
       error instanceof Error
         ? error.message
         : "Failed to load biological age improvement loop.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error(message, error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }

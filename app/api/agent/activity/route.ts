@@ -67,7 +67,8 @@ export async function GET() {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not load Aeonvera activity.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error(message, error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
 
@@ -131,7 +132,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not save Aeonvera activity.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error(message, error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
 

@@ -65,10 +65,18 @@ export async function POST(req: NextRequest) {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (profileError || !profile?.stripe_customer_id) {
+    if (profileError) {
+      console.error("Stripe sync profile lookup error:", profileError);
       return NextResponse.json(
-        { error: "Stripe customer not found." },
-        { status: 404 }
+        { error: "Could not sync Stripe subscription." },
+        { status: 500 }
+      );
+    }
+
+    if (!profile?.stripe_customer_id) {
+      return NextResponse.json(
+        { reason: "stripe_customer_not_found", synced: false },
+        { status: 200 }
       );
     }
 
@@ -86,8 +94,8 @@ export async function POST(req: NextRequest) {
 
     if (!subscription) {
       return NextResponse.json(
-        { error: "No active Stripe subscription found." },
-        { status: 404 }
+        { reason: "active_subscription_not_found", synced: false },
+        { status: 200 }
       );
     }
 
@@ -114,6 +122,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       plan,
+      synced: true,
       subscriptionStatus: normalizeSubscriptionStatus(subscription.status),
       subscriptionId: subscription.id,
     });

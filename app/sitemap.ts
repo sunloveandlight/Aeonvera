@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 const BASE_URL = "https://www.aeonvera.com";
 
 // Public, indexable marketing/legal routes.
-const ROUTES = ["", "/about", "/assessment", "/demo", "/life-autopilot", "/optimization", "/pricing", "/privacy", "/terms"];
+const ROUTES = ["", "/about", "/demo", "/pricing", "/privacy", "/terms"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return ROUTES.map((route) => ({

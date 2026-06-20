@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not build physician export.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error(message, error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }

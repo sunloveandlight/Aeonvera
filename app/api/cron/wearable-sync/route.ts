@@ -110,7 +110,7 @@ async function syncWearables(request: NextRequest) {
           userId: connection.user_id,
         });
         failures.push({
-          error: message,
+          error: "Wearable connection sync failed.",
           provider: connection.provider,
           userId: connection.user_id,
         });

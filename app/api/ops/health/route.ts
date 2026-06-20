@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       {
-        error: message,
+        error: "Health check failed.",
         ok: false,
         timestamp: new Date().toISOString(),
       },

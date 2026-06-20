@@ -51,6 +51,7 @@ export async function GET() {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to load lab trends.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error(message, error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
