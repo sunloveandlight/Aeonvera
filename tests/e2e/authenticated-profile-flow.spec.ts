@@ -83,6 +83,18 @@ test.describe("authenticated profile-scoped flow", () => {
     await expect(page.getByText(/1 of 10 profiles used/i)).toBeVisible();
     await expect(page.getByText(/9 remaining/i)).toBeVisible();
 
+    await page.goto("/ops", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "Workspace diagnostics." })).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByText("Sovereign").first()).toBeVisible();
+    await expect(page.getByText("Core").last()).toBeVisible();
+    await expect(page.getByText("Elite").last()).toBeVisible();
+    await expect(page.getByText("Sovereign").last()).toBeVisible();
+
+    await page.goto("/settings", { waitUntil: "domcontentloaded" });
+    await page.getByLabel("New profile name").waitFor({ timeout: 30_000 });
+
     await createProfileViaUi(page, householdProfileName, "family");
     await expect(page.getByText("Profile created.")).toBeVisible({ timeout: 30_000 });
     await expect(
