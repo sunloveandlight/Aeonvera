@@ -5,6 +5,11 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
 import { FUTURE_SELF_SCENARIOS } from "@/lib/longevity/futureSelfSimulator";
 import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type CookieToSet = {
   name: string;
@@ -13,7 +18,7 @@ type CookieToSet = {
 };
 
 const BASE_SELECT_FIELDS =
-  "id,title,description,scenario_ids,controls,projection,future_self,share_token,is_public,created_at,updated_at";
+  "id,title,description,scenario_ids,controls,projection,future_self,share_token,is_public,health_profile_id,created_at,updated_at";
 const SELECT_FIELDS = `${BASE_SELECT_FIELDS},parent_scenario_id,version_number,protocol_id`;
 
 type ScenarioQueryResult = {
@@ -26,17 +31,22 @@ export async function GET() {
     const user = await requireUser();
     const admin = getSupabaseAdmin();
     await requireFutureSelfAccess(admin, user.id);
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
     const result = await admin
       .from("future_self_scenarios")
       .select(SELECT_FIELDS)
-      .eq("user_id", user.id)
+      .eq(healthFilter.column, healthFilter.value)
       .order("created_at", { ascending: false })
       .limit(12);
     const { data, error } = await retryWithoutPhase5LinkColumns(result, () =>
       admin
         .from("future_self_scenarios")
         .select(BASE_SELECT_FIELDS)
-        .eq("user_id", user.id)
+        .eq(healthFilter.column, healthFilter.value)
         .order("created_at", { ascending: false })
         .limit(12)
     );
@@ -70,6 +80,10 @@ export async function POST(request: NextRequest) {
     const user = await requireUser();
     const admin = getSupabaseAdmin();
     await requireFutureSelfAccess(admin, user.id);
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
     const body = await readJsonBody(request);
     const scenarioIds = sanitizeScenarioIds(body?.scenarioIds);
     const futureSelf = safeRecord(body?.futureSelf);
@@ -85,6 +99,7 @@ export async function POST(request: NextRequest) {
 
     const insertPayload = {
       user_id: user.id,
+      ...healthSubjectInsertFields(healthProfileContext),
       title,
       description,
       scenario_ids: scenarioIds,
@@ -105,6 +120,7 @@ export async function POST(request: NextRequest) {
         .from("future_self_scenarios")
         .insert({
           user_id: user.id,
+          ...healthSubjectInsertFields(healthProfileContext),
           title,
           description,
           scenario_ids: scenarioIds,
@@ -148,6 +164,7 @@ export async function POST(request: NextRequest) {
       sourceType: "future_self_scenario",
       supabase: admin,
       title,
+      healthProfileId: healthProfileContext.healthProfileId,
       userId: user.id,
     });
 

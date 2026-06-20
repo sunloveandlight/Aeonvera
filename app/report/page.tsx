@@ -7,6 +7,10 @@ import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Spinner from "@/components/ui/Spinner";
+import {
+  applyHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 import { possessiveName, resolveDisplayName } from "@/lib/profile/displayName";
 import { sentenceDisplay } from "@/lib/text/display";
 
@@ -206,6 +210,10 @@ export default function ReportPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { router.replace("/login"); return; }
+        const healthProfileContext = await resolveActiveHealthProfileContext({
+          supabase,
+          loginUserId: user.id,
+        });
 
         const [
           reportRes,
@@ -216,10 +224,12 @@ export default function ReportPage() {
           labTrendsRes,
           improvementLoopRes,
         ] = await Promise.all([
-          supabase
-            .from("longevity_reports")
-            .select("report, created_at, risk_score, primary_goal")
-            .eq("user_id", user.id)
+          applyHealthSubjectFilter(
+            supabase
+              .from("longevity_reports")
+              .select("report, created_at, risk_score, primary_goal"),
+            healthProfileContext
+          )
             .order("created_at", { ascending: false })
             .limit(1)
             .single(),
@@ -228,10 +238,12 @@ export default function ReportPage() {
             .select("display_name, biological_age")
             .eq("user_id", user.id)
             .single(),
-          supabase
-            .from("longevity_assessments")
-            .select("*")
-            .eq("user_id", user.id)
+          applyHealthSubjectFilter(
+            supabase
+              .from("longevity_assessments")
+              .select("*"),
+            healthProfileContext
+          )
             .order("created_at", { ascending: false })
             .limit(1)
             .single(),

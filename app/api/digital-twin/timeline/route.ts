@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
+import {
+  getHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type TimelineEvent = {
   id: string;
@@ -153,6 +157,12 @@ export async function GET() {
       );
     }
 
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const healthSubjectFilter = getHealthSubjectFilter(healthProfileContext);
+
     const [
       profileRes,
       assessmentRes,
@@ -182,7 +192,7 @@ export async function GET() {
         admin
           .from("longevity_assessments")
           .select("id, age, primary_goal, created_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("created_at", { ascending: false })
           .limit(8)
       ),
@@ -190,7 +200,7 @@ export async function GET() {
         admin
           .from("biological_age_history")
           .select("id, biological_age, chronological_age, age_delta, score, category, source, created_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("created_at", { ascending: false })
           .limit(12)
       ),
@@ -198,7 +208,7 @@ export async function GET() {
         admin
           .from("lab_biomarkers")
           .select("id, canonical_key, value, unit, measured_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("measured_at", { ascending: false })
           .limit(18)
       ),
@@ -206,7 +216,7 @@ export async function GET() {
         admin
           .from("optimization_protocols")
           .select("id, protocol, summary, focus_domains, status, created_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("created_at", { ascending: false })
           .limit(10)
       ),
@@ -214,7 +224,7 @@ export async function GET() {
         admin
           .from("longevity_reports")
           .select("id, risk_score, primary_goal, created_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("created_at", { ascending: false })
           .limit(8)
       ),
@@ -222,7 +232,7 @@ export async function GET() {
         admin
           .from("notification_deliveries")
           .select("id, title, message, channel, status, created_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("created_at", { ascending: false })
           .limit(10)
       ),
@@ -230,7 +240,7 @@ export async function GET() {
         admin
           .from("future_self_scenarios")
           .select("id, title, description, share_token, is_public, version_number, protocol_id, projection, future_self, created_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("created_at", { ascending: false })
           .limit(10)
       ),
@@ -238,7 +248,7 @@ export async function GET() {
         admin
           .from("health_states")
           .select("baseline, risk_scores, insights, updated_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("updated_at", { ascending: false })
           .limit(1)
           .maybeSingle()
@@ -247,7 +257,7 @@ export async function GET() {
         admin
           .from("wearable_metrics")
           .select("id, provider, metric_name, metric_value, recorded_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("recorded_at", { ascending: false })
           .limit(16)
       ),
@@ -255,7 +265,7 @@ export async function GET() {
         admin
           .from("intervention_outcomes")
           .select("id, protocol_id, domain, action, success, outcome, confidence, notes, measured_at, created_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("created_at", { ascending: false })
           .limit(16)
       ),
@@ -263,7 +273,7 @@ export async function GET() {
         admin
           .from("health_metrics")
           .select("metric, value, measured_at, source")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("measured_at", { ascending: false })
           .limit(80)
       ),
@@ -271,7 +281,7 @@ export async function GET() {
         admin
           .from("clinical_insights")
           .select("id, domains, concern_status, confidence, created_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("created_at", { ascending: false })
           .limit(12)
       ),
@@ -279,7 +289,7 @@ export async function GET() {
         admin
           .from("agent_preferences")
           .select("id, category, preference_key, confidence, updated_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("updated_at", { ascending: false })
           .limit(16)
       ),
@@ -287,7 +297,7 @@ export async function GET() {
         admin
           .from("daily_execution_plans")
           .select("id, status, autopilot_mode, plan_date, updated_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("plan_date", { ascending: false })
           .limit(10)
       ),
@@ -295,7 +305,7 @@ export async function GET() {
         admin
           .from("calendar_events")
           .select("id, status, provider, scheduled_for, created_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("scheduled_for", { ascending: false })
           .limit(16)
       ),

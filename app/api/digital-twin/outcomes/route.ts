@@ -3,6 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 const BASE_SELECT =
   "id,domain,action,success,confidence,created_at";
@@ -21,17 +26,23 @@ export async function GET() {
     });
     if (!entitlement.allowed) return entitlement.response;
 
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const healthSubjectFilter = getHealthSubjectFilter(healthProfileContext);
+
     const result = await admin
       .from("intervention_outcomes")
       .select(EXTENDED_SELECT)
-      .eq("user_id", user.id)
+      .eq(healthSubjectFilter.column, healthSubjectFilter.value)
       .order("created_at", { ascending: false })
       .limit(30);
     const { data, error } = await retryWithoutExtendedColumns(result, () =>
       admin
         .from("intervention_outcomes")
         .select(BASE_SELECT)
-        .eq("user_id", user.id)
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
         .order("created_at", { ascending: false })
         .limit(30)
     );
@@ -81,7 +92,13 @@ export async function POST(request: NextRequest) {
     });
     if (!entitlement.allowed) return entitlement.response;
 
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+
     const payload = {
+      ...healthSubjectInsertFields(healthProfileContext),
       user_id: user.id,
       protocol_id: sanitizeUuid(body.protocolId) || null,
       domain,
@@ -103,6 +120,7 @@ export async function POST(request: NextRequest) {
       admin
         .from("intervention_outcomes")
         .insert({
+          ...healthSubjectInsertFields(healthProfileContext),
           user_id: user.id,
           domain,
           action,
@@ -128,6 +146,7 @@ export async function POST(request: NextRequest) {
     }
 
     await admin.from("behavior_learning_events").insert({
+      ...healthSubjectInsertFields(healthProfileContext),
       user_id: user.id,
       domain,
       action,
@@ -142,6 +161,7 @@ export async function POST(request: NextRequest) {
         `Action: ${action}`,
         payload.notes ? `Notes: ${payload.notes}` : "",
       ].filter(Boolean).join("\n"),
+      healthProfileId: healthProfileContext.healthProfileId,
       importance: outcome === "success" ? 0.74 : 0.82,
       metadata: {
         confidence: payload.confidence,

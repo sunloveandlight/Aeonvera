@@ -1,4 +1,8 @@
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import {
+  getHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export type PhysicianExportSection =
   | "snapshot"
@@ -59,14 +63,22 @@ export type PhysicianExportBundle = {
 
 export async function buildPhysicianExportBundle({
   email,
+  healthProfileId,
   sections = DEFAULT_PHYSICIAN_EXPORT_SECTIONS,
   userId,
 }: {
   email?: string | null;
+  healthProfileId?: string | null;
   sections?: PhysicianExportSection[];
   userId: string;
 }): Promise<PhysicianExportBundle> {
   const admin = getSupabaseAdmin();
+  const healthProfileContext = await resolveActiveHealthProfileContext({
+    requestedHealthProfileId: healthProfileId,
+    supabase: admin,
+    loginUserId: userId,
+  });
+  const healthSubjectFilter = getHealthSubjectFilter(healthProfileContext);
   const includedSections = normalizeSections(sections);
   const include = new Set(includedSections);
 
@@ -90,77 +102,77 @@ export async function buildPhysicianExportBundle({
         .maybeSingle()
     ),
     safeQuery(() =>
-      admin
-        .from("longevity_assessments")
-        .select("*")
-        .eq("user_id", userId)
+        admin
+          .from("longevity_assessments")
+          .select("*")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle()
     ),
     safeQuery(() =>
-      admin
-        .from("longevity_reports")
-        .select("report, risk_score, primary_goal, created_at")
-        .eq("user_id", userId)
+        admin
+          .from("longevity_reports")
+          .select("report, risk_score, primary_goal, created_at")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle()
     ),
     safeQuery(() =>
-      admin
-        .from("biological_age_history")
-        .select("biological_age, chronological_age, age_delta, score, accuracy_score, category, source, created_at")
-        .eq("user_id", userId)
+        admin
+          .from("biological_age_history")
+          .select("biological_age, chronological_age, age_delta, score, accuracy_score, category, source, created_at")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
         .order("created_at", { ascending: false })
         .limit(12)
     ),
     safeQuery(() =>
-      admin
-        .from("lab_biomarkers")
-        .select("canonical_key, value, unit, reference_range, source, measured_at")
-        .eq("user_id", userId)
+        admin
+          .from("lab_biomarkers")
+          .select("canonical_key, value, unit, reference_range, source, measured_at")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
         .order("measured_at", { ascending: false })
         .limit(30)
     ),
     safeQuery(() =>
-      admin
-        .from("optimization_protocols")
-        .select("protocol, summary, focus_domains, status, created_at")
-        .eq("user_id", userId)
+        admin
+          .from("optimization_protocols")
+          .select("protocol, summary, focus_domains, status, created_at")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
         .order("created_at", { ascending: false })
         .limit(5)
     ),
     safeQuery(() =>
-      admin
-        .from("intervention_outcomes")
-        .select("domain,action,success,confidence,outcome,baseline_snapshot,followup_snapshot,notes,measured_at,created_at")
-        .eq("user_id", userId)
+        admin
+          .from("intervention_outcomes")
+          .select("domain,action,success,confidence,outcome,baseline_snapshot,followup_snapshot,notes,measured_at,created_at")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
         .order("created_at", { ascending: false })
         .limit(20)
     ),
     safeQuery(() =>
-      admin
-        .from("health_states")
-        .select("baseline,risk_scores,insights,updated_at")
-        .eq("user_id", userId)
+        admin
+          .from("health_states")
+          .select("baseline,risk_scores,insights,updated_at")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle()
     ),
     safeQuery(() =>
-      admin
-        .from("wearable_metrics")
-        .select("provider, metric_name, metric_value, recorded_at")
-        .eq("user_id", userId)
+        admin
+          .from("wearable_metrics")
+          .select("provider, metric_name, metric_value, recorded_at")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
         .order("recorded_at", { ascending: false })
         .limit(20)
     ),
     safeQuery(() =>
-      admin
-        .from("clinical_insights")
-        .select("domains, concern_status, confidence, answer_summary, range_flags, recommended_actions, created_at")
-        .eq("user_id", userId)
+        admin
+          .from("clinical_insights")
+          .select("domains, concern_status, confidence, answer_summary, range_flags, recommended_actions, created_at")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
         .order("created_at", { ascending: false })
         .limit(12)
     ),

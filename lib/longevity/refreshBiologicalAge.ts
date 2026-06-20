@@ -41,13 +41,15 @@ export async function refreshBiologicalAgeForUser({
   userId: string;
   source?: RefreshSource;
 }): Promise<BiologicalAgeRefreshResult | null> {
-  const { data: assessment, error: assessmentError } = await supabase
+  const assessmentQuery = supabase
     .from("longevity_assessments")
     .select("*")
-    .eq("user_id", userId)
+    .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  const { data: assessment, error: assessmentError } = await assessmentQuery;
 
   if (assessmentError) {
     throw new Error(assessmentError.message);

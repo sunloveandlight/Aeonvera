@@ -3,6 +3,10 @@ import { canAccess } from "@/lib/auth/permissions";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import {
+  getHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,6 +18,12 @@ export async function GET(request: NextRequest) {
 
     const admin = getSupabaseAdmin();
     const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
     if (!canAccess(subscription.plan, subscription.status, "clinical_intelligence")) {
       return NextResponse.json(
@@ -37,7 +47,7 @@ export async function GET(request: NextRequest) {
       .select(
         "id,source_question,answer_summary,domains,concern_status,confidence,signal_map,range_flags,follow_up_questions,recommended_actions,metadata,created_at,updated_at"
       )
-      .eq("user_id", user.id)
+      .eq(healthFilter.column, healthFilter.value)
       .order("created_at", { ascending: false })
       .limit(8);
 

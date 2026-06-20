@@ -319,7 +319,7 @@ export async function createClinicalInsightFromLabs({
 
   const { data, error } = await query;
 
-  const context = await loadClinicalProfileContext(supabase, userId);
+  const context = await loadClinicalProfileContext(supabase, userId, healthProfileId);
   const assessmentRows = context.assessment
     ? assessmentToBiomarkerRows(context.assessment)
     : [];
@@ -637,14 +637,20 @@ function readableKey(key: ClinicalBiomarkerKey | string) {
     .replace("Ldl", "LDL");
 }
 
-async function loadClinicalProfileContext(supabase: SupabaseClient, userId: string) {
-  const { data: assessment, error } = await supabase
+async function loadClinicalProfileContext(
+  supabase: SupabaseClient,
+  userId: string,
+  healthProfileId?: string | null
+) {
+  const query = supabase
     .from("longevity_assessments")
     .select("*")
-    .eq("user_id", userId)
+    .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+
+  const { data: assessment, error } = await query;
 
   if (error) {
     console.error("[Clinical Intelligence Context Error]", error.message);

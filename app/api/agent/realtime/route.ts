@@ -3,6 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
+  getHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
+import {
   checkAndRecordUsage,
   getUserPlanForUsage,
   serializeUsage,
@@ -41,6 +46,11 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
+    });
     const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
     const usage = await checkAndRecordUsage({
       metadata: { source: "realtime_voice", transport: "webrtc" },
@@ -48,6 +58,7 @@ export async function POST(request: NextRequest) {
       plan: subscription.plan,
       status: subscription.status,
       supabase: admin,
+      healthProfileId: healthProfileContext.healthProfileId,
       userId: user.id,
     });
 
@@ -66,7 +77,13 @@ export async function POST(request: NextRequest) {
         type: "realtime",
         model: REALTIME_MODEL,
         output_modalities: ["audio"],
-        instructions: await buildRealtimeInstructions(admin, user.id, subscription, currentPage),
+        instructions: await buildRealtimeInstructions(
+          admin,
+          user.id,
+          healthProfileContext,
+          subscription,
+          currentPage
+        ),
         max_output_tokens: 900,
         audio: {
           input: {
@@ -159,10 +176,17 @@ async function getAuthenticatedUser(request: NextRequest) {
 async function buildRealtimeInstructions(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
+  healthProfileContext: ActiveHealthProfileContext,
   subscription: Awaited<ReturnType<typeof getUserPlanForUsage>>,
   currentPage: string
 ) {
-  const context = await loadRealtimeContext(supabase, userId, subscription, currentPage);
+  const context = await loadRealtimeContext(
+    supabase,
+    userId,
+    healthProfileContext,
+    subscription,
+    currentPage
+  );
 
   return [
     "You are Aeonvera, a premium realtime longevity and health optimization voice agent.",
@@ -187,6 +211,7 @@ async function buildRealtimeInstructions(
 async function loadRealtimeContext(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
+  healthProfileContext: ActiveHealthProfileContext,
   subscription: Awaited<ReturnType<typeof getUserPlanForUsage>>,
   currentPage: string
 ) {
@@ -194,6 +219,7 @@ async function loadRealtimeContext(
   const periodStart = new Date();
   periodStart.setUTCDate(1);
   periodStart.setUTCHours(0, 0, 0, 0);
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
   const [
     profile,
@@ -224,7 +250,7 @@ async function loadRealtimeContext(
       supabase
         .from("daily_execution_plans")
         .select("summary,status,autopilot_mode,plan,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .eq("plan_date", today)
         .maybeSingle()
     ),
@@ -232,21 +258,21 @@ async function loadRealtimeContext(
       supabase
         .from("autopilot_preferences")
         .select("mode,calendar_enabled,notifications_enabled,auto_schedule_enabled,quiet_hours_start,quiet_hours_end,timezone,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .maybeSingle()
     ),
     safeSingle(() =>
       supabase
         .from("coach_memory_profiles")
         .select("communication_style,motivation_profile,failure_patterns,best_interventions,domain_scores,morning_brief,confidence,last_computed_at,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .maybeSingle()
     ),
     safeSingle(() =>
       supabase
         .from("optimization_protocols")
         .select("summary,focus_domains,status,protocol,created_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -255,7 +281,7 @@ async function loadRealtimeContext(
       supabase
         .from("health_states")
         .select("baseline,trends,risk_scores,insights,last_processed_at,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -264,7 +290,7 @@ async function loadRealtimeContext(
       supabase
         .from("longevity_reports")
         .select("risk_score,primary_goal,created_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -273,7 +299,7 @@ async function loadRealtimeContext(
       supabase
         .from("lab_biomarkers")
         .select("canonical_key,value,unit,measured_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("measured_at", { ascending: false })
         .limit(30)
     ),
@@ -281,7 +307,7 @@ async function loadRealtimeContext(
       supabase
         .from("biological_age_history")
         .select("biological_age,chronological_age,age_delta,score,category,created_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -290,7 +316,7 @@ async function loadRealtimeContext(
       supabase
         .from("clinical_insights")
         .select("answer_summary,domains,concern_status,range_flags,follow_up_questions,recommended_actions,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("updated_at", { ascending: false })
         .limit(5)
     ),
@@ -298,7 +324,7 @@ async function loadRealtimeContext(
       supabase
         .from("agent_preferences")
         .select("category,preference_key,preference_value,confidence,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("updated_at", { ascending: false })
         .limit(12)
     ),
@@ -306,14 +332,14 @@ async function loadRealtimeContext(
       supabase
         .from("wearable_connections")
         .select("provider,status,last_synced_at,connected_at,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("updated_at", { ascending: false })
     ),
     safeList(() =>
       supabase
         .from("life_os_domain_profiles")
         .select("domain,score,direction,current_state,desired_state,key_risk,next_action,confidence,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("score", { ascending: false })
         .limit(8)
     ),
@@ -321,7 +347,7 @@ async function loadRealtimeContext(
       supabase
         .from("life_os_priorities")
         .select("domain,title,desired_outcome,next_action,priority,horizon_days,status,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .eq("status", "active")
         .order("priority", { ascending: false })
         .order("updated_at", { ascending: false })
@@ -339,7 +365,7 @@ async function loadRealtimeContext(
       supabase
         .from("usage_events")
         .select("meter,units,created_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .gte("created_at", periodStart.toISOString())
         .order("created_at", { ascending: false })
         .limit(120)

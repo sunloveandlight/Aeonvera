@@ -112,7 +112,5 @@ export function applyHealthSubjectFilter<T>(
 export function healthSubjectInsertFields(
   context: ActiveHealthProfileContext
 ) {
-  return context.healthProfileId
-    ? { health_profile_id: context.healthProfileId }
-    : {};
+  return { health_profile_id: context.healthProfileId };
 }

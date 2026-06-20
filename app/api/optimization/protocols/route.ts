@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
+import {
+  getHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 const SELECT_FIELDS =
   "id,protocol,summary,focus_domains,status,created_at,updated_at";
@@ -27,10 +31,16 @@ export async function GET() {
     });
     if (!entitlement.allowed) return entitlement.response;
 
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
+
     const { data, error } = await admin
       .from("optimization_protocols")
       .select(SELECT_FIELDS)
-      .eq("user_id", user.id)
+      .eq(healthFilter.column, healthFilter.value)
       .order("created_at", { ascending: false })
       .limit(20);
 

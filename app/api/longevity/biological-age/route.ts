@@ -113,7 +113,10 @@ export async function POST(request: NextRequest) {
     const { data: assessment, error: assessmentError } = await supabase
       .from("longevity_assessments")
       .select("*")
-      .eq("user_id", userId)
+      .eq(
+        getHealthSubjectFilter(healthProfileContext).column,
+        getHealthSubjectFilter(healthProfileContext).value
+      )
       .order("created_at", { ascending: false })
       .limit(1)
       .single();

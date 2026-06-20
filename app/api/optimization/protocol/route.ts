@@ -10,6 +10,11 @@ import {
   serializeUsage,
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type Question = {
   id: string;
@@ -102,6 +107,11 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const healthSubjectFilter = getHealthSubjectFilter(healthProfileContext);
 
     const [
       { data: profile },
@@ -115,28 +125,29 @@ export async function POST(request: NextRequest) {
         admin
           .from("longevity_assessments")
           .select("*")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
         admin
           .from("health_states")
           .select("*")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("updated_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
         admin
           .from("longevity_reports")
           .select("report, risk_score, primary_goal, created_at")
-          .eq("user_id", user.id)
+          .eq(healthSubjectFilter.column, healthSubjectFilter.value)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
-        loadLabTrendsForUser(admin, user.id),
+        loadLabTrendsForUser(admin, user.id, healthProfileContext.healthProfileId),
       ]);
 
     const usage = await checkAndRecordUsage({
+      healthProfileId: healthProfileContext.healthProfileId,
       metadata: { source: "optimization_protocol" },
       meter: "optimization_protocol",
       plan: ((profile as { plan?: Plan | null } | null)?.plan as Plan | null) || null,
@@ -157,6 +168,7 @@ export async function POST(request: NextRequest) {
     const intakeResult = await admin
       .from("optimization_intakes")
       .insert({
+        ...healthSubjectInsertFields(healthProfileContext),
         user_id: user.id,
         answers,
         context: enrichedContext,
@@ -191,6 +203,7 @@ export async function POST(request: NextRequest) {
     const protocolResult = await admin
       .from("optimization_protocols")
       .insert({
+        ...healthSubjectInsertFields(healthProfileContext),
         user_id: user.id,
         intake_id: intakeResult.data.id,
         protocol: generated.protocol,
@@ -209,6 +222,7 @@ export async function POST(request: NextRequest) {
     }
 
     await recordOptimizationDelivery({
+      healthProfileId: healthProfileContext.healthProfileId,
       userId: user.id,
       protocolId: protocolResult.data.id,
       title: "Optimization protocol is ready",
@@ -620,11 +634,13 @@ function buildClinicalProtocolAction(trend: LabTrend): ProtocolAction {
 }
 
 async function recordOptimizationDelivery({
+  healthProfileId,
   userId,
   protocolId,
   title,
   message,
 }: {
+  healthProfileId?: string | null;
   userId: string;
   protocolId: string;
   title: string;
@@ -633,6 +649,7 @@ async function recordOptimizationDelivery({
   try {
     const admin = getSupabaseAdmin();
     const { error } = await admin.from("notification_deliveries").insert({
+      ...(healthProfileId ? { health_profile_id: healthProfileId } : {}),
       user_id: userId,
       channel: "in_app",
       status: "sent",

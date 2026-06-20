@@ -10,6 +10,12 @@ import {
   createShareAccessCode,
   hashShareAccessCode,
 } from "@/lib/security/shareAccess";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type ShareLinkRow = {
   access_count?: number;
@@ -18,6 +24,7 @@ type ShareLinkRow = {
   id: string;
   included_sections?: string[];
   last_accessed_at?: string | null;
+  health_profile_id?: string | null;
   recipient_email?: string | null;
   recipient_label?: string | null;
   revoked_at?: string | null;
@@ -25,18 +32,20 @@ type ShareLinkRow = {
 };
 
 const SELECT_FIELDS =
-  "id,share_token,recipient_email,recipient_label,included_sections,expires_at,revoked_at,access_count,last_accessed_at,created_at,access_code_hash";
+  "id,share_token,health_profile_id,recipient_email,recipient_label,included_sections,expires_at,revoked_at,access_count,last_accessed_at,created_at,access_code_hash";
 
 export async function GET() {
   try {
     const auth = await requirePhysicianExportAccess();
     if (auth.response) return auth.response;
+    if (!auth.healthProfileContext) throw new Error("Active health profile not found.");
 
     const admin = getSupabaseAdmin();
+    const healthSubjectFilter = getHealthSubjectFilter(auth.healthProfileContext);
     const { data, error } = await admin
       .from("physician_share_links")
       .select(SELECT_FIELDS)
-      .eq("user_id", auth.userId)
+      .eq(healthSubjectFilter.column, healthSubjectFilter.value)
       .order("created_at", { ascending: false })
       .limit(12);
 
@@ -64,6 +73,7 @@ export async function POST(request: NextRequest) {
   try {
     const auth = await requirePhysicianExportAccess();
     if (auth.response) return auth.response;
+    if (!auth.healthProfileContext) throw new Error("Active health profile not found.");
 
     const body = await request.json().catch(() => ({}));
     const includedSections = normalizeSections(body?.includedSections);
@@ -80,6 +90,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await admin
       .from("physician_share_links")
       .insert({
+        ...healthSubjectInsertFields(auth.healthProfileContext),
         user_id: auth.userId,
         access_code_hash: hashShareAccessCode(accessCode),
         recipient_email: recipientEmail || null,
@@ -121,6 +132,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const auth = await requirePhysicianExportAccess();
     if (auth.response) return auth.response;
+    if (!auth.healthProfileContext) throw new Error("Active health profile not found.");
 
     const body = await request.json().catch(() => ({}));
     const id = typeof body?.id === "string" ? body.id : "";
@@ -130,6 +142,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const healthSubjectFilter = getHealthSubjectFilter(auth.healthProfileContext);
     const { data, error } = await admin
       .from("physician_share_links")
       .update({
@@ -137,7 +150,7 @@ export async function PATCH(request: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
-      .eq("user_id", auth.userId)
+      .eq(healthSubjectFilter.column, healthSubjectFilter.value)
       .select(SELECT_FIELDS)
       .single();
 
@@ -153,6 +166,7 @@ export async function PATCH(request: NextRequest) {
 
 async function requirePhysicianExportAccess(): Promise<{
   response: NextResponse | null;
+  healthProfileContext: ActiveHealthProfileContext | null;
   userId: string;
 }> {
   const supabaseUser = await createClient();
@@ -163,6 +177,7 @@ async function requirePhysicianExportAccess(): Promise<{
 
   if (userError || !user) {
     return {
+      healthProfileContext: null,
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
       userId: "",
     };
@@ -187,6 +202,7 @@ async function requirePhysicianExportAccess(): Promise<{
     )
   ) {
     return {
+      healthProfileContext: null,
       response: NextResponse.json(
         {
           error: "Secure physician and coach share links are included in Sovereign.",
@@ -201,7 +217,12 @@ async function requirePhysicianExportAccess(): Promise<{
     };
   }
 
-  return { response: null, userId: user.id };
+  const healthProfileContext = await resolveActiveHealthProfileContext({
+    supabase: admin,
+    loginUserId: user.id,
+  });
+
+  return { healthProfileContext, response: null, userId: user.id };
 }
 
 function mapLinks(rows: ShareLinkRow[]) {

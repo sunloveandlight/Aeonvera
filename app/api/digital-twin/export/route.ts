@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
 import { buildPhysicianExportBundle } from "@/lib/digital-twin/physicianExportBundle";
+import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
 
 export async function GET() {
   try {
@@ -46,9 +47,15 @@ export async function GET() {
       );
     }
 
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+
     return NextResponse.json(
       await buildPhysicianExportBundle({
         email: user.email || null,
+        healthProfileId: healthProfileContext.healthProfileId,
         userId: user.id,
       })
     );

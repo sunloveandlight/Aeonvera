@@ -3,6 +3,10 @@ import { buildTieredModalityRecommendations } from "@/lib/longevity/advancedModa
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Plan, SubscriptionStatus } from "@/lib/auth/permissions";
+import {
+  getHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export async function GET() {
   try {
@@ -16,6 +20,11 @@ export async function GET() {
     }
 
     const admin = getSupabaseAdmin();
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
     const [profileRes, assessmentRes, biologicalAgeRes, clinicalRes, labRes] =
       await Promise.all([
         admin
@@ -26,27 +35,27 @@ export async function GET() {
         admin
           .from("longevity_assessments")
           .select("age,primary_goal")
-          .eq("user_id", user.id)
+          .eq(healthFilter.column, healthFilter.value)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
         admin
           .from("biological_age_history")
           .select("age_delta")
-          .eq("user_id", user.id)
+          .eq(healthFilter.column, healthFilter.value)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
         admin
           .from("clinical_insights")
           .select("domains,metadata")
-          .eq("user_id", user.id)
+          .eq(healthFilter.column, healthFilter.value)
           .order("created_at", { ascending: false })
           .limit(3),
         admin
           .from("lab_biomarkers")
           .select("canonical_key,value,unit")
-          .eq("user_id", user.id)
+          .eq(healthFilter.column, healthFilter.value)
           .order("measured_at", { ascending: false })
           .limit(20),
       ]);

@@ -8,6 +8,12 @@ import {
   type AgentPreferenceMemory,
 } from "@/lib/agent/agentPreferenceMemory";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type AutopilotMode = "manual" | "suggest" | "approve" | "autopilot" | "sovereign";
 type ActionScope = "today" | "week" | "check_in" | "later";
@@ -82,12 +88,18 @@ export async function GET(request: NextRequest) {
     const admin = getSupabaseAdmin();
     const entitlement = await ensureAutopilotAccess(admin, user.id);
     if (entitlement) return entitlement;
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
     const today = toDateKey(new Date());
-    const preferences = await getOrCreatePreferences(admin, user.id);
+    const preferences = await getOrCreatePreferences(admin, user.id, healthProfileContext);
     const [protocol, executionMemory, preferenceMemory] = await Promise.all([
-      getLatestProtocol(admin, user.id),
-      getRecentExecutionMemory(admin, user.id),
+      getLatestProtocol(admin, user.id, healthProfileContext),
+      getRecentExecutionMemory(admin, user.id, healthProfileContext),
       getAgentPreferenceMemory({ supabase: admin, userId: user.id }),
     ]);
     const prepared = buildDailyPlan({
@@ -100,7 +112,7 @@ export async function GET(request: NextRequest) {
     const { data: existingPlan, error: existingError } = await admin
       .from("daily_execution_plans")
       .select("status,accepted_at,skipped_at,scheduled_event_ids")
-      .eq("user_id", user.id)
+      .eq(healthFilter.column, healthFilter.value)
       .eq("plan_date", today)
       .maybeSingle();
 
@@ -115,24 +127,18 @@ export async function GET(request: NextRequest) {
         ? existingPlan.status
         : "prepared";
 
-    const { data, error } = await admin
-      .from("daily_execution_plans")
-      .upsert(
-        {
-          user_id: user.id,
-          protocol_id: protocol?.id || null,
-          plan_date: today,
-          status,
-          autopilot_mode: preferences.mode,
-          summary: prepared.summary,
-          plan: prepared.plan,
-          scheduled_event_ids: existingPlan?.scheduled_event_ids || [],
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,plan_date" }
-      )
-      .select("*")
-      .single();
+    const { data, error } = await upsertDailyPlan(admin, healthProfileContext, {
+      user_id: user.id,
+      ...healthSubjectInsertFields(healthProfileContext),
+      protocol_id: protocol?.id || null,
+      plan_date: today,
+      status,
+      autopilot_mode: preferences.mode,
+      summary: prepared.summary,
+      plan: prepared.plan,
+      scheduled_event_ids: existingPlan?.scheduled_event_ids || [],
+      updated_at: new Date().toISOString(),
+    });
 
     if (error) {
       if (isMissingAutopilotTable(error)) {
@@ -172,21 +178,19 @@ export async function PATCH(request: NextRequest) {
     const admin = getSupabaseAdmin();
     const entitlement = await ensureAutopilotAccess(admin, user.id);
     if (entitlement) return entitlement;
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
+    });
 
-    const current = await getOrCreatePreferences(admin, user.id);
+    const current = await getOrCreatePreferences(admin, user.id, healthProfileContext);
     const next = sanitizePreferences(user.id, { ...current, ...body });
-
-    const { data, error } = await admin
-      .from("autopilot_preferences")
-      .upsert(
-        {
-          ...next,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" }
-      )
-      .select("*")
-      .single();
+    const { data, error } = await upsertAutopilotPreferences(admin, healthProfileContext, {
+      ...next,
+      ...healthSubjectInsertFields(healthProfileContext),
+      updated_at: new Date().toISOString(),
+    });
 
     if (error) {
       if (isMissingAutopilotTable(error)) {
@@ -227,6 +231,12 @@ export async function POST(request: NextRequest) {
     const admin = getSupabaseAdmin();
     const entitlement = await ensureAutopilotAccess(admin, user.id);
     if (entitlement) return entitlement;
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
     const today = toDateKey(new Date());
     const now = new Date().toISOString();
@@ -252,7 +262,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await admin
       .from("daily_execution_plans")
       .update(patch)
-      .eq("user_id", user.id)
+      .eq(healthFilter.column, healthFilter.value)
       .eq("plan_date", today)
       .select("*")
       .maybeSingle();
@@ -263,6 +273,7 @@ export async function POST(request: NextRequest) {
 
     await admin.from("behavior_events").insert({
       user_id: user.id,
+      ...healthSubjectInsertFields(healthProfileContext),
       type: "autopilot_plan",
       event_type: `daily_plan_${status}`,
       domain: "Execution",
@@ -325,14 +336,69 @@ async function ensureAutopilotAccess(
   );
 }
 
+async function upsertDailyPlan(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  healthProfileContext: ActiveHealthProfileContext,
+  payload: Record<string, unknown> & { plan_date: string; user_id: string }
+) {
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
+  const { data: updated, error: updateError } = await supabase
+    .from("daily_execution_plans")
+    .update(payload)
+    .eq(healthFilter.column, healthFilter.value)
+    .eq("plan_date", payload.plan_date)
+    .select("*")
+    .maybeSingle();
+
+  if (updateError && !isMissingAutopilotTable(updateError)) {
+    return { data: null, error: updateError };
+  }
+
+  if (updated) return { data: updated, error: null };
+
+  return await supabase
+    .from("daily_execution_plans")
+    .insert(payload)
+    .select("*")
+    .single();
+}
+
+async function upsertAutopilotPreferences(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  healthProfileContext: ActiveHealthProfileContext,
+  payload: Record<string, unknown> & { user_id: string }
+) {
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
+  const { data: updated, error: updateError } = await supabase
+    .from("autopilot_preferences")
+    .update(payload)
+    .eq(healthFilter.column, healthFilter.value)
+    .select("*")
+    .maybeSingle();
+
+  if (updateError && !isMissingAutopilotTable(updateError)) {
+    return { data: null, error: updateError };
+  }
+
+  if (updated) return { data: updated, error: null };
+
+  return await supabase
+    .from("autopilot_preferences")
+    .insert(payload)
+    .select("*")
+    .single();
+}
+
 async function getOrCreatePreferences(
   supabase: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ) {
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
   const { data, error } = await supabase
     .from("autopilot_preferences")
     .select("*")
-    .eq("user_id", userId)
+    .eq(healthFilter.column, healthFilter.value)
     .maybeSingle();
 
   if (error) {
@@ -347,24 +413,29 @@ async function getOrCreatePreferences(
     return sanitizePreferences(userId, data);
   }
 
-  const next = defaultPreferences(userId);
-  const { data: created } = await supabase
-    .from("autopilot_preferences")
-    .insert(next)
-    .select("*")
-    .maybeSingle();
+  const next = {
+    ...defaultPreferences(userId),
+    ...healthSubjectInsertFields(healthProfileContext),
+  };
+  const { data: created } = await upsertAutopilotPreferences(
+    supabase,
+    healthProfileContext,
+    next
+  );
 
   return sanitizePreferences(userId, created || next);
 }
 
 async function getLatestProtocol(
   supabase: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ): Promise<ProtocolRow | null> {
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
   const { data, error } = await supabase
     .from("optimization_protocols")
     .select("id,protocol,summary,focus_domains,status,created_at,updated_at")
-    .eq("user_id", userId)
+    .eq(healthFilter.column, healthFilter.value)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -476,15 +547,17 @@ function buildDailyPlan({
 
 async function getRecentExecutionMemory(
   supabase: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ): Promise<ExecutionMemory> {
   const since = new Date();
   since.setDate(since.getDate() - 21);
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
   const { data, error } = await supabase
     .from("intervention_outcomes")
     .select("domain,action,outcome,success,created_at,measured_at")
-    .eq("user_id", userId)
+    .eq(healthFilter.column, healthFilter.value)
     .gte("created_at", since.toISOString())
     .order("created_at", { ascending: false })
     .limit(60);

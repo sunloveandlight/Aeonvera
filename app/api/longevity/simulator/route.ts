@@ -23,6 +23,10 @@ import {
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
 import type { Plan, SubscriptionStatus } from "@/lib/auth/permissions";
+import {
+  getHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type CookieToSet = {
   name: string;
@@ -68,6 +72,7 @@ export async function GET() {
       plan: context.plan,
       status: context.status,
       supabase: context.supabase,
+      healthProfileId: context.healthProfileId,
       userId: context.userId,
     });
 
@@ -116,6 +121,7 @@ export async function POST(request: NextRequest) {
       plan: context.plan,
       status: context.status,
       supabase: context.supabase,
+      healthProfileId: context.healthProfileId,
       userId: context.userId,
     });
 
@@ -175,11 +181,16 @@ async function getLatestAssessmentContext() {
   }
 
   const supabase = getSupabaseAdmin();
+  const healthProfileContext = await resolveActiveHealthProfileContext({
+    supabase,
+    loginUserId: user.id,
+  });
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
   const [{ data: assessment, error: assessmentError }, { data: profile }] = await Promise.all([
     supabase
       .from("longevity_assessments")
       .select("*")
-      .eq("user_id", user.id)
+      .eq(healthFilter.column, healthFilter.value)
       .order("created_at", { ascending: false })
       .limit(1)
       .single(),
@@ -197,8 +208,13 @@ async function getLatestAssessmentContext() {
   return {
     input: {
       ...buildAssessmentInput(assessment),
-      ...(await loadLatestLabInputValues({ supabase, userId: user.id })),
+      ...(await loadLatestLabInputValues({
+        supabase,
+        userId: user.id,
+        healthProfileId: healthProfileContext.healthProfileId,
+      })),
     },
+    healthProfileId: healthProfileContext.healthProfileId,
     plan: ((profile as { plan?: Plan | null } | null)?.plan as Plan | null) || null,
     status:
       ((profile as { subscription_status?: SubscriptionStatus | null } | null)

@@ -13,6 +13,11 @@ import {
   serializeUsage,
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 let openaiClient: OpenAI | null = null;
 
@@ -91,6 +96,12 @@ export async function POST() {
     }
 
     const userId = user.id;
+    const admin = getSupabaseAdmin();
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: userId,
+    });
+    const healthSubjectFilter = getHealthSubjectFilter(healthProfileContext);
 
     /**
      * STEP 1 — CORE DATA
@@ -102,11 +113,12 @@ export async function POST() {
       .single();
 
     const usage = await checkAndRecordUsage({
+      healthProfileId: healthProfileContext.healthProfileId,
       metadata: { source: "longevity_report" },
       meter: "report_generation",
       plan: (profile?.plan as Plan | null) || null,
       status: (profile?.subscription_status as SubscriptionStatus | null) || null,
-      supabase: getSupabaseAdmin(),
+      supabase: admin,
       userId,
     });
 
@@ -120,7 +132,7 @@ export async function POST() {
     const { data: assessment } = await supabase
       .from("longevity_assessments")
       .select("*")
-      .eq("user_id", userId)
+      .eq(healthSubjectFilter.column, healthSubjectFilter.value)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
@@ -131,7 +143,7 @@ export async function POST() {
     const { data: state } = await supabase
       .from("health_states")
       .select("*")
-      .eq("user_id", userId)
+      .eq(healthSubjectFilter.column, healthSubjectFilter.value)
       .single();
 
     /**
@@ -140,7 +152,7 @@ export async function POST() {
     const { data: behaviorEvents } = await supabase
       .from("behavior_events")
       .select("*")
-      .eq("user_id", userId);
+      .eq(healthSubjectFilter.column, healthSubjectFilter.value);
 
     const adaptiveWeights = computeAdaptiveWeights(
       (behaviorEvents || []).map((e) => ({
@@ -158,7 +170,7 @@ export async function POST() {
     const { data: conversationEvents } = await supabase
       .from("conversation_events")
       .select("*")
-      .eq("user_id", userId)
+      .eq(healthSubjectFilter.column, healthSubjectFilter.value)
       .order("timestamp", { ascending: true })
       .limit(50);
 
@@ -301,6 +313,7 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
     const { data, error } = await supabase
       .from("longevity_reports")
       .insert({
+        ...healthSubjectInsertFields(healthProfileContext),
         user_id: userId,
         assessment_id: assessment?.id,
         report,
@@ -324,6 +337,7 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
     const { data: alert } = await supabase
       .from("health_alerts")
       .insert({
+        ...healthSubjectInsertFields(healthProfileContext),
         user_id: userId,
         type: "longevity_report",
         severity: alertSeverity,
@@ -340,6 +354,7 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
       .single();
 
     const notification = await recordReportNotification({
+      healthProfileId: healthProfileContext.healthProfileId,
       userId,
       title: "New longevity report is ready",
       message:
@@ -371,12 +386,14 @@ OUTPUT FORMAT (JSON ONLY — no markdown fences, no preamble, raw JSON only):
 }
 
 async function recordReportNotification({
+  healthProfileId,
   userId,
   title,
   message,
   riskScore,
   alertId,
 }: {
+  healthProfileId?: string | null;
   userId: string;
   title: string;
   message: string;
@@ -388,6 +405,7 @@ async function recordReportNotification({
     const { data, error } = await admin
       .from("notification_deliveries")
       .insert({
+        ...(healthProfileId ? { health_profile_id: healthProfileId } : {}),
         user_id: userId,
         alert_id: alertId,
         channel: "in_app",

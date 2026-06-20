@@ -71,32 +71,36 @@ export type BiologicalAgeImprovementLoop = {
 };
 
 export async function buildBiologicalAgeImprovementLoop({
+  healthProfileId,
   supabase,
   userId,
 }: {
+  healthProfileId?: string | null;
   supabase: SupabaseClient;
   userId: string;
 }): Promise<BiologicalAgeImprovementLoop> {
   const since = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString();
+  const subjectColumn = healthProfileId ? "health_profile_id" : "user_id";
+  const subjectValue = healthProfileId || userId;
   const [historyResult, labTrends, metricsResult, protocolResult] = await Promise.all([
     supabase
       .from("biological_age_history")
       .select("id, chronological_age, biological_age, age_delta, score, accuracy_score, category, source, created_at")
-      .eq("user_id", userId)
+      .eq(subjectColumn, subjectValue)
       .order("created_at", { ascending: false })
       .limit(24),
-    loadLabTrendsForUser(supabase, userId),
+    loadLabTrendsForUser(supabase, userId, healthProfileId),
     supabase
       .from("health_metrics")
       .select("metric, value, measured_at")
-      .eq("user_id", userId)
+      .eq(subjectColumn, subjectValue)
       .gte("measured_at", since)
       .order("measured_at", { ascending: false })
       .limit(240),
     supabase
       .from("optimization_protocols")
       .select("protocol, status, created_at")
-      .eq("user_id", userId)
+      .eq(subjectColumn, subjectValue)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),

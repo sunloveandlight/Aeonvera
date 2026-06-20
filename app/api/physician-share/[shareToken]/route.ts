@@ -12,6 +12,7 @@ type ShareLinkRow = {
   expires_at?: string;
   included_sections?: string[];
   access_code_hash?: string | null;
+  health_profile_id?: string | null;
   recipient_label?: string | null;
   revoked_at?: string | null;
   share_token: string;
@@ -35,7 +36,7 @@ export async function GET(
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
       .from("physician_share_links")
-      .select("user_id,share_token,access_code_hash,recipient_label,included_sections,expires_at,revoked_at,access_count")
+      .select("user_id,share_token,health_profile_id,access_code_hash,recipient_label,included_sections,expires_at,revoked_at,access_count")
       .eq("share_token", shareToken)
       .maybeSingle();
 
@@ -89,6 +90,7 @@ export async function GET(
 
     const bundle = await buildPhysicianExportBundle({
       email: null,
+      healthProfileId: link.health_profile_id || null,
       sections: normalizeSections(link.included_sections),
       userId: link.user_id,
     });

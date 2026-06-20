@@ -5,6 +5,11 @@ import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import { buildHealthState } from "@/lib/state/healthStateEngine";
 import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
 import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAge";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,6 +26,16 @@ export async function POST(req: NextRequest) {
 
     const { isCron, userId } = authorization;
     const supabase = getSupabaseAdmin();
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase,
+      loginUserId: userId,
+      requestedHealthProfileId:
+        typeof body.healthProfileId === "string"
+          ? body.healthProfileId
+          : req.cookies.get("aeonvera.activeHealthProfileId")?.value,
+    });
+    const healthFilter = getHealthSubjectFilter(healthProfileContext);
+
     if (!isCron) {
       const entitlement = await requireServerFeatureAccess({
         feature: "dashboard_access",
@@ -38,7 +53,7 @@ export async function POST(req: NextRequest) {
     const { data: existingState } = await supabase
       .from("health_states")
       .select("last_processed_at")
-      .eq("user_id", userId)
+      .eq(healthFilter.column, healthFilter.value)
       .single();
 
     const lastProcessedAt = existingState?.last_processed_at ?? null;
@@ -49,7 +64,7 @@ export async function POST(req: NextRequest) {
     let query = supabase
       .from("wearable_metrics")
       .select("*")
-      .eq("user_id", userId)
+      .eq(healthFilter.column, healthFilter.value)
       .order("recorded_at", { ascending: true });
 
     if (lastProcessedAt) {
@@ -91,6 +106,7 @@ export async function POST(req: NextRequest) {
     await supabase.from("health_metrics").upsert(
       normalized.map((m) => ({
         user_id: m.userId,
+        ...healthSubjectInsertFields(healthProfileContext),
         metric: m.metric,
         value: m.value,
         measured_at: m.measured_at,
@@ -104,7 +120,7 @@ export async function POST(req: NextRequest) {
     const { data: canonicalMetrics } = await supabase
       .from("health_metrics")
       .select("*")
-      .eq("user_id", userId)
+      .eq(healthFilter.column, healthFilter.value)
       .order("measured_at", { ascending: true });
 
     const formattedMetrics = (canonicalMetrics || []).map((m) => ({
@@ -138,20 +154,24 @@ export async function POST(req: NextRequest) {
     /**
      * STEP 7: SAVE STATE + UPDATE PROCESSING CURSOR
      */
-    const { error: stateError } = await supabase
-      .from("health_states")
-      .upsert(
-        {
-          user_id: userId,
-          baseline: state.baseline,
-          trends: state.trends,
-          risk_scores: state.riskScores,
-          insights: state.insights,
-          updated_at: state.updatedAt,
-          last_processed_at: latestTimestamp,
-        },
-        { onConflict: "user_id" }
-      );
+    const statePayload = {
+      user_id: userId,
+      ...healthSubjectInsertFields(healthProfileContext),
+      baseline: state.baseline,
+      trends: state.trends,
+      risk_scores: state.riskScores,
+      insights: state.insights,
+      updated_at: state.updatedAt,
+      last_processed_at: latestTimestamp,
+    };
+
+    const stateError = healthProfileContext.healthProfileId
+      ? await upsertHealthStateByProfile(supabase, healthProfileContext.healthProfileId, statePayload)
+      : (
+          await supabase
+            .from("health_states")
+            .upsert(statePayload, { onConflict: "user_id" })
+        ).error;
 
     if (stateError) {
       return NextResponse.json(
@@ -163,6 +183,7 @@ export async function POST(req: NextRequest) {
     const biologicalAge = await refreshBiologicalAgeForUser({
       supabase,
       userId,
+      healthProfileId: healthProfileContext.healthProfileId,
       source: "wearable",
     });
 
@@ -182,6 +203,24 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+async function upsertHealthStateByProfile(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  healthProfileId: string,
+  payload: Record<string, unknown>
+) {
+  const { data, error } = await supabase
+    .from("health_states")
+    .update(payload)
+    .eq("health_profile_id", healthProfileId)
+    .select("id")
+    .limit(1);
+
+  if (error) return error;
+  if (Array.isArray(data) && data.length > 0) return null;
+
+  return (await supabase.from("health_states").insert(payload)).error;
 }
 
 async function resolveAuthorizedUserId(req: NextRequest, requestedUserId?: string) {

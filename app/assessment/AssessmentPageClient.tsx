@@ -6,6 +6,12 @@ import { supabase } from "@/lib/supabase/client";
 import PageContainer from "@/components/ui/PageContainer";
 import Spinner from "@/components/ui/Spinner";
 import {
+  applyHealthSubjectFilter,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
+import {
   Field as FormField,
   NumberInput,
   RadioGroup,
@@ -648,6 +654,8 @@ export default function AssessmentPage() {
   const [latestReport, setLatestReport] = useState<LatestReport | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [healthProfileContext, setHealthProfileContext] =
+    useState<ActiveHealthProfileContext | null>(null);
   const [summarySearch, setSummarySearch] = useState("");
 
   useEffect(() => {
@@ -657,12 +665,19 @@ export default function AssessmentPage() {
         return;
       }
       setUserId(user.id);
+      const resolvedHealthProfileContext = await resolveActiveHealthProfileContext({
+        supabase,
+        loginUserId: user.id,
+      });
+      setHealthProfileContext(resolvedHealthProfileContext);
 
       const [assessmentRes, profileRes, reportRes] = await Promise.all([
-        supabase
-          .from("longevity_assessments")
-          .select("*")
-          .eq("user_id", user.id)
+        applyHealthSubjectFilter(
+          supabase
+            .from("longevity_assessments")
+            .select("*"),
+          resolvedHealthProfileContext
+        )
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
@@ -671,10 +686,12 @@ export default function AssessmentPage() {
           .select("biological_age")
           .eq("user_id", user.id)
           .maybeSingle(),
-        supabase
-          .from("longevity_reports")
-          .select("risk_score, created_at")
-          .eq("user_id", user.id)
+        applyHealthSubjectFilter(
+          supabase
+            .from("longevity_reports")
+            .select("risk_score, created_at"),
+          resolvedHealthProfileContext
+        )
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
@@ -747,20 +764,32 @@ export default function AssessmentPage() {
   async function submit() {
     if (!validateStep()) return;
     if (!userId) return;
+    const currentHealthProfileContext =
+      healthProfileContext ||
+      (await resolveActiveHealthProfileContext({
+        supabase,
+        loginUserId: userId,
+      }));
 
     try {
       setProcessing(true);
       setProcessingStatus("Saving your assessment data...");
 
       // Delete old assessments — keep only latest
-      await supabase
-        .from("longevity_assessments")
-        .delete()
-        .eq("user_id", userId);
+      await applyHealthSubjectFilter(
+        supabase
+          .from("longevity_assessments")
+          .delete(),
+        currentHealthProfileContext
+      );
 
       const { error: insertError } = await supabase
         .from("longevity_assessments")
-        .insert([{ user_id: userId, ...sanitizeAnswers(answers) }]);
+        .insert([{
+          ...healthSubjectInsertFields(currentHealthProfileContext),
+          user_id: userId,
+          ...sanitizeAnswers(answers),
+        }]);
 
       if (insertError) {
         setValidationError("Failed to save. Please try again.");

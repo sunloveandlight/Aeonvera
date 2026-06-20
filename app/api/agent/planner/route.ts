@@ -3,6 +3,11 @@ import { getCommandOrbToolMeta, type CommandOrbToolId } from "@/lib/agent/comman
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import {
+  getHealthSubjectFilter,
+  resolveActiveHealthProfileContext,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 const SHARE_SECTIONS = [
   "snapshot",
@@ -82,7 +87,17 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
-    const userState = await loadUserStatePacket(admin, user.id, currentPage);
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
+    });
+    const userState = await loadUserStatePacket(
+      admin,
+      user.id,
+      healthProfileContext,
+      currentPage
+    );
     const plan = planCommand(command, currentPage, userState);
     return NextResponse.json(plan);
   } catch (error) {
@@ -202,10 +217,12 @@ function toolMeta(id: CommandOrbToolId) {
 async function loadUserStatePacket(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   userId: string,
+  healthProfileContext: ActiveHealthProfileContext,
   currentPage: string
 ): Promise<UserStatePacket> {
   const today = new Date().toISOString().slice(0, 10);
   const subscription = await getUserPlanForUsage({ supabase, userId });
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
   const [
     profile,
@@ -229,7 +246,7 @@ async function loadUserStatePacket(
       supabase
         .from("daily_execution_plans")
         .select("summary,status,autopilot_mode,plan,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .eq("plan_date", today)
         .maybeSingle()
     ),
@@ -237,7 +254,7 @@ async function loadUserStatePacket(
       supabase
         .from("longevity_reports")
         .select("risk_score,primary_goal,created_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -246,7 +263,7 @@ async function loadUserStatePacket(
       supabase
         .from("lab_biomarkers")
         .select("canonical_key,value,unit,measured_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("measured_at", { ascending: false })
         .limit(12)
     ),
@@ -254,14 +271,14 @@ async function loadUserStatePacket(
       supabase
         .from("wearable_connections")
         .select("provider,status,last_synced_at,connected_at,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .order("updated_at", { ascending: false })
     ),
     safeList(() =>
       supabase
         .from("life_os_priorities")
         .select("domain,title,desired_outcome,next_action,priority,horizon_days,status,updated_at")
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .eq("status", "active")
         .order("priority", { ascending: false })
         .order("updated_at", { ascending: false })
@@ -279,7 +296,7 @@ async function loadUserStatePacket(
       supabase
         .from("physician_share_links")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
+        .eq(healthFilter.column, healthFilter.value)
         .is("revoked_at", null)
         .gt("expires_at", new Date().toISOString())
     ),
