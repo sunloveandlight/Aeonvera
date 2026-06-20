@@ -45,6 +45,7 @@ const PLANS: PricingPlan[] = [
       {
         label: "Function Set",
         items: [
+          "One included active health profile",
           "One active biological age baseline",
           "Assessment-driven recommendations",
           "Manual Apple Health import",
@@ -97,6 +98,7 @@ const PLANS: PricingPlan[] = [
           "Push registration ready for mobile devices",
           "Behavior memory influences recommendations",
           "Autopilot daily plan preparation and calendar execution",
+          "Extra profiles remain preserved and read-only if membership limits change",
         ],
       },
     ],
@@ -136,7 +138,8 @@ const PLANS: PricingPlan[] = [
         label: "Operating Model",
         items: [
           "Concierge-level data integration",
-          "Family profile expansion path",
+          "Family health profile expansion path",
+          "Extra profiles remain preserved and read-only if you later downgrade",
           "Most complete intervention and longitudinal tracking tier",
           "Sovereign-only regenerative protocol strategy and longitudinal experiment review",
         ],
@@ -209,7 +212,7 @@ const TRUST_POINTS = [
   },
   {
     title: "Cancel or change tiers",
-    body: "Membership changes go through secure Stripe billing. You can manage upgrades, downgrades, and cancellation from your account.",
+    body: "Membership changes go through secure Stripe billing. If a downgrade lowers your included profile count, extra profiles stay preserved and readable, but new edits and actions pause until you upgrade again.",
   },
   {
     title: "Medical boundary",

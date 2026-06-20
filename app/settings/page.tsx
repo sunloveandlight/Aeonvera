@@ -44,7 +44,7 @@ const SETTINGS_LINKS = [
   {
     icon: CreditCard,
     title: "Membership",
-    body: "Change plan, invoices, payment method, and cancellation live in the secure billing flow.",
+    body: "Change plan, invoices, payment method, and cancellation. Extra profiles stay preserved and read-only if a lower tier no longer includes them.",
     href: "/pricing",
     action: "Manage plan",
   },

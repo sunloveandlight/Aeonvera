@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Check, UserPlus, UsersRound } from "lucide-react";
+import { Check, LockKeyhole, UserPlus, UsersRound } from "lucide-react";
 
 type HealthProfile = {
   id: string;
@@ -161,10 +161,14 @@ export default function ProfileManagementPanel() {
             </p>
           ) : null}
           {hasFrozenProfiles ? (
-            <p className="mt-2 text-xs leading-6 text-white/38">
-              Frozen profiles stay readable after a membership change, but new edits and actions
-              are paused.
-            </p>
+            <div className="mt-4 rounded-lg border border-amber-300/[0.16] bg-amber-300/[0.05] p-3">
+              <p className="flex items-start gap-2 text-xs leading-6 text-amber-100/76">
+                <LockKeyhole className="mt-1 shrink-0" size={14} aria-hidden />
+                Extra profiles are preserved after a downgrade. You can still read their history,
+                but edits, imports, coaching actions, and new reports stay locked until your
+                membership includes them again.
+              </p>
+            </div>
           ) : null}
         </div>
         <UsersRound className="shrink-0 royal-text" size={23} />
@@ -201,7 +205,7 @@ export default function ProfileManagementPanel() {
                   <span className="av-control-muted mt-1 block text-xs capitalize">
                     {profile.relationship}
                     {profile.isPrimary ? " · primary" : ""}
-                    {profile.isFrozen ? " · frozen" : ""}
+                    {profile.isFrozen ? " · read-only" : ""}
                   </span>
                 </span>
                 {active ? <Check className="royal-text" size={16} /> : null}
@@ -247,8 +251,8 @@ export default function ProfileManagementPanel() {
               </div>
               {activeProfile.isFrozen ? (
                 <p className="mt-3 text-xs text-white/44">
-                  This profile is read-only on the current membership. Data stays available, but
-                  new edits and actions are paused.
+                  This profile is read-only on the current membership. Its data stays available,
+                  but edits, uploads, coaching actions, and new reports are paused.
                 </p>
               ) : null}
             </div>
@@ -291,7 +295,8 @@ export default function ProfileManagementPanel() {
             </div>
             {remainingProfiles < 1 ? (
               <p className="mt-3 text-xs text-white/44">
-                This workspace has reached its active profile limit.
+                This membership has reached its included health profile limit. Existing extra
+                profiles remain readable if the limit changes, but new profile creation is paused.
               </p>
             ) : null}
             {message ? <p className="mt-3 text-xs text-white/44">{message}</p> : null}

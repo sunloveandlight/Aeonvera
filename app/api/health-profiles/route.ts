@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     if ((count || 0) >= workspace.maxHealthProfiles) {
       return NextResponse.json(
         {
-          error: "This workspace has reached its active profile limit.",
+          error: "This membership has reached its included health profile limit.",
           maxHealthProfiles: workspace.maxHealthProfiles,
         },
         { status: 403 }
