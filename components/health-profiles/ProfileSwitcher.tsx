@@ -83,7 +83,7 @@ export default function ProfileSwitcher({
       >
         {profiles.map((profile) => (
           <option key={profile.id} value={profile.id}>
-            {profile.displayName}
+            {profile.displayName}{profile.isPrimary ? " · primary" : ` · ${profile.relationship}`}
           </option>
         ))}
       </select>

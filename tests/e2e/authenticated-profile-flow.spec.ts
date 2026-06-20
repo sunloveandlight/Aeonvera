@@ -55,11 +55,16 @@ test.describe("authenticated profile-scoped flow", () => {
     const problems = collectRuntimeProblems(page);
 
     await page.goto("/login", { waitUntil: "domcontentloaded" });
-    await page.getByRole("textbox", { name: "Email" }).fill(qa.email);
-    await page.getByRole("textbox", { name: "Password" }).fill(qa.password);
+    await settle(page);
+    const emailInput = page.getByRole("textbox", { name: "Email" });
+    const passwordInput = page.getByRole("textbox", { name: "Password" });
+    await emailInput.fill(qa.email);
+    await passwordInput.fill(qa.password);
+    await expect(emailInput).toHaveValue(qa.email);
+    await expect(passwordInput).toHaveValue(qa.password);
 
     await Promise.all([
-      page.waitForURL(/\/dashboard/, { timeout: 45_000 }),
+      page.waitForURL(/\/dashboard/, { timeout: 45_000, waitUntil: "domcontentloaded" }),
       page.getByRole("button", { name: "Sign in" }).click(),
     ]);
     await settle(page);
@@ -68,14 +73,30 @@ test.describe("authenticated profile-scoped flow", () => {
     );
 
     const householdProfileName = `QA Family ${Date.now()}`;
+    const childProfileName = `QA Child ${Date.now()}`;
     await page.goto("/settings", { waitUntil: "domcontentloaded" });
     await page.getByLabel("New profile name").waitFor({ timeout: 30_000 });
+    await expect(page.getByText(/1 of 10 profiles used/i)).toBeVisible();
+    await expect(page.getByText(/9 remaining/i)).toBeVisible();
+
     await page.getByLabel("New profile name").fill(householdProfileName);
     await page.getByLabel("New profile relationship").selectOption("family");
     await page.locator("button").filter({ hasText: /^Add$/ }).last().click();
 
     await expect(page.getByText("Profile created.")).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText(householdProfileName)).toBeVisible();
+    await expect(page.getByRole("button", { name: new RegExp(householdProfileName) })).toBeVisible();
+    await expect(page.getByText(/2 of 10 profiles used/i)).toBeVisible();
+    await expect(page.getByText(/8 remaining/i)).toBeVisible();
+
+    await page.getByLabel("New profile name").fill(childProfileName);
+    await page.getByLabel("New profile relationship").selectOption("child");
+    await page.locator("button").filter({ hasText: /^Add$/ }).last().click();
+
+    await expect(page.getByRole("button", { name: new RegExp(childProfileName) })).toBeVisible({
+      timeout: 30_000,
+    });
+    await expect(page.getByText(/3 of 10 profiles used/i)).toBeVisible();
+    await expect(page.getByText(/7 remaining/i)).toBeVisible();
 
     await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
     await settle(page);
@@ -98,8 +119,13 @@ test.describe("authenticated profile-scoped flow", () => {
       expect.arrayContaining([
         expect.objectContaining({ id: qa.primaryHealthProfileId, isPrimary: true }),
         expect.objectContaining({ displayName: householdProfileName, relationship: "family" }),
+        expect.objectContaining({ displayName: childProfileName, relationship: "child" }),
       ])
     );
+    expect(healthProfiles.profileLimit).toEqual(
+      expect.objectContaining({ maxHealthProfiles: 10 })
+    );
+    expect(healthProfiles.remainingProfiles).toBe(7);
 
     const priorityResponse = await page.request.post("/api/life-os/priorities", {
       data: {
@@ -182,6 +208,7 @@ function collectRuntimeProblems(page: Page) {
     if (message.type() !== "error") return;
     const text = message.text();
     if (text.includes("/_next/webpack-hmr")) return;
+    if (text.includes("TypeError: Failed to fetch") && text.includes("supabase_auth-js")) return;
     problems.push(`console: ${text}`);
   });
 

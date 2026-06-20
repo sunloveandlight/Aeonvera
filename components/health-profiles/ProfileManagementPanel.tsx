@@ -11,6 +11,10 @@ type HealthProfile = {
   role: "owner" | "editor" | "viewer";
 };
 
+type ProfileLimit = {
+  maxHealthProfiles: number;
+};
+
 const RELATIONSHIPS = [
   "self",
   "partner",
@@ -26,6 +30,7 @@ export default function ProfileManagementPanel() {
   const [displayName, setDisplayName] = useState("");
   const [relationship, setRelationship] = useState("family");
   const [profiles, setProfiles] = useState<HealthProfile[]>([]);
+  const [profileLimit, setProfileLimit] = useState<ProfileLimit>({ maxHealthProfiles: 1 });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -33,6 +38,8 @@ export default function ProfileManagementPanel() {
     () => profiles.find((profile) => profile.id === activeProfileId) || profiles[0] || null,
     [activeProfileId, profiles]
   );
+
+  const remainingProfiles = Math.max(profileLimit.maxHealthProfiles - profiles.length, 0);
 
   useEffect(() => {
     void loadProfiles();
@@ -43,6 +50,9 @@ export default function ProfileManagementPanel() {
     if (!response.ok) return;
     const payload = await response.json();
     setProfiles(Array.isArray(payload.profiles) ? payload.profiles : []);
+    setProfileLimit({
+      maxHealthProfiles: Number(payload.profileLimit?.maxHealthProfiles) || 1,
+    });
     setActiveProfileId(payload.activeProfileId || "");
   }
 
@@ -127,6 +137,13 @@ export default function ProfileManagementPanel() {
           <p className="mt-3 text-sm leading-7 text-white/46">
             Each profile keeps assessments, reports, protocols, and daily plans separated.
           </p>
+          {activeProfile ? (
+            <p className="mt-3 text-xs leading-6 text-white/42">
+              Active: <span className="text-white/72">{activeProfile.displayName}</span>
+              {" · "}
+              {profiles.length} of {profileLimit.maxHealthProfiles} profiles used
+            </p>
+          ) : null}
         </div>
         <UsersRound className="shrink-0 royal-text" size={23} />
       </div>
@@ -193,7 +210,10 @@ export default function ProfileManagementPanel() {
           ) : null}
 
           <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4">
-            <p className="micro-label">Add</p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="micro-label">Add</p>
+              <p className="text-xs text-white/34">{remainingProfiles} remaining</p>
+            </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_10rem_auto]">
               <input
                 value={displayName}
@@ -217,13 +237,18 @@ export default function ProfileManagementPanel() {
               <button
                 type="button"
                 onClick={() => void createProfile()}
-                disabled={saving || !displayName.trim()}
+                disabled={saving || !displayName.trim() || remainingProfiles < 1}
                 className="premium-action-primary inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <UserPlus size={15} />
                 Add
               </button>
             </div>
+            {remainingProfiles < 1 ? (
+              <p className="mt-3 text-xs text-white/44">
+                This workspace has reached its active profile limit.
+              </p>
+            ) : null}
             {message ? <p className="mt-3 text-xs text-white/44">{message}</p> : null}
           </div>
         </div>

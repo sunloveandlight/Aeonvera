@@ -37,13 +37,16 @@ export async function GET(request: NextRequest) {
 
     const admin = getSupabaseAdmin();
     const profiles = await listProfiles(admin, auth.userId);
+    const profileLimit = await getWorkspaceProfileLimit(admin, auth.userId);
     const activeProfileId = request.cookies.get(ACTIVE_HEALTH_PROFILE_COOKIE)?.value || null;
 
     return NextResponse.json({
       activeProfileId: profiles.some((profile) => profile.id === activeProfileId)
         ? activeProfileId
         : profiles.find((profile) => profile.isPrimary)?.id || profiles[0]?.id || null,
+      profileLimit,
       profiles,
+      remainingProfiles: Math.max(profileLimit.maxHealthProfiles - profiles.length, 0),
     });
   } catch (error) {
     const message =
@@ -258,6 +261,17 @@ async function getManagedWorkspace(
   return {
     id: workspace.id,
     maxHealthProfiles: workspace.max_health_profiles || 1,
+  };
+}
+
+async function getWorkspaceProfileLimit(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  userId: string
+) {
+  const workspace = await getManagedWorkspace(admin, userId);
+
+  return {
+    maxHealthProfiles: workspace?.maxHealthProfiles || 1,
   };
 }
 
