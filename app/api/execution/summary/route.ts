@@ -5,6 +5,7 @@ import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import { buildExecutionSummary, getExecutionWindow } from "@/lib/execution/executionSummary";
 import {
   getHealthSubjectFilter,
+  getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 
@@ -28,6 +29,7 @@ export async function GET(request: NextRequest) {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
     const healthFilter = getHealthSubjectFilter(healthProfileContext);
     const window = getExecutionWindow();

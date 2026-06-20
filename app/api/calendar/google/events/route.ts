@@ -7,6 +7,12 @@ import {
   createGoogleCalendarEvent,
   getValidGoogleCalendarAccessToken,
 } from "@/lib/calendar/google";
+import {
+  frozenHealthProfileResponse,
+  getRequestedHealthProfileId,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type CalendarBody = {
   title?: string;
@@ -31,6 +37,12 @@ export async function POST(request: NextRequest) {
 
     const admin = getSupabaseAdmin();
     const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
+    });
+    if (healthProfileContext.isFrozen) return frozenHealthProfileResponse();
 
     if (!canAccess(subscription.plan, subscription.status, "autopilot_calendar")) {
       return NextResponse.json(
@@ -97,6 +109,7 @@ export async function POST(request: NextRequest) {
       .from("calendar_events")
       .insert({
         user_id: user.id,
+        ...healthSubjectInsertFields(healthProfileContext),
         connection_id: connection.connectionId,
         protocol_id: sanitizeUuid(body.protocolId) || null,
         provider: "google",
@@ -127,6 +140,7 @@ export async function POST(request: NextRequest) {
 
     await admin.from("behavior_events").insert({
       user_id: user.id,
+      ...healthSubjectInsertFields(healthProfileContext),
       type: "calendar_event",
       event_type: "google_calendar_event_scheduled",
       domain: "Execution",

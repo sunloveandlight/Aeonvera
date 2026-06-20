@@ -163,3 +163,7 @@ export function frozenHealthProfilePayload() {
     message: "Upgrade or switch to an included profile to make changes.",
   };
 }
+
+export function frozenHealthProfileResponse() {
+  return Response.json(frozenHealthProfilePayload(), { status: 423 });
+}

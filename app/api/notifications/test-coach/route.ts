@@ -10,6 +10,12 @@ import type { LabTrend } from "@/lib/labs/labTrends";
 import { loadLabTrendsForUser } from "@/lib/labs/loadLabTrendsForUser";
 import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
 import { buildDailyIntelligenceBrief } from "@/lib/coach/dailyIntelligenceBrief";
+import {
+  frozenHealthProfileResponse,
+  getRequestedHealthProfileId,
+  healthSubjectInsertFields,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type OptimizationProtocol = {
   summary?: string;
@@ -37,6 +43,12 @@ export async function POST(request: NextRequest) {
 
     const admin = getSupabaseAdmin();
     const subscription = await getUserPlanForUsage({ supabase: admin, userId: mobileUser.id });
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: mobileUser.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
+    });
+    if (healthProfileContext.isFrozen) return frozenHealthProfileResponse();
 
     if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
       return NextResponse.json(
@@ -66,9 +78,9 @@ export async function POST(request: NextRequest) {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
-        loadLabTrendsForUser(admin, mobileUser.id),
-        loadOrBuildCoachMemoryProfile(admin, mobileUser.id),
-        buildDailyIntelligenceBrief(admin, mobileUser.id),
+        loadLabTrendsForUser(admin, mobileUser.id, healthProfileContext.healthProfileId),
+        loadOrBuildCoachMemoryProfile(admin, mobileUser.id, healthProfileContext),
+        buildDailyIntelligenceBrief(admin, mobileUser.id, healthProfileContext),
       ]);
 
     const protocol = latestProtocol?.protocol as OptimizationProtocol | undefined;
@@ -102,6 +114,7 @@ export async function POST(request: NextRequest) {
       .from("health_alerts")
       .insert({
         user_id: mobileUser.id,
+        ...healthSubjectInsertFields(healthProfileContext),
         type: alert.type,
         severity: alert.severity,
         title: alert.title,
@@ -139,6 +152,7 @@ export async function POST(request: NextRequest) {
     const delivery = await deliverCoachNotifications({
       supabase: admin,
       userId: mobileUser.id,
+      healthProfileContext,
       alerts: [storedAlert],
       jarvis,
       memoryTags: [

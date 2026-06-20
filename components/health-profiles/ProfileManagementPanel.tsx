@@ -41,6 +41,7 @@ export default function ProfileManagementPanel() {
   );
 
   const remainingProfiles = Math.max(profileLimit.maxHealthProfiles - profiles.length, 0);
+  const hasFrozenProfiles = profiles.some((profile) => profile.isFrozen);
 
   useEffect(() => {
     void loadProfiles();
@@ -148,6 +149,12 @@ export default function ProfileManagementPanel() {
               {activeProfile.isFrozen ? " · frozen" : ""}
             </p>
           ) : null}
+          {hasFrozenProfiles ? (
+            <p className="mt-2 text-xs leading-6 text-white/38">
+              Frozen profiles stay readable after a membership change, but new edits and actions
+              are paused.
+            </p>
+          ) : null}
         </div>
         <UsersRound className="shrink-0 royal-text" size={23} />
       </div>
@@ -215,7 +222,8 @@ export default function ProfileManagementPanel() {
               </div>
               {activeProfile.isFrozen ? (
                 <p className="mt-3 text-xs text-white/44">
-                  This profile is frozen on the current membership.
+                  This profile is read-only on the current membership. Data stays available, but
+                  new edits and actions are paused.
                 </p>
               ) : null}
             </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { isHealthProfileFrozen } from "@/lib/health-profiles/profileEntitlements";
 
 type WorkspaceRole = "owner" | "admin" | "member" | "viewer";
 type ProfileRole = "owner" | "editor" | "viewer";
@@ -132,6 +133,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Choose at least one profile from this workspace." },
         { status: 400 }
+      );
+    }
+
+    const frozenProfileChecks = await Promise.all(
+      validProfileIds.map((healthProfileId) =>
+        isHealthProfileFrozen({
+          healthProfileId,
+          supabase: admin,
+          workspaceId: workspace.id,
+        })
+      )
+    );
+    if (frozenProfileChecks.some(Boolean)) {
+      return NextResponse.json(
+        {
+          error: "Frozen profiles are read-only on the current membership.",
+          frozen: true,
+        },
+        { status: 423 }
       );
     }
 

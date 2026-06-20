@@ -3,7 +3,11 @@ import { runProactiveDataSourceFollowUps } from "@/lib/data/proactiveDataSourceF
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
-import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
+import {
+  frozenHealthProfileResponse,
+  getRequestedHealthProfileId,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +32,9 @@ export async function POST(request: NextRequest) {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: mobileUser.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
+    if (healthProfileContext.isFrozen) return frozenHealthProfileResponse();
 
     const result = await runProactiveDataSourceFollowUps({
       force: true,

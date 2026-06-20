@@ -70,7 +70,7 @@ export async function loadOrBuildCoachMemoryProfile(
   userId: string,
   healthProfileContext?: ActiveHealthProfileContext | null
 ): Promise<CoachMemoryProfile | null> {
-  const existing = await loadStoredProfile(supabase, userId, healthProfileContext);
+  const existing = await loadStoredCoachMemoryProfile(supabase, userId, healthProfileContext);
   const isFresh =
     existing &&
     existing.motivationProfile.version === COACH_MEMORY_PROFILE_VERSION &&
@@ -173,7 +173,7 @@ export async function buildCoachMemoryProfile(
   };
 }
 
-async function loadStoredProfile(
+export async function loadStoredCoachMemoryProfile(
   supabase: SupabaseAdmin,
   userId: string,
   healthProfileContext?: ActiveHealthProfileContext | null

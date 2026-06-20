@@ -6,6 +6,11 @@ import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import { parseAppleHealthPayload, parseAppleHealthText } from "@/lib/wearables/apple";
 import { ingestWearableMetrics } from "@/lib/wearables/ingestWearableMetrics";
 import type { WearableRawMetric } from "@/lib/wearables/types";
+import {
+  frozenHealthProfileResponse,
+  getRequestedHealthProfileId,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 let openaiClient: OpenAI | null = null;
 
@@ -35,6 +40,13 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
+    });
+    if (healthProfileContext.isFrozen) return frozenHealthProfileResponse();
+
     const entitlement = await requireServerFeatureAccess({
       feature: "dashboard_access",
       lockedMessage: "Activate Core to import Apple Health data.",
@@ -57,6 +69,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       provider: "apple",
       metrics,
+      healthProfileContext,
     });
 
     return NextResponse.json({

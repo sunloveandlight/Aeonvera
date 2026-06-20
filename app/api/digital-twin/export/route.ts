@@ -1,11 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
 import { buildPhysicianExportBundle } from "@/lib/digital-twin/physicianExportBundle";
-import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
+import {
+  getRequestedHealthProfileId,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabaseUser = await createClient();
     const {
@@ -50,6 +53,7 @@ export async function GET() {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
 
     return NextResponse.json(

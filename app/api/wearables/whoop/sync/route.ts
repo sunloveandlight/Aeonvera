@@ -6,7 +6,11 @@ import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import { ingestWearableMetrics } from "@/lib/wearables/ingestWearableMetrics";
 import { fetchWhoopMetrics } from "@/lib/wearables/whoop";
 import { getValidWearableAccessToken } from "@/lib/wearables/oauth";
-import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
+import {
+  frozenHealthProfileResponse,
+  getRequestedHealthProfileId,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,8 +28,9 @@ export async function POST(request: NextRequest) {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
-      requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
+    if (healthProfileContext.isFrozen) return frozenHealthProfileResponse();
 
     if (!canAccess(subscription.plan, subscription.status, "elite_features")) {
       return NextResponse.json(

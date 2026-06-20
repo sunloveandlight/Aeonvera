@@ -1,14 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { buildTieredModalityRecommendations } from "@/lib/longevity/advancedModalities";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { Plan, SubscriptionStatus } from "@/lib/auth/permissions";
 import {
   getHealthSubjectFilter,
+  getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
@@ -23,6 +24,7 @@ export async function GET() {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
     const healthFilter = getHealthSubjectFilter(healthProfileContext);
     const [profileRes, assessmentRes, biologicalAgeRes, clinicalRes, labRes] =

@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
+import {
+  frozenHealthProfileResponse,
+  getRequestedHealthProfileId,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 const ALLOWED_SOURCE_TYPES = new Set([
   "assessment",
@@ -32,7 +36,10 @@ export async function POST(request: NextRequest) {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
+    if (healthProfileContext.isFrozen) return frozenHealthProfileResponse();
+
     await storeSemanticMemory({
       content,
       healthProfileId: healthProfileContext.healthProfileId,

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import {
   getHealthSubjectFilter,
+  getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
-      requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
     const userState = await loadUserStatePacket(
       admin,

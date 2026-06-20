@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { canAccess } from "@/lib/auth/permissions";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import {
+  frozenHealthProfileResponse,
+  getRequestedHealthProfileId,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +20,12 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
     const subscription = await getUserPlanForUsage({ supabase, userId: user.id });
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase,
+      loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
+    });
+    if (healthProfileContext.isFrozen) return frozenHealthProfileResponse();
 
     if (!canAccess(subscription.plan, subscription.status, "autopilot_calendar")) {
       return NextResponse.json(
@@ -32,6 +43,7 @@ export async function POST(request: NextRequest) {
     const result = await runMorningAutopilotBrief({
       supabase,
       userId: user.id,
+      healthProfileContext,
     });
 
     return NextResponse.json({

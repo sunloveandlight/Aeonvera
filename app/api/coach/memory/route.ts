@@ -1,12 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { canAccess } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
+import {
+  loadOrBuildCoachMemoryProfile,
+  loadStoredCoachMemoryProfile,
+} from "@/lib/memory/coachMemoryProfile";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
-import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
+import {
+  getRequestedHealthProfileId,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
@@ -22,6 +28,7 @@ export async function GET() {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
 
     if (!canAccess(subscription.plan, subscription.status, "proactive_coach")) {
@@ -41,13 +48,17 @@ export async function GET() {
       );
     }
 
-    const memory = await loadOrBuildCoachMemoryProfile(admin, user.id, healthProfileContext);
+    const memory = healthProfileContext.isFrozen
+      ? await loadStoredCoachMemoryProfile(admin, user.id, healthProfileContext)
+      : await loadOrBuildCoachMemoryProfile(admin, user.id, healthProfileContext);
 
     return NextResponse.json({
       memory,
       migrationRequired: memory === null,
       message: memory
         ? "Coach memory profile is active."
+        : healthProfileContext.isFrozen
+        ? "This profile is frozen on the current membership, so coach memory was not generated."
         : "Apply the coach_memory_profiles migration to persist Phase 8 memory.",
     });
   } catch (error) {

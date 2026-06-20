@@ -1,6 +1,9 @@
 import { buildExecutionSummary, getExecutionWindow } from "@/lib/execution/executionSummary";
 import type { ActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
-import { loadOrBuildCoachMemoryProfile } from "@/lib/memory/coachMemoryProfile";
+import {
+  loadOrBuildCoachMemoryProfile,
+  loadStoredCoachMemoryProfile,
+} from "@/lib/memory/coachMemoryProfile";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 type SupabaseAdmin = ReturnType<typeof getSupabaseAdmin>;
@@ -70,9 +73,12 @@ export async function buildDailyIntelligenceBrief(
 
   const subjectColumn = healthProfileContext?.healthProfileId ? "health_profile_id" : "user_id";
   const subjectValue = healthProfileContext?.healthProfileId || userId;
+  const loadMemory = healthProfileContext?.isFrozen
+    ? loadStoredCoachMemoryProfile
+    : loadOrBuildCoachMemoryProfile;
   const [memory, outcomesResult, calendarResult, protocolResult, healthResult] =
     await Promise.all([
-      loadOrBuildCoachMemoryProfile(supabase, userId, healthProfileContext),
+      loadMemory(supabase, userId, healthProfileContext),
       supabase
         .from("intervention_outcomes")
         .select("domain, action, outcome, success, notes, measured_at, created_at")

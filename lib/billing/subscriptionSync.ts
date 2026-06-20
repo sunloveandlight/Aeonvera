@@ -37,6 +37,12 @@ export function maxHealthProfilesForPlan(plan: Plan) {
   return PLAN_HEALTH_PROFILE_LIMITS[plan].maxProfiles;
 }
 
+/**
+ * The workspace limit follows the subscription state Stripe reports as current.
+ * If Stripe schedules a downgrade for period end, it should keep reporting the
+ * current paid plan until the period flips; once Stripe reports the lower plan,
+ * excess profiles become read-only instead of being deleted.
+ */
 export async function syncUserSubscriptionState({
   currentPeriodEnd,
   plan,

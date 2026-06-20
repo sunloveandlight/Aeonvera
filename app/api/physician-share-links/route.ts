@@ -11,7 +11,9 @@ import {
   hashShareAccessCode,
 } from "@/lib/security/shareAccess";
 import {
+  frozenHealthProfileResponse,
   getHealthSubjectFilter,
+  getRequestedHealthProfileId,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
@@ -34,11 +36,12 @@ type ShareLinkRow = {
 const SELECT_FIELDS =
   "id,share_token,health_profile_id,recipient_email,recipient_label,included_sections,expires_at,revoked_at,access_count,last_accessed_at,created_at,access_code_hash";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const auth = await requirePhysicianExportAccess();
+    const auth = await requirePhysicianExportAccess(request);
     if (auth.response) return auth.response;
     if (!auth.healthProfileContext) throw new Error("Active health profile not found.");
+    if (auth.healthProfileContext.isFrozen) return frozenHealthProfileResponse();
 
     const admin = getSupabaseAdmin();
     const healthSubjectFilter = getHealthSubjectFilter(auth.healthProfileContext);
@@ -71,7 +74,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requirePhysicianExportAccess();
+    const auth = await requirePhysicianExportAccess(request);
     if (auth.response) return auth.response;
     if (!auth.healthProfileContext) throw new Error("Active health profile not found.");
 
@@ -130,7 +133,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = await requirePhysicianExportAccess();
+    const auth = await requirePhysicianExportAccess(request);
     if (auth.response) return auth.response;
     if (!auth.healthProfileContext) throw new Error("Active health profile not found.");
 
@@ -164,7 +167,7 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-async function requirePhysicianExportAccess(): Promise<{
+async function requirePhysicianExportAccess(request: NextRequest): Promise<{
   response: NextResponse | null;
   healthProfileContext: ActiveHealthProfileContext | null;
   userId: string;
@@ -220,6 +223,7 @@ async function requirePhysicianExportAccess(): Promise<{
   const healthProfileContext = await resolveActiveHealthProfileContext({
     supabase: admin,
     loginUserId: user.id,
+    requestedHealthProfileId: getRequestedHealthProfileId(request),
   });
 
   return { healthProfileContext, response: null, userId: user.id };
