@@ -276,6 +276,7 @@ async function recordDelivery({
         legacyUserId: userId,
         mode: "legacy_user",
         role: "owner",
+        isFrozen: false,
       }
     ),
     alert_id: alertId,

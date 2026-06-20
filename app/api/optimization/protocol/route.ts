@@ -11,6 +11,7 @@ import {
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
 import {
+  getRequestedHealthProfileId,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
@@ -110,6 +111,7 @@ export async function POST(request: NextRequest) {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
     const healthSubjectFilter = getHealthSubjectFilter(healthProfileContext);
 

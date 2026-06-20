@@ -6,6 +6,7 @@ import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permis
 import { FUTURE_SELF_SCENARIOS } from "@/lib/longevity/futureSelfSimulator";
 import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 import {
+  frozenHealthProfilePayload,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
@@ -84,6 +85,9 @@ export async function POST(request: NextRequest) {
       supabase: admin,
       loginUserId: user.id,
     });
+    if (healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
     const body = await readJsonBody(request);
     const scenarioIds = sanitizeScenarioIds(body?.scenarioIds);
     const futureSelf = safeRecord(body?.futureSelf);

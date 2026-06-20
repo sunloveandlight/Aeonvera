@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import {
+  getUserIdForStripeCustomer,
+  syncUserSubscriptionState,
+} from "@/lib/billing/subscriptionSync";
+import type { Plan } from "@/lib/auth/permissions";
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -24,10 +29,8 @@ function getWebhookSecret() {
   return secret;
 }
 
-type AllowedPlan = "core" | "elite" | "sovereign";
-
-function getPlanFromPriceId(priceId?: string | null): AllowedPlan | null {
-  const priceToPlan: Record<string, AllowedPlan> = {};
+function getPlanFromPriceId(priceId?: string | null): Plan | null {
+  const priceToPlan: Record<string, Plan> = {};
 
   if (process.env.STRIPE_CORE_PRICE_ID) {
     priceToPlan[process.env.STRIPE_CORE_PRICE_ID] = "core";
@@ -44,9 +47,9 @@ function getPlanFromPriceId(priceId?: string | null): AllowedPlan | null {
   return priceId ? priceToPlan[priceId] ?? null : null;
 }
 
-function getPlanFromSubscription(sub: Stripe.Subscription): AllowedPlan | null {
+function getPlanFromSubscription(sub: Stripe.Subscription): Plan | null {
   const priceId = sub.items.data[0]?.price.id;
-  return getPlanFromPriceId(priceId) ?? (sub.metadata?.plan as AllowedPlan | undefined) ?? null;
+  return getPlanFromPriceId(priceId) ?? normalizePlan(sub.metadata?.plan);
 }
 
 export async function POST(req: NextRequest) {
@@ -104,7 +107,7 @@ export async function POST(req: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
 
         const userId = session.metadata?.user_id;
-        const plan = session.metadata?.plan as AllowedPlan | undefined;
+        const metadataPlan = normalizePlan(session.metadata?.plan);
 
         const subscriptionId =
           typeof session.subscription === "string"
@@ -115,14 +118,24 @@ export async function POST(req: NextRequest) {
           break;
         }
 
-        await supabase
-          .from("profiles")
-          .update({
-            plan,
-            subscription_status: "active",
-            stripe_subscription_id: subscriptionId,
-          })
-          .eq("user_id", userId);
+        const subscription = subscriptionId
+          ? await stripe.subscriptions.retrieve(subscriptionId)
+          : null;
+        const priceId = subscription?.items.data[0]?.price.id || null;
+        const plan = subscription ? getPlanFromSubscription(subscription) : metadataPlan;
+
+        if (!plan) break;
+
+        await syncUserSubscriptionState({
+          currentPeriodEnd: subscription ? getCurrentPeriodEnd(subscription) : null,
+          plan,
+          status: subscription?.status || "active",
+          stripeCustomerId: getCustomerId(session.customer),
+          stripePriceId: priceId,
+          stripeSubscriptionId: subscriptionId || null,
+          supabase,
+          userId,
+        });
 
         break;
       }
@@ -130,15 +143,27 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
         const plan = getPlanFromSubscription(sub);
+        const customerId = getCustomerId(sub.customer);
 
-        await supabase
-          .from("profiles")
-          .update({
-            ...(plan ? { plan } : {}),
-            subscription_status: sub.status,
-            stripe_subscription_id: sub.id,
-          })
-          .eq("stripe_customer_id", sub.customer as string);
+        if (!plan || !customerId) break;
+
+        const userId = await getUserIdForStripeCustomer({
+          stripeCustomerId: customerId,
+          supabase,
+        });
+
+        if (!userId) break;
+
+        await syncUserSubscriptionState({
+          currentPeriodEnd: getCurrentPeriodEnd(sub),
+          plan,
+          status: sub.status,
+          stripeCustomerId: customerId,
+          stripePriceId: sub.items.data[0]?.price.id || null,
+          stripeSubscriptionId: sub.id,
+          supabase,
+          userId,
+        });
 
         break;
       }
@@ -155,26 +180,56 @@ export async function POST(req: NextRequest) {
           break;
         }
 
-        await supabase
+        const { data: profile } = await supabase
           .from("profiles")
-          .update({
-            subscription_status: "past_due",
-          })
-          .eq("stripe_customer_id", customerId);
+          .select("user_id,plan,stripe_subscription_id")
+          .eq("stripe_customer_id", customerId)
+          .maybeSingle<{
+            plan: string | null;
+            stripe_subscription_id: string | null;
+            user_id: string | null;
+          }>();
+
+        const plan = normalizePlan(profile?.plan) || "core";
+        const userId = profile?.user_id;
+
+        if (!userId) break;
+
+        await syncUserSubscriptionState({
+          plan,
+          status: "past_due",
+          stripeCustomerId: customerId,
+          stripeSubscriptionId: profile?.stripe_subscription_id || undefined,
+          supabase,
+          userId,
+        });
 
         break;
       }
 
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
+        const customerId = getCustomerId(sub.customer);
 
-        await supabase
-          .from("profiles")
-          .update({
-            plan: "core",
-            subscription_status: "canceled",
-          })
-          .eq("stripe_customer_id", sub.customer as string);
+        if (!customerId) break;
+
+        const userId = await getUserIdForStripeCustomer({
+          stripeCustomerId: customerId,
+          supabase,
+        });
+
+        if (!userId) break;
+
+        await syncUserSubscriptionState({
+          currentPeriodEnd: getCurrentPeriodEnd(sub),
+          plan: "core",
+          status: "canceled",
+          stripeCustomerId: customerId,
+          stripePriceId: sub.items.data[0]?.price.id || null,
+          stripeSubscriptionId: sub.id,
+          supabase,
+          userId,
+        });
 
         break;
       }
@@ -192,4 +247,23 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function normalizePlan(plan: string | null | undefined): Plan | null {
+  return plan === "core" || plan === "elite" || plan === "sovereign"
+    ? plan
+    : null;
+}
+
+function getCurrentPeriodEnd(subscription: Stripe.Subscription) {
+  const periodEnd = (subscription as unknown as { current_period_end?: number })
+    .current_period_end;
+
+  return periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
+}
+
+function getCustomerId(
+  customer: string | Stripe.Customer | Stripe.DeletedCustomer | null
+) {
+  return typeof customer === "string" ? customer : customer?.id || null;
 }

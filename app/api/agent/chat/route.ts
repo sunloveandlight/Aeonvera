@@ -10,6 +10,7 @@ import {
   serializeUsage,
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
+import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
 
 type ChatMessage = {
   role?: unknown;
@@ -37,8 +38,14 @@ export async function POST(request: NextRequest) {
     }
 
     const admin = getSupabaseAdmin();
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
+    });
     const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
     const usage = await checkAndRecordUsage({
+      healthProfileId: healthProfileContext.healthProfileId,
       metadata: { source: "agent_chat" },
       meter: "agent_question",
       plan: subscription.plan,

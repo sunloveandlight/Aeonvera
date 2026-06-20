@@ -25,6 +25,7 @@ import {
 import type { Plan, SubscriptionStatus } from "@/lib/auth/permissions";
 import {
   getHealthSubjectFilter,
+  getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 
@@ -173,6 +174,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function getLatestAssessmentContext() {
+  const cookieStore = await cookies();
   const supabaseUser = await getSupabaseUser();
   const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
 
@@ -184,6 +186,7 @@ async function getLatestAssessmentContext() {
   const healthProfileContext = await resolveActiveHealthProfileContext({
     supabase,
     loginUserId: user.id,
+    requestedHealthProfileId: getRequestedHealthProfileId({ cookies: cookieStore }),
   });
   const healthFilter = getHealthSubjectFilter(healthProfileContext);
   const [{ data: assessment, error: assessmentError }, { data: profile }] = await Promise.all([

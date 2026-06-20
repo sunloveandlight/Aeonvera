@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import {
+  frozenHealthProfilePayload,
+  getRequestedHealthProfileId,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
@@ -19,7 +21,7 @@ type Preferences = {
   source?: "table" | "auth_metadata" | "sleep_schedule";
 };
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const {
@@ -42,6 +44,7 @@ export async function GET() {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
     const healthFilter = getHealthSubjectFilter(healthProfileContext);
     const sleepSchedule = await deriveQuietHours(admin, user.id, healthProfileContext);
@@ -105,7 +108,11 @@ export async function POST(request: NextRequest) {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
+    if (healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
     const sleepSchedule = await deriveQuietHours(admin, user.id, healthProfileContext);
     const nextPreferences: Preferences = {
       user_id: user.id,

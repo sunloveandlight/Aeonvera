@@ -14,6 +14,7 @@ import {
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
 import {
+  getRequestedHealthProfileId,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
@@ -85,6 +86,7 @@ async function getSupabase() {
 export async function POST() {
   try {
     const supabase = await getSupabase();
+    const cookieStore = await cookies();
 
     const {
       data: { user },
@@ -100,6 +102,7 @@ export async function POST() {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: userId,
+      requestedHealthProfileId: getRequestedHealthProfileId({ cookies: cookieStore }),
     });
     const healthSubjectFilter = getHealthSubjectFilter(healthProfileContext);
 

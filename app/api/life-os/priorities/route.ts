@@ -3,7 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import {
+  frozenHealthProfilePayload,
   getHealthSubjectFilter,
+  getRequestedHealthProfileId,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
@@ -53,9 +55,9 @@ const LIFE_DOMAINS = new Set<LifeDomainKey>([
   "financial_health",
 ]);
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const auth = await requireLifeOsAccess();
+    const auth = await requireLifeOsAccess(request);
     if (auth.response) return auth.response;
 
     const admin = getSupabaseAdmin();
@@ -91,8 +93,11 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireLifeOsAccess();
+    const auth = await requireLifeOsAccess(request);
     if (auth.response) return auth.response;
+    if (auth.healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
 
     const body = await request.json().catch(() => ({}));
     const domain = sanitizeDomain(body?.domain);
@@ -146,7 +151,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const auth = await requireLifeOsAccess();
+    const auth = await requireLifeOsAccess(request);
     if (auth.response) return auth.response;
 
     const body = await request.json().catch(() => ({}));
@@ -181,7 +186,7 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-async function requireLifeOsAccess(): Promise<{
+async function requireLifeOsAccess(request: NextRequest): Promise<{
   healthProfileContext: ActiveHealthProfileContext;
   response: NextResponse | null;
   userId: string;
@@ -214,6 +219,7 @@ async function requireLifeOsAccess(): Promise<{
   const healthProfileContext = await resolveActiveHealthProfileContext({
     supabase: admin,
     loginUserId: user.id,
+    requestedHealthProfileId: getRequestedHealthProfileId(request),
   });
 
   return { healthProfileContext, response: null, userId: user.id };

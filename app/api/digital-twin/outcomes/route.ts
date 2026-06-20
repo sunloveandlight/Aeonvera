@@ -4,6 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 import {
+  frozenHealthProfilePayload,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
@@ -96,6 +97,9 @@ export async function POST(request: NextRequest) {
       supabase: admin,
       loginUserId: user.id,
     });
+    if (healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
 
     const payload = {
       ...healthSubjectInsertFields(healthProfileContext),

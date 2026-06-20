@@ -5,6 +5,7 @@ import { canAccess } from "@/lib/auth/permissions";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 import {
+  frozenHealthProfilePayload,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
@@ -131,6 +132,9 @@ export async function PATCH(request: NextRequest) {
       supabase: admin,
       loginUserId: user.id,
     });
+    if (healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
 
     const body = await request.json().catch(() => ({}));
     const current = await getOrCreatePreferences(admin, user.id, healthProfileContext);

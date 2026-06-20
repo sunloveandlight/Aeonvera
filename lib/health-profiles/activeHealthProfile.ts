@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isHealthProfileFrozen } from "@/lib/health-profiles/profileEntitlements";
 
 export const ACTIVE_HEALTH_PROFILE_COOKIE = "aeonvera.activeHealthProfileId";
+
+type ActiveHealthProfileCookieRequest = {
+  cookies: {
+    get(name: string): { value?: string } | undefined;
+  };
+};
 
 export type ActiveHealthProfileContext = {
   loginUserId: string;
@@ -9,7 +16,17 @@ export type ActiveHealthProfileContext = {
   legacyUserId: string;
   mode: "legacy_user" | "health_profile";
   role: "owner" | "editor" | "viewer";
+  isFrozen: boolean;
 };
+
+export class FrozenHealthProfileError extends Error {
+  statusCode = 423;
+
+  constructor() {
+    super("This health profile is frozen on the current membership.");
+    this.name = "FrozenHealthProfileError";
+  }
+}
 
 export type HealthSubjectFilter =
   | {
@@ -45,7 +62,14 @@ export function createLegacyActiveHealthProfileContext(
     legacyUserId: loginUserId,
     mode: "legacy_user",
     role: "owner",
+    isFrozen: false,
   };
+}
+
+export function getRequestedHealthProfileId(
+  request: ActiveHealthProfileCookieRequest
+) {
+  return request.cookies.get(ACTIVE_HEALTH_PROFILE_COOKIE)?.value || null;
 }
 
 export async function resolveActiveHealthProfileContext({
@@ -69,6 +93,12 @@ export async function resolveActiveHealthProfileContext({
     return createLegacyActiveHealthProfileContext(loginUserId);
   }
 
+  const frozen = await isHealthProfileFrozen({
+    healthProfileId: data.health_profile_id,
+    supabase,
+    workspaceId: data.workspace_id,
+  });
+
   return {
     loginUserId,
     workspaceId: data.workspace_id,
@@ -76,6 +106,7 @@ export async function resolveActiveHealthProfileContext({
     legacyUserId: loginUserId,
     mode: "health_profile",
     role: data.role || "viewer",
+    isFrozen: frozen,
   };
 }
 
@@ -113,4 +144,22 @@ export function healthSubjectInsertFields(
   context: ActiveHealthProfileContext
 ) {
   return { health_profile_id: context.healthProfileId };
+}
+
+export function assertHealthProfileWritable(context: ActiveHealthProfileContext) {
+  if (context.isFrozen) {
+    throw new FrozenHealthProfileError();
+  }
+}
+
+export function isFrozenHealthProfileError(error: unknown) {
+  return error instanceof FrozenHealthProfileError;
+}
+
+export function frozenHealthProfilePayload() {
+  return {
+    error: "This health profile is frozen on the current membership.",
+    frozen: true,
+    message: "Upgrade or switch to an included profile to make changes.",
+  };
 }

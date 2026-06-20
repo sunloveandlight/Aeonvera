@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createServerClient } from "@supabase/ssr";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-
-type Plan = "core" | "elite" | "sovereign";
+import {
+  normalizeSubscriptionStatus,
+  syncUserSubscriptionState,
+} from "@/lib/billing/subscriptionSync";
+import type { Plan } from "@/lib/auth/permissions";
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -94,18 +97,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await admin
-      .from("profiles")
-      .update({
-        plan,
-        subscription_status: subscription.status,
-        stripe_subscription_id: subscription.id,
-      })
-      .eq("user_id", user.id);
+    await syncUserSubscriptionState({
+      currentPeriodEnd: getCurrentPeriodEnd(subscription),
+      plan,
+      status: subscription.status,
+      stripeCustomerId: profile.stripe_customer_id,
+      stripePriceId: priceId,
+      stripeSubscriptionId: subscription.id,
+      supabase: admin,
+      userId: user.id,
+    });
 
     return NextResponse.json({
       plan,
-      subscriptionStatus: subscription.status,
+      subscriptionStatus: normalizeSubscriptionStatus(subscription.status),
       subscriptionId: subscription.id,
     });
   } catch (error) {
@@ -115,4 +120,11 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function getCurrentPeriodEnd(subscription: Stripe.Subscription) {
+  const periodEnd = (subscription as unknown as { current_period_end?: number })
+    .current_period_end;
+
+  return periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
 }

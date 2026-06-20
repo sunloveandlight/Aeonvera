@@ -8,6 +8,7 @@ type HealthProfileOption = {
   displayName: string;
   relationship: string;
   isPrimary: boolean;
+  isFrozen?: boolean;
 };
 
 type ProfileSwitcherProps = {
@@ -84,6 +85,7 @@ export default function ProfileSwitcher({
         {profiles.map((profile) => (
           <option key={profile.id} value={profile.id}>
             {profile.displayName}{profile.isPrimary ? " · primary" : ` · ${profile.relationship}`}
+            {profile.isFrozen ? " · frozen" : ""}
           </option>
         ))}
       </select>

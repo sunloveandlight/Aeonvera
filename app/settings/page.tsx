@@ -20,6 +20,7 @@ import {
 import Page from "@/components/ui/Page";
 import PageContainer from "@/components/ui/PageContainer";
 import ProfileManagementPanel from "@/components/health-profiles/ProfileManagementPanel";
+import WorkspaceMembersPanel from "@/components/workspaces/WorkspaceMembersPanel";
 import { supabase } from "@/lib/supabase/client";
 import { VOICE_OPTIONS, type VoiceId } from "@/components/layout/commandOrb/config";
 
@@ -144,6 +145,10 @@ export default function SettingsPage() {
 
           <div className="mb-5">
             <ProfileManagementPanel />
+          </div>
+
+          <div className="mb-5">
+            <WorkspaceMembersPanel />
           </div>
 
           <div className="grid gap-5 lg:grid-cols-[1.08fr_0.92fr]">

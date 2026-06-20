@@ -18,6 +18,7 @@ import {
 import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAge";
 import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 import {
+  getRequestedHealthProfileId,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
     const usage = await checkAndRecordUsage({
       healthProfileId: healthProfileContext.healthProfileId,

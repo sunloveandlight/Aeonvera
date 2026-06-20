@@ -9,6 +9,7 @@ import {
 } from "@/lib/agent/agentPreferenceMemory";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import {
+  frozenHealthProfilePayload,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
@@ -93,6 +94,9 @@ export async function GET(request: NextRequest) {
       loginUserId: user.id,
       requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
     });
+    if (healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
     const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
     const today = toDateKey(new Date());
@@ -183,6 +187,9 @@ export async function PATCH(request: NextRequest) {
       loginUserId: user.id,
       requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
     });
+    if (healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
 
     const current = await getOrCreatePreferences(admin, user.id, healthProfileContext);
     const next = sanitizePreferences(user.id, { ...current, ...body });
@@ -236,6 +243,9 @@ export async function POST(request: NextRequest) {
       loginUserId: user.id,
       requestedHealthProfileId: request.cookies.get("aeonvera.activeHealthProfileId")?.value,
     });
+    if (healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
     const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
     const today = toDateKey(new Date());

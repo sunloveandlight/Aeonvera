@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { ACTIVE_HEALTH_PROFILE_COOKIE } from "@/lib/health-profiles/activeHealthProfile";
+import { isSubscriptionValid, type SubscriptionStatus } from "@/lib/auth/permissions";
+import {
+  getWorkspaceProfileEntitlements,
+  isHealthProfileFrozen,
+} from "@/lib/health-profiles/profileEntitlements";
 
 type AccessRow = {
   health_profile_id: string;
@@ -70,6 +75,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "You need workspace admin access to create a profile." },
         { status: 403 }
+      );
+    }
+
+    if (!isSubscriptionValid(workspace.subscriptionStatus)) {
+      return NextResponse.json(
+        { error: "An active membership is required to create profiles." },
+        { status: 402 }
       );
     }
 
@@ -153,6 +165,21 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    const frozen = await isHealthProfileFrozen({
+      healthProfileId: profileId,
+      supabase: admin,
+      workspaceId: access.workspace_id,
+    });
+    if (frozen) {
+      return NextResponse.json(
+        {
+          error: "This health profile is frozen on the current membership.",
+          frozen: true,
+        },
+        { status: 423 }
+      );
+    }
+
     const patch: Record<string, string> = {};
     const displayName = sanitizeText(body.displayName, 80);
     const relationship = sanitizeRelationship(body.relationship);
@@ -227,8 +254,34 @@ async function listProfiles(
   if (profileError) throw profileError;
 
   const accessByProfile = new Map(accessRows.map((row) => [row.health_profile_id, row]));
+  const entitlementByWorkspace = new Map<
+    string,
+    Awaited<ReturnType<typeof getWorkspaceProfileEntitlements>>
+  >();
+
+  for (const row of accessRows) {
+    if (entitlementByWorkspace.has(row.workspace_id)) continue;
+    entitlementByWorkspace.set(
+      row.workspace_id,
+      await getWorkspaceProfileEntitlements({
+        supabase: admin,
+        workspaceId: row.workspace_id,
+      })
+    );
+  }
+
   return (profiles || [])
-    .map((profile) => formatProfile(profile, accessByProfile.get(profile.id)))
+    .map((profile) => {
+      const access = accessByProfile.get(profile.id);
+      const entitlements = access?.workspace_id
+        ? entitlementByWorkspace.get(access.workspace_id)
+        : null;
+      return formatProfile(
+        profile,
+        access,
+        entitlements ? !entitlements.writableProfileIds.has(profile.id) : false
+      );
+    })
     .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.createdAt.localeCompare(b.createdAt));
 }
 
@@ -250,10 +303,14 @@ async function getManagedWorkspace(
 
   const { data: workspace, error: workspaceError } = await admin
     .from("workspaces")
-    .select("id,max_health_profiles")
+    .select("id,max_health_profiles,subscription_status")
     .eq("id", membership.workspace_id)
     .eq("status", "active")
-    .maybeSingle<{ id: string; max_health_profiles: number }>();
+    .maybeSingle<{
+      id: string;
+      max_health_profiles: number;
+      subscription_status: SubscriptionStatus | null;
+    }>();
 
   if (workspaceError) throw workspaceError;
   if (!workspace) return null;
@@ -261,6 +318,7 @@ async function getManagedWorkspace(
   return {
     id: workspace.id,
     maxHealthProfiles: workspace.max_health_profiles || 1,
+    subscriptionStatus: workspace.subscription_status || null,
   };
 }
 
@@ -292,7 +350,7 @@ async function getProfileAccess(
   return data;
 }
 
-function formatProfile(profile: HealthProfileRow, access?: AccessRow | null) {
+function formatProfile(profile: HealthProfileRow, access?: AccessRow | null, isFrozen = false) {
   return {
     id: profile.id,
     workspaceId: profile.workspace_id,
@@ -301,6 +359,7 @@ function formatProfile(profile: HealthProfileRow, access?: AccessRow | null) {
     isPrimary: profile.is_primary === true,
     status: profile.status || "active",
     role: access?.role || "viewer",
+    isFrozen,
     createdAt: profile.created_at || "",
     updatedAt: profile.updated_at || "",
   };

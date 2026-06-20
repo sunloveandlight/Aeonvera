@@ -8,6 +8,7 @@ import {
   createLegacyActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { isHealthProfileFrozenById } from "@/lib/health-profiles/profileEntitlements";
 
 /**
  * Aeonvera Daily Automation Job
@@ -104,7 +105,7 @@ export async function GET(req: Request) {
     /**
      * STEP 2: DEDUPLICATE USER/PROFILE WORK ITEMS
      */
-    const workItems = buildProfileWorkItems(users);
+    const workItems = await buildProfileWorkItems(users, supabase);
 
     let processed = 0;
     let autopilotPrepared = 0;
@@ -194,8 +195,9 @@ export async function GET(req: Request) {
   }
 }
 
-function buildProfileWorkItems(
-  rows: Array<{ user_id?: string | null; health_profile_id?: string | null }>
+async function buildProfileWorkItems(
+  rows: Array<{ user_id?: string | null; health_profile_id?: string | null }>,
+  supabase: ReturnType<typeof getSupabaseAdmin>
 ) {
   const items = new Map<
     string,
@@ -207,6 +209,16 @@ function buildProfileWorkItems(
     const key = `${row.user_id}:${row.health_profile_id || "legacy"}`;
     if (items.has(key)) continue;
 
+    if (
+      row.health_profile_id &&
+      (await isHealthProfileFrozenById({
+        healthProfileId: row.health_profile_id,
+        supabase,
+      }))
+    ) {
+      continue;
+    }
+
     items.set(key, {
       userId: row.user_id,
       healthProfileContext: row.health_profile_id
@@ -217,6 +229,7 @@ function buildProfileWorkItems(
             legacyUserId: row.user_id,
             mode: "health_profile",
             role: "owner",
+            isFrozen: false,
           }
         : createLegacyActiveHealthProfileContext(row.user_id),
     });

@@ -6,6 +6,7 @@ import { buildHealthState } from "@/lib/state/healthStateEngine";
 import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
 import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAge";
 import {
+  frozenHealthProfilePayload,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
@@ -34,6 +35,9 @@ export async function POST(req: NextRequest) {
           ? body.healthProfileId
           : req.cookies.get("aeonvera.activeHealthProfileId")?.value,
     });
+    if (healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
     const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
     if (!isCron) {

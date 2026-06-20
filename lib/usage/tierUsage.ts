@@ -8,6 +8,7 @@ import {
   type UsageMeter,
 } from "@/lib/auth/permissions";
 import { getWorkspaceSubscriptionForUser } from "@/lib/auth/workspaceSubscription";
+import { isHealthProfileFrozenById } from "@/lib/health-profiles/profileEntitlements";
 
 type ProfileRow = {
   plan?: Plan | null;
@@ -89,6 +90,19 @@ export async function checkAndRecordUsage({
   });
 
   if (!check.allowed || check.migrationRequired) return check;
+
+  if (healthProfileId) {
+    const frozen = await isHealthProfileFrozenById({ healthProfileId, supabase });
+    if (frozen) {
+      return {
+        ...check,
+        allowed: false,
+        message: "This health profile is frozen on the current membership.",
+        remaining: 0,
+        statusCode: 423,
+      };
+    }
+  }
 
   const { error } = await supabase.from("usage_events").insert({
     ...(healthProfileId ? { health_profile_id: healthProfileId } : {}),

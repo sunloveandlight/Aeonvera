@@ -10,6 +10,7 @@ import { buildAssessmentInput } from "@/lib/longevity/assessmentInput";
 import { loadLatestLabInputValues } from "@/lib/labs/latestLabInputs";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import {
+  frozenHealthProfilePayload,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
   resolveActiveHealthProfileContext,
@@ -109,6 +110,9 @@ export async function POST(request: NextRequest) {
       supabase,
       loginUserId: userId,
     });
+    if (healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
 
     const { data: assessment, error: assessmentError } = await supabase
       .from("longevity_assessments")

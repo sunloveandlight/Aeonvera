@@ -9,6 +9,7 @@ type HealthProfile = {
   relationship: string;
   isPrimary: boolean;
   role: "owner" | "editor" | "viewer";
+  isFrozen?: boolean;
 };
 
 type ProfileLimit = {
@@ -77,6 +78,7 @@ export default function ProfileManagementPanel() {
     setDisplayName("");
     setRelationship("family");
     await loadProfiles();
+    window.dispatchEvent(new Event("aeonvera:health-profiles-change"));
     if (payload.profile?.id) await switchProfile(payload.profile.id, false);
     setSaving(false);
     setMessage("Profile created.");
@@ -116,6 +118,7 @@ export default function ProfileManagementPanel() {
     }
 
     setMessage("Profile saved.");
+    window.dispatchEvent(new Event("aeonvera:health-profiles-change"));
     setSaving(false);
   }
 
@@ -142,6 +145,7 @@ export default function ProfileManagementPanel() {
               Active: <span className="text-white/72">{activeProfile.displayName}</span>
               {" · "}
               {profiles.length} of {profileLimit.maxHealthProfiles} profiles used
+              {activeProfile.isFrozen ? " · frozen" : ""}
             </p>
           ) : null}
         </div>
@@ -166,6 +170,7 @@ export default function ProfileManagementPanel() {
                   <span className="av-control-muted mt-1 block text-xs capitalize">
                     {profile.relationship}
                     {profile.isPrimary ? " · primary" : ""}
+                    {profile.isFrozen ? " · frozen" : ""}
                   </span>
                 </span>
                 {active ? <Check className="royal-text" size={16} /> : null}
@@ -184,12 +189,14 @@ export default function ProfileManagementPanel() {
                   onChange={(event) => updateActiveProfile({ displayName: event.target.value })}
                   className="h-10 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm text-white outline-none transition focus:border-white/[0.22]"
                   aria-label="Profile display name"
+                  disabled={activeProfile.isFrozen}
                 />
                 <select
                   value={activeProfile.relationship}
                   onChange={(event) => updateActiveProfile({ relationship: event.target.value })}
                   className="h-10 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm capitalize text-white outline-none transition focus:border-white/[0.22]"
                   aria-label="Profile relationship"
+                  disabled={activeProfile.isFrozen}
                 >
                   {RELATIONSHIPS.map((item) => (
                     <option key={item} value={item}>
@@ -200,12 +207,17 @@ export default function ProfileManagementPanel() {
                 <button
                   type="button"
                   onClick={() => void saveActiveProfile()}
-                  disabled={saving || activeProfile.role === "viewer"}
+                  disabled={saving || activeProfile.role === "viewer" || activeProfile.isFrozen}
                   className="premium-action-secondary inline-flex h-10 items-center justify-center px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Save
                 </button>
               </div>
+              {activeProfile.isFrozen ? (
+                <p className="mt-3 text-xs text-white/44">
+                  This profile is frozen on the current membership.
+                </p>
+              ) : null}
             </div>
           ) : null}
 
