@@ -395,12 +395,30 @@ function ShareLinkManager({
     <div className="mb-8 rounded-lg border border-[rgba(var(--gold),0.18)] bg-[rgba(var(--gold),0.045)] p-6 print:hidden">
       <div className="av-divider mb-5 flex flex-col gap-3 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="micro-label">Secure Clinical Sharing</p>
+          <p className="micro-label">Invite Your Clinician</p>
           <h2 className="mt-3 text-3xl font-semibold text-white">
-            Share a controlled read-only export.
+            Send a guided, controlled read-only export.
           </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/48">
+            Choose what belongs in the packet, create a private link, then send
+            your clinician the link and access code. You can revoke access any time.
+          </p>
         </div>
         <ShieldCheck className="royal-text" size={24} />
+      </div>
+
+      <div className="mb-5 grid gap-3 md:grid-cols-4">
+        {[
+          ["01", "Name the recipient"],
+          ["02", "Choose clinical sections"],
+          ["03", "Create secure link"],
+          ["04", "Copy message for clinician"],
+        ].map(([step, label]) => (
+          <div key={step} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-3">
+            <p className="av-eyebrow text-[rgba(var(--gold),0.72)]">{step}</p>
+            <p className="mt-2 text-xs leading-5 text-white/54">{label}</p>
+          </div>
+        ))}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">

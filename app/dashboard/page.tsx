@@ -968,6 +968,14 @@ export default function DashboardPage() {
           signals={todaySignals}
         />
 
+        <FirstThirtyDaysPanel
+          hasAssessment={hasAssessment}
+          hasReport={Boolean(report)}
+          hasLabs={labRows.length > 0}
+          hasProtocol={Boolean(optimizationProtocol)}
+          onNavigate={(href) => router.push(href)}
+        />
+
         <div className="grid gap-6 lg:grid-cols-[1.18fr_0.82fr]">
 
           {/* BIOLOGICAL AGE CARD */}
@@ -1375,6 +1383,99 @@ export default function DashboardPage() {
 
       </div>
     </PageContainer>
+  );
+}
+
+function FirstThirtyDaysPanel({
+  hasAssessment,
+  hasLabs,
+  hasProtocol,
+  hasReport,
+  onNavigate,
+}: {
+  hasAssessment: boolean;
+  hasLabs: boolean;
+  hasProtocol: boolean;
+  hasReport: boolean;
+  onNavigate: (href: string) => void;
+}) {
+  const steps = [
+    {
+      complete: hasAssessment,
+      href: "/assessment",
+      label: "Create baseline",
+      week: "Day 1",
+    },
+    {
+      complete: hasReport,
+      href: "/report",
+      label: "Generate first report",
+      week: "Week 1",
+    },
+    {
+      complete: hasLabs,
+      href: "/data-sources",
+      label: "Upload labs and wearables",
+      week: "Week 2",
+    },
+    {
+      complete: hasProtocol,
+      href: "/optimization",
+      label: "Run the protocol",
+      week: "Weeks 3-4",
+    },
+  ];
+  const completedCount = steps.filter((step) => step.complete).length;
+  const nextStep = steps.find((step) => !step.complete) || steps.at(-1);
+
+  return (
+    <section className="executive-panel rounded-lg p-5 md:p-6">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="micro-label">First 30 Days</p>
+          <h2 className="mt-3 text-3xl font-semibold leading-tight text-white">
+            Make the value obvious fast.
+          </h2>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-white/50">
+            Aeonvera works best when the first month moves from baseline to report,
+            data depth, and a protocol you can actually execute.
+          </p>
+        </div>
+        {nextStep ? (
+          <button
+            type="button"
+            onClick={() => onNavigate(nextStep.href)}
+            className="premium-action inline-flex h-11 shrink-0 items-center justify-center rounded-md px-5 text-sm font-medium"
+          >
+            {nextStep.complete ? "Review protocol" : nextStep.label}
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mt-6 grid gap-3 md:grid-cols-4">
+        {steps.map((step) => (
+          <button
+            key={step.week}
+            type="button"
+            onClick={() => onNavigate(step.href)}
+            className={`av-control-card rounded-lg border p-4 text-left transition ${
+              step.complete ? "av-control-card-active" : ""
+            }`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <p className="av-eyebrow text-[rgba(var(--gold),0.72)]">{step.week}</p>
+              <span className="av-eyebrow text-white/30">
+                {step.complete ? "done" : "open"}
+              </span>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-white/58">{step.label}</p>
+          </button>
+        ))}
+      </div>
+      <p className="mt-4 text-xs leading-5 text-white/32">
+        {completedCount} of {steps.length} activation milestones complete.
+      </p>
+    </section>
   );
 }
 

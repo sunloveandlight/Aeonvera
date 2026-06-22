@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Crown, LockKeyhole, Settings } from "lucide-react";
+import { ArrowRight, Check, Crown, Gift, LockKeyhole, Settings } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState from "@/components/ui/AccessState";
 import { supabase } from "@/lib/supabase/client";
@@ -202,6 +202,8 @@ export default function PlanPage() {
               ))}
             </section>
 
+            <SovereignRevenuePanel currentPlan={usageLimits?.plan || null} />
+
             <section className="grid gap-4 lg:grid-cols-2">
               <FeatureGroup items={included} title="Unlocked now" tone="included" />
               <FeatureGroup items={locked} title="Protected until upgrade" tone="locked" />
@@ -210,6 +212,76 @@ export default function PlanPage() {
         )}
       </div>
     </PageContainer>
+  );
+}
+
+function SovereignRevenuePanel({ currentPlan }: { currentPlan: string | null }) {
+  const isSovereign = currentPlan === "sovereign";
+
+  return (
+    <section className="grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
+      <div className="executive-panel rounded-lg p-5 md:p-6">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="micro-label">Sovereign Concierge</p>
+            <h2 className="mt-3 text-3xl font-semibold leading-tight text-white">
+              White-glove onboarding for serious health operators.
+            </h2>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/50">
+              A high-touch setup package for labs, wearables, clinician packet,
+              family profile planning, and a first 30-day execution protocol.
+            </p>
+          </div>
+          <span className="premium-status-neutral inline-flex h-10 shrink-0 items-center rounded-md px-3 text-xs text-white/72">
+            From $2,500
+          </span>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-4">
+          {["Lab intake", "Wearable setup", "Clinician export", "30-day protocol"].map((item) => (
+            <div key={item} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-3">
+              <p className="text-xs leading-5 text-white/58">{item}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <a
+            href="mailto:support@aeonvera.com?subject=Sovereign%20concierge%20onboarding"
+            className="premium-action inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+          >
+            <Crown size={15} />
+            Request concierge
+          </a>
+          {!isSovereign ? (
+            <Link
+              href="/pricing"
+              className="premium-action-secondary inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+            >
+              Compare Sovereign
+              <ArrowRight size={15} />
+            </Link>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="executive-panel rounded-lg p-5 md:p-6">
+        <p className="micro-label">Referral Credits</p>
+        <h2 className="mt-3 text-2xl font-semibold leading-tight text-white">
+          Partner with clinicians, coaches, and health creators.
+        </h2>
+        <p className="mt-4 text-sm leading-7 text-white/50">
+          Apply for referral credits when a trusted expert sends members into
+          Aeonvera. This keeps the program curated while the automated ledger is
+          prepared.
+        </p>
+        <a
+          href="mailto:support@aeonvera.com?subject=Referral%20partner%20application"
+          className="premium-action-secondary mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+        >
+          <Gift size={15} />
+          Apply for credits
+        </a>
+      </div>
+    </section>
   );
 }
 

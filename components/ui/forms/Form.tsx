@@ -58,7 +58,9 @@ export default function Form({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(values);
+    const form = e.currentTarget as HTMLFormElement;
+    const submittedValues = Object.fromEntries(new FormData(form).entries());
+    await onSubmit({ ...values, ...submittedValues });
   };
 
   return (

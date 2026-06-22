@@ -32,13 +32,19 @@ function LoginInner() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  async function handleAuth() {
+  async function handleAuth(values: Record<string, unknown>) {
+    const submittedEmail = String(values.email ?? email).trim();
+    const submittedPassword = String(values.password ?? password);
+
     setLoading(true);
     setMessage(null);
 
     try {
       if (isSignUpMode) {
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+          email: submittedEmail,
+          password: submittedPassword,
+        });
 
         if (error) {
           setMessage(error.message);
@@ -53,7 +59,10 @@ function LoginInner() {
         return;
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: submittedEmail,
+        password: submittedPassword,
+      });
 
       if (error) {
         setMessage(error.message);
@@ -107,6 +116,7 @@ function LoginInner() {
           <FormField name="email" label="Email" required>
             {({ value, onChange }) => (
               <TextInput
+                name="email"
                 type="email"
                 value={(value as string) ?? email}
                 onChange={(e) => {
@@ -123,6 +133,7 @@ function LoginInner() {
           <FormField name="password" label="Password" required>
             {({ value, onChange }) => (
               <PasswordInput
+                name="password"
                 value={(value as string) ?? password}
                 onChange={(e) => {
                   onChange(e.target.value);

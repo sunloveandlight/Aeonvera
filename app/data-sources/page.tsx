@@ -478,6 +478,7 @@ export default function DataSourcesPage() {
           <ImportPanel
             accepted="PDF, CSV, text, image, or manual values"
             body="Upload a lab report or enter biomarker values to deepen biological age, clinical memory, and protocol logic."
+            fileInputId="clinical-labs-upload"
             fileName={labFile?.name || null}
             icon={<FileUp size={18} />}
             label="Clinical Labs"
@@ -490,6 +491,11 @@ export default function DataSourcesPage() {
             onSubmit={() => void importLabs()}
           />
         </section>
+
+        <PremiumLabReviewPanel
+          labCount={labRows.length}
+          onOpenUpload={() => document.getElementById("clinical-labs-upload")?.click()}
+        />
 
         <section className="mt-5 grid gap-5 lg:grid-cols-3">
           <SourceCard
@@ -669,6 +675,7 @@ function SourceCard({
 function ImportPanel({
   accepted,
   body,
+  fileInputId,
   fileName,
   icon,
   label,
@@ -682,6 +689,7 @@ function ImportPanel({
 }: {
   accepted: string;
   body: string;
+  fileInputId?: string;
   fileName: string | null;
   icon: ReactNode;
   label: string;
@@ -719,6 +727,7 @@ function ImportPanel({
             Choose
           </span>
           <input
+            id={fileInputId}
             type="file"
             accept="application/json,application/pdf,text/plain,text/csv,.json,.pdf,.csv,.txt,image/png,image/jpeg,image/webp,image/heic,image/heif"
             className="sr-only"
@@ -744,6 +753,59 @@ function ImportPanel({
         </button>
       ) : null}
     </div>
+  );
+}
+
+function PremiumLabReviewPanel({
+  labCount,
+  onOpenUpload,
+}: {
+  labCount: number;
+  onOpenUpload: () => void;
+}) {
+  return (
+    <section className="executive-panel mt-5 rounded-lg p-5 md:p-6">
+      <div className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr] lg:items-center">
+        <div>
+          <p className="micro-label">Premium Lab Review</p>
+          <h2 className="mt-3 text-2xl font-semibold leading-tight text-white">
+            Turn a lab PDF into longitudinal interpretation.
+          </h2>
+          <p className="mt-4 text-sm leading-7 text-white/50">
+            Upload the report now; Sovereign review turns raw biomarkers into a
+            clinician-ready trend narrative, protocol implications, and follow-up
+            questions.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={onOpenUpload}
+              className="premium-action inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium"
+            >
+              Upload lab PDF
+            </button>
+            <Link
+              href="/physician-export"
+              className="premium-action-secondary inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium"
+            >
+              Open clinician packet
+            </Link>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            ["Import", labCount ? `${labCount} markers` : "PDF or CSV"],
+            ["Interpret", "Trends + outliers"],
+            ["Review", "Protocol changes"],
+          ].map(([label, detail]) => (
+            <div key={label} className="rounded-lg border border-white/[0.07] bg-white/[0.025] p-4">
+              <p className="av-eyebrow text-[rgba(var(--gold),0.72)]">{label}</p>
+              <p className="mt-3 text-sm leading-6 text-white/52">{detail}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

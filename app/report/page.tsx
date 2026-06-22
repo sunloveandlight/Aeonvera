@@ -545,6 +545,27 @@ export default function ReportPage() {
           </p>
         </Card>
 
+        <Card title="FAMILY COMPARISON">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-xl font-semibold leading-tight text-white/82">
+                Add a partner or family profile after this baseline.
+              </p>
+              <p className="mt-3 text-sm leading-7 text-white/42">
+                Your first report is the best moment to compare patterns across a
+                spouse, parent, or high-accountability partner without mixing their
+                data into your profile.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button href="/settings">Manage profiles</Button>
+              <Button variant="secondary" href="/pricing">
+                Compare tiers
+              </Button>
+            </div>
+          </div>
+        </Card>
+
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <BioAgeHistoryCard
             history={bioAgeHistory}
