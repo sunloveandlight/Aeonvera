@@ -31,14 +31,33 @@ type UsageLimitsPayload = {
   usage: UsageMeterSnapshot[];
 };
 
+type ConciergeRequest = {
+  id: string;
+  status: string;
+};
+
+type ReferralApplication = {
+  id: string;
+  partnerType: PartnerType;
+  referralCode: string;
+  status: string;
+};
+
+type PartnerType = "physician" | "coach" | "health_creator" | "other";
+
 const PLAN_ORDER = ["core", "elite", "sovereign"];
 
 export default function PlanPage() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [usageLimits, setUsageLimits] = useState<UsageLimitsPayload | null>(null);
+  const [conciergeRequest, setConciergeRequest] = useState<ConciergeRequest | null>(null);
+  const [referralApplication, setReferralApplication] = useState<ReferralApplication | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [openingBilling, setOpeningBilling] = useState(false);
+  const [requestingConcierge, setRequestingConcierge] = useState(false);
+  const [submittingReferral, setSubmittingReferral] = useState(false);
+  const [partnerType, setPartnerType] = useState<PartnerType>("health_creator");
 
   useEffect(() => {
     let cancelled = false;
@@ -57,16 +76,29 @@ export default function PlanPage() {
       }
 
       try {
-        const response = await fetch("/api/usage/limits", { credentials: "include" });
-        const data = await response.json();
+        const [usageResponse, conciergeResponse, referralResponse] = await Promise.all([
+          fetch("/api/usage/limits", { credentials: "include" }),
+          fetch("/api/concierge/onboarding", { credentials: "include" }),
+          fetch("/api/referrals/partner", { credentials: "include" }),
+        ]);
+        const data = await usageResponse.json();
 
-        if (!response.ok) {
+        if (!usageResponse.ok) {
           throw new Error(data.error || "Could not load your plan.");
         }
+
+        const conciergeData = await conciergeResponse.json().catch(() => null);
+        const referralData = await referralResponse.json().catch(() => null);
 
         if (!cancelled) {
           setAuthenticated(true);
           setUsageLimits(data);
+          if (conciergeResponse.ok) {
+            setConciergeRequest(conciergeData?.request || null);
+          }
+          if (referralResponse.ok) {
+            setReferralApplication(referralData?.application || null);
+          }
         }
       } catch (error) {
         if (!cancelled) {
@@ -114,6 +146,65 @@ export default function PlanPage() {
       setMessage(error instanceof Error ? error.message : "Could not open billing.");
     } finally {
       setOpeningBilling(false);
+    }
+  }
+
+  async function requestConcierge() {
+    setRequestingConcierge(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch("/api/concierge/onboarding", {
+        body: JSON.stringify({
+          requestedScope: [
+            "lab_intake",
+            "wearable_setup",
+            "clinician_export",
+            "first_30_day_protocol",
+          ],
+        }),
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not request concierge onboarding.");
+      }
+
+      setConciergeRequest(data.request || null);
+      setMessage("Concierge request submitted. We will follow up with the onboarding path.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not request concierge onboarding.");
+    } finally {
+      setRequestingConcierge(false);
+    }
+  }
+
+  async function applyForReferralCredits() {
+    setSubmittingReferral(true);
+    setMessage(null);
+
+    try {
+      const response = await fetch("/api/referrals/partner", {
+        body: JSON.stringify({ partnerType }),
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Could not submit referral application.");
+      }
+
+      setReferralApplication(data.application || null);
+      setMessage("Referral application submitted. Your provisional code is ready for review.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not submit referral application.");
+    } finally {
+      setSubmittingReferral(false);
     }
   }
 
@@ -202,7 +293,17 @@ export default function PlanPage() {
               ))}
             </section>
 
-            <SovereignRevenuePanel currentPlan={usageLimits?.plan || null} />
+            <SovereignRevenuePanel
+              conciergeRequest={conciergeRequest}
+              currentPlan={usageLimits?.plan || null}
+              partnerType={partnerType}
+              referralApplication={referralApplication}
+              requestingConcierge={requestingConcierge}
+              submittingReferral={submittingReferral}
+              onPartnerTypeChange={setPartnerType}
+              onReferralApply={() => void applyForReferralCredits()}
+              onRequestConcierge={() => void requestConcierge()}
+            />
 
             <section className="grid gap-4 lg:grid-cols-2">
               <FeatureGroup items={included} title="Unlocked now" tone="included" />
@@ -215,7 +316,27 @@ export default function PlanPage() {
   );
 }
 
-function SovereignRevenuePanel({ currentPlan }: { currentPlan: string | null }) {
+function SovereignRevenuePanel({
+  conciergeRequest,
+  currentPlan,
+  onPartnerTypeChange,
+  onReferralApply,
+  onRequestConcierge,
+  partnerType,
+  referralApplication,
+  requestingConcierge,
+  submittingReferral,
+}: {
+  conciergeRequest: ConciergeRequest | null;
+  currentPlan: string | null;
+  onPartnerTypeChange: (value: PartnerType) => void;
+  onReferralApply: () => void;
+  onRequestConcierge: () => void;
+  partnerType: PartnerType;
+  referralApplication: ReferralApplication | null;
+  requestingConcierge: boolean;
+  submittingReferral: boolean;
+}) {
   const isSovereign = currentPlan === "sovereign";
 
   return (
@@ -243,14 +364,21 @@ function SovereignRevenuePanel({ currentPlan }: { currentPlan: string | null }) 
             </div>
           ))}
         </div>
+        {conciergeRequest ? (
+          <p className="mt-5 rounded-md border border-[rgba(var(--gold),0.18)] bg-[rgba(var(--gold),0.06)] px-3 py-2 text-sm text-[rgba(var(--gold),0.82)]">
+            Concierge request: {statusLabel(conciergeRequest.status)}
+          </p>
+        ) : null}
         <div className="mt-5 flex flex-wrap gap-3">
-          <a
-            href="mailto:support@aeonvera.com?subject=Sovereign%20concierge%20onboarding"
-            className="premium-action inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+          <button
+            type="button"
+            onClick={onRequestConcierge}
+            disabled={requestingConcierge}
+            className="premium-action inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-45"
           >
             <Crown size={15} />
-            Request concierge
-          </a>
+            {requestingConcierge ? "Requesting" : "Request concierge"}
+          </button>
           {!isSovereign ? (
             <Link
               href="/pricing"
@@ -273,16 +401,52 @@ function SovereignRevenuePanel({ currentPlan }: { currentPlan: string | null }) 
           Aeonvera. This keeps the program curated while the automated ledger is
           prepared.
         </p>
-        <a
-          href="mailto:support@aeonvera.com?subject=Referral%20partner%20application"
-          className="premium-action-secondary mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
+        {referralApplication ? (
+          <div className="mt-5 rounded-md border border-white/[0.08] bg-white/[0.03] p-3">
+            <p className="text-sm text-white/72">
+              Application: {statusLabel(referralApplication.status)}
+            </p>
+            <p className="av-eyebrow mt-2 text-[rgba(var(--gold),0.72)]">
+              Code {referralApplication.referralCode}
+            </p>
+          </div>
+        ) : (
+          <label className="mt-5 block">
+            <span className="av-eyebrow av-subtle mb-2 block">
+              Partner type
+            </span>
+            <select
+              value={partnerType}
+              onChange={(event) => onPartnerTypeChange(event.target.value as PartnerType)}
+              className="av-field h-11 w-full rounded-md px-3 text-sm"
+            >
+              <option value="health_creator">Health creator</option>
+              <option value="physician">Physician</option>
+              <option value="coach">Coach</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+        )}
+        <button
+          type="button"
+          onClick={onReferralApply}
+          disabled={submittingReferral}
+          className="premium-action-secondary mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-45"
         >
           <Gift size={15} />
-          Apply for credits
-        </a>
+          {submittingReferral
+            ? "Submitting"
+            : referralApplication
+            ? "Submit another channel"
+            : "Apply for credits"}
+        </button>
       </div>
     </section>
   );
+}
+
+function statusLabel(status: string) {
+  return status.replaceAll("_", " ");
 }
 
 function FeatureGroup({
