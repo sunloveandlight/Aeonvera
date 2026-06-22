@@ -32,7 +32,9 @@ type UsageLimitsPayload = {
 };
 
 type ConciergeRequest = {
+  fulfillmentStage?: string;
   id: string;
+  paymentStatus?: string;
   status: string;
 };
 
@@ -125,6 +127,15 @@ export default function PlanPage() {
     [usageLimits]
   );
   const nextPlan = getNextPlan(usageLimits?.plan);
+
+  useEffect(() => {
+    const conciergeResult = new URLSearchParams(window.location.search).get("concierge");
+    if (conciergeResult === "cancelled") {
+      window.setTimeout(() => {
+        setMessage("Concierge checkout was cancelled. Your request is saved, and you can restart payment when ready.");
+      }, 0);
+    }
+  }, []);
 
   async function openBilling() {
     setOpeningBilling(true);
@@ -372,6 +383,8 @@ function SovereignRevenuePanel({
         {conciergeRequest ? (
           <p className="mt-5 rounded-md border border-[rgba(var(--gold),0.18)] bg-[rgba(var(--gold),0.06)] px-3 py-2 text-sm text-[rgba(var(--gold),0.82)]">
             Concierge request: {statusLabel(conciergeRequest.status)}
+            {conciergeRequest.paymentStatus ? ` / ${statusLabel(conciergeRequest.paymentStatus)}` : ""}
+            {conciergeRequest.fulfillmentStage ? ` / ${statusLabel(conciergeRequest.fulfillmentStage)}` : ""}
           </p>
         ) : null}
         <div className="mt-5 flex flex-wrap gap-3">
@@ -451,7 +464,9 @@ function SovereignRevenuePanel({
 }
 
 function statusLabel(status: string) {
-  return status.replaceAll("_", " ");
+  return status
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function FeatureGroup({

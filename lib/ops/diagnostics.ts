@@ -44,10 +44,18 @@ type StripeEventRow = {
 type ConciergeRequestRow = {
   contact_email: string | null;
   created_at: string | null;
+  fulfillment_checklist: ConciergeChecklistItem[] | null;
+  fulfillment_stage: string | null;
   id: string;
   payment_status: string | null;
   requested_scope: string[] | null;
   status: string | null;
+};
+
+type ConciergeChecklistItem = {
+  key?: string | null;
+  label?: string | null;
+  status?: string | null;
 };
 
 type ReferralApplicationRow = {
@@ -79,8 +87,14 @@ export type WorkspaceDiagnostics = {
   }>;
   revenue: {
     concierge: Array<{
+      checklist: Array<{
+        key: string;
+        label: string;
+        status: string;
+      }>;
       contactEmail: string;
       createdAt: string | null;
+      fulfillmentStage: string;
       id: string;
       paymentStatus: string;
       scopeCount: number;
@@ -204,7 +218,7 @@ export async function getWorkspaceDiagnostics({
   const [conciergeRequests, referralApplications] = await Promise.all([
     supabase
       .from("concierge_onboarding_requests")
-      .select("id,contact_email,status,payment_status,requested_scope,created_at")
+      .select("id,contact_email,status,payment_status,fulfillment_stage,fulfillment_checklist,requested_scope,created_at")
       .eq("workspace_id", workspace.id)
       .order("created_at", { ascending: false })
       .limit(10)
@@ -255,8 +269,10 @@ export async function getWorkspaceDiagnostics({
     profiles: profileSummaries,
     revenue: {
       concierge: (conciergeRequests.data || []).map((request) => ({
+        checklist: normalizeChecklist(request.fulfillment_checklist),
         contactEmail: request.contact_email || "Unknown",
         createdAt: request.created_at,
+        fulfillmentStage: request.fulfillment_stage || "intake_pending",
         id: request.id,
         paymentStatus: request.payment_status || "not_started",
         scopeCount: request.requested_scope?.length || 0,
@@ -290,4 +306,16 @@ export async function getWorkspaceDiagnostics({
       updatedAt: workspace.updated_at,
     },
   };
+}
+
+function normalizeChecklist(items: ConciergeChecklistItem[] | null) {
+  if (!Array.isArray(items)) return [];
+
+  return items
+    .map((item) => ({
+      key: item.key || item.label || "step",
+      label: item.label || item.key || "Concierge step",
+      status: item.status || "pending",
+    }))
+    .slice(0, 8);
 }

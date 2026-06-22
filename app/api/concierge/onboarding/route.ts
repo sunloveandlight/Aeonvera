@@ -10,6 +10,8 @@ import { sendCoachEmail } from "@/lib/notifications/email";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type ConciergeRequestRow = {
+  fulfillment_checklist?: ConciergeChecklistItem[] | null;
+  fulfillment_stage?: string | null;
   id: string;
   status: string;
   package_tier: string;
@@ -17,6 +19,12 @@ type ConciergeRequestRow = {
   payment_status?: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type ConciergeChecklistItem = {
+  key: string;
+  label: string;
+  status: string;
 };
 
 const DEFAULT_SCOPE = [
@@ -34,7 +42,7 @@ export async function GET() {
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
       .from("concierge_onboarding_requests")
-      .select("id, status, package_tier, requested_scope, payment_status, created_at, updated_at")
+      .select("id, status, package_tier, requested_scope, payment_status, fulfillment_stage, fulfillment_checklist, created_at, updated_at")
       .eq("user_id", auth.user.id)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -81,7 +89,7 @@ export async function POST(request: NextRequest) {
         user_id: auth.user.id,
         workspace_id: workspaceId,
       })
-      .select("id, status, package_tier, requested_scope, payment_status, created_at, updated_at")
+      .select("id, status, package_tier, requested_scope, payment_status, fulfillment_stage, fulfillment_checklist, created_at, updated_at")
       .single();
 
     if (error) throw error;
@@ -153,7 +161,7 @@ async function createConciergeCheckout({
       user_id: userId,
     },
     mode: "payment",
-    success_url: `${siteUrl}/plan?concierge=success`,
+    success_url: `${siteUrl}/concierge/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${siteUrl}/plan?concierge=cancelled`,
   });
 
@@ -276,6 +284,8 @@ function sanitizeScope(value: unknown) {
 function serializeConciergeRequest(row: ConciergeRequestRow) {
   return {
     createdAt: row.created_at,
+    fulfillmentChecklist: row.fulfillment_checklist || [],
+    fulfillmentStage: row.fulfillment_stage || "intake_pending",
     id: row.id,
     packageTier: row.package_tier,
     paymentStatus: row.payment_status || "not_started",

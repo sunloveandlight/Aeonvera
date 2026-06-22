@@ -120,8 +120,23 @@ export default async function OpsPage() {
                         </StatusPill>
                       </div>
                       <p className="av-control-muted mt-3 text-xs capitalize">
-                        {titleize(request.status)}
+                        {titleize(request.status)} / {titleize(request.fulfillmentStage)}
                       </p>
+                      {request.checklist.length > 0 ? (
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                          {request.checklist.map((item) => (
+                            <div
+                              key={`${request.id}-${item.key}`}
+                              className="flex min-w-0 items-center justify-between gap-2 rounded-md border border-white/[0.06] bg-white/[0.025] px-3 py-2"
+                            >
+                              <span className="truncate text-xs text-white/56">{item.label}</span>
+                              <span className="shrink-0 text-[0.62rem] uppercase tracking-[0.12em] text-white/34">
+                                {titleize(item.status)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   ))
                 ) : (
@@ -341,5 +356,7 @@ function StatusPill({
 }
 
 function titleize(value: string) {
-  return value.replaceAll("_", " ");
+  return value
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }

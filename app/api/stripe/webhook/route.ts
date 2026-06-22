@@ -5,6 +5,7 @@ import {
   getUserIdForStripeCustomer,
   syncUserSubscriptionState,
 } from "@/lib/billing/subscriptionSync";
+import { sendCoachEmail } from "@/lib/notifications/email";
 import type { Plan } from "@/lib/auth/permissions";
 
 function getStripe() {
@@ -122,9 +123,10 @@ export async function POST(req: NextRequest) {
         const metadataPlan = normalizePlan(session.metadata?.plan);
 
         if (checkoutKind === "sovereign_concierge" && conciergeRequestId && userId) {
-          const { error: conciergeError } = await supabase
+          const { data: conciergeRequest, error: conciergeError } = await supabase
             .from("concierge_onboarding_requests")
             .update({
+              fulfillment_stage: "kickoff_scheduled",
               paid_at: new Date().toISOString(),
               payment_status: "paid",
               status: "reviewing",
@@ -135,9 +137,24 @@ export async function POST(req: NextRequest) {
                   : session.payment_intent?.id || null,
             })
             .eq("id", conciergeRequestId)
-            .eq("user_id", userId);
+            .eq("user_id", userId)
+            .select("id,contact_email,fulfillment_stage,paid_at")
+            .single<{
+              contact_email: string | null;
+              fulfillment_stage: string | null;
+              id: string;
+              paid_at: string | null;
+            }>();
 
           if (conciergeError) throw conciergeError;
+
+          await sendConciergePaidEmails({
+            contactEmail: conciergeRequest?.contact_email || session.customer_details?.email || null,
+            paidAt: conciergeRequest?.paid_at || null,
+            requestId: conciergeRequestId,
+            sessionId: session.id,
+            userId,
+          });
           break;
         }
 
@@ -309,4 +326,83 @@ function getCustomerId(
   customer: string | Stripe.Customer | Stripe.DeletedCustomer | null
 ) {
   return typeof customer === "string" ? customer : customer?.id || null;
+}
+
+async function sendConciergePaidEmails({
+  contactEmail,
+  paidAt,
+  requestId,
+  sessionId,
+  userId,
+}: {
+  contactEmail: string | null;
+  paidAt: string | null;
+  requestId: string;
+  sessionId: string;
+  userId: string;
+}) {
+  const paidLine = paidAt ? `Paid at: ${paidAt}` : "Paid at: recorded";
+  const opsText = [
+    "Sovereign Concierge Onboarding was paid.",
+    `Request: ${requestId}`,
+    `User: ${userId}`,
+    `Stripe session: ${sessionId}`,
+    paidLine,
+    "Fulfillment stage: kickoff_scheduled",
+  ].join("\n");
+
+  const opsResult = await sendCoachEmail({
+    html: `<pre style="font-family:ui-monospace,Menlo,monospace;white-space:pre-wrap">${escapeHtml(opsText)}</pre>`,
+    subject: "Sovereign concierge payment received",
+    text: opsText,
+    to: process.env.OPS_ALERT_EMAIL || "info@aeonvera.com",
+  });
+
+  if (opsResult.status !== "sent") {
+    console.warn("Concierge paid ops email skipped:", opsResult.error);
+  }
+
+  if (!contactEmail) return;
+
+  const customerText = [
+    "Your Sovereign Concierge Onboarding payment has been received.",
+    "",
+    "What happens next:",
+    "1. We review your workspace and current data sources.",
+    "2. We schedule the concierge kickoff.",
+    "3. We prepare your lab, wearable, clinician export, and first 30-day protocol workflow.",
+    "",
+    "You can return to Aeonvera to see the concierge status from your plan page.",
+  ].join("\n");
+
+  const customerResult = await sendCoachEmail({
+    html: `
+      <div style="font-family:Inter,Arial,sans-serif;line-height:1.6;color:#141414">
+        <h1 style="font-size:22px;margin:0 0 16px">Sovereign Concierge payment received</h1>
+        <p>Your Sovereign Concierge Onboarding payment has been received.</p>
+        <p><strong>What happens next:</strong></p>
+        <ol>
+          <li>We review your workspace and current data sources.</li>
+          <li>We schedule the concierge kickoff.</li>
+          <li>We prepare your lab, wearable, clinician export, and first 30-day protocol workflow.</li>
+        </ol>
+        <p>You can return to Aeonvera to see the concierge status from your plan page.</p>
+      </div>
+    `,
+    subject: "Your Sovereign Concierge onboarding is underway",
+    text: customerText,
+    to: contactEmail,
+  });
+
+  if (customerResult.status !== "sent") {
+    console.warn("Concierge paid customer email skipped:", customerResult.error);
+  }
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
