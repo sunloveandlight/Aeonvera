@@ -46,6 +46,7 @@ export async function proxy(req: NextRequest) {
   const isAuthPage = pathname.startsWith("/login");
   const isProtected =
     pathname.startsWith("/companion") ||
+    pathname.startsWith("/concierge") ||
     pathname.startsWith("/data-sources") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/digital-twin") ||
@@ -76,6 +77,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/companion/:path*",
+    "/concierge/:path*",
     "/data-sources/:path*",
     "/digital-twin/:path*",
     "/life-autopilot/:path*",

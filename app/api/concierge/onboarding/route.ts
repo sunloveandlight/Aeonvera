@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import {
   getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { sendCoachEmail } from "@/lib/notifications/email";
-import { rateLimitRequest } from "@/lib/security/rateLimit";
+import { checkRateLimit, rateLimitRequest } from "@/lib/security/rateLimit";
 
 type ConciergeRequestRow = {
   fulfillment_checklist?: ConciergeChecklistItem[] | null;
@@ -69,6 +70,22 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     const admin = getSupabaseAdmin();
+    const userLimit = await checkRateLimit({
+      key: `concierge-onboarding-request:user:${auth.user.id}`,
+      label: "This concierge request",
+      limit: 3,
+      windowMs: 60_000,
+    });
+    if (userLimit) return userLimit;
+
+    const entitlement = await requireServerFeatureAccess({
+      feature: "concierge_intelligence",
+      lockedMessage: "Sovereign Concierge Onboarding requires an active Sovereign plan.",
+      supabase: admin,
+      userId: auth.user.id,
+    });
+    if (!entitlement.allowed) return entitlement.response;
+
     const healthProfileContext = await resolveActiveHealthProfileContext({
       supabase: admin,
       loginUserId: auth.user.id,
@@ -142,7 +159,9 @@ async function createConciergeCheckout({
   const secretKey = process.env.STRIPE_SECRET_KEY;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
-  if (!priceId || !secretKey || !siteUrl) return null;
+  if (!priceId || !secretKey || !siteUrl) {
+    throw new Error("Sovereign Concierge Checkout is not configured.");
+  }
 
   const stripe = new Stripe(secretKey, { apiVersion: "2026-05-27.dahlia" });
   const customerId = await getOrCreateStripeCustomer({

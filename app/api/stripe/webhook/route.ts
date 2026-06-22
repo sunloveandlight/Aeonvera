@@ -8,6 +8,9 @@ import {
 import { sendCoachEmail } from "@/lib/notifications/email";
 import type { Plan } from "@/lib/auth/permissions";
 
+const CONCIERGE_AMOUNT_CENTS = 500_000;
+const CONCIERGE_CURRENCY = "usd";
+
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
 
@@ -123,13 +126,53 @@ export async function POST(req: NextRequest) {
         const metadataPlan = normalizePlan(session.metadata?.plan);
 
         if (checkoutKind === "sovereign_concierge" && conciergeRequestId && userId) {
+          await assertPaidConciergeCheckout({ session, stripe });
+
+          const { data: existingRequest, error: existingRequestError } = await supabase
+            .from("concierge_onboarding_requests")
+            .select("id,contact_email,fulfillment_stage,paid_at,payment_status,status,stripe_checkout_session_id")
+            .eq("id", conciergeRequestId)
+            .eq("user_id", userId)
+            .single<{
+              contact_email: string | null;
+              fulfillment_stage: string | null;
+              id: string;
+              paid_at: string | null;
+              payment_status: string | null;
+              status: string | null;
+              stripe_checkout_session_id: string | null;
+            }>();
+
+          if (existingRequestError) throw existingRequestError;
+
+          if (
+            existingRequest.stripe_checkout_session_id &&
+            existingRequest.stripe_checkout_session_id !== session.id
+          ) {
+            throw new Error("Concierge checkout session does not match request.");
+          }
+
+          if (existingRequest.payment_status === "paid") {
+            break;
+          }
+
+          const nextFulfillmentStage =
+            existingRequest.fulfillment_stage === "intake_pending" ||
+            !existingRequest.fulfillment_stage
+              ? "kickoff_scheduled"
+              : existingRequest.fulfillment_stage;
+          const nextStatus =
+            existingRequest.status === "requested" || !existingRequest.status
+              ? "reviewing"
+              : existingRequest.status;
+
           const { data: conciergeRequest, error: conciergeError } = await supabase
             .from("concierge_onboarding_requests")
             .update({
-              fulfillment_stage: "kickoff_scheduled",
+              fulfillment_stage: nextFulfillmentStage,
               paid_at: new Date().toISOString(),
               payment_status: "paid",
-              status: "reviewing",
+              status: nextStatus,
               stripe_checkout_session_id: session.id,
               stripe_payment_intent_id:
                 typeof session.payment_intent === "string"
@@ -396,6 +439,45 @@ async function sendConciergePaidEmails({
 
   if (customerResult.status !== "sent") {
     console.warn("Concierge paid customer email skipped:", customerResult.error);
+  }
+}
+
+async function assertPaidConciergeCheckout({
+  session,
+  stripe,
+}: {
+  session: Stripe.Checkout.Session;
+  stripe: Stripe;
+}) {
+  const priceId = process.env.STRIPE_SOVEREIGN_CONCIERGE_PRICE_ID;
+
+  if (!priceId) {
+    throw new Error("Missing STRIPE_SOVEREIGN_CONCIERGE_PRICE_ID");
+  }
+
+  if (session.mode !== "payment") {
+    throw new Error("Concierge checkout session was not a one-time payment.");
+  }
+
+  if (session.payment_status !== "paid") {
+    throw new Error("Concierge checkout session is not paid.");
+  }
+
+  if (session.currency !== CONCIERGE_CURRENCY) {
+    throw new Error("Concierge checkout currency mismatch.");
+  }
+
+  if (session.amount_total !== CONCIERGE_AMOUNT_CENTS) {
+    throw new Error("Concierge checkout amount mismatch.");
+  }
+
+  const lineItems = await stripe.checkout.sessions.listLineItems(session.id, {
+    limit: 10,
+  });
+  const hasExpectedPrice = lineItems.data.some((item) => item.price?.id === priceId);
+
+  if (!hasExpectedPrice) {
+    throw new Error("Concierge checkout price mismatch.");
   }
 }
 

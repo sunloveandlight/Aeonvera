@@ -137,7 +137,8 @@
 
 html,
 body {
-  height: 100%;
+  height: auto;
+  min-height: 100%;
   overflow-x: hidden;
   background: var(--background);
   color: var(--ink);

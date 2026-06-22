@@ -23,6 +23,7 @@ export default function robots(): MetadataRoute.Robots {
         "/physician-export",
         "/onboarding",
         "/success",
+        "/concierge",
         "/care-network/",
         "/physician-share/",
         "/future-self/",
