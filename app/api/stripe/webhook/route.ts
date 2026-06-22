@@ -117,7 +117,29 @@ export async function POST(req: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
 
         const userId = session.metadata?.user_id;
+        const conciergeRequestId = session.metadata?.concierge_request_id;
+        const checkoutKind = session.metadata?.kind;
         const metadataPlan = normalizePlan(session.metadata?.plan);
+
+        if (checkoutKind === "sovereign_concierge" && conciergeRequestId && userId) {
+          const { error: conciergeError } = await supabase
+            .from("concierge_onboarding_requests")
+            .update({
+              paid_at: new Date().toISOString(),
+              payment_status: "paid",
+              status: "reviewing",
+              stripe_checkout_session_id: session.id,
+              stripe_payment_intent_id:
+                typeof session.payment_intent === "string"
+                  ? session.payment_intent
+                  : session.payment_intent?.id || null,
+            })
+            .eq("id", conciergeRequestId)
+            .eq("user_id", userId);
+
+          if (conciergeError) throw conciergeError;
+          break;
+        }
 
         const subscriptionId =
           typeof session.subscription === "string"

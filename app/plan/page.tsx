@@ -174,6 +174,11 @@ export default function PlanPage() {
       }
 
       setConciergeRequest(data.request || null);
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
       setMessage("Concierge request submitted. We will follow up with the onboarding path.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not request concierge onboarding.");
@@ -354,7 +359,7 @@ function SovereignRevenuePanel({
             </p>
           </div>
           <span className="premium-status-neutral inline-flex h-10 shrink-0 items-center rounded-md px-3 text-xs text-white/72">
-            From $2,500
+            $5,000
           </span>
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-4">

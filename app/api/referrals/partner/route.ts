@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { sendCoachEmail } from "@/lib/notifications/email";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type PartnerType = "physician" | "coach" | "health_creator" | "other";
@@ -75,13 +76,47 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) throw error;
+    const application = data as ReferralApplicationRow;
+
+    await sendOpsAlert({
+      subject: "New referral partner application",
+      text: [
+        "A referral partner application was submitted.",
+        `Application: ${application.id}`,
+        `User: ${auth.user.id}`,
+        `Email: ${contactEmail || "unknown"}`,
+        `Workspace: ${workspaceId || "none"}`,
+        `Partner type: ${application.partner_type}`,
+        `Referral code: ${application.referral_code}`,
+      ].join("\n"),
+    });
 
     return NextResponse.json({
-      application: serializeReferralApplication(data as ReferralApplicationRow),
+      application: serializeReferralApplication(application),
     });
   } catch (error) {
     console.error("Could not create referral application:", error);
     return NextResponse.json({ error: "Could not create referral application." }, { status: 500 });
+  }
+}
+
+async function sendOpsAlert({
+  subject,
+  text,
+}: {
+  subject: string;
+  text: string;
+}) {
+  const to = process.env.OPS_ALERT_EMAIL || "info@aeonvera.com";
+  const result = await sendCoachEmail({
+    html: `<pre style="font-family:ui-monospace,Menlo,monospace;white-space:pre-wrap">${escapeHtml(text)}</pre>`,
+    subject,
+    text,
+    to,
+  });
+
+  if (result.status !== "sent") {
+    console.warn("Ops alert email skipped:", result.error);
   }
 }
 
@@ -144,4 +179,12 @@ function serializeReferralApplication(row: ReferralApplicationRow) {
     status: row.status,
     updatedAt: row.updated_at,
   };
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }

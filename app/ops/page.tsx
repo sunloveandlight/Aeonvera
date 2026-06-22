@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Activity, CreditCard, Database, ShieldCheck, UsersRound } from "lucide-react";
+import { Activity, CreditCard, Database, Gift, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 
 import Page from "@/components/ui/Page";
 import PageContainer from "@/components/ui/PageContainer";
@@ -91,6 +91,80 @@ export default async function OpsPage() {
               detail={`${diagnostics.env.filter((item) => item.configured).length} of ${diagnostics.env.length} configured`}
               healthy={envReady}
             />
+          </div>
+
+          <div className="mt-5 grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+            <section className="executive-panel rounded-lg p-6 md:p-7">
+              <div className="mb-6 flex items-start justify-between gap-5 border-b border-white/[0.06] pb-5">
+                <div>
+                  <p className="micro-label">Concierge</p>
+                  <h2 className="mt-3 text-3xl font-semibold text-white">
+                    Paid onboarding.
+                  </h2>
+                </div>
+                <Sparkles className="shrink-0 royal-text" size={23} />
+              </div>
+              <div className="space-y-3">
+                {diagnostics.revenue.concierge.length > 0 ? (
+                  diagnostics.revenue.concierge.map((request) => (
+                    <div key={request.id} className="av-control-card rounded-lg border p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm">{request.contactEmail}</p>
+                          <p className="av-control-muted mt-1 text-xs">
+                            {formatDate(request.createdAt)} / {request.scopeCount} setup tracks
+                          </p>
+                        </div>
+                        <StatusPill tone={isPositiveStatus(request.paymentStatus) ? "ok" : "warn"}>
+                          {titleize(request.paymentStatus)}
+                        </StatusPill>
+                      </div>
+                      <p className="av-control-muted mt-3 text-xs capitalize">
+                        {titleize(request.status)}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <EmptyState label="No concierge requests yet." />
+                )}
+              </div>
+            </section>
+
+            <section className="executive-panel rounded-lg p-6 md:p-7">
+              <div className="mb-6 flex items-start justify-between gap-5 border-b border-white/[0.06] pb-5">
+                <div>
+                  <p className="micro-label">Referral Credits</p>
+                  <h2 className="mt-3 text-3xl font-semibold text-white">
+                    Partner pipeline.
+                  </h2>
+                </div>
+                <Gift className="shrink-0 royal-text" size={23} />
+              </div>
+              <div className="space-y-3">
+                {diagnostics.revenue.referrals.length > 0 ? (
+                  diagnostics.revenue.referrals.map((application) => (
+                    <div key={application.id} className="av-control-card rounded-lg border p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm">{application.contactEmail}</p>
+                          <p className="av-control-muted mt-1 text-xs capitalize">
+                            {titleize(application.partnerType)} / {formatDate(application.createdAt)}
+                          </p>
+                        </div>
+                        <StatusPill tone={isPositiveStatus(application.status) ? "ok" : "warn"}>
+                          {titleize(application.status)}
+                        </StatusPill>
+                      </div>
+                      <p className="av-control-muted mt-3 truncate text-xs">
+                        {application.referralCode}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <EmptyState label="No referral applications yet." />
+                )}
+              </div>
+            </section>
           </div>
 
           <div className="mt-5 grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
@@ -221,6 +295,31 @@ function BooleanRow({ label, value }: { label: string; value: boolean }) {
   );
 }
 
+function EmptyState({ label }: { label: string }) {
+  return (
+    <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-4 text-sm text-white/42">
+      {label}
+    </div>
+  );
+}
+
+function formatDate(value: string | null) {
+  if (!value) {
+    return "Unknown";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    month: "short",
+  }).format(new Date(value));
+}
+
+function isPositiveStatus(status: string) {
+  return ["approved", "completed", "paid", "scheduled"].includes(status);
+}
+
 function StatusPill({
   children,
   tone,
@@ -239,4 +338,8 @@ function StatusPill({
       {children}
     </span>
   );
+}
+
+function titleize(value: string) {
+  return value.replaceAll("_", " ");
 }

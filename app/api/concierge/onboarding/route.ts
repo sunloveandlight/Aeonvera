@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import Stripe from "stripe";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import {
   getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { sendCoachEmail } from "@/lib/notifications/email";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type ConciergeRequestRow = {
@@ -12,6 +14,7 @@ type ConciergeRequestRow = {
   status: string;
   package_tier: string;
   requested_scope: string[];
+  payment_status?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -31,7 +34,7 @@ export async function GET() {
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
       .from("concierge_onboarding_requests")
-      .select("id, status, package_tier, requested_scope, created_at, updated_at")
+      .select("id, status, package_tier, requested_scope, payment_status, created_at, updated_at")
       .eq("user_id", auth.user.id)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -78,17 +81,143 @@ export async function POST(request: NextRequest) {
         user_id: auth.user.id,
         workspace_id: workspaceId,
       })
-      .select("id, status, package_tier, requested_scope, created_at, updated_at")
+      .select("id, status, package_tier, requested_scope, payment_status, created_at, updated_at")
       .single();
 
     if (error) throw error;
+    const conciergeRequest = data as ConciergeRequestRow;
+    const checkoutUrl = await createConciergeCheckout({
+      admin,
+      contactEmail,
+      requestId: conciergeRequest.id,
+      userEmail: auth.user.email || contactEmail || undefined,
+      userId: auth.user.id,
+    });
+
+    await sendOpsAlert({
+      subject: "New Sovereign concierge request",
+      text: [
+        "A Sovereign concierge onboarding request was created.",
+        `Request: ${conciergeRequest.id}`,
+        `User: ${auth.user.id}`,
+        `Email: ${contactEmail || "unknown"}`,
+        `Workspace: ${workspaceId || "none"}`,
+        `Health profile: ${healthProfileContext.healthProfileId || "none"}`,
+        `Payment: ${checkoutUrl ? "checkout_started" : "not_started"}`,
+      ].join("\n"),
+    });
 
     return NextResponse.json({
-      request: serializeConciergeRequest(data as ConciergeRequestRow),
+      checkoutUrl,
+      request: serializeConciergeRequest(conciergeRequest),
     });
   } catch (error) {
     console.error("Could not create concierge request:", error);
     return NextResponse.json({ error: "Could not create concierge request." }, { status: 500 });
+  }
+}
+
+async function createConciergeCheckout({
+  admin,
+  contactEmail,
+  requestId,
+  userEmail,
+  userId,
+}: {
+  admin: ReturnType<typeof getSupabaseAdmin>;
+  contactEmail: string | null;
+  requestId: string;
+  userEmail?: string;
+  userId: string;
+}) {
+  const priceId = process.env.STRIPE_SOVEREIGN_CONCIERGE_PRICE_ID;
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+  if (!priceId || !secretKey || !siteUrl) return null;
+
+  const stripe = new Stripe(secretKey, { apiVersion: "2026-05-27.dahlia" });
+  const customerId = await getOrCreateStripeCustomer({
+    admin,
+    email: userEmail || contactEmail || undefined,
+    userId,
+    stripe,
+  });
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    line_items: [{ price: priceId, quantity: 1 }],
+    metadata: {
+      concierge_request_id: requestId,
+      kind: "sovereign_concierge",
+      user_id: userId,
+    },
+    mode: "payment",
+    success_url: `${siteUrl}/plan?concierge=success`,
+    cancel_url: `${siteUrl}/plan?concierge=cancelled`,
+  });
+
+  await admin
+    .from("concierge_onboarding_requests")
+    .update({
+      payment_status: "checkout_started",
+      stripe_checkout_session_id: session.id,
+    })
+    .eq("id", requestId)
+    .eq("user_id", userId);
+
+  return session.url;
+}
+
+async function getOrCreateStripeCustomer({
+  admin,
+  email,
+  stripe,
+  userId,
+}: {
+  admin: ReturnType<typeof getSupabaseAdmin>;
+  email?: string;
+  stripe: Stripe;
+  userId: string;
+}) {
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("stripe_customer_id")
+    .eq("user_id", userId)
+    .maybeSingle<{ stripe_customer_id: string | null }>();
+
+  if (profile?.stripe_customer_id) return profile.stripe_customer_id;
+
+  const customer = await stripe.customers.create({
+    email,
+    metadata: { user_id: userId },
+  });
+
+  await admin
+    .from("profiles")
+    .update({ stripe_customer_id: customer.id })
+    .eq("user_id", userId);
+
+  return customer.id;
+}
+
+async function sendOpsAlert({
+  subject,
+  text,
+}: {
+  subject: string;
+  text: string;
+}) {
+  const to = process.env.OPS_ALERT_EMAIL || "info@aeonvera.com";
+  const result = await sendCoachEmail({
+    html: `<pre style="font-family:ui-monospace,Menlo,monospace;white-space:pre-wrap">${escapeHtml(text)}</pre>`,
+    subject,
+    text,
+    to,
+  });
+
+  if (result.status !== "sent") {
+    console.warn("Ops alert email skipped:", result.error);
   }
 }
 
@@ -149,8 +278,17 @@ function serializeConciergeRequest(row: ConciergeRequestRow) {
     createdAt: row.created_at,
     id: row.id,
     packageTier: row.package_tier,
+    paymentStatus: row.payment_status || "not_started",
     requestedScope: row.requested_scope,
     status: row.status,
     updatedAt: row.updated_at,
   };
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }

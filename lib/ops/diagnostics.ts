@@ -41,6 +41,24 @@ type StripeEventRow = {
   created_at?: string | null;
 };
 
+type ConciergeRequestRow = {
+  contact_email: string | null;
+  created_at: string | null;
+  id: string;
+  payment_status: string | null;
+  requested_scope: string[] | null;
+  status: string | null;
+};
+
+type ReferralApplicationRow = {
+  contact_email: string | null;
+  created_at: string | null;
+  id: string;
+  partner_type: string | null;
+  referral_code: string | null;
+  status: string | null;
+};
+
 export type WorkspaceDiagnostics = {
   currentUserRole: string;
   env: Array<{ configured: boolean; name: string }>;
@@ -59,6 +77,24 @@ export type WorkspaceDiagnostics = {
     relationship: string;
     status: string;
   }>;
+  revenue: {
+    concierge: Array<{
+      contactEmail: string;
+      createdAt: string | null;
+      id: string;
+      paymentStatus: string;
+      scopeCount: number;
+      status: string;
+    }>;
+    referrals: Array<{
+      contactEmail: string;
+      createdAt: string | null;
+      id: string;
+      partnerType: string;
+      referralCode: string;
+      status: string;
+    }>;
+  };
   stripe: {
     customerLinked: boolean;
     latestEventId: string | null;
@@ -88,10 +124,12 @@ const REQUIRED_ENV = [
   "STRIPE_CORE_PRICE_ID",
   "STRIPE_ELITE_PRICE_ID",
   "STRIPE_SOVEREIGN_PRICE_ID",
+  "STRIPE_SOVEREIGN_CONCIERGE_PRICE_ID",
   "NEXT_PUBLIC_SITE_URL",
   "CRON_SECRET",
   "OPENAI_API_KEY",
   "RESEND_API_KEY",
+  "OPS_ALERT_EMAIL",
   "VAPID_PUBLIC_KEY",
   "VAPID_PRIVATE_KEY",
 ] as const;
@@ -163,6 +201,31 @@ export async function getWorkspaceDiagnostics({
     .limit(10)
     .returns<StripeEventRow[]>();
 
+  const [conciergeRequests, referralApplications] = await Promise.all([
+    supabase
+      .from("concierge_onboarding_requests")
+      .select("id,contact_email,status,payment_status,requested_scope,created_at")
+      .eq("workspace_id", workspace.id)
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .returns<ConciergeRequestRow[]>(),
+    supabase
+      .from("referral_partner_applications")
+      .select("id,contact_email,partner_type,referral_code,status,created_at")
+      .eq("workspace_id", workspace.id)
+      .order("created_at", { ascending: false })
+      .limit(10)
+      .returns<ReferralApplicationRow[]>(),
+  ]);
+
+  if (conciergeRequests.error) {
+    throw conciergeRequests.error;
+  }
+
+  if (referralApplications.error) {
+    throw referralApplications.error;
+  }
+
   const profileSummaries = (profiles || []).map((profile) => {
     const active = profile.status === "active";
     return {
@@ -190,6 +253,24 @@ export async function getWorkspaceDiagnostics({
       plan: planId,
     })),
     profiles: profileSummaries,
+    revenue: {
+      concierge: (conciergeRequests.data || []).map((request) => ({
+        contactEmail: request.contact_email || "Unknown",
+        createdAt: request.created_at,
+        id: request.id,
+        paymentStatus: request.payment_status || "not_started",
+        scopeCount: request.requested_scope?.length || 0,
+        status: request.status || "unknown",
+      })),
+      referrals: (referralApplications.data || []).map((application) => ({
+        contactEmail: application.contact_email || "Unknown",
+        createdAt: application.created_at,
+        id: application.id,
+        partnerType: application.partner_type || "unknown",
+        referralCode: application.referral_code || "pending",
+        status: application.status || "unknown",
+      })),
+    },
     stripe: {
       customerLinked: Boolean(workspace.stripe_customer_id),
       latestEventId: stripeEvents.data?.[0]?.id || null,
