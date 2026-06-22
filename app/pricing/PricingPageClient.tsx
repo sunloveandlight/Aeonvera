@@ -293,7 +293,7 @@ export default function PricingPage() {
         throw new Error(data.error || "Could not open billing management.");
       }
 
-      window.location.assign(data.url);
+      await leaveForStripe(data.url);
     } catch (err) {
       console.error(err);
       setCheckoutMessage(
@@ -324,7 +324,7 @@ export default function PricingPage() {
         throw new Error(data.error || "Checkout failed");
       }
 
-      window.location.assign(data.url);
+      await leaveForStripe(data.url);
     } catch (err) {
       console.error(err);
       setCheckoutMessage(
@@ -461,4 +461,10 @@ export default function PricingPage() {
       </section>
     </div>
   );
+}
+
+async function leaveForStripe(url: string) {
+  window.__aeonveraExternalNavigation = true;
+  await supabase.auth.stopAutoRefresh().catch(() => undefined);
+  window.location.assign(url);
 }

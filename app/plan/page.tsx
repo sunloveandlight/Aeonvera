@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowRight, Check, Crown, Gift, LockKeyhole, Settings } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState from "@/components/ui/AccessState";
-import { supabase } from "@/lib/supabase/client";
 
 type UsageMeterSnapshot = {
   allowed: boolean;
@@ -65,30 +64,26 @@ export default function PlanPage() {
     let cancelled = false;
 
     async function loadPlan() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        if (!cancelled) {
-          setAuthenticated(false);
-          setLoading(false);
-        }
-        return;
-      }
-
       try {
-        const [usageResponse, conciergeResponse, referralResponse] = await Promise.all([
-          fetch("/api/usage/limits", { credentials: "include" }),
-          fetch("/api/concierge/onboarding", { credentials: "include" }),
-          fetch("/api/referrals/partner", { credentials: "include" }),
-        ]);
+        const usageResponse = await fetch("/api/usage/limits", { credentials: "include" });
         const data = await usageResponse.json();
+
+        if (usageResponse.status === 401) {
+          if (!cancelled) {
+            setAuthenticated(false);
+            setLoading(false);
+          }
+          return;
+        }
 
         if (!usageResponse.ok) {
           throw new Error(data.error || "Could not load your plan.");
         }
 
+        const [conciergeResponse, referralResponse] = await Promise.all([
+          fetch("/api/concierge/onboarding", { credentials: "include" }),
+          fetch("/api/referrals/partner", { credentials: "include" }),
+        ]);
         const conciergeData = await conciergeResponse.json().catch(() => null);
         const referralData = await referralResponse.json().catch(() => null);
 
@@ -152,7 +147,7 @@ export default function PlanPage() {
         throw new Error(data.error || "Could not open billing.");
       }
 
-      window.location.href = data.url;
+      await leaveForStripe(data.url);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not open billing.");
     } finally {
@@ -186,7 +181,7 @@ export default function PlanPage() {
 
       setConciergeRequest(data.request || null);
       if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+        await leaveForStripe(data.checkoutUrl);
         return;
       }
 
@@ -542,4 +537,9 @@ function usageMeterLabel(meter: string) {
   if (meter === "optimization_protocol") return "Protocols";
   if (meter === "lab_import") return "Lab imports";
   return meter.replaceAll("_", " ");
+}
+
+async function leaveForStripe(url: string) {
+  window.__aeonveraExternalNavigation = true;
+  window.location.href = url;
 }

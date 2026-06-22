@@ -6,6 +6,7 @@ import { useDesignAudit } from "@/lib/audit/useDesignAudit";
 import { useDesignOverlay } from "@/lib/design/useDesignOverlay";
 import DesignOverlayToggle from "./DesignOverlayToggle";
 import AeonCommandOrb from "./AeonCommandOrb";
+import ClientRuntimeGuards from "./ClientRuntimeGuards";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -36,6 +37,7 @@ export default function AppShell({ children }: AppShellProps) {
       <Footer />
 
       <AeonCommandOrb />
+      <ClientRuntimeGuards />
 
       {/* DESIGN SYSTEM OVERLAY INDICATOR */}
       {designToolsEnabled && enabled && (

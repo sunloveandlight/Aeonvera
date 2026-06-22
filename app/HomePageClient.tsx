@@ -145,7 +145,7 @@ export default function HomePage() {
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Could not open billing management.");
-      window.location.assign(data.url);
+      await leaveForStripe(data.url);
     } catch (err) {
       console.error(err);
       window.location.assign("/pricing");
@@ -176,7 +176,7 @@ export default function HomePage() {
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Checkout failed");
-      window.location.assign(data.url);
+      await leaveForStripe(data.url);
     } catch (err) {
       console.error(err);
       window.location.assign("/pricing");
@@ -185,7 +185,7 @@ export default function HomePage() {
     }
   }
 
-  function activateVoiceOrb() {
+function activateVoiceOrb() {
     if (typeof window === "undefined") return;
     window.dispatchEvent(new CustomEvent("aeonvera:activate-voice-orb"));
   }
@@ -362,4 +362,10 @@ export default function HomePage() {
       )}
     </div>
   );
+}
+
+async function leaveForStripe(url: string) {
+  window.__aeonveraExternalNavigation = true;
+  await supabase.auth.stopAutoRefresh().catch(() => undefined);
+  window.location.assign(url);
 }
