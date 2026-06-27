@@ -41,9 +41,9 @@ export const metadata: Metadata = {
     url: "/waitlist",
     images: [
       {
-        url: "/marketing/waitlist-alien-founders.png",
-        width: 1810,
-        height: 869,
+        url: "/marketing/waitlist-white-gold-founders.png",
+        width: 1820,
+        height: 864,
         alt: "Aeonvera longevity intelligence.",
       },
     ],
@@ -101,7 +101,7 @@ export default function WaitlistPage() {
             fill
             priority
             sizes="(max-width: 900px) 100vw, 48vw"
-            src="/marketing/waitlist-alien-founders.png"
+            src="/marketing/waitlist-white-gold-founders.png"
           />
         </section>
       </main>
