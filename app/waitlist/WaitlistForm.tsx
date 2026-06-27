@@ -1,13 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { ArrowRight, Check, Mail, User } from "lucide-react";
+import { ArrowRight, Check, Mail } from "lucide-react";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
 export default function WaitlistForm() {
   const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
 
@@ -20,7 +19,6 @@ export default function WaitlistForm() {
       const response = await fetch("/api/waitlist", {
         body: JSON.stringify({
           email,
-          firstName,
           sourcePath: window.location.pathname,
         }),
         headers: { "Content-Type": "application/json" },
@@ -35,7 +33,6 @@ export default function WaitlistForm() {
       setStatus("success");
       setMessage("You are on the waitlist. We will email your invite when Aeonvera opens.");
       setEmail("");
-      setFirstName("");
     } catch (error) {
       setStatus("error");
       setMessage(
@@ -51,22 +48,6 @@ export default function WaitlistForm() {
   return (
     <form onSubmit={handleSubmit} className="waitlist-form">
       <div className="waitlist-form-grid">
-        <div className="waitlist-field">
-          <User aria-hidden size={18} />
-          <label className="sr-only" htmlFor="waitlist-first-name">
-            First name
-          </label>
-          <input
-            autoComplete="given-name"
-            id="waitlist-first-name"
-            maxLength={80}
-            name="firstName"
-            onChange={(event) => setFirstName(event.target.value)}
-            placeholder="First name"
-            value={firstName}
-          />
-        </div>
-
         <div className="waitlist-field">
           <Mail aria-hidden size={18} />
           <label className="sr-only" htmlFor="waitlist-email">

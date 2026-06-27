@@ -41,9 +41,9 @@ export const metadata: Metadata = {
     url: "/waitlist",
     images: [
       {
-        url: "/marketing/rejuvenation-woman.png",
-        width: 1536,
-        height: 1024,
+        url: "/marketing/waitlist-alien-founders.png",
+        width: 1810,
+        height: 869,
         alt: "Aeonvera longevity intelligence.",
       },
     ],
@@ -68,7 +68,7 @@ export default function WaitlistPage() {
           <p className="waitlist-launch-date">Private access opens August 19, 2026</p>
 
           <h1>
-            Join the Founding Members List
+            Enter Aeonvera Early
           </h1>
 
           <p className="waitlist-tagline">
@@ -76,9 +76,9 @@ export default function WaitlistPage() {
           </p>
 
           <p className="waitlist-lede">
-            Aeonvera is opening soon. Get priority access to the private
-            longevity intelligence system built for labs, wearables,
-            biological age, protocols, and physician-ready insight.
+            Join the private list for first access to longevity intelligence
+            built for labs, wearables, biological age, and physician-ready
+            insight.
           </p>
 
           <WaitlistForm />
@@ -101,7 +101,7 @@ export default function WaitlistPage() {
             fill
             priority
             sizes="(max-width: 900px) 100vw, 48vw"
-            src="/marketing/waitlist-futuristic-founders.png"
+            src="/marketing/waitlist-alien-founders.png"
           />
         </section>
       </main>
