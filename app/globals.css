@@ -6051,22 +6051,28 @@ input[type="number"]::-webkit-inner-spin-button {
   align-items: center;
   justify-content: center;
   gap: 0.58rem;
-  border: 1px solid rgba(244, 207, 122, 0.68) !important;
+  border: 1px solid rgba(255, 229, 164, 0.76) !important;
   border-radius: 8px;
-  background: rgba(244, 207, 122, 0.1) !important;
-  color: #ffe3a2 !important;
+  background:
+    linear-gradient(180deg, rgba(247, 214, 139, 0.94), rgba(205, 154, 57, 0.9)),
+    #d9a846 !important;
+  color: #151109 !important;
   padding: 0 1rem;
   font-size: 0.92rem;
   font-weight: 800;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.36),
+    inset 0 -1px 0 rgba(86, 54, 12, 0.22);
   transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
   white-space: nowrap;
 }
 
 .waitlist-submit:hover {
   border-color: rgba(255, 226, 160, 0.9) !important;
-  background: rgba(244, 207, 122, 0.18) !important;
-  color: #fff1c9 !important;
+  background:
+    linear-gradient(180deg, rgba(255, 225, 153, 0.98), rgba(221, 168, 68, 0.95)),
+    #e2b356 !important;
+  color: #100d07 !important;
 }
 
 .waitlist-submit:focus-visible {
