@@ -12,6 +12,13 @@ type Cookie = {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  const waitlistMode = process.env.AEONVERA_WAITLIST_MODE === "1";
+  const isWaitlistPage = pathname === "/waitlist";
+
+  if (waitlistMode && !isWaitlistPage) {
+    return NextResponse.redirect(new URL("/waitlist", req.url));
+  }
+
   if (pathname.startsWith("/api")) {
     return NextResponse.next();
   }
@@ -75,6 +82,7 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/((?!api|_next/static|_next/image|.*\\..*).*)",
     "/dashboard/:path*",
     "/companion/:path*",
     "/concierge/:path*",

@@ -4,6 +4,7 @@ import Header from "./Header";
 import Footer from "./Footer";
 import { useDesignAudit } from "@/lib/audit/useDesignAudit";
 import { useDesignOverlay } from "@/lib/design/useDesignOverlay";
+import { usePathname } from "next/navigation";
 import DesignOverlayToggle from "./DesignOverlayToggle";
 import AeonCommandOrb from "./AeonCommandOrb";
 import ClientRuntimeGuards from "./ClientRuntimeGuards";
@@ -13,11 +14,13 @@ type AppShellProps = {
 };
 
 export default function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
   const { enabled, toggle } = useDesignOverlay();
   const designToolsEnabled =
     process.env.NODE_ENV !== "production" &&
     process.env.NEXT_PUBLIC_SHOW_DESIGN_TOOLS === "true";
   useDesignAudit(designToolsEnabled && enabled);
+  const isWaitlistPage = pathname === "/waitlist";
 
   return (
     <main
@@ -30,13 +33,15 @@ export default function AppShell({ children }: AppShellProps) {
         className="pointer-events-none fixed inset-0 -z-20"
       />
 
-      <Header />
+      {!isWaitlistPage && <Header />}
 
-      <div className="relative flex-1 w-full pt-11">{children}</div>
+      <div className={`relative flex-1 w-full ${isWaitlistPage ? "" : "pt-11"}`}>
+        {children}
+      </div>
 
-      <Footer />
+      {!isWaitlistPage && <Footer />}
 
-      <AeonCommandOrb />
+      {!isWaitlistPage && <AeonCommandOrb />}
       <ClientRuntimeGuards />
 
       {/* DESIGN SYSTEM OVERLAY INDICATOR */}
