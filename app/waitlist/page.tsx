@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { Activity, Bell, Clock3, Dna, Gift, ShieldCheck, Tag } from "lucide-react";
+import { Bell, Clock3, Gift, Tag } from "lucide-react";
 
 import WaitlistForm from "./WaitlistForm";
 
@@ -72,7 +72,7 @@ export default function WaitlistPage() {
           </h1>
 
           <p className="waitlist-tagline">
-            Welcome to your younger future.
+            The app that grows younger with you.
           </p>
 
           <p className="waitlist-lede">
@@ -94,42 +94,15 @@ export default function WaitlistPage() {
           </div>
         </section>
 
-        <section className="waitlist-visual" aria-label="Aeonvera preview">
-          <div className="waitlist-orbit" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
-
+        <section className="waitlist-visual" aria-label="Aeonvera preview" aria-hidden="true">
           <Image
-            alt="Aeonvera longevity intelligence preview."
+            alt=""
             className="waitlist-portrait"
             fill
             priority
             sizes="(max-width: 900px) 100vw, 48vw"
-            src="/marketing/rejuvenation-woman.png"
+            src="/marketing/founding-members-visual.png"
           />
-
-          <div className="waitlist-metric waitlist-metric-age">
-            <span>Biological age</span>
-            <strong>28.4</strong>
-            <small>-6.2 yrs vs. calendar age</small>
-          </div>
-
-          <div className="waitlist-metric waitlist-metric-dna">
-            <Dna aria-hidden size={28} />
-            <span>Signal fusion active</span>
-          </div>
-
-          <div className="waitlist-metric waitlist-metric-coach">
-            <Activity aria-hidden size={24} />
-            <span>Adaptive protocol engine</span>
-          </div>
-
-          <div className="waitlist-security">
-            <ShieldCheck aria-hidden size={16} />
-            Private by design
-          </div>
         </section>
       </main>
     </div>

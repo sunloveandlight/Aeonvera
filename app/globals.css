@@ -6314,3 +6314,213 @@ input[type="number"]::-webkit-inner-spin-button {
     display: none;
   }
 }
+
+/* Reference-matched founding page v2. */
+[data-waitlist-page] {
+  background: #010202;
+}
+
+.waitlist-visual {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  min-height: auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #010202 !important;
+  box-shadow: none !important;
+  pointer-events: none !important;
+}
+
+.waitlist-visual::before {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.99) 0%, rgba(0, 0, 0, 0.96) 34%, rgba(0, 0, 0, 0.56) 48%, rgba(0, 0, 0, 0.08) 72%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.24)) !important;
+}
+
+.waitlist-portrait {
+  object-position: right center !important;
+  opacity: 0.98 !important;
+  filter: saturate(1.02) contrast(1.03) !important;
+}
+
+.waitlist-backdrop {
+  z-index: 2;
+}
+
+.waitlist-backdrop::before {
+  opacity: 0.35;
+}
+
+.waitlist-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 55% 35%, rgba(243, 207, 122, 0.08), transparent 24rem),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.96), rgba(0, 0, 0, 0.82) 42%, transparent 70%);
+}
+
+.waitlist-shell {
+  z-index: 3 !important;
+  width: min(100%, 1540px) !important;
+  grid-template-columns: minmax(0, 0.98fr) minmax(24rem, 1.02fr) !important;
+  gap: clamp(2rem, 5vw, 5rem) !important;
+  padding: clamp(2.8rem, 5vw, 4.9rem) clamp(2rem, 5.4vw, 5rem) !important;
+}
+
+.waitlist-copy {
+  max-width: 43.5rem !important;
+  position: relative !important;
+  z-index: 20 !important;
+  isolation: isolate !important;
+}
+
+.waitlist-brand {
+  font-size: 1.08rem !important;
+  letter-spacing: 0.42em !important;
+  color: #e7c06e !important;
+  border-bottom: 0 !important;
+  min-height: 1.35rem !important;
+}
+
+.waitlist-launch-date {
+  color: rgba(243, 207, 122, 0.92) !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.18em !important;
+}
+
+[data-waitlist-page] h1 {
+  max-width: 14.2ch !important;
+  margin-top: 1.35rem !important;
+  font-size: clamp(3.25rem, 5.85vw, 5.55rem) !important;
+  line-height: 1.02 !important;
+  color: #f8fbff !important;
+  -webkit-text-fill-color: #f8fbff !important;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.54) !important;
+}
+
+.waitlist-brand,
+.waitlist-launch-date,
+.waitlist-tagline,
+.waitlist-lede,
+.waitlist-form,
+.waitlist-benefits {
+  position: relative !important;
+  z-index: 21 !important;
+}
+
+.waitlist-tagline {
+  max-width: 42rem !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: clamp(1.05rem, 1.65vw, 1.35rem) !important;
+  font-weight: 600 !important;
+}
+
+.waitlist-lede {
+  max-width: 42rem !important;
+  color: rgba(235, 242, 247, 0.74) !important;
+  font-size: clamp(1.02rem, 1.45vw, 1.16rem) !important;
+}
+
+.waitlist-form {
+  max-width: 38.5rem !important;
+  margin-top: 2rem !important;
+}
+
+.waitlist-form-grid {
+  grid-template-columns: 1fr !important;
+  gap: 0.9rem !important;
+}
+
+.waitlist-field {
+  min-height: 3.6rem !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
+  background: rgba(0, 0, 0, 0.34) !important;
+}
+
+.waitlist-submit {
+  width: 100% !important;
+  min-height: 3.7rem !important;
+  background: linear-gradient(135deg, #fff4ca, #efc777 52%, #d59d39) !important;
+  box-shadow: 0 0 0 1px rgba(255, 240, 194, 0.28), 0 20px 64px rgba(243, 207, 122, 0.18) !important;
+}
+
+.waitlist-benefits {
+  max-width: 44.5rem !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0 !important;
+  margin-top: 1.9rem !important;
+  padding-top: 1.35rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
+}
+
+.waitlist-benefit {
+  min-height: 5.8rem !important;
+  border: 0 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 1.2rem !important;
+}
+
+.waitlist-benefit:first-child {
+  padding-left: 0 !important;
+}
+
+.waitlist-benefit:last-child {
+  border-right: 0 !important;
+}
+
+.waitlist-benefit svg {
+  color: #f3cf7a !important;
+}
+
+@media (max-width: 1080px) {
+  .waitlist-visual::before {
+    background:
+      linear-gradient(180deg, rgba(0, 0, 0, 0.94) 0%, rgba(0, 0, 0, 0.86) 50%, rgba(0, 0, 0, 0.52) 100%),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.78), transparent 74%) !important;
+  }
+
+  .waitlist-shell {
+    grid-template-columns: 1fr !important;
+    align-items: start !important;
+  }
+
+  .waitlist-copy {
+    max-width: 43rem !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .waitlist-shell {
+    padding: 1.45rem 1.2rem 3rem !important;
+  }
+
+  .waitlist-brand {
+    font-size: 0.78rem !important;
+  }
+
+  [data-waitlist-page] h1 {
+    max-width: 12ch !important;
+    font-size: 2.75rem !important;
+    line-height: 1.03 !important;
+  }
+
+  .waitlist-tagline {
+    font-size: 1.08rem !important;
+  }
+
+  .waitlist-benefits {
+    grid-template-columns: 1fr !important;
+    border-top-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .waitlist-benefit {
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    padding: 0.95rem 0 !important;
+  }
+}
