@@ -90,10 +90,10 @@ export default function WaitlistForm() {
         <button className="waitlist-submit" disabled={disabled} type="submit">
           <span>
             {status === "success"
-              ? "You're on the list"
+              ? "Joined"
               : disabled
                 ? "Joining"
-                : "Notify me"}
+                : "Join the list"}
           </span>
           {status === "success" ? <Check size={18} /> : <ArrowRight size={18} />}
         </button>
