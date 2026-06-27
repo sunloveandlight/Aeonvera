@@ -152,7 +152,7 @@ export default function OnboardingPage() {
           title: "Initial profile context",
           content: [
             nextDisplayName ? `Display name: ${nextDisplayName}` : "",
-            entityName ? `Entity: ${entityName}` : "",
+            entityName ? `Health profile: ${entityName}` : "",
             "User completed health intelligence acknowledgement.",
           ].filter(Boolean).join("\n"),
           importance: 0.72,
@@ -246,11 +246,11 @@ export default function OnboardingPage() {
                     className="h-12 bg-black/30 px-4"
                   />
                 </Field>
-                <Field label="Profile Name">
+                <Field label="Health Profile Name">
                   <TextInput
                     value={entityName}
                     onChange={(e) => setEntityName(e.target.value)}
-                    placeholder="e.g. Personal"
+                    placeholder="e.g. Personal baseline"
                     className="h-12 bg-black/30 px-4"
                   />
                 </Field>

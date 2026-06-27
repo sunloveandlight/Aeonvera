@@ -607,7 +607,7 @@ function describeCurrentPage(path: string) {
       usefulActions: ["create a physician share link", "explain what is included", "prepare a clinical summary"],
     },
     {
-      label: "Plan",
+      label: "Membership",
       path: "/plan",
       usefulActions: ["review usage", "compare tiers", "open billing"],
     },

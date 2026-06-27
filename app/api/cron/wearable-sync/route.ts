@@ -7,8 +7,13 @@ import { getValidWearableAccessToken } from "@/lib/wearables/oauth";
 import type { WearableOAuthProvider } from "@/lib/wearables/oauth";
 import { canAccess } from "@/lib/auth/permissions";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import {
+  createLegacyActiveHealthProfileContext,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type ConnectionRow = {
+  health_profile_id?: string | null;
   user_id: string;
   provider: WearableOAuthProvider;
 };
@@ -40,7 +45,7 @@ async function syncWearables(request: NextRequest) {
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
       .from("wearable_connections")
-      .select("user_id, provider")
+      .select("user_id, health_profile_id, provider")
       .eq("status", "connected");
 
     if (error) {
@@ -72,6 +77,7 @@ async function syncWearables(request: NextRequest) {
         });
 
         if (!accessToken) continue;
+        const healthProfileContext = resolveConnectionProfileContext(connection);
 
         const metrics =
           connection.provider === "oura"
@@ -79,6 +85,7 @@ async function syncWearables(request: NextRequest) {
             : await fetchWhoopMetrics({ accessToken, ...window });
 
         const result = await ingestWearableMetrics({
+          healthProfileContext,
           supabase: admin,
           userId: connection.user_id,
           provider: connection.provider,
@@ -129,6 +136,24 @@ async function syncWearables(request: NextRequest) {
     console.error("[Wearable Cron] Sync failed:", error);
     return NextResponse.json({ error: "Wearable cron sync failed." }, { status: 500 });
   }
+}
+
+function resolveConnectionProfileContext(
+  connection: ConnectionRow
+): ActiveHealthProfileContext {
+  if (!connection.health_profile_id) {
+    return createLegacyActiveHealthProfileContext(connection.user_id);
+  }
+
+  return {
+    loginUserId: connection.user_id,
+    workspaceId: null,
+    healthProfileId: connection.health_profile_id,
+    legacyUserId: connection.user_id,
+    mode: "health_profile",
+    role: "owner",
+    isFrozen: false,
+  };
 }
 
 function getSyncWindow() {

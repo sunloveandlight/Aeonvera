@@ -1,5 +1,11 @@
 import type { CoachTrigger, CoachMode } from "@/lib/types/coachTypes";
-import type { Intervention } from "@/lib/intervention/interventionDecisionEngine";
+
+export type Intervention = {
+  domain: string;
+  action: string;
+  reason?: string;
+  priority: number;
+};
 
 export type JarvisMessage = {
   mode: CoachMode;

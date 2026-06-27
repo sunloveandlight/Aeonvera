@@ -54,7 +54,7 @@ const PUBLIC_NAV_GROUPS: NavGroup[] = [
     href: "/optimization",
     items: [
       { href: "/optimization", label: "Optimization", description: "Turn your signals into a daily protocol." },
-      { href: "/plan", label: "Daily plan", description: "Make insight executable." },
+      { href: "/plan", label: "Membership", description: "Plan limits, billing, concierge, and referrals." },
       { href: "/life-autopilot", label: "Life Autopilot", description: "Behavior reminders, quiet hours, and schedule permissions." },
       { href: "/companion", label: "Ask Aeonvera", description: "Voice and text help across the app." },
     ],
@@ -97,7 +97,7 @@ const AUTH_NAV_GROUPS: NavGroup[] = [
     href: "/optimization",
     items: [
       { href: "/optimization", label: "Optimization", description: "Generate and refine your protocol." },
-      { href: "/plan", label: "Daily plan", description: "Protocols, reminders, and execution." },
+      { href: "/plan", label: "Membership", description: "Plan limits, billing, concierge, and referrals." },
       { href: "/life-autopilot", label: "Life Autopilot", description: "Coach intensity, reminders, and schedule permissions." },
       { href: "/assessment", label: "Assessment", description: "Refresh your baseline and context." },
     ],

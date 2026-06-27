@@ -1,4 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  healthSubjectInsertFields,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 import type { WearableProvider } from "./types";
 
 export type WearableOAuthProvider = Extract<WearableProvider, "oura" | "whoop">;
@@ -125,11 +129,13 @@ export async function refreshWearableToken({
 }
 
 export async function saveWearableConnection({
+  healthProfileContext,
   supabase,
   userId,
   provider,
   token,
 }: {
+  healthProfileContext?: ActiveHealthProfileContext | null;
   supabase: SupabaseClient;
   userId: string;
   provider: WearableOAuthProvider;
@@ -142,6 +148,7 @@ export async function saveWearableConnection({
   const { error } = await supabase.from("wearable_connections").upsert(
     {
       user_id: userId,
+      ...(healthProfileContext ? healthSubjectInsertFields(healthProfileContext) : {}),
       provider,
       access_token: token.access_token,
       refresh_token: token.refresh_token || null,

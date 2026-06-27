@@ -198,12 +198,12 @@ export const ROUTE_CONTEXTS = [
   },
   {
     match: "/plan",
-    label: "Plan",
-    detail: "I can simplify, explain, or move you to plan and billing controls.",
+    label: "Membership",
+    detail: "I can explain usage, tiers, billing controls, and concierge access.",
     prompts: [
-      "Simplify my plan",
-      "What should I do first?",
+      "Review my usage",
       "Change my membership",
+      "Compare tiers",
     ],
   },
 ];
@@ -239,8 +239,8 @@ export const NAVIGATION_INTENTS = [
   },
   {
     href: "/plan",
-    label: "Your Plan",
-    pattern: /\b(plan|subscription|usage|membership|tier)\b/i,
+    label: "Membership",
+    pattern: /\b(subscription|usage|membership|tier|billing)\b/i,
   },
   {
     href: "/pricing",

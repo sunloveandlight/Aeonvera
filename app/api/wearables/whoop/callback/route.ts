@@ -4,6 +4,10 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { canAccess } from "@/lib/auth/permissions";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import { exchangeWearableCode, saveWearableConnection } from "@/lib/wearables/oauth";
+import {
+  ACTIVE_HEALTH_PROFILE_COOKIE,
+  resolveActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 export async function GET(request: NextRequest) {
   const redirectUrl = new URL("/dashboard", request.url);
@@ -41,8 +45,14 @@ export async function GET(request: NextRequest) {
       origin: request.nextUrl.origin,
       code,
     });
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: request.cookies.get(ACTIVE_HEALTH_PROFILE_COOKIE)?.value,
+    });
 
     await saveWearableConnection({
+      healthProfileContext,
       supabase: admin,
       userId: user.id,
       provider: "whoop",

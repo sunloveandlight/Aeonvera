@@ -548,7 +548,7 @@ function resolveNavigationIntent(text: string, currentPage: string) {
     { href: "/physician-export", label: "Physician Export", pattern: /\b(physician export|doctor export|clinical export)\b/ },
     { href: "/network", label: "Care Network", pattern: /\b(care network|network|care team)\b/ },
     { href: "/pricing", label: "Pricing", pattern: /\b(pricing|prices|tiers)\b/ },
-    { href: "/plan", label: "Your Plan", pattern: /\b(my plan|your plan|usage|membership)\b/ },
+    { href: "/plan", label: "Membership", pattern: /\b(subscription|usage|membership|billing)\b/ },
     { href: "/report", label: "Report", pattern: /\b(report|longevity report)\b/ },
   ];
 
@@ -590,7 +590,7 @@ function describeCurrentPage(path: string) {
       usefulActions: ["create a physician share link", "explain what is included", "prepare a clinical summary"],
     },
     {
-      label: "Your Plan",
+      label: "Membership",
       path: "/plan",
       usefulActions: ["review usage", "compare tiers", "open billing"],
     },

@@ -1,22 +1,15 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { NextRequest, NextResponse } from "next/server";
 import { canAccess } from "@/lib/auth/permissions";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
+import { getHealthSubjectFilter } from "@/lib/health-profiles/activeHealthProfile";
+import { requireAuthenticatedRouteContext } from "@/lib/auth/routeContext";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const auth = await requireAuthenticatedRouteContext(request);
+    if (auth.response) return auth.response;
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const admin = getSupabaseAdmin();
-    const subscription = await getUserPlanForUsage({ supabase: admin, userId: user.id });
+    const subscription = await getUserPlanForUsage({ supabase: auth.admin, userId: auth.userId });
 
     if (!canAccess(subscription.plan, subscription.status, "elite_features")) {
       return NextResponse.json({
@@ -29,10 +22,12 @@ export async function GET() {
       });
     }
 
-    const { data, error } = await admin
+    const healthFilter = getHealthSubjectFilter(auth.healthProfileContext);
+    const { data, error } = await auth.admin
       .from("wearable_connections")
       .select("provider, status, scope, expires_at, last_synced_at, connected_at")
-      .eq("user_id", user.id)
+      .eq("user_id", auth.userId)
+      .eq(healthFilter.column, healthFilter.value)
       .order("connected_at", { ascending: false });
 
     if (error) {

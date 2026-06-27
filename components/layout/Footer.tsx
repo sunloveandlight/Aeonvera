@@ -28,7 +28,7 @@ const FOOTER_GROUPS = [
       { href: "/physician-export", label: "Physician export" },
       { href: "/network", label: "Care network" },
       { href: "/report", label: "Longevity report" },
-      { href: "/plan", label: "Daily plan" },
+      { href: "/plan", label: "Membership" },
     ],
   },
   {

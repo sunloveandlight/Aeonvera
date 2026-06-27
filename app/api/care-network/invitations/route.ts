@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
+import { canAccess } from "@/lib/auth/permissions";
 import {
   DEFAULT_PHYSICIAN_EXPORT_SECTIONS,
 } from "@/lib/digital-twin/physicianExportBundle";
@@ -15,6 +14,13 @@ import {
   hashShareAccessCode,
 } from "@/lib/security/shareAccess";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
+import { requireAuthenticatedRouteContext } from "@/lib/auth/routeContext";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
+import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 
 type CareNetworkRow = {
   accepted_at?: string | null;
@@ -40,19 +46,32 @@ type RoleRecommendation = {
   title: string;
 };
 
+type NetworkAccessGranted = {
+  admin: ReturnType<typeof getSupabaseAdmin>;
+  healthProfileContext: ActiveHealthProfileContext;
+  response: null;
+  userId: string;
+};
+
+type NetworkAccessDenied = {
+  response: NextResponse;
+  userId: "";
+};
+
 const SELECT_FIELDS =
   "id,invite_token,member_email,member_name,role,status,permissions,expires_at,accepted_at,revoked_at,access_count,last_accessed_at,created_at,access_code_hash";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const auth = await requireNetworkAccess();
+    const auth = await requireNetworkAccess(request);
     if (auth.response) return auth.response;
 
-    const admin = getSupabaseAdmin();
-    const { data, error } = await admin
+    const healthFilter = getCareNetworkSubjectFilter(auth.healthProfileContext);
+    const { data, error } = await auth.admin
       .from("care_network_memberships")
       .select(SELECT_FIELDS)
       .eq("owner_user_id", auth.userId)
+      .eq(healthFilter.column, healthFilter.value)
       .order("created_at", { ascending: false })
       .limit(24);
 
@@ -68,7 +87,11 @@ export async function GET() {
       throw error;
     }
 
-    const recommendations = await buildRoleRecommendations(admin, auth.userId);
+    const recommendations = await buildRoleRecommendations(
+      auth.admin,
+      auth.userId,
+      auth.healthProfileContext
+    );
 
     return NextResponse.json({
       invitations: mapInvitations(data || []),
@@ -87,7 +110,7 @@ export async function POST(request: NextRequest) {
     const limited = await rateLimitRequest(request, "care-network-invitation", 20, 60_000);
     if (limited) return limited;
 
-    const auth = await requireNetworkAccess();
+    const auth = await requireNetworkAccess(request);
     if (auth.response) return auth.response;
 
     const body = await request.json().catch(() => ({}));
@@ -110,11 +133,11 @@ export async function POST(request: NextRequest) {
     });
     const accessCode = createShareAccessCode();
 
-    const admin = getSupabaseAdmin();
-    const { data, error } = await admin
+    const { data, error } = await auth.admin
       .from("care_network_memberships")
       .insert({
         access_code_hash: hashShareAccessCode(accessCode),
+        ...healthSubjectInsertFields(auth.healthProfileContext),
         owner_user_id: auth.userId,
         member_email: memberEmail,
         member_name: memberName,
@@ -158,7 +181,7 @@ export async function PATCH(request: NextRequest) {
     const limited = await rateLimitRequest(request, "care-network-invitation-update", 40, 60_000);
     if (limited) return limited;
 
-    const auth = await requireNetworkAccess();
+    const auth = await requireNetworkAccess(request);
     if (auth.response) return auth.response;
 
     const body = await request.json().catch(() => ({}));
@@ -168,18 +191,19 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Invitation not found." }, { status: 404 });
     }
 
-    const admin = getSupabaseAdmin();
     const action = typeof body?.action === "string" ? body.action : "revoke";
     const update =
       action === "extend"
         ? await extendInvitation({
-            admin,
+            admin: auth.admin,
             expiresInDays: body?.expiresInDays,
+            healthProfileContext: auth.healthProfileContext,
             id,
             ownerUserId: auth.userId,
           })
         : await revokeInvitation({
-            admin,
+            admin: auth.admin,
+            healthProfileContext: auth.healthProfileContext,
             id,
             ownerUserId: auth.userId,
           });
@@ -198,13 +222,16 @@ export async function PATCH(request: NextRequest) {
 
 async function revokeInvitation({
   admin,
+  healthProfileContext,
   id,
   ownerUserId,
 }: {
   admin: ReturnType<typeof getSupabaseAdmin>;
+  healthProfileContext: ActiveHealthProfileContext;
   id: string;
   ownerUserId: string;
 }) {
+  const healthFilter = getCareNetworkSubjectFilter(healthProfileContext);
   return admin
     .from("care_network_memberships")
     .update({
@@ -214,6 +241,7 @@ async function revokeInvitation({
     })
     .eq("id", id)
     .eq("owner_user_id", ownerUserId)
+    .eq(healthFilter.column, healthFilter.value)
     .select(SELECT_FIELDS)
     .single();
 }
@@ -221,19 +249,23 @@ async function revokeInvitation({
 async function extendInvitation({
   admin,
   expiresInDays,
+  healthProfileContext,
   id,
   ownerUserId,
 }: {
   admin: ReturnType<typeof getSupabaseAdmin>;
   expiresInDays: unknown;
+  healthProfileContext: ActiveHealthProfileContext;
   id: string;
   ownerUserId: string;
 }) {
+  const healthFilter = getCareNetworkSubjectFilter(healthProfileContext);
   const { data: existing, error: existingError } = await admin
     .from("care_network_memberships")
     .select("id,accepted_at,revoked_at")
     .eq("id", id)
     .eq("owner_user_id", ownerUserId)
+    .eq(healthFilter.column, healthFilter.value)
     .single();
 
   if (existingError) return { data: null, error: existingError };
@@ -259,21 +291,23 @@ async function extendInvitation({
     })
     .eq("id", id)
     .eq("owner_user_id", ownerUserId)
+    .eq(healthFilter.column, healthFilter.value)
     .select(SELECT_FIELDS)
     .single();
 }
 
 async function buildRoleRecommendations(
   admin: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ): Promise<RoleRecommendation[]> {
   const [labs, insights, protocols, outcomes, wearables, age] = await Promise.all([
-    safeCount(admin, "lab_biomarkers", userId),
-    safeCount(admin, "clinical_insights", userId),
-    safeCount(admin, "optimization_protocols", userId),
-    safeCount(admin, "intervention_outcomes", userId),
-    safeCount(admin, "wearable_metrics", userId),
-    safeCount(admin, "biological_age_history", userId),
+    safeCount(admin, "lab_biomarkers", userId, healthProfileContext),
+    safeCount(admin, "clinical_insights", userId, healthProfileContext),
+    safeCount(admin, "optimization_protocols", userId, healthProfileContext),
+    safeCount(admin, "intervention_outcomes", userId, healthProfileContext),
+    safeCount(admin, "wearable_metrics", userId, healthProfileContext),
+    safeCount(admin, "biological_age_history", userId, healthProfileContext),
   ]);
 
   const recommendations: RoleRecommendation[] = [];
@@ -324,49 +358,40 @@ async function buildRoleRecommendations(
 async function safeCount(
   admin: ReturnType<typeof getSupabaseAdmin>,
   table: string,
-  userId: string
+  userId: string,
+  healthProfileContext: ActiveHealthProfileContext
 ) {
+  const healthFilter = getHealthSubjectFilter(healthProfileContext);
   const { count, error } = await admin
     .from(table)
     .select("id", { count: "exact", head: true })
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .eq(healthFilter.column, healthFilter.value);
 
   if (error) return 0;
   return count || 0;
 }
 
-async function requireNetworkAccess(): Promise<{
-  response: NextResponse | null;
-  userId: string;
-}> {
-  const supabaseUser = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabaseUser.auth.getUser();
-
-  if (userError || !user) {
+async function requireNetworkAccess(
+  request: NextRequest
+): Promise<NetworkAccessGranted | NetworkAccessDenied> {
+  const auth = await requireAuthenticatedRouteContext(request);
+  if (auth.response) {
     return {
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      response: auth.response,
       userId: "",
     };
   }
 
-  const admin = getSupabaseAdmin();
-  const { data: entitlementProfile } = await admin
-    .from("profiles")
-    .select("plan,subscription_status")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  const entitlement = entitlementProfile as {
-    plan?: Plan | null;
-    subscription_status?: SubscriptionStatus | null;
-  } | null;
+  const entitlement = await getUserPlanForUsage({
+    supabase: auth.admin,
+    userId: auth.userId,
+  });
 
   if (
     !canAccess(
-      entitlement?.plan || null,
-      entitlement?.subscription_status || null,
+      entitlement.plan,
+      entitlement.status,
       "physician_exports"
     )
   ) {
@@ -385,7 +410,12 @@ async function requireNetworkAccess(): Promise<{
     };
   }
 
-  return { response: null, userId: user.id };
+  return {
+    admin: auth.admin,
+    healthProfileContext: auth.healthProfileContext,
+    response: null,
+    userId: auth.userId,
+  };
 }
 
 function mapInvitations(rows: CareNetworkRow[]) {
@@ -421,6 +451,20 @@ function mapInvitation(row: CareNetworkRow) {
     role: row.role || "physician",
     status,
     url: `/care-network/${row.invite_token}`,
+  };
+}
+
+function getCareNetworkSubjectFilter(context: ActiveHealthProfileContext) {
+  if (context.healthProfileId) {
+    return {
+      column: "health_profile_id",
+      value: context.healthProfileId,
+    };
+  }
+
+  return {
+    column: "owner_user_id",
+    value: context.legacyUserId,
   };
 }
 
