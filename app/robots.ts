@@ -3,6 +3,17 @@ import type { MetadataRoute } from "next";
 const BASE_URL = "https://www.aeonvera.com";
 
 export default function robots(): MetadataRoute.Robots {
+  if (process.env.AEONVERA_WAITLIST_MODE === "1") {
+    return {
+      rules: {
+        userAgent: "*",
+        allow: "/waitlist",
+        disallow: ["/", "/api/"],
+      },
+      sitemap: `${BASE_URL}/sitemap.xml`,
+    };
+  }
+
   return {
     rules: {
       userAgent: "*",

@@ -65,7 +65,7 @@ export default function WaitlistPage() {
             AEONVERA
           </div>
 
-          <p className="waitlist-launch-date">Launching August 19, 2026</p>
+          <p className="waitlist-launch-date">Private access opens August 19, 2026</p>
 
           <h1>
             Join the Founding Members List
@@ -101,7 +101,7 @@ export default function WaitlistPage() {
             fill
             priority
             sizes="(max-width: 900px) 100vw, 48vw"
-            src="/marketing/founding-members-visual.png"
+            src="/marketing/waitlist-futuristic-founders.png"
           />
         </section>
       </main>

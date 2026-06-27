@@ -33,7 +33,7 @@ export default function WaitlistForm() {
       }
 
       setStatus("success");
-      setMessage("You are on the list. We will email you when Aeonvera opens.");
+      setMessage("You are on the waitlist. We will email your invite when Aeonvera opens.");
       setEmail("");
       setFirstName("");
     } catch (error) {
@@ -87,10 +87,26 @@ export default function WaitlistForm() {
         </div>
 
         <button className="waitlist-submit" disabled={disabled} type="submit">
-          <span>{disabled ? "Joining" : "Join the list"}</span>
+          <span>
+            {status === "success"
+              ? "Added to waitlist"
+              : disabled
+                ? "Joining"
+                : "Join the waitlist"}
+          </span>
           {status === "success" ? <Check size={18} /> : <ArrowRight size={18} />}
         </button>
       </div>
+
+      {status === "success" ? (
+        <div className="waitlist-success" role="status">
+          <Check aria-hidden size={19} />
+          <div>
+            <strong>You&apos;re on the waitlist.</strong>
+            <span>Founder access details will arrive by email.</span>
+          </div>
+        </div>
+      ) : null}
 
       <p
         className={`waitlist-form-note ${status === "error" ? "is-error" : ""}`}

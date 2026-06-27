@@ -5825,31 +5825,53 @@ input[type="number"]::-webkit-inner-spin-button {
 /* Temporary founding-member waitlist front door. Scoped so it can be removed
    cleanly when public signups reopen. */
 [data-waitlist-page] {
-  --wl-bg: #030506;
-  --wl-panel: rgba(255, 255, 255, 0.055);
-  --wl-panel-strong: rgba(255, 255, 255, 0.11);
-  --wl-line: rgba(255, 255, 255, 0.14);
-  --wl-line-strong: rgba(255, 255, 255, 0.24);
+  --wl-bg: #020506;
   --wl-text: #f8fbff;
-  --wl-muted: rgba(235, 242, 247, 0.7);
-  --wl-faint: rgba(235, 242, 247, 0.48);
-  --wl-gold: #f3cf7a;
-  --wl-gold-strong: #ffd978;
-  --wl-cyan: #72f2ee;
-  --wl-cyan-soft: rgba(114, 242, 238, 0.18);
+  --wl-muted: rgba(231, 240, 243, 0.74);
+  --wl-faint: rgba(231, 240, 243, 0.54);
+  --wl-line: rgba(255, 255, 255, 0.16);
+  --wl-cyan: #78f4ef;
+  --wl-gold: #f4cf7a;
+  --wl-gold-strong: #ffdb87;
   position: relative;
   min-height: 100svh;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 77% 20%, rgba(114, 242, 238, 0.16), transparent 30rem),
-    radial-gradient(circle at 36% 88%, rgba(243, 207, 122, 0.12), transparent 24rem),
-    linear-gradient(135deg, #030506 0%, #090d0f 46%, #020303 100%);
+  background: var(--wl-bg);
   color: var(--wl-text) !important;
+}
+
+.waitlist-visual {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  min-height: auto;
+  overflow: hidden;
+  background: #020506;
+  pointer-events: none;
+}
+
+.waitlist-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(90deg, rgba(2, 5, 6, 0.98) 0%, rgba(2, 5, 6, 0.92) 30%, rgba(2, 5, 6, 0.48) 50%, rgba(2, 5, 6, 0.06) 72%),
+    linear-gradient(180deg, rgba(2, 5, 6, 0.08), rgba(2, 5, 6, 0.36) 72%, rgba(2, 5, 6, 0.9));
+  pointer-events: none;
+}
+
+.waitlist-portrait {
+  object-fit: cover;
+  object-position: center center;
+  opacity: 0.96;
+  filter: saturate(1.04) contrast(1.04);
 }
 
 .waitlist-backdrop {
   position: absolute;
   inset: 0;
+  z-index: 2;
   pointer-events: none;
 }
 
@@ -5858,140 +5880,153 @@ input[type="number"]::-webkit-inner-spin-button {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: radial-gradient(circle at 70% 35%, black, transparent 72%);
+    linear-gradient(rgba(120, 244, 239, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 244, 239, 0.035) 1px, transparent 1px);
+  background-size: 84px 84px;
+  mask-image: linear-gradient(90deg, black, transparent 62%);
+  opacity: 0.55;
+}
+
+.waitlist-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 18% 28%, rgba(120, 244, 239, 0.16), transparent 22rem),
+    radial-gradient(circle at 34% 70%, rgba(244, 207, 122, 0.12), transparent 24rem);
 }
 
 .waitlist-scanline {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent, rgba(114, 242, 238, 0.09), transparent);
-  height: 24rem;
-  transform: translateY(-55%);
-  animation: waitlist-scan 7s ease-in-out infinite;
+  inset-inline: 0;
+  top: -30%;
+  height: 28rem;
+  background: linear-gradient(180deg, transparent, rgba(120, 244, 239, 0.11), transparent);
+  animation: waitlist-scan 8s ease-in-out infinite;
 }
 
 .waitlist-arc {
   position: absolute;
-  width: 34rem;
-  height: 34rem;
-  border: 1px solid rgba(114, 242, 238, 0.18);
+  width: 32rem;
+  height: 32rem;
+  border: 1px solid rgba(120, 244, 239, 0.2);
   border-radius: 999px;
-  filter: drop-shadow(0 0 26px rgba(114, 242, 238, 0.12));
 }
 
 .waitlist-arc-top {
-  right: -12rem;
-  top: -10rem;
+  left: -14rem;
+  top: -16rem;
 }
 
 .waitlist-arc-bottom {
-  bottom: -18rem;
-  left: 36%;
-  border-color: rgba(243, 207, 122, 0.16);
+  left: 24%;
+  bottom: -22rem;
+  border-color: rgba(244, 207, 122, 0.18);
 }
 
 .waitlist-shell {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   display: grid;
   min-height: 100svh;
-  grid-template-columns: minmax(0, 1.02fr) minmax(24rem, 0.98fr);
+  grid-template-columns: minmax(0, 0.92fr) minmax(22rem, 1.08fr);
   align-items: center;
-  gap: clamp(2rem, 5vw, 5rem);
-  width: min(100%, 1320px);
+  gap: clamp(2rem, 5vw, 5.2rem);
+  width: min(100%, 1540px);
   margin: 0 auto;
-  padding: clamp(2rem, 5vw, 4.5rem);
+  padding: clamp(2.4rem, 5vw, 5rem) clamp(1.4rem, 5.2vw, 5rem);
 }
 
 .waitlist-copy {
-  max-width: 46rem;
+  position: relative;
+  z-index: 4;
+  max-width: 43.5rem;
 }
 
 .waitlist-brand {
   display: inline-flex;
   align-items: center;
-  min-height: 2rem;
-  border-bottom: 1px solid rgba(243, 207, 122, 0.62);
+  min-height: 1.4rem;
   color: var(--wl-gold) !important;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.34em;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.42em;
 }
 
 .waitlist-launch-date {
-  margin-top: 1.1rem;
-  color: var(--wl-cyan) !important;
-  font-size: 0.84rem !important;
-  font-weight: 700;
+  margin-top: 1.35rem;
+  color: rgba(120, 244, 239, 0.88) !important;
+  font-size: 0.78rem !important;
+  font-weight: 800;
   letter-spacing: 0.18em;
-  line-height: 1.2 !important;
+  line-height: 1.35 !important;
   text-transform: uppercase;
 }
 
 [data-waitlist-page] h1 {
-  margin-top: 1.15rem;
-  max-width: 12ch;
-  color: var(--wl-text) !important;
-  font-size: clamp(3.15rem, 7vw, 6.25rem) !important;
-  line-height: 0.96 !important;
+  max-width: 13ch;
+  margin-top: 1.2rem;
+  color: #f8fbff !important;
+  -webkit-text-fill-color: #f8fbff !important;
+  font-size: clamp(3.2rem, 6.2vw, 5.9rem) !important;
+  line-height: 0.98 !important;
   letter-spacing: 0 !important;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.54) !important;
   text-wrap: balance;
 }
 
 .waitlist-tagline {
-  max-width: 34rem;
-  margin-top: 1rem;
-  color: var(--wl-gold) !important;
-  font-size: clamp(1.18rem, 2vw, 1.55rem) !important;
-  font-weight: 650;
+  max-width: 36rem;
+  margin-top: 1.05rem;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: clamp(1.08rem, 1.75vw, 1.42rem) !important;
+  font-weight: 700 !important;
   line-height: 1.35 !important;
 }
 
 .waitlist-lede {
-  max-width: 42rem;
+  max-width: 41rem;
   margin-top: 1rem;
-  color: var(--wl-muted) !important;
-  font-size: clamp(1rem, 1.6vw, 1.18rem) !important;
+  color: rgba(235, 242, 247, 0.74) !important;
+  font-size: clamp(1.02rem, 1.45vw, 1.16rem) !important;
   line-height: 1.72 !important;
 }
 
 .waitlist-form {
   width: 100%;
-  max-width: 44rem;
+  max-width: 38.5rem;
   margin-top: 2rem;
 }
 
 .waitlist-form-grid {
   display: grid;
-  grid-template-columns: minmax(9rem, 0.82fr) minmax(13rem, 1.18fr) auto;
-  gap: 0.75rem;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
 }
 
 .waitlist-field {
   display: flex;
-  min-height: 3.35rem;
+  min-height: 3.65rem;
   align-items: center;
-  gap: 0.7rem;
-  border: 1px solid var(--wl-line);
+  gap: 0.72rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
+  background: rgba(2, 5, 6, 0.54);
   padding: 0 1rem;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
   transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
 
 .waitlist-field:focus-within {
-  border-color: rgba(114, 242, 238, 0.72);
-  background: rgba(255, 255, 255, 0.082);
-  box-shadow: 0 0 0 3px rgba(114, 242, 238, 0.1);
+  border-color: rgba(120, 244, 239, 0.76);
+  background: rgba(6, 16, 18, 0.7);
+  box-shadow: 0 0 0 3px rgba(120, 244, 239, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .waitlist-field svg {
   flex: 0 0 auto;
-  color: rgba(114, 242, 238, 0.78);
+  color: rgba(120, 244, 239, 0.8);
 }
 
 .waitlist-field input {
@@ -6000,42 +6035,43 @@ input[type="number"]::-webkit-inner-spin-button {
   border: 0;
   background: transparent;
   color: var(--wl-text) !important;
-  font-size: 0.95rem;
+  font-size: 0.96rem;
   outline: none;
 }
 
 .waitlist-field input::placeholder {
-  color: rgba(235, 242, 247, 0.46) !important;
+  color: rgba(235, 242, 247, 0.48) !important;
 }
 
 .waitlist-submit {
   display: inline-flex;
-  min-height: 3.35rem;
+  width: 100%;
+  min-height: 3.75rem;
   align-items: center;
   justify-content: center;
-  gap: 0.65rem;
+  gap: 0.66rem;
   border: 1px solid rgba(255, 223, 145, 0.82) !important;
   border-radius: 8px;
-  background: linear-gradient(135deg, #fff3c8, var(--wl-gold-strong) 52%, #c5902d) !important;
+  background: linear-gradient(135deg, #fff4ca, #efc777 52%, #d59d39) !important;
   color: #100d05 !important;
   padding: 0 1.35rem;
-  font-size: 0.94rem;
-  font-weight: 800;
-  box-shadow: 0 18px 60px rgba(243, 207, 122, 0.23);
+  font-size: 0.96rem;
+  font-weight: 850;
+  box-shadow: 0 0 0 1px rgba(255, 240, 194, 0.28), 0 20px 64px rgba(243, 207, 122, 0.2);
   transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
   white-space: nowrap;
 }
 
 .waitlist-submit:hover {
   background: linear-gradient(135deg, #fff8dc, #ffe08a 48%, #d59f39) !important;
-  box-shadow: 0 20px 72px rgba(243, 207, 122, 0.32);
+  box-shadow: 0 22px 78px rgba(243, 207, 122, 0.32);
   filter: saturate(1.06);
   transform: translateY(-1px);
 }
 
 .waitlist-submit:disabled {
   cursor: not-allowed;
-  opacity: 0.62;
+  opacity: 0.68;
 }
 
 .waitlist-submit svg {
@@ -6043,9 +6079,46 @@ input[type="number"]::-webkit-inner-spin-button {
   stroke: currentColor !important;
 }
 
+.waitlist-success {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.78rem;
+  align-items: start;
+  margin-top: 1rem;
+  border: 1px solid rgba(120, 244, 239, 0.36);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(120, 244, 239, 0.16), rgba(244, 207, 122, 0.08));
+  padding: 0.95rem 1rem;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(18px);
+}
+
+.waitlist-success svg {
+  margin-top: 0.08rem;
+  color: var(--wl-cyan);
+}
+
+.waitlist-success strong,
+.waitlist-success span {
+  display: block;
+}
+
+.waitlist-success strong {
+  color: var(--wl-text);
+  font-size: 0.98rem;
+  line-height: 1.3;
+}
+
+.waitlist-success span {
+  margin-top: 0.12rem;
+  color: var(--wl-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .waitlist-form-note {
-  min-height: 1.5rem;
-  margin-top: 0.95rem;
+  min-height: 1.4rem;
+  margin-top: 0.9rem;
   color: var(--wl-faint) !important;
   font-size: 0.9rem !important;
   line-height: 1.55 !important;
@@ -6057,31 +6130,36 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .waitlist-benefits {
   display: grid;
-  max-width: 45rem;
+  max-width: 44.5rem;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.7rem;
-  margin-top: 1.55rem;
+  gap: 0;
+  margin-top: 1.9rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .waitlist-benefit {
-  min-height: 8.4rem;
-  border: 1px solid var(--wl-line);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035)),
-    rgba(5, 9, 10, 0.72);
-  padding: 0.9rem 1rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  min-height: 5.8rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 0 1.2rem;
+}
+
+.waitlist-benefit:first-child {
+  padding-left: 0;
+}
+
+.waitlist-benefit:last-child {
+  border-right: 0;
 }
 
 .waitlist-benefit svg {
-  color: var(--wl-cyan);
+  color: #f3cf7a !important;
 }
 
 .waitlist-benefit h2 {
   margin-top: 0.65rem;
   color: var(--wl-text) !important;
-  font-size: 0.96rem !important;
+  font-size: 0.94rem !important;
   line-height: 1.22 !important;
   letter-spacing: 0 !important;
 }
@@ -6093,141 +6171,16 @@ input[type="number"]::-webkit-inner-spin-button {
   line-height: 1.55 !important;
 }
 
-.waitlist-visual {
-  position: relative;
-  min-height: clamp(36rem, 64vw, 52rem);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 48% 32%, rgba(243, 207, 122, 0.16), transparent 18rem),
-    radial-gradient(circle at 64% 52%, rgba(114, 242, 238, 0.18), transparent 20rem),
-    rgba(255, 255, 255, 0.035);
-  box-shadow: 0 36px 120px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-.waitlist-visual::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background:
-    linear-gradient(90deg, rgba(3, 5, 6, 0.68), transparent 34%, rgba(3, 5, 6, 0.1)),
-    linear-gradient(0deg, rgba(3, 5, 6, 0.92), transparent 36%, rgba(3, 5, 6, 0.28));
-  pointer-events: none;
-}
-
-.waitlist-portrait {
-  object-fit: cover;
-  object-position: 52% center;
-  opacity: 0.82;
-  filter: saturate(0.96) contrast(1.08);
-}
-
-.waitlist-orbit {
-  position: absolute;
-  inset: 8%;
-  z-index: 3;
-  pointer-events: none;
-}
-
-.waitlist-orbit span {
-  position: absolute;
-  inset: 7%;
-  border: 1px solid rgba(114, 242, 238, 0.24);
-  border-radius: 50%;
-  transform: rotate(-12deg) skewX(-18deg);
-  box-shadow: 0 0 36px rgba(114, 242, 238, 0.12);
-}
-
-.waitlist-orbit span:nth-child(2) {
-  inset: 18%;
-  border-color: rgba(243, 207, 122, 0.26);
-  transform: rotate(22deg) skewX(16deg);
-}
-
-.waitlist-orbit span:nth-child(3) {
-  inset: 28%;
-  border-color: rgba(255, 255, 255, 0.17);
-  transform: rotate(48deg) skewX(-10deg);
-}
-
-.waitlist-metric,
-.waitlist-security {
-  position: absolute;
-  z-index: 4;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
-  background: rgba(4, 8, 9, 0.72);
-  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(18px);
-}
-
-.waitlist-metric-age {
-  left: 1.2rem;
-  bottom: 1.2rem;
-  width: min(17rem, calc(100% - 2.4rem));
-  padding: 1rem;
-}
-
-.waitlist-metric-age span,
-.waitlist-metric-age small {
-  display: block;
-  color: var(--wl-faint) !important;
-  font-size: 0.78rem;
-}
-
-.waitlist-metric-age strong {
-  display: block;
-  margin-top: 0.25rem;
-  color: var(--wl-text);
-  font-size: 3rem;
-  line-height: 1;
-}
-
-.waitlist-metric-dna,
-.waitlist-metric-coach,
-.waitlist-security {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.8rem 0.9rem;
-  color: var(--wl-muted);
-  font-size: 0.82rem;
-  font-weight: 650;
-}
-
-.waitlist-metric-dna {
-  right: 1.2rem;
-  top: 1.2rem;
-}
-
-.waitlist-metric-coach {
-  right: 1.2rem;
-  bottom: 9.6rem;
-}
-
-.waitlist-security {
-  left: 1.2rem;
-  top: 1.2rem;
-}
-
-.waitlist-metric svg,
-.waitlist-security svg {
-  color: var(--wl-cyan);
-  stroke: currentColor;
-}
-
 @keyframes waitlist-scan {
   0%, 100% {
-    transform: translateY(-55%);
+    transform: translateY(0);
     opacity: 0;
   }
   45%, 65% {
     opacity: 1;
   }
   100% {
-    transform: translateY(160%);
+    transform: translateY(165%);
   }
 }
 
@@ -6238,265 +6191,25 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 @media (max-width: 1080px) {
-  .waitlist-shell {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .waitlist-copy {
-    max-width: 100%;
-  }
-
-  .waitlist-visual {
-    min-height: 34rem;
-  }
-}
-
-@media (max-width: 760px) {
-  .waitlist-shell {
-    padding: 1.4rem;
-  }
-
-  [data-waitlist-page] h1 {
-    max-width: 11ch;
-    font-size: 3rem !important;
-    line-height: 1.03 !important;
-  }
-
-  .waitlist-lede {
-    font-size: 0.98rem !important;
-  }
-
-  .waitlist-form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .waitlist-benefits {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .waitlist-benefit {
-    min-height: 8.8rem;
-  }
-
-  .waitlist-visual {
-    min-height: 30rem;
-  }
-
-  .waitlist-metric-coach {
-    display: none;
-  }
-}
-
-@media (max-width: 460px) {
-  .waitlist-shell {
-    padding: 1.2rem;
-  }
-
-  [data-waitlist-page] h1 {
-    max-width: 12ch;
-    font-size: 2.55rem !important;
-  }
-
-  .waitlist-benefits {
-    grid-template-columns: 1fr;
-  }
-
-  .waitlist-benefit {
-    min-height: auto;
-  }
-
-  .waitlist-visual {
-    min-height: 27rem;
-  }
-
-  .waitlist-metric-dna {
-    display: none;
-  }
-}
-
-/* Reference-matched founding page v2. */
-[data-waitlist-page] {
-  background: #010202;
-}
-
-.waitlist-visual {
-  position: absolute !important;
-  inset: 0 !important;
-  z-index: 1 !important;
-  min-height: auto !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: #010202 !important;
-  box-shadow: none !important;
-  pointer-events: none !important;
-}
-
-.waitlist-visual::before {
-  background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.99) 0%, rgba(0, 0, 0, 0.96) 34%, rgba(0, 0, 0, 0.56) 48%, rgba(0, 0, 0, 0.08) 72%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.24)) !important;
-}
-
-.waitlist-portrait {
-  object-position: right center !important;
-  opacity: 0.98 !important;
-  filter: saturate(1.02) contrast(1.03) !important;
-}
-
-.waitlist-backdrop {
-  z-index: 2;
-}
-
-.waitlist-backdrop::before {
-  opacity: 0.35;
-}
-
-.waitlist-backdrop::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 55% 35%, rgba(243, 207, 122, 0.08), transparent 24rem),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.96), rgba(0, 0, 0, 0.82) 42%, transparent 70%);
-}
-
-.waitlist-shell {
-  z-index: 3 !important;
-  width: min(100%, 1540px) !important;
-  grid-template-columns: minmax(0, 0.98fr) minmax(24rem, 1.02fr) !important;
-  gap: clamp(2rem, 5vw, 5rem) !important;
-  padding: clamp(2.8rem, 5vw, 4.9rem) clamp(2rem, 5.4vw, 5rem) !important;
-}
-
-.waitlist-copy {
-  max-width: 43.5rem !important;
-  position: relative !important;
-  z-index: 20 !important;
-  isolation: isolate !important;
-}
-
-.waitlist-brand {
-  font-size: 1.08rem !important;
-  letter-spacing: 0.42em !important;
-  color: #e7c06e !important;
-  border-bottom: 0 !important;
-  min-height: 1.35rem !important;
-}
-
-.waitlist-launch-date {
-  color: rgba(243, 207, 122, 0.92) !important;
-  font-size: 0.78rem !important;
-  letter-spacing: 0.18em !important;
-}
-
-[data-waitlist-page] h1 {
-  max-width: 14.2ch !important;
-  margin-top: 1.35rem !important;
-  font-size: clamp(3.25rem, 5.85vw, 5.55rem) !important;
-  line-height: 1.02 !important;
-  color: #f8fbff !important;
-  -webkit-text-fill-color: #f8fbff !important;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.54) !important;
-}
-
-.waitlist-brand,
-.waitlist-launch-date,
-.waitlist-tagline,
-.waitlist-lede,
-.waitlist-form,
-.waitlist-benefits {
-  position: relative !important;
-  z-index: 21 !important;
-}
-
-.waitlist-tagline {
-  max-width: 42rem !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-  font-size: clamp(1.05rem, 1.65vw, 1.35rem) !important;
-  font-weight: 600 !important;
-}
-
-.waitlist-lede {
-  max-width: 42rem !important;
-  color: rgba(235, 242, 247, 0.74) !important;
-  font-size: clamp(1.02rem, 1.45vw, 1.16rem) !important;
-}
-
-.waitlist-form {
-  max-width: 38.5rem !important;
-  margin-top: 2rem !important;
-}
-
-.waitlist-form-grid {
-  grid-template-columns: 1fr !important;
-  gap: 0.9rem !important;
-}
-
-.waitlist-field {
-  min-height: 3.6rem !important;
-  border-color: rgba(255, 255, 255, 0.24) !important;
-  background: rgba(0, 0, 0, 0.34) !important;
-}
-
-.waitlist-submit {
-  width: 100% !important;
-  min-height: 3.7rem !important;
-  background: linear-gradient(135deg, #fff4ca, #efc777 52%, #d59d39) !important;
-  box-shadow: 0 0 0 1px rgba(255, 240, 194, 0.28), 0 20px 64px rgba(243, 207, 122, 0.18) !important;
-}
-
-.waitlist-benefits {
-  max-width: 44.5rem !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: 0 !important;
-  margin-top: 1.9rem !important;
-  padding-top: 1.35rem !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.16) !important;
-}
-
-.waitlist-benefit {
-  min-height: 5.8rem !important;
-  border: 0 !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.16) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 1.2rem !important;
-}
-
-.waitlist-benefit:first-child {
-  padding-left: 0 !important;
-}
-
-.waitlist-benefit:last-child {
-  border-right: 0 !important;
-}
-
-.waitlist-benefit svg {
-  color: #f3cf7a !important;
-}
-
-@media (max-width: 1080px) {
   .waitlist-visual::before {
     background:
-      linear-gradient(180deg, rgba(0, 0, 0, 0.94) 0%, rgba(0, 0, 0, 0.86) 50%, rgba(0, 0, 0, 0.52) 100%),
-      linear-gradient(90deg, rgba(0, 0, 0, 0.78), transparent 74%) !important;
+      linear-gradient(180deg, rgba(2, 5, 6, 0.96) 0%, rgba(2, 5, 6, 0.88) 48%, rgba(2, 5, 6, 0.5) 100%),
+      linear-gradient(90deg, rgba(2, 5, 6, 0.72), transparent 76%);
   }
 
   .waitlist-shell {
-    grid-template-columns: 1fr !important;
-    align-items: start !important;
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 
   .waitlist-copy {
-    max-width: 43rem !important;
+    max-width: 43rem;
   }
 }
 
 @media (max-width: 760px) {
   .waitlist-shell {
-    padding: 1.45rem 1.2rem 3rem !important;
+    padding: 1.45rem 1.2rem 3rem;
   }
 
   .waitlist-brand {
@@ -6504,7 +6217,7 @@ input[type="number"]::-webkit-inner-spin-button {
   }
 
   [data-waitlist-page] h1 {
-    max-width: 12ch !important;
+    max-width: 12ch;
     font-size: 2.75rem !important;
     line-height: 1.03 !important;
   }
@@ -6514,13 +6227,18 @@ input[type="number"]::-webkit-inner-spin-button {
   }
 
   .waitlist-benefits {
-    grid-template-columns: 1fr !important;
-    border-top-color: rgba(255, 255, 255, 0.12) !important;
+    grid-template-columns: 1fr;
+    border-top-color: rgba(255, 255, 255, 0.12);
   }
 
   .waitlist-benefit {
-    border-right: 0 !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
-    padding: 0.95rem 0 !important;
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 0.95rem 0;
+  }
+
+  .waitlist-portrait {
+    object-position: 67% center;
   }
 }
