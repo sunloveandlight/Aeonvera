@@ -41,9 +41,9 @@ export const metadata: Metadata = {
     url: "/waitlist",
     images: [
       {
-        url: "/marketing/waitlist-white-gold-founders-v2.png",
-        width: 1821,
-        height: 864,
+        url: "/marketing/waitlist-white-gold-founders-sharp.png",
+        width: 1918,
+        height: 820,
         alt: "Aeonvera longevity intelligence.",
       },
     ],
@@ -68,11 +68,12 @@ export default function WaitlistPage() {
           <p className="waitlist-launch-date">Private access opens August 19, 2026</p>
 
           <h1>
-            Enter Aeonvera Early
+            Launching soon.
           </h1>
 
           <p className="waitlist-tagline">
-            The app that grows younger with you.
+            Join the Founding Members list to be notified the moment
+            subscriptions open.
           </p>
 
           <p className="waitlist-lede">
@@ -101,7 +102,7 @@ export default function WaitlistPage() {
             fill
             priority
             sizes="(max-width: 900px) 100vw, 48vw"
-            src="/marketing/waitlist-white-gold-founders-v2.png"
+            src="/marketing/waitlist-white-gold-founders-sharp.png"
           />
         </section>
       </main>
