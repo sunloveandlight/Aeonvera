@@ -6048,26 +6048,28 @@ input[type="number"]::-webkit-inner-spin-button {
   position: relative;
   display: inline-flex;
   width: 100%;
-  min-height: 3.45rem;
+  min-height: 3.62rem;
   align-items: center;
-  justify-content: center;
-  gap: 0.58rem;
-  border: 1px solid rgba(255, 229, 164, 0.76) !important;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: 1px solid rgba(255, 245, 218, 0.92) !important;
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(255, 239, 188, 0.98) 0%, rgba(246, 207, 118, 0.98) 42%, rgba(197, 139, 41, 0.98) 100%),
-    #e6b95a !important;
-  color: #151109 !important;
-  padding: 0 1rem;
+    linear-gradient(135deg, rgba(255, 255, 250, 1) 0%, rgba(255, 239, 189, 1) 48%, rgba(235, 185, 83, 1) 100%),
+    #fff2c1 !important;
+  color: #0c0d0d !important;
+  padding: 0.32rem 0.36rem 0.32rem 1.18rem;
   overflow: hidden;
-  font-size: 0.92rem;
-  font-weight: 800;
+  font-size: 0.94rem;
+  font-weight: 900;
+  letter-spacing: 0;
   box-shadow:
-    0 16px 34px rgba(175, 120, 35, 0.28),
-    0 0 0 1px rgba(255, 246, 217, 0.16) inset,
-    inset 0 1px 0 rgba(255, 255, 255, 0.68),
-    inset 0 -1px 0 rgba(86, 54, 12, 0.32);
-  text-shadow: 0 1px 0 rgba(255, 244, 203, 0.28);
+    0 18px 48px rgba(244, 207, 122, 0.28),
+    0 8px 22px rgba(0, 0, 0, 0.26),
+    0 0 0 1px rgba(120, 244, 239, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    inset 0 -1px 0 rgba(109, 72, 12, 0.2);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.42);
   transform: translateY(0);
   transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease, transform 0.18s ease;
   white-space: nowrap;
@@ -6076,73 +6078,104 @@ input[type="number"]::-webkit-inner-spin-button {
 .waitlist-submit::before {
   content: "";
   position: absolute;
-  inset: 1px;
-  border-radius: 7px;
+  inset: -45% auto auto -18%;
+  width: 58%;
+  height: 190%;
   background:
-    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent),
-    radial-gradient(circle at 24% 0%, rgba(255, 255, 255, 0.42), transparent 34%);
-  opacity: 0.62;
+    radial-gradient(circle, rgba(255, 255, 255, 0.82), transparent 58%);
+  opacity: 0.72;
   pointer-events: none;
-  transform: translateX(-38%);
+  transform: rotate(-12deg) translateX(0);
   transition: opacity 0.18s ease, transform 0.28s ease;
 }
 
 .waitlist-submit::after {
   content: "";
   position: absolute;
-  inset: auto 0 0;
-  height: 42%;
-  background: linear-gradient(180deg, transparent, rgba(87, 51, 7, 0.18));
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, rgba(120, 244, 239, 0.2), transparent 34%),
+    linear-gradient(180deg, transparent 52%, rgba(98, 60, 8, 0.16));
   pointer-events: none;
 }
 
-.waitlist-submit span,
-.waitlist-submit svg {
+.waitlist-submit-copy,
+.waitlist-submit-icon {
   position: relative;
   z-index: 1;
 }
 
-.waitlist-submit:hover {
-  border-color: rgba(255, 226, 160, 0.9) !important;
+.waitlist-submit-copy {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.waitlist-submit-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 2.78rem;
+  height: 2.78rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 235, 176, 0.24);
+  border-radius: 7px;
   background:
-    linear-gradient(180deg, rgba(255, 246, 210, 1) 0%, rgba(255, 219, 136, 1) 44%, rgba(215, 154, 49, 1) 100%),
-    #f0c56c !important;
-  color: #100d07 !important;
+    linear-gradient(180deg, rgba(8, 15, 16, 0.96), rgba(18, 18, 14, 0.96)),
+    #0b0e0e;
+  color: #f9d784;
   box-shadow:
-    0 20px 42px rgba(194, 137, 44, 0.36),
-    0 0 24px rgba(244, 207, 122, 0.18),
-    0 0 0 1px rgba(255, 249, 229, 0.22) inset,
-    inset 0 1px 0 rgba(255, 255, 255, 0.76),
-    inset 0 -1px 0 rgba(86, 54, 12, 0.28);
-  transform: translateY(-1px);
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 0 18px rgba(120, 244, 239, 0.14);
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.waitlist-submit:hover {
+  border-color: rgba(120, 244, 239, 0.72) !important;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 244, 210, 1) 45%, rgba(255, 207, 101, 1) 100%),
+    #fff4cd !important;
+  color: #070808 !important;
+  box-shadow:
+    0 22px 56px rgba(244, 207, 122, 0.34),
+    0 0 30px rgba(120, 244, 239, 0.18),
+    0 8px 22px rgba(0, 0, 0, 0.24),
+    0 0 0 1px rgba(120, 244, 239, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(109, 72, 12, 0.18);
+  transform: translateY(-2px);
 }
 
 .waitlist-submit:hover::before {
-  opacity: 0.86;
-  transform: translateX(12%);
+  opacity: 0.95;
+  transform: rotate(-12deg) translateX(18%);
 }
 
-.waitlist-submit:hover svg {
+.waitlist-submit:hover .waitlist-submit-icon {
+  background:
+    linear-gradient(180deg, rgba(6, 17, 18, 1), rgba(14, 13, 9, 1)),
+    #070b0b;
+  color: #78f4ef;
   transform: translateX(2px);
 }
 
 .waitlist-submit:active {
   box-shadow:
-    0 10px 22px rgba(175, 120, 35, 0.22),
-    0 0 0 1px rgba(255, 246, 217, 0.18) inset,
-    inset 0 1px 0 rgba(255, 255, 255, 0.56),
-    inset 0 2px 8px rgba(86, 54, 12, 0.18);
+    0 10px 26px rgba(244, 207, 122, 0.22),
+    0 4px 14px rgba(0, 0, 0, 0.22),
+    inset 0 2px 8px rgba(109, 72, 12, 0.14);
   transform: translateY(0);
 }
 
 .waitlist-submit:focus-visible {
   border-color: rgba(120, 244, 239, 0.82) !important;
   box-shadow:
-    0 0 0 3px rgba(120, 244, 239, 0.16),
-    0 16px 34px rgba(175, 120, 35, 0.28),
-    0 0 0 1px rgba(255, 246, 217, 0.16) inset,
-    inset 0 1px 0 rgba(255, 255, 255, 0.68),
-    inset 0 -1px 0 rgba(86, 54, 12, 0.32);
+    0 0 0 3px rgba(120, 244, 239, 0.2),
+    0 18px 48px rgba(244, 207, 122, 0.28),
+    0 8px 22px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    inset 0 -1px 0 rgba(109, 72, 12, 0.2);
   outline: none;
 }
 
@@ -6158,7 +6191,6 @@ input[type="number"]::-webkit-inner-spin-button {
   height: 16px;
   color: currentColor !important;
   stroke: currentColor !important;
-  transition: transform 0.18s ease;
 }
 
 .waitlist-success {
