@@ -9,26 +9,26 @@ const FOOTER_GROUPS = [
       { href: "/about", label: "How it works" },
       { href: "/demo", label: "Demo profile" },
       { href: "/pricing", label: "Pricing" },
-      { href: "/optimization", label: "Optimization" },
-      { href: "/life-autopilot", label: "Life Autopilot" },
+      { href: "/resources", label: "Resources" },
+      { href: "/resources/articles", label: "Articles" },
     ],
   },
   {
-    title: "Workspace",
+    title: "Library",
+    links: [
+      { href: "/resources/guides", label: "Beginner's guides" },
+      { href: "/resources/biomarkers", label: "Biomarkers" },
+      { href: "/resources/categories/exercise", label: "Exercise" },
+      { href: "/resources/categories/sleep", label: "Sleep" },
+    ],
+  },
+  {
+    title: "Platform",
     links: [
       { href: "/assessment", label: "Assessment" },
-      { href: "/data-sources", label: "Data sources" },
       { href: "/digital-twin", label: "Digital Twin" },
       { href: "/companion", label: "Ask Aeonvera" },
-    ],
-  },
-  {
-    title: "Care",
-    links: [
-      { href: "/physician-export", label: "Physician export" },
-      { href: "/network", label: "Care network" },
-      { href: "/report", label: "Longevity report" },
-      { href: "/plan", label: "Membership" },
+      { href: "/login?mode=signup", label: "Create account" },
     ],
   },
   {

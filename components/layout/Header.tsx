@@ -28,8 +28,19 @@ const PUBLIC_NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/about", label: "How Aeonvera works", description: "Private longevity intelligence, explained simply." },
       { href: "/demo", label: "Demo profile", description: "Preview Aeonvera with sample health signals." },
+      { href: "/resources", label: "Longevity Library", description: "Articles, guides, biomarkers, and research reviews." },
       { href: "/login?mode=signup", label: "Create account", description: "Start private health profiles." },
       { href: "/login?mode=signin", label: "Sign in", description: "Return to your Aeonvera account." },
+    ],
+  },
+  {
+    label: "Resources",
+    href: "/resources",
+    items: [
+      { href: "/resources", label: "Library home", description: "The Aeonvera Longevity Library." },
+      { href: "/resources/articles", label: "Articles", description: "Evidence-aware healthspan explainers." },
+      { href: "/resources/guides", label: "Beginner's guides", description: "Start with the ideas that compound." },
+      { href: "/resources/biomarkers", label: "Biomarker database", description: "Understand labs and wearable signals." },
     ],
   },
   {

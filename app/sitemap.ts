@@ -1,9 +1,25 @@
 import type { MetadataRoute } from "next";
 
+import {
+  resourceArticles,
+  resourceCategories,
+} from "@/lib/resources/content";
+
 const BASE_URL = "https://www.aeonvera.com";
 
 // Public, indexable marketing/legal routes.
-const ROUTES = ["", "/about", "/demo", "/pricing", "/privacy", "/terms"];
+const ROUTES = [
+  "",
+  "/about",
+  "/demo",
+  "/pricing",
+  "/privacy",
+  "/terms",
+  "/resources",
+  "/resources/articles",
+  "/resources/guides",
+  "/resources/biomarkers",
+];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   if (process.env.AEONVERA_WAITLIST_MODE === "1") {
@@ -16,9 +32,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ];
   }
 
-  return ROUTES.map((route) => ({
+  const staticRoutes = ROUTES.map((route) => ({
     url: `${BASE_URL}${route}`,
-    changeFrequency: route === "" ? "weekly" : "monthly",
+    changeFrequency: route === "" ? "weekly" as const : "monthly" as const,
     priority: route === "" ? 1 : 0.7,
   }));
+
+  const categoryRoutes = resourceCategories.map((category) => ({
+    url: `${BASE_URL}/resources/categories/${category.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
+  const articleRoutes = resourceArticles.map((article) => ({
+    url: `${BASE_URL}/resources/${article.slug}`,
+    lastModified: article.updatedAt,
+    changeFrequency: "monthly" as const,
+    priority: 0.85,
+  }));
+
+  return [...staticRoutes, ...categoryRoutes, ...articleRoutes];
 }
