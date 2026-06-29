@@ -102,6 +102,16 @@ export default function WaitlistPage() {
             })}
           </div>
 
+          <section className="waitlist-library-preview" aria-label="Aeonvera Longevity Library preview">
+            <p className="waitlist-library-label">Longevity Library</p>
+            <h2>Guides, biomarkers, and research reviews open with Aeonvera.</h2>
+            <p>
+              On August 19, explore evidence-aware healthspan guides, biomarker
+              explainers, and practical research reviews built to turn longevity
+              science into a system you can act on.
+            </p>
+          </section>
+
           <div className="waitlist-benefits" aria-label="Founding member benefits">
             {foundingBenefits.map((benefit) => (
               <div className="waitlist-benefit" key={benefit.title}>

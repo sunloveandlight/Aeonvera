@@ -6290,6 +6290,41 @@ input[type="number"]::-webkit-inner-spin-button {
   background: rgba(255, 255, 255, 0.045);
 }
 
+.waitlist-library-preview {
+  max-width: 40rem;
+  margin-top: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 1rem;
+}
+
+.waitlist-library-label {
+  margin: 0 0 0.6rem !important;
+  color: #f3cf7a !important;
+  font-size: 0.68rem !important;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  line-height: 1.1 !important;
+  text-transform: uppercase;
+}
+
+.waitlist-library-preview h2 {
+  max-width: 30rem;
+  color: var(--wl-text) !important;
+  font-size: clamp(1.1rem, 2vw, 1.45rem) !important;
+  line-height: 1.16 !important;
+  letter-spacing: 0 !important;
+}
+
+.waitlist-library-preview p:not(.waitlist-library-label) {
+  max-width: 34rem;
+  margin-top: 0.6rem;
+  color: var(--wl-muted) !important;
+  font-size: 0.94rem !important;
+  line-height: 1.55 !important;
+}
+
 @keyframes waitlist-scan {
   0%, 100% {
     transform: translateY(0);
