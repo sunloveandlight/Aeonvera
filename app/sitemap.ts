@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import {
+  biomarkerEntries,
   resourceArticles,
   resourceCategories,
 } from "@/lib/resources/content";
@@ -51,5 +52,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.85,
   }));
 
-  return [...staticRoutes, ...categoryRoutes, ...articleRoutes];
+  const biomarkerRoutes = biomarkerEntries
+    .filter((biomarker) => biomarker.summary)
+    .map((biomarker) => ({
+      url: `${BASE_URL}/resources/biomarkers/${biomarker.slug}`,
+      changeFrequency: "monthly" as const,
+      priority: 0.75,
+    }));
+
+  return [...staticRoutes, ...categoryRoutes, ...articleRoutes, ...biomarkerRoutes];
 }

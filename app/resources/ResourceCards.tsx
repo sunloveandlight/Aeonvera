@@ -84,16 +84,23 @@ export function BiomarkerPreview({ biomarkers }: { biomarkers: BiomarkerEntry[] 
   return (
     <div className="resource-biomarker-grid">
       {biomarkers.map((biomarker) => (
-        <article className="resource-biomarker-card" key={biomarker.slug}>
-          <p>{biomarker.category}</p>
-          <h2>{biomarker.name}</h2>
-          <span>{biomarker.whyItMatters}</span>
-          <ul>
-            {biomarker.signals.map((signal) => (
-              <li key={signal}>{signal}</li>
-            ))}
-          </ul>
-        </article>
+        <Link
+          aria-label={`Read the ${biomarker.name} biomarker guide`}
+          className="resource-biomarker-card"
+          href={biomarker.summary ? `/resources/biomarkers/${biomarker.slug}` : "/resources/biomarkers"}
+          key={biomarker.slug}
+        >
+          <article>
+            <p>{biomarker.category}</p>
+            <h2>{biomarker.name}</h2>
+            <span>{biomarker.whyItMatters}</span>
+            <ul>
+              {biomarker.signals.map((signal) => (
+                <li key={signal}>{signal}</li>
+              ))}
+            </ul>
+          </article>
+        </Link>
       ))}
     </div>
   );

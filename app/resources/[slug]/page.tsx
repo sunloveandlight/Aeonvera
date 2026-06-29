@@ -6,6 +6,7 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 import { formatDate } from "../ResourceCards";
 import {
+  biomarkerEntries,
   getArticle,
   getCategory,
   resourceArticles,
@@ -71,6 +72,9 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
 
   if (!article) notFound();
 
+  const linkedBiomarkers = article.biomarkerLinks
+    ? biomarkerEntries.filter((biomarker) => article.biomarkerLinks?.includes(biomarker.slug))
+    : [];
   const articleUrl = `https://www.aeonvera.com/resources/${article.slug}`;
   const jsonLd = {
     "@context": "https://schema.org",
@@ -130,8 +134,8 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           <aside className="article-sidebar" aria-label="Article contents">
             <p>In this guide</p>
             <a href="#summary">Summary</a>
-            <a href="#strategies">25 strategies</a>
-            <a href="#biomarkers">Biomarkers to track</a>
+            <a href="#strategies">{article.strategySectionTitle || "Strategies"}</a>
+            <a href="#biomarkers">{article.biomarkerSectionTitle || "Biomarkers to track"}</a>
             <a href="#aeonvera">How Aeonvera helps</a>
             <a href="#references">References</a>
           </aside>
@@ -160,17 +164,15 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             </section>
 
             <section className="article-section">
-              <h2>Before the list: evidence strength matters.</h2>
+              <h2>{article.evidenceIntroTitle || "Before the list: evidence strength matters."}</h2>
               <p>
-                Some interventions are supported by decades of population,
-                clinical, and mechanistic evidence. Others are promising but
-                still early. This guide marks each strategy as strong, moderate,
-                or emerging so you can prioritize the highest-confidence moves first.
+                {article.evidenceIntroBody ||
+                  "Some interventions are supported by decades of population, clinical, and mechanistic evidence. Others are promising but still early. This guide marks each strategy as strong, moderate, or emerging so you can prioritize the highest-confidence moves first."}
               </p>
             </section>
 
             <section id="strategies" className="article-section">
-              <h2>25 evidence-based healthspan strategies</h2>
+              <h2>{article.strategySectionTitle || "25 evidence-based healthspan strategies"}</h2>
               <div className="strategy-list">
                 {article.strategies.map((strategy, index) => {
                   const category = getCategory(strategy.category);
@@ -193,18 +195,23 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             </section>
 
             <section id="biomarkers" className="article-section">
-              <h2>Biomarkers worth knowing first</h2>
-              <p>
-                The most useful biomarkers are the ones that change decisions.
-                Start with blood pressure, lipids such as LDL-C and ApoB,
-                glucose regulation markers such as HbA1c, body composition
-                context, cardiorespiratory fitness, sleep, and recovery trends.
-              </p>
-              <p>
-                No single marker is destiny. The signal becomes useful when it
-                is interpreted with baseline context, symptoms, family history,
-                medications, and clinician guidance.
-              </p>
+              <h2>{article.biomarkerSectionTitle || "Biomarkers worth knowing first"}</h2>
+              {(article.biomarkerSectionBody || [
+                "The most useful biomarkers are the ones that change decisions. Start with blood pressure, lipids such as LDL-C and ApoB, glucose regulation markers such as HbA1c, body composition context, cardiorespiratory fitness, sleep, and recovery trends.",
+                "No single marker is destiny. The signal becomes useful when it is interpreted with baseline context, symptoms, family history, medications, and clinician guidance.",
+              ]).map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+              {linkedBiomarkers.length > 0 ? (
+                <div className="article-link-grid">
+                  {linkedBiomarkers.map((biomarker) => (
+                    <Link href={`/resources/biomarkers/${biomarker.slug}`} key={biomarker.slug}>
+                      <strong>{biomarker.name}</strong>
+                      <span>{biomarker.category}</span>
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
               <Link href="/resources/biomarkers" className="resource-inline-link">
                 Browse the biomarker database <ArrowRight size={16} />
               </Link>
