@@ -6254,6 +6254,42 @@ input[type="number"]::-webkit-inner-spin-button {
   line-height: 1.55 !important;
 }
 
+.premium-footer-social-link,
+.waitlist-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--text-2);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.premium-footer-social-link:hover,
+.waitlist-social-link:hover {
+  border-color: rgba(var(--gold), 0.48);
+  color: rgb(var(--gold));
+  background: rgba(var(--gold), 0.08);
+}
+
+.waitlist-socials {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.waitlist-social-link {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(244, 239, 224, 0.74);
+  background: rgba(255, 255, 255, 0.045);
+}
+
 @keyframes waitlist-scan {
   0%, 100% {
     transform: translateY(0);
@@ -6710,6 +6746,60 @@ input[type="number"]::-webkit-inner-spin-button {
   gap: 1rem;
 }
 
+.resources-start-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.resources-start-grid .resource-article-card.is-featured {
+  grid-template-columns: 1fr;
+  min-height: 360px;
+}
+
+.resource-cluster-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.resource-cluster-card {
+  min-height: 260px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 1.2rem;
+}
+
+.resource-cluster-card h3 {
+  font-size: 1.35rem;
+}
+
+.resource-cluster-card p {
+  margin-top: 0.75rem;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.resource-cluster-card div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 1.1rem;
+}
+
+.resource-cluster-card a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: rgba(var(--gold), 0.92);
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0 0.65rem;
+}
+
 .resources-split-section {
   display: grid;
   grid-template-columns: 0.82fr 1.18fr;
@@ -7152,7 +7242,9 @@ input[type="number"]::-webkit-inner-spin-button {
   .resource-biomarker-grid,
   .article-takeaways,
   .article-link-grid,
-  .related-biomarker-grid {
+  .related-biomarker-grid,
+  .resources-start-grid,
+  .resource-cluster-grid {
     grid-template-columns: 1fr;
   }
 

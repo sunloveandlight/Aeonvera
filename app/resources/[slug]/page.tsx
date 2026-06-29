@@ -115,6 +115,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
             <p>{article.subtitle}</p>
             <div className="article-meta-row">
               <span>{article.author}</span>
+              <span>{article.reviewedBy || "Clinical review planned"}</span>
               <span>{formatDate(article.publishedAt)}</span>
               <span>{article.readingTime}</span>
             </div>

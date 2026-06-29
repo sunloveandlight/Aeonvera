@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { socialLinks } from "@/lib/brand/socialLinks";
+
 const FOOTER_GROUPS = [
   {
     title: "Product",
@@ -60,6 +62,22 @@ export default function Footer() {
               Private longevity intelligence for labs, wearables, biological age,
               protocols, and clinician-ready sharing.
             </p>
+            <div className="premium-footer-social mt-5 flex items-center gap-2">
+              {socialLinks.map((link) => {
+                return (
+                  <a
+                    aria-label={`Aeonvera on ${link.label}`}
+                    className="premium-footer-social-link"
+                    href={link.href}
+                    key={link.href}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    {link.shortLabel}
+                  </a>
+                );
+              })}
+            </div>
           </div>
 
           <nav className="grid grid-cols-2 gap-8 sm:grid-cols-4" aria-label="Footer navigation">

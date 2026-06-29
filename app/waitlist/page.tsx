@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Bell, Clock3, Gift, Tag } from "lucide-react";
 
 import WaitlistForm from "./WaitlistForm";
+import { socialLinks } from "@/lib/brand/socialLinks";
 
 const foundingBenefits = [
   {
@@ -83,6 +84,23 @@ export default function WaitlistPage() {
           </p>
 
           <WaitlistForm />
+
+          <div className="waitlist-socials" aria-label="Aeonvera social links">
+            {socialLinks.map((link) => {
+              return (
+                <a
+                  aria-label={`Aeonvera on ${link.label}`}
+                  className="waitlist-social-link"
+                  href={link.href}
+                  key={link.href}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  {link.shortLabel}
+                </a>
+              );
+            })}
+          </div>
 
           <div className="waitlist-benefits" aria-label="Founding member benefits">
             {foundingBenefits.map((benefit) => (

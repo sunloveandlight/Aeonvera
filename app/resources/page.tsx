@@ -12,6 +12,7 @@ import {
 } from "./ResourceCards";
 import {
   biomarkerEntries,
+  getArticle,
   getFeaturedArticle,
   resourceCategories,
 } from "@/lib/resources/content";
@@ -48,6 +49,32 @@ export const metadata: Metadata = {
 
 export default function ResourcesPage() {
   const featured = getFeaturedArticle();
+  const startHereArticles = [
+    featured,
+    getArticle("what-is-biological-age"),
+  ].filter(Boolean);
+  const biomarkerClusters = [
+    {
+      title: "Cardiometabolic",
+      body: "Particle burden, cholesterol pattern, and cardiovascular risk context.",
+      slugs: ["apob", "ldl-c", "hdl-c", "triglycerides"],
+    },
+    {
+      title: "Glucose regulation",
+      body: "Average glucose, fasting baseline, and insulin-resistance context.",
+      slugs: ["hba1c", "fasting-glucose", "fasting-insulin"],
+    },
+    {
+      title: "Fitness and recovery",
+      body: "Functional reserve, autonomic strain, and recovery trends.",
+      slugs: ["vo2-max", "hrv", "resting-hr"],
+    },
+    {
+      title: "Inflammation",
+      body: "Systemic inflammatory burden and cardiometabolic context.",
+      slugs: ["hs-crp"],
+    },
+  ];
 
   return (
     <div className="resources-page">
@@ -88,10 +115,14 @@ export default function ResourcesPage() {
 
       <section className="resources-band">
         <div className="resources-section-heading">
-          <p>Featured Article</p>
-          <h2>The first pillar in the library.</h2>
+          <p>Start Here</p>
+          <h2>The two pillars to read first.</h2>
         </div>
-        <ArticleCard article={featured} featured />
+        <div className="resources-start-grid">
+          {startHereArticles.map((article) => (
+            article ? <ArticleCard article={article} featured key={article.slug} /> : null
+          ))}
+        </div>
       </section>
 
       <section className="resources-section">
@@ -122,6 +153,34 @@ export default function ResourcesPage() {
           </Link>
         </div>
         <BiomarkerPreview biomarkers={biomarkerEntries.slice(0, 3)} />
+      </section>
+
+      <section className="resources-section">
+        <div className="resources-section-heading">
+          <p>Browse By Biomarker Cluster</p>
+          <h2>Find the signal by the system it belongs to.</h2>
+        </div>
+        <div className="resource-cluster-grid">
+          {biomarkerClusters.map((cluster) => {
+            const clusterBiomarkers = biomarkerEntries.filter((biomarker) =>
+              cluster.slugs.includes(biomarker.slug) && biomarker.summary
+            );
+
+            return (
+              <section className="resource-cluster-card" key={cluster.title}>
+                <h3>{cluster.title}</h3>
+                <p>{cluster.body}</p>
+                <div>
+                  {clusterBiomarkers.map((biomarker) => (
+                    <Link href={`/resources/biomarkers/${biomarker.slug}`} key={biomarker.slug}>
+                      {biomarker.name}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
       </section>
 
       <section className="resources-band resources-next-band">

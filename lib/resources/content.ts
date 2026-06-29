@@ -59,6 +59,7 @@ export type ResourceArticle = {
   updatedAt: string;
   readingTime: string;
   author: string;
+  reviewedBy?: string;
   heroImage: string;
   heroAlt: string;
   summary: string[];
@@ -913,6 +914,276 @@ const strategies: Strategy[] = [
 ];
 
 export const resourceArticles: ResourceArticle[] = [
+  {
+    slug: "how-to-read-your-first-longevity-blood-panel",
+    title: "How to Read Your First Longevity Blood Panel",
+    subtitle:
+      "A beginner's map for turning lab results into better questions, cleaner trends, and more useful clinician conversations.",
+    description:
+      "Learn how to read a longevity blood panel across lipids, glucose regulation, inflammation, kidney/liver context, and follow-up timing.",
+    category: "beginners-guides",
+    categories: ["beginners-guides", "longevity-library", "biomarker-database", "disease-prevention"],
+    publishedAt: "2026-06-29",
+    updatedAt: "2026-06-29",
+    readingTime: "9 min read",
+    author: "Aeonvera Editorial",
+    reviewedBy: "Clinical review planned",
+    heroImage: "/marketing/rejuvenation-woman-top-extended.png",
+    heroAlt: "Aeonvera lab and longevity intelligence portrait.",
+    summary: [
+      "A lab panel is not a grade. It is a snapshot of physiology, risk, and context.",
+      "The most useful first pass is pattern recognition: lipids, glucose, inflammation, organ function, and blood counts.",
+      "Trends and clinician interpretation matter more than one isolated value.",
+    ],
+    takeaways: [
+      "Confirm whether the test was fasting and whether you were sick, stressed, or recovering from hard training.",
+      "Look for clusters, not single numbers.",
+      "Prioritize markers that change decisions.",
+      "Retest after enough time for a real intervention to matter.",
+    ],
+    evidenceIntroTitle: "Start with patterns, not panic.",
+    evidenceIntroBody:
+      "Most out-of-range values need context: symptoms, medications, fasting status, recent infection, training load, menstrual status, hydration, and prior results. The goal is to identify what deserves action, retesting, or clinical follow-up.",
+    strategySectionTitle: "Five steps for reading a blood panel",
+    biomarkerSectionTitle: "Markers to understand first",
+    biomarkerSectionBody: [
+      "For a first longevity panel, the cardiometabolic cluster usually deserves early attention: ApoB, LDL-C, HDL-C, triglycerides, HbA1c, fasting glucose, and fasting insulin.",
+      "Inflammation and recovery context can come from hs-CRP, sleep, resting heart rate, HRV, and symptoms. None of these should be interpreted alone.",
+    ],
+    biomarkerLinks: ["apob", "ldl-c", "hdl-c", "triglycerides", "hba1c", "fasting-glucose", "fasting-insulin", "hs-crp"],
+    strategies: [
+      {
+        title: "Check the test context first",
+        evidence: "Strong",
+        category: "beginners-guides",
+        body:
+          "Before interpreting results, note fasting status, recent illness, heavy exercise, alcohol exposure, poor sleep, medications, supplements, and timing.",
+      },
+      {
+        title: "Read the lipid cluster together",
+        evidence: "Strong",
+        category: "biomarker-database",
+        body:
+          "LDL-C, HDL-C, triglycerides, non-HDL-C, and ApoB answer related but different questions about cardiovascular risk.",
+      },
+      {
+        title: "Read glucose markers as a system",
+        evidence: "Strong",
+        category: "biomarker-database",
+        body:
+          "HbA1c, fasting glucose, fasting insulin, triglycerides, waist circumference, and blood pressure can reveal metabolic patterns earlier than one marker alone.",
+      },
+      {
+        title: "Separate acute noise from chronic trend",
+        evidence: "Moderate",
+        category: "research-reviews",
+        body:
+          "Inflammation markers, liver enzymes, glucose, and blood counts can move temporarily. Repeat testing may be more useful than overreacting to a single snapshot.",
+      },
+      {
+        title: "Turn results into a next action",
+        evidence: "Moderate",
+        category: "ai-medicine",
+        body:
+          "Every meaningful lab review should end with one of four outcomes: watch, retest, change behavior, or discuss medical treatment with a clinician.",
+      },
+    ],
+    references: [
+      {
+        label: "MedlinePlus: understanding laboratory tests",
+        url: "https://medlineplus.gov/lab-tests/",
+      },
+      {
+        label: "CDC: cholesterol testing and facts",
+        url: "https://www.cdc.gov/cholesterol/testing/index.html",
+      },
+      {
+        label: "CDC: diabetes testing",
+        url: "https://www.cdc.gov/diabetes/diabetes-testing/index.html",
+      },
+      {
+        label: "MedlinePlus: C-reactive protein test",
+        url: "https://medlineplus.gov/lab-tests/c-reactive-protein-crp-test/",
+      },
+    ],
+  },
+  {
+    slug: "beginners-guide-apob-ldl-hdl-triglycerides",
+    title: "A Beginner's Guide to ApoB, LDL-C, HDL-C, and Triglycerides",
+    subtitle:
+      "The lipid markers that explain cardiovascular risk better when they are read together.",
+    description:
+      "Understand ApoB, LDL-C, HDL-C, and triglycerides, how they differ, and why the full lipid pattern matters for prevention.",
+    category: "beginners-guides",
+    categories: ["beginners-guides", "biomarker-database", "disease-prevention", "research-reviews"],
+    publishedAt: "2026-06-29",
+    updatedAt: "2026-06-29",
+    readingTime: "8 min read",
+    author: "Aeonvera Editorial",
+    reviewedBy: "Clinical review planned",
+    heroImage: "/marketing/rejuvenation-man.png",
+    heroAlt: "Aeonvera cardiometabolic health portrait.",
+    summary: [
+      "LDL-C estimates cholesterol mass in LDL particles; ApoB approximates atherogenic particle number.",
+      "HDL-C and triglycerides are metabolic context markers, not simple good-versus-bad labels.",
+      "The best lipid interpretation depends on the whole risk picture.",
+    ],
+    takeaways: [
+      "ApoB can clarify risk when LDL-C and triglycerides are discordant.",
+      "Triglycerides and HDL-C often reflect metabolic health patterns.",
+      "LDL-C remains a central marker, but it is not the only one.",
+      "Treatment targets depend on overall risk and clinician judgment.",
+    ],
+    evidenceIntroTitle: "Lipids are a pattern, not a personality test.",
+    evidenceIntroBody:
+      "The old story of good cholesterol and bad cholesterol is too simple. Cardiovascular prevention works best when lipids are interpreted with blood pressure, glucose regulation, family history, smoking status, age, sex, and prior disease.",
+    strategySectionTitle: "Four lipid markers, four different questions",
+    biomarkerSectionTitle: "Open the lipid marker guides",
+    biomarkerSectionBody: [
+      "Start with LDL-C and ApoB for atherogenic risk, then use HDL-C and triglycerides to understand the broader metabolic context.",
+    ],
+    biomarkerLinks: ["apob", "ldl-c", "hdl-c", "triglycerides"],
+    strategies: [
+      {
+        title: "LDL-C asks how much cholesterol is carried in LDL particles",
+        evidence: "Strong",
+        category: "biomarker-database",
+        body:
+          "LDL-C is central to cardiovascular risk assessment and is commonly used to guide prevention and treatment decisions.",
+      },
+      {
+        title: "ApoB asks how many atherogenic particles are present",
+        evidence: "Strong",
+        category: "biomarker-database",
+        body:
+          "ApoB can be especially useful when particle number and cholesterol mass do not match, such as in insulin resistance or high triglycerides.",
+      },
+      {
+        title: "HDL-C adds context, but raising it is not the goal",
+        evidence: "Moderate",
+        category: "biomarker-database",
+        body:
+          "Low HDL-C can travel with metabolic risk, but simply raising HDL-C has not reliably reduced events. The pattern matters.",
+      },
+      {
+        title: "Triglycerides often reveal metabolic pressure",
+        evidence: "Strong",
+        category: "biomarker-database",
+        body:
+          "High triglycerides can reflect insulin resistance, alcohol exposure, refined carbohydrate intake, genetic factors, or medical conditions.",
+      },
+    ],
+    references: [
+      {
+        label: "CDC: LDL, HDL, and triglycerides",
+        url: "https://www.cdc.gov/cholesterol/about/ldl-and-hdl-cholesterol-and-triglycerides.html",
+      },
+      {
+        label: "NHLBI: blood cholesterol",
+        url: "https://www.nhlbi.nih.gov/health/blood-cholesterol",
+      },
+      {
+        label: "American Heart Association: ApoB",
+        url: "https://www.heart.org/en/health-topics/cholesterol/how-to-get-your-cholesterol-tested/apolipoprotein-b",
+      },
+      {
+        label: "MedlinePlus: triglycerides test",
+        url: "https://medlineplus.gov/lab-tests/triglycerides-test/",
+      },
+    ],
+  },
+  {
+    slug: "healthspan-stack-sleep-strength-cardio-nutrition-prevention",
+    title: "The Healthspan Stack: Sleep, Strength, Cardio, Nutrition, and Prevention",
+    subtitle:
+      "The five boring, powerful pillars that do more for longevity than most exotic interventions.",
+    description:
+      "A practical beginner's guide to the core healthspan stack: sleep, strength, cardio, nutrition, and prevention.",
+    category: "beginners-guides",
+    categories: ["beginners-guides", "longevity-library", "exercise", "sleep", "nutrition", "disease-prevention"],
+    publishedAt: "2026-06-29",
+    updatedAt: "2026-06-29",
+    readingTime: "10 min read",
+    author: "Aeonvera Editorial",
+    reviewedBy: "Clinical review planned",
+    heroImage: "/marketing/rejuvenation-woman.png",
+    heroAlt: "Aeonvera healthspan systems portrait.",
+    summary: [
+      "Most healthspan gains start with fundamentals that compound.",
+      "The stack works because each pillar supports the others: sleep improves training, training improves glucose, nutrition supports body composition, and prevention catches risk early.",
+      "The goal is not perfection; it is a system you can repeat.",
+    ],
+    takeaways: [
+      "Anchor sleep before chasing advanced optimization.",
+      "Train both strength and cardiorespiratory fitness.",
+      "Use nutrition to support metabolic health, not short-term punishment.",
+      "Build a screening and prevention calendar with a clinician.",
+    ],
+    evidenceIntroTitle: "The fundamentals are not basic. They are load-bearing.",
+    evidenceIntroBody:
+      "Healthspan work often fails when people skip repeatable basics for novelty. The highest-confidence system starts with behaviors and clinical prevention that are measurable, repeatable, and adaptable.",
+    strategySectionTitle: "The five-part healthspan stack",
+    biomarkerSectionTitle: "Markers that show whether the stack is working",
+    biomarkerSectionBody: [
+      "A useful healthspan stack should move signals over time: glucose regulation, lipid risk, inflammation, VO2 max, resting heart rate, HRV, blood pressure, waist circumference, and sleep quality.",
+    ],
+    biomarkerLinks: ["hba1c", "fasting-glucose", "fasting-insulin", "apob", "triglycerides", "hs-crp", "vo2-max", "hrv"],
+    strategies: [
+      {
+        title: "Sleep is the recovery platform",
+        evidence: "Strong",
+        category: "sleep",
+        body:
+          "Most adults need at least seven hours. Sleep affects appetite, glucose regulation, blood pressure, mood, immune function, and training adaptation.",
+      },
+      {
+        title: "Strength preserves capacity",
+        evidence: "Strong",
+        category: "exercise",
+        body:
+          "Resistance training supports muscle, bone, glucose disposal, mobility, and independence across aging.",
+      },
+      {
+        title: "Cardio builds reserve",
+        evidence: "Strong",
+        category: "exercise",
+        body:
+          "Aerobic fitness and VO2 max are among the strongest functional signals for long-term health and resilience.",
+      },
+      {
+        title: "Nutrition shapes metabolic direction",
+        evidence: "Strong",
+        category: "nutrition",
+        body:
+          "A Mediterranean-style, high-fiber, minimally processed dietary pattern supports lipids, glucose, body composition, and adherence.",
+      },
+      {
+        title: "Prevention keeps small risks from becoming large ones",
+        evidence: "Strong",
+        category: "disease-prevention",
+        body:
+          "Blood pressure control, vaccination, cancer screening, dental care, and clinician-guided risk management are part of longevity, not separate from it.",
+      },
+    ],
+    references: [
+      {
+        label: "U.S. physical activity guidelines",
+        url: "https://health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines",
+      },
+      {
+        label: "CDC: sleep and sleep disorders",
+        url: "https://www.cdc.gov/sleep/about/index.html",
+      },
+      {
+        label: "American Heart Association Life's Essential 8",
+        url: "https://www.heart.org/en/healthy-living/healthy-lifestyle/lifes-essential-8",
+      },
+      {
+        label: "National Institute on Aging: healthy aging",
+        url: "https://www.nia.nih.gov/health/healthy-aging",
+      },
+    ],
+  },
   {
     slug: "what-is-biological-age",
     title: "What Is Biological Age?",
