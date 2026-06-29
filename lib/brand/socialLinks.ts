@@ -1,5 +1,10 @@
 export const socialLinks = [
   {
+    label: "Facebook",
+    shortLabel: "FB",
+    href: "https://www.facebook.com/profile.php?id=61590871547912",
+  },
+  {
     label: "X",
     shortLabel: "X",
     href: "https://x.com/aeonvera",
@@ -7,16 +12,11 @@ export const socialLinks = [
   {
     label: "Instagram",
     shortLabel: "IG",
-    href: "https://www.instagram.com/aeonvera",
-  },
-  {
-    label: "LinkedIn",
-    shortLabel: "in",
-    href: "https://www.linkedin.com/company/aeonvera",
+    href: "https://www.instagram.com/aeonvera.ai/",
   },
   {
     label: "YouTube",
     shortLabel: "YT",
-    href: "https://www.youtube.com/@aeonvera",
+    href: "https://www.youtube.com/@Aeonvera",
   },
 ];
