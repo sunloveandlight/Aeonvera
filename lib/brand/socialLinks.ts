@@ -2,7 +2,7 @@ export const socialLinks = [
   {
     label: "Facebook",
     shortLabel: "FB",
-    href: "https://www.facebook.com/profile.php?id=61590871547912",
+    href: "https://www.facebook.com/aeonvera",
   },
   {
     label: "X",
