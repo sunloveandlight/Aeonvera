@@ -62,6 +62,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith("/memory") ||
     pathname.startsWith("/network") ||
     pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/ops") ||
     pathname.startsWith("/optimization") ||
     pathname.startsWith("/physician-export") ||
     pathname.startsWith("/plan") ||
@@ -95,6 +96,7 @@ export const config = {
     "/memory/:path*",
     "/network/:path*",
     "/onboarding/:path*",
+    "/ops/:path*",
     "/optimization/:path*",
     "/physician-export/:path*",
     "/plan/:path*",

@@ -23,6 +23,7 @@ const protectedRoutes = [
   "/memory",
   "/network",
   "/onboarding",
+  "/ops",
   "/optimization",
   "/physician-export",
   "/plan",
@@ -124,5 +125,19 @@ test.describe("unauthenticated safety boundaries", () => {
 
     expect(daily.status()).toBe(401);
     expect(wearables.status()).toBe(401);
+  });
+
+  test("ops health is shallow unless authorized", async ({ request }) => {
+    const publicHealth = await request.get("/api/ops/health");
+    expect(publicHealth.status()).toBe(200);
+    const publicBody = await publicHealth.json();
+    expect(publicBody.ok).toBe(true);
+    expect(publicBody.checks.database).toBeUndefined();
+    expect(publicBody.checks.env).toBeUndefined();
+
+    const badAuth = await request.get("/api/ops/health", {
+      headers: { authorization: "Bearer not-the-secret" },
+    });
+    expect(badAuth.status()).toBe(401);
   });
 });
