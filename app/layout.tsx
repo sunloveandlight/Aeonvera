@@ -36,8 +36,11 @@ export const metadata: Metadata = {
     telephone: false,
   },
   icons: {
-    icon: "/aeonvera-app-icon.svg",
-    apple: "/aeonvera-app-icon.svg",
+    icon: [
+      { url: "/aeonvera-icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/aeonvera-app-icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/aeonvera-apple-touch-icon.png",
   },
   openGraph: {
     title: "Aeonvera",

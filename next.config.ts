@@ -1,10 +1,14 @@
 import type { NextConfig } from "next";
 
-// Security response headers. CSP is limited to frame-ancestors (clickjacking)
-// to avoid breaking the inline theme/JSON-LD scripts a full script-src would block.
+// Security response headers. CSP intentionally avoids script-src until inline
+// theme/JSON-LD scripts can be nonce-backed without breaking first paint.
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
-  { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+  {
+    key: "Content-Security-Policy",
+    value:
+      "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests",
+  },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
