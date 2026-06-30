@@ -31,6 +31,7 @@ export default function robots(): MetadataRoute.Robots {
         "/settings",
         "/login",
         "/ops",
+        "/optimization",
         "/physician-export",
         "/onboarding",
         "/success",

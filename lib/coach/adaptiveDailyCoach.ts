@@ -157,7 +157,9 @@ export function buildAdaptiveCoachDecision({
   const unrepeatedBaseAlerts = baseAlerts.filter(
     (alert) => !recentTags.has(alertTag(alert))
   );
-  const severeBaseAlerts = baseAlerts.filter((alert) => alert.severity === "high");
+  const hasSuppressedHighSeverityBase = baseAlerts.some(
+    (alert) => alert.severity === "high" && recentTags.has(alertTag(alert))
+  );
   const alerts = [...unrepeatedBaseAlerts];
   const memoryTags = alerts.map(alertTag);
 
@@ -212,8 +214,8 @@ export function buildAdaptiveCoachDecision({
   }
 
   const hasHighSeverity = alerts.some((alert) => alert.severity === "high");
-  const hasSevereSuppressedBase = severeBaseAlerts.length > 0 && alerts.length === 0;
-  const intensity = hasHighSeverity || hasSevereSuppressedBase ? "high" : "medium";
+  const intensity =
+    hasHighSeverity || hasSuppressedHighSeverityBase ? "high" : "medium";
 
   return {
     shouldSend: true,

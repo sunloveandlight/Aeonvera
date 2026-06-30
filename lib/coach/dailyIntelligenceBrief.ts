@@ -78,7 +78,13 @@ export async function buildDailyIntelligenceBrief(
     : loadOrBuildCoachMemoryProfile;
   const [memory, outcomesResult, calendarResult, protocolResult, healthResult] =
     await Promise.all([
-      loadMemory(supabase, userId, healthProfileContext),
+      loadMemory(supabase, userId, healthProfileContext).catch((error) => {
+        console.error(
+          "[Daily Brief Memory Error]",
+          error instanceof Error ? error.message : error
+        );
+        return null;
+      }),
       supabase
         .from("intervention_outcomes")
         .select("domain, action, outcome, success, notes, measured_at, created_at")

@@ -1,6 +1,17 @@
 import { expect, test, type Page } from "@playwright/test";
 
-const publicRoutes = ["/", "/about", "/demo", "/pricing", "/privacy", "/terms", "/login"];
+const publicRoutes = [
+  "/",
+  "/about",
+  "/demo",
+  "/pricing",
+  "/privacy",
+  "/resources",
+  "/resources/articles",
+  "/resources/biomarkers",
+  "/terms",
+  "/login",
+];
 const protectedRoutes = [
   "/dashboard",
   "/assessment",
@@ -72,7 +83,7 @@ test.describe("launch shell", () => {
     await expect(page.locator(".premium-mega-menu")).toHaveCount(0);
   });
 
-  test("mobile navigation exposes public product paths", async ({ page, isMobile }) => {
+  test("mobile navigation exposes only public launch paths", async ({ page, isMobile }) => {
     test.skip(!isMobile, "mobile-only menu behavior");
 
     await page.goto("/pricing", { waitUntil: "domcontentloaded" });
@@ -82,9 +93,12 @@ test.describe("launch shell", () => {
     await menuButton.click();
 
     await expect(page.locator(".premium-mobile-menu")).toContainText("Demo profile");
-    await expect(page.locator(".premium-mobile-menu")).toContainText("Connect your data");
-    await expect(page.locator(".premium-mobile-menu")).toContainText("Life Autopilot");
-    await expect(page.locator(".premium-mobile-menu")).toContainText("Physician export");
+    await expect(page.locator(".premium-mobile-menu")).toContainText("Longevity Library");
+    await expect(page.locator(".premium-mobile-menu")).toContainText("Biomarker database");
+    await expect(page.locator(".premium-mobile-menu")).toContainText("Compare plans");
+    await expect(page.locator(".premium-mobile-menu")).not.toContainText("Connect your data");
+    await expect(page.locator(".premium-mobile-menu")).not.toContainText("Life Autopilot");
+    await expect(page.locator(".premium-mobile-menu")).not.toContainText("Physician export");
   });
 });
 

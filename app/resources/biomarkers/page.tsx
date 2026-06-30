@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 
 export default function BiomarkersPage() {
   const articles = getArticlesByCategory("biomarker-database");
+  const detailedBiomarkers = biomarkerEntries.filter((biomarker) => biomarker.summary);
 
   return (
     <main className="resources-page">
@@ -28,7 +29,7 @@ export default function BiomarkersPage() {
         </p>
       </section>
       <section className="resources-section">
-        <BiomarkerPreview biomarkers={biomarkerEntries} />
+        <BiomarkerPreview biomarkers={detailedBiomarkers} />
       </section>
       <section className="resources-band resources-next-band">
         <h2>Biomarkers in context</h2>

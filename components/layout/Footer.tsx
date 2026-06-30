@@ -25,11 +25,11 @@ const FOOTER_GROUPS = [
     ],
   },
   {
-    title: "Platform",
+    title: "Start",
     links: [
-      { href: "/assessment", label: "Assessment" },
-      { href: "/digital-twin", label: "Digital Twin" },
-      { href: "/companion", label: "Ask Aeonvera" },
+      { href: "/waitlist", label: "Early access" },
+      { href: "/pricing", label: "Plans" },
+      { href: "/demo", label: "Demo profile" },
       { href: "/login?mode=signup", label: "Create account" },
     ],
   },

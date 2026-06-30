@@ -25,6 +25,7 @@ const sections = [
       "AI interaction information, including questions, voice transcripts, generated answers, clinical follow-up context, optimization protocols, feedback on actions, and coach memory signals.",
       "Calendar and notification information, including connected calendar status, scheduled protocol events, push tokens, device platform, notification preferences, quiet hours, and delivery history.",
       "Payment and plan information, including subscription plan, Stripe customer state, checkout events, and billing portal status. Aeonvera does not store full card numbers.",
+      "Waitlist information, including email address, optional name, signup source, referrer, approximate network information, and browser metadata used for launch communication, security, and abuse prevention.",
       "Technical information, including browser or app interactions, device type, approximate network information, logs, diagnostics, error states, and security-related metadata needed to operate the service.",
     ],
   },

@@ -927,7 +927,7 @@ export const resourceArticles: ResourceArticle[] = [
     updatedAt: "2026-06-29",
     readingTime: "9 min read",
     author: "Aeonvera Editorial",
-    reviewedBy: "Clinical review planned",
+    reviewedBy: "Aeonvera Editorial Review",
     heroImage: "/marketing/rejuvenation-woman-top-extended.png",
     heroAlt: "Aeonvera lab and longevity intelligence portrait.",
     summary: [
@@ -1020,7 +1020,7 @@ export const resourceArticles: ResourceArticle[] = [
     updatedAt: "2026-06-29",
     readingTime: "8 min read",
     author: "Aeonvera Editorial",
-    reviewedBy: "Clinical review planned",
+    reviewedBy: "Aeonvera Editorial Review",
     heroImage: "/marketing/rejuvenation-man.png",
     heroAlt: "Aeonvera cardiometabolic health portrait.",
     summary: [
@@ -1105,7 +1105,7 @@ export const resourceArticles: ResourceArticle[] = [
     updatedAt: "2026-06-29",
     readingTime: "10 min read",
     author: "Aeonvera Editorial",
-    reviewedBy: "Clinical review planned",
+    reviewedBy: "Aeonvera Editorial Review",
     heroImage: "/marketing/rejuvenation-woman.png",
     heroAlt: "Aeonvera healthspan systems portrait.",
     summary: [

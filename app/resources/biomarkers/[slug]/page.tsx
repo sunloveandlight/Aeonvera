@@ -99,7 +99,7 @@ export default async function BiomarkerPage({ params }: BiomarkerPageProps) {
           <p>{biomarker.whyItMatters}</p>
           <div className="article-meta-row">
             <span>Aeonvera Editorial</span>
-            <span>Clinical review planned</span>
+            <span>Aeonvera Editorial Review</span>
             <span>Educational guide</span>
             <span>Clinician context recommended</span>
           </div>

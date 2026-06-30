@@ -182,8 +182,8 @@ async function maybePrepareClinicalAction({
 
   const lower = answer.toLowerCase();
   const shouldPrepare =
-    status === "unresolved" ||
-    /(yes|please|do it|add|plan|protocol|schedule|help me|need|want)/.test(lower);
+    !rejectsPlanPreparation(lower) &&
+    (status === "unresolved" || wantsPlanPreparation(lower));
 
   if (!shouldPrepare) return null;
 
@@ -283,7 +283,7 @@ function inferClinicalStatus(answer: string) {
     } satisfies ClinicalResponseInterpretation;
   }
 
-  if (/(dismiss|ignore|not relevant|false alarm|stop tracking|remove this)/.test(lower)) {
+  if (/\b(dismiss|ignore|not relevant|false alarm|stop tracking|remove this)\b/.test(lower)) {
     return {
       action: null,
       safetyLevel: "routine",
@@ -292,7 +292,7 @@ function inferClinicalStatus(answer: string) {
     } satisfies ClinicalResponseInterpretation;
   }
 
-  if (/(better|improved|improving|resolved|gone|stable now|back to normal|symptoms resolved|feel normal)/.test(lower)) {
+  if (/\b(better|improved|improving|resolved|gone|stable now|back to normal|symptoms resolved|feel normal)\b/.test(lower)) {
     return {
       action: null,
       safetyLevel: "monitor",
@@ -301,7 +301,7 @@ function inferClinicalStatus(answer: string) {
     } satisfies ClinicalResponseInterpretation;
   }
 
-  if (/(worse|worsening|still|same|not better|continues|ongoing|higher|up|problem)/.test(lower)) {
+  if (/\b(worse|worsening|still|same|not better|continues|ongoing|higher|problem)\b/.test(lower)) {
     return {
       action: null,
       safetyLevel: "monitor",
@@ -325,7 +325,19 @@ function hasUrgentRedFlag(lower: string) {
 }
 
 function hasMedicalReviewSignal(lower: string) {
-  return /(sleep apnea|stop breathing|blood in stool|black stool|unexplained weight loss|heart palpitations|irregular heartbeat|new severe headache|abnormal lab|very high|very low|testosterone|thyroid medication|trt|statin|metformin|medication)/.test(
+  return /\b(sleep apnea|stop breathing|blood in stool|black stool|unexplained weight loss|heart palpitations|irregular heartbeat|new severe headache|abnormal lab|very high|very low|testosterone|thyroid medication|trt|statin|metformin|medication)\b/.test(
+    lower
+  );
+}
+
+function wantsPlanPreparation(lower: string) {
+  return /\b(yes|please|do it|add|plan|protocol|schedule|help me|need|want|prepare)\b/.test(
+    lower
+  );
+}
+
+function rejectsPlanPreparation(lower: string) {
+  return /\b(no|not|don't|do not|dont|never|stop|without)\b.{0,40}\b(plan|protocol|schedule|add|help|need|want|prepare)\b/.test(
     lower
   );
 }

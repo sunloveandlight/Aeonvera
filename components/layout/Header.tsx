@@ -44,42 +44,6 @@ const PUBLIC_NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "Assess",
-    href: "/assessment",
-    items: [
-      { href: "/assessment", label: "Start assessment", description: "Begin with your biological-age baseline." },
-      { href: "/data-sources", label: "Connect your data", description: "Oura, Apple Health, labs, and imports." },
-    ],
-  },
-  {
-    label: "Twin",
-    href: "/digital-twin",
-    items: [
-      { href: "/digital-twin", label: "Digital Twin", description: "A living model of your health state." },
-      { href: "/life-os", label: "Life OS", description: "Priorities, trajectory, and life domains." },
-      { href: "/memory", label: "Memory", description: "Context that makes coaching sharper." },
-    ],
-  },
-  {
-    label: "Optimize",
-    href: "/optimization",
-    items: [
-      { href: "/optimization", label: "Optimization", description: "Turn your signals into a daily protocol." },
-      { href: "/plan", label: "Membership", description: "Plan limits, billing, concierge, and referrals." },
-      { href: "/life-autopilot", label: "Life Autopilot", description: "Behavior reminders, quiet hours, and schedule permissions." },
-      { href: "/companion", label: "Ask Aeonvera", description: "Voice and text help across the app." },
-    ],
-  },
-  {
-    label: "Reports",
-    href: "/report",
-    items: [
-      { href: "/report", label: "Longevity report", description: "A readable summary of your healthspan." },
-      { href: "/physician-export", label: "Physician export", description: "Clinical packets and secure share links." },
-      { href: "/network", label: "Care network", description: "Invite physicians, coaches, and family." },
-    ],
-  },
-  {
     label: "Pricing",
     href: "/pricing",
     items: [{ href: "/pricing", label: "Compare plans", description: "Core, Elite, and Sovereign." }],
@@ -271,13 +235,13 @@ export default function Header() {
 
         <div className="flex min-h-11 items-center justify-end gap-1.5 justify-self-end">
           <Link
-            href="/companion"
+            href={authenticated ? "/companion" : "/resources/articles"}
             onClick={() => {
               setAccountOpen(false);
               setActiveMenu(null);
             }}
             className="premium-icon-link hidden min-h-11 min-w-11 items-center justify-center rounded-md transition sm:inline-flex"
-            aria-label="Search or ask Aeonvera"
+            aria-label={authenticated ? "Search or ask Aeonvera" : "Search resources"}
           >
             <Search size={15} />
           </Link>

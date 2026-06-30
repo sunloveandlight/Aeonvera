@@ -117,7 +117,8 @@ function computeTrends(
     const secondAvg =
       secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
 
-    const changePercent = ((secondAvg - firstAvg) / firstAvg) * 100;
+    const changePercent =
+      firstAvg === 0 ? 0 : ((secondAvg - firstAvg) / firstAvg) * 100;
 
     trends[key] = {
       direction:
@@ -148,8 +149,11 @@ function computeRiskScores(
   const sleepTrend: number = trends["sleep_hours"]?.changePercent ?? 0;
   const recoveryTrend: number = trends["recovery_score"]?.changePercent ?? 0;
 
+  const sleepDeficitRisk = (8 - sleep) * 25;
+  const sleepTrendRisk = sleepTrend < 0 ? Math.abs(sleepTrend) : -sleepTrend * 0.5;
+
   return {
-    sleep: clampRisk(100 - sleep * 12 - sleepTrend),
+    sleep: clampRisk(sleepDeficitRisk + sleepTrendRisk),
     recovery: clampRisk(100 - recovery + Math.abs(recoveryTrend)),
     metabolic: clampRisk(50),
     activity: clampRisk(Math.max(0, 100 - steps / 100)),

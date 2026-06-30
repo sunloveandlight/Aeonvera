@@ -56,13 +56,15 @@ export function computeAdaptiveWeights(
  * FOLLOW RATE
  */
 function computeFollowRate(events: BehaviorEvent[]) {
-  const total = events.filter(
+  const viewed = events.filter(
     (e) => e.eventType === "viewed_recommendation"
   ).length;
 
   const followed = events.filter(
     (e) => e.eventType === "followed_recommendation"
   ).length;
+
+  const total = viewed + followed;
 
   if (total === 0) return 0.5;
 
