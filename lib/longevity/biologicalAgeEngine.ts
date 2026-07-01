@@ -811,7 +811,7 @@ function computeClinicalBiomarkerAge(
     1 - Math.exp((-Math.exp(xb) * (Math.exp(120 * 0.0076927) - 1)) / 0.0076927);
   const boundedMortality = Math.max(0.000001, Math.min(0.999999, mortalityScore));
   const clinicalAge =
-    141.50225 + Math.log(-0.00553 * Math.log(1 - boundedMortality)) / 0.09165;
+    141.50225 + Math.log(-0.00553 * Math.log(1 - boundedMortality)) / 0.090165;
   const boundedAge = Math.max(18, Math.min(120, clinicalAge));
   const delta = Number((boundedAge - input.age).toFixed(1));
 
@@ -1511,7 +1511,7 @@ function normalizeGlucose(value: number) {
 }
 
 function normalizeCrp(value: number) {
-  return value > 3 ? value / 10 : value;
+  return value > 0.3 ? value / 10 : value;
 }
 
 function classifyCategory(

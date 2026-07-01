@@ -3,6 +3,7 @@ import {
   healthSubjectInsertFields,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { decryptToken, encryptToken } from "@/lib/security/tokenCrypto";
 import type { WearableProvider } from "./types";
 
 export type WearableOAuthProvider = Extract<WearableProvider, "oura" | "whoop">;
@@ -150,8 +151,8 @@ export async function saveWearableConnection({
       user_id: userId,
       ...(healthProfileContext ? healthSubjectInsertFields(healthProfileContext) : {}),
       provider,
-      access_token: token.access_token,
-      refresh_token: token.refresh_token || null,
+      access_token: encryptToken(token.access_token),
+      refresh_token: token.refresh_token ? encryptToken(token.refresh_token) : null,
       token_type: token.token_type || "bearer",
       scope: token.scope || null,
       expires_at: expiresAt,
@@ -188,16 +189,18 @@ export async function getValidWearableAccessToken({
   const expiresAt = data.expires_at ? new Date(data.expires_at).getTime() : null;
   const hasTime = expiresAt === null || expiresAt > Date.now() + 5 * 60 * 1000;
 
-  if (hasTime) return data.access_token;
+  if (hasTime) return decryptToken(data.access_token);
 
-  if (!data.refresh_token) {
+  const refreshToken = decryptToken(data.refresh_token);
+  if (!refreshToken) {
     throw new Error(`${provider.toUpperCase()} connection expired. Reconnect your device.`);
   }
 
   const refreshed = await refreshWearableToken({
     provider,
-    refreshToken: data.refresh_token,
+    refreshToken,
   });
+  refreshed.refresh_token ||= refreshToken;
 
   await saveWearableConnection({ supabase, userId, provider, token: refreshed });
 

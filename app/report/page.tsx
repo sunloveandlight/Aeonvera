@@ -261,7 +261,7 @@ export default function ReportPage() {
           }).then((response) => response.json()).catch(() => null),
         ]);
 
-        if (reportRes.data) setReport(reportRes.data.report as ReportData);
+        if (reportRes.data) setReport(normalizeReportData(reportRes.data.report));
         if (profileRes.data) {
           setProfile(profileRes.data);
           setBioAge(profileRes.data.biological_age);
@@ -314,7 +314,7 @@ export default function ReportPage() {
       const res = await fetch("/api/longevity/report", { method: "POST", credentials: "include" });
       const data = await res.json();
       if (res.ok && data.report?.report) {
-        setReport(data.report.report as ReportData);
+        setReport(normalizeReportData(data.report.report));
       }
       window.location.reload();
     } catch (err) {
@@ -708,6 +708,44 @@ export default function ReportPage() {
       </div>
     </PageContainer>
   );
+}
+
+function normalizeReportData(value: unknown): ReportData {
+  const source = value && typeof value === "object" ? value as Partial<ReportData> : {};
+  const plan = Array.isArray(source["90_day_plan"]) ? source["90_day_plan"] : [];
+
+  return {
+    "90_day_plan": plan.flatMap((item) => {
+      if (!item || typeof item !== "object") return [];
+      const candidate = item as Record<string, unknown>;
+      return {
+        action: String(candidate.action || "Review this protocol step with Aeonvera."),
+        category: String(candidate.category || "Protocol"),
+        impact: String(candidate.impact || "Medium"),
+      };
+    }),
+    behavioral_insights: normalizeStringList(source.behavioral_insights),
+    primary_goal: String(source.primary_goal || "Improve healthspan"),
+    risk_profile:
+      source.risk_profile && typeof source.risk_profile === "object"
+        ? source.risk_profile
+        : {
+            cardiovascular_risk: "Unknown",
+            lifestyle_risk: "Unknown",
+            metabolic_risk: "Unknown",
+            sleep_risk: "Unknown",
+          },
+    risk_score: Number(source.risk_score) || 0,
+    strengths: normalizeStringList(source.strengths),
+    top_priorities: normalizeStringList(source.top_priorities),
+    weaknesses: normalizeStringList(source.weaknesses),
+  };
+}
+
+function normalizeStringList(value: unknown) {
+  return Array.isArray(value)
+    ? value.flatMap((item) => typeof item === "string" && item.trim() ? [item] : [])
+    : [];
 }
 
 function BioAgeHistoryCard({

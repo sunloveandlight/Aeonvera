@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const state = crypto.randomUUID().replace(/-/g, "").slice(0, 8);
+    const state = crypto.randomUUID();
     const url = buildAuthorizeUrl({
       provider: "oura",
       origin: request.nextUrl.origin,
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     });
     const response = NextResponse.redirect(url);
 
-    response.cookies.set("aeonvera_oura_oauth_state", state, {
+    response.cookies.set("aeonvera_oura_oauth_state", `${user.id}:${state}`, {
       httpOnly: true,
       sameSite: "lax",
       secure: request.nextUrl.protocol === "https:",

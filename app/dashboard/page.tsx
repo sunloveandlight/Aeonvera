@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
@@ -248,29 +248,22 @@ export default function DashboardPage() {
   const [wearableRows, setWearableRows] = useState<WearableMetricRow[]>([]);
   const [wearableConnections, setWearableConnections] = useState<WearableConnection[]>([]);
   const [wearableSyncing, setWearableSyncing] = useState<string | null>(null);
-  const [activatedPlan] = useState<MembershipPlan | null>(() => {
-    if (typeof window === "undefined") return null;
-    const plan = new URLSearchParams(window.location.search).get("activated");
-    return plan === "core" || plan === "elite" || plan === "sovereign"
-      ? plan
-      : null;
-  });
-  const [wearableMessage, setWearableMessage] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    const params = new URLSearchParams(window.location.search);
-    const connected = params.get("wearableConnected");
-    const error = params.get("wearableError");
-
-    if (connected) return `${connected.toUpperCase()} connected. Sync latest data when ready.`;
-    if (error) return error;
-    return null;
-  });
+  const searchParams = useSyncExternalStore(subscribeLocationSearch, getLocationSearch, () => "");
+  const query = new URLSearchParams(searchParams);
+  const plan = query.get("activated");
+  const activatedPlan: MembershipPlan | null =
+    plan === "core" || plan === "elite" || plan === "sovereign" ? plan : null;
+  const queryWearableConnected = query.get("wearableConnected");
+  const queryWearableError = query.get("wearableError");
+  const queryWearableMessage = queryWearableConnected
+    ? `${queryWearableConnected.toUpperCase()} connected. Sync latest data when ready.`
+    : queryWearableError || null;
+  const [wearableMessageOverride, setWearableMessage] = useState<string | null>(null);
+  const wearableMessage = wearableMessageOverride || queryWearableMessage;
   const [applePayload, setApplePayload] = useState("");
   const [appleImportFile, setAppleImportFile] = useState<File | null>(null);
-  const [firstReportPrompt, setFirstReportPrompt] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("firstReport") === "1";
-  });
+  const [firstReportPromptDismissed, setFirstReportPromptDismissed] = useState(false);
+  const firstReportPrompt = !firstReportPromptDismissed && query.get("firstReport") === "1";
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showAdvancedConsole, setShowAdvancedConsole] = useState(false);
 
@@ -366,13 +359,9 @@ export default function DashboardPage() {
             .order("recorded_at", { ascending: false })
             .limit(50),
 
-          fetch("/api/wearables/connections", {
-            credentials: "include",
-          }).then((response) => response.json()).catch(() => null),
+          fetchJsonOrNull("/api/wearables/connections"),
 
-          fetch("/api/notifications/deliveries", {
-            credentials: "include",
-          }).then((response) => response.json()).catch(() => null),
+          fetchJsonOrNull("/api/notifications/deliveries"),
 
           applyHealthSubjectFilter(
             supabase
@@ -384,17 +373,11 @@ export default function DashboardPage() {
             .limit(1)
             .maybeSingle(),
 
-          fetch("/api/longevity/biological-age", {
-            credentials: "include",
-          }).then((response) => response.json()).catch(() => null),
+          fetchJsonOrNull("/api/longevity/biological-age"),
 
-          fetch("/api/longevity/simulator", {
-            credentials: "include",
-          }).then((response) => response.json()).catch(() => null),
+          fetchJsonOrNull("/api/longevity/simulator"),
 
-          fetch("/api/longevity/improvement-loop", {
-            credentials: "include",
-          }).then((response) => response.json()).catch(() => null),
+          fetchJsonOrNull("/api/longevity/improvement-loop"),
 
           applyHealthSubjectFilter(
             supabase
@@ -405,14 +388,18 @@ export default function DashboardPage() {
             .order("measured_at", { ascending: false })
             .limit(18),
 
-          fetch("/api/labs/trends", {
-            credentials: "include",
-          }).then((response) => response.json()).catch(() => null),
+          fetchJsonOrNull("/api/labs/trends"),
 
-          fetch("/api/calendar/google/status", {
-            credentials: "include",
-          }).then((response) => response.json()).catch(() => null),
+          fetchJsonOrNull("/api/calendar/google/status"),
         ]);
+
+        throwOnQueryError("latest report", reportRes.error);
+        throwOnQueryError("latest assessment", assessmentRes.error);
+        throwOnQueryError("health alerts", alertsRes.error);
+        throwOnQueryError("health state", stateRes.error);
+        throwOnQueryError("wearable metrics", wearableRes.error);
+        throwOnQueryError("optimization protocol", optimizationRes.error);
+        throwOnQueryError("lab biomarkers", labsRes.error);
 
         if (reportRes.data) setReport(reportRes.data);
 
@@ -452,7 +439,6 @@ export default function DashboardPage() {
               .catch(console.error);
           }
         }
-
         if (alertsRes.data) setAlerts(alertsRes.data);
         if (stateRes.data) setHealthState(stateRes.data);
         setCalendarStatus(calendarRes);
@@ -549,7 +535,7 @@ export default function DashboardPage() {
       }
 
       setGenerationMessage("Report ready. Dashboard updated.");
-      setFirstReportPrompt(false);
+      setFirstReportPromptDismissed(true);
       router.replace("/dashboard");
     } catch (err) {
       console.error(err);
@@ -2242,4 +2228,35 @@ function driverStatusClassName(status: ImprovementLoop["drivers"][number]["statu
   if (status === "positive") return `${base} royal-text bg-white/[0.035]`;
   if (status === "negative") return `${base} text-rose-200/70 bg-rose-400/[0.08]`;
   return `${base} text-white/30 bg-white/[0.025]`;
+}
+
+async function fetchJsonOrNull(path: string) {
+  try {
+    const response = await fetch(path, { credentials: "include" });
+    if (!response.ok) throw new Error(`${path} failed with ${response.status}.`);
+    return response.json();
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+function throwOnQueryError(label: string, error: { message?: string } | null | undefined) {
+  if (!error) return;
+  throw new Error(`Could not load ${label}: ${error.message || "database query failed"}`);
+}
+
+function subscribeLocationSearch(listener: () => void) {
+  window.addEventListener("popstate", listener);
+  window.addEventListener("pushstate", listener);
+  window.addEventListener("replacestate", listener);
+  return () => {
+    window.removeEventListener("popstate", listener);
+    window.removeEventListener("pushstate", listener);
+    window.removeEventListener("replacestate", listener);
+  };
+}
+
+function getLocationSearch() {
+  return window.location.search;
 }

@@ -25,14 +25,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const state = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+    const state = crypto.randomUUID();
     const url = buildGoogleCalendarAuthorizeUrl({
       origin: request.nextUrl.origin,
       state,
     });
     const response = NextResponse.redirect(url);
 
-    response.cookies.set("aeonvera_google_calendar_oauth_state", state, {
+    response.cookies.set("aeonvera_google_calendar_oauth_state", `${user.id}:${state}`, {
       httpOnly: true,
       sameSite: "lax",
       secure: request.nextUrl.protocol === "https:",

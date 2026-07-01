@@ -5,7 +5,10 @@ type WhoopSleep = {
   end?: string;
   score?: {
     sleep_performance_percentage?: number;
-    stage_summary?: { total_in_bed_time_milli?: number };
+    stage_summary?: {
+      total_in_bed_time_milli?: number;
+      total_awake_time_milli?: number;
+    };
   };
 };
 type WhoopRecovery = {
@@ -41,7 +44,12 @@ export async function fetchWhoopMetrics({
   return [
     ...sleep.flatMap((entry) => {
       const timestamp = normalizeTimestamp(entry.end);
-      const sleepMs = entry.score?.stage_summary?.total_in_bed_time_milli;
+      const inBedMs = entry.score?.stage_summary?.total_in_bed_time_milli;
+      const awakeMs = entry.score?.stage_summary?.total_awake_time_milli || 0;
+      const sleepMs =
+        Number.isFinite(inBedMs) && Number.isFinite(awakeMs)
+          ? Math.max(0, Number(inBedMs) - Number(awakeMs))
+          : null;
 
       if (!timestamp || !Number.isFinite(sleepMs)) return [];
 

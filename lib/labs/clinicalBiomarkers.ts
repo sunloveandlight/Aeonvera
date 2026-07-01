@@ -244,15 +244,16 @@ export function parseClinicalBiomarkerText(text: string): ParsedClinicalBiomarke
 
     if (!definition || found.has(definition.key)) continue;
 
-    const valueMatch = line.match(/(-?\d+(?:\.\d+)?)/);
+    const valueMatch = extractBiomarkerValue(line, definition.labels);
     if (!valueMatch) continue;
 
-    const value = Number(valueMatch[1]);
-    if (!Number.isFinite(value)) continue;
+    const rawValue = Number(valueMatch);
+    if (!Number.isFinite(rawValue)) continue;
 
     const unit = definition.units.find((candidate) =>
       line.toLowerCase().includes(candidate.toLowerCase())
     );
+    const value = normalizeBiomarkerUnit(definition.key, rawValue, unit);
 
     found.set(definition.key, {
       canonicalKey: definition.key,
@@ -290,7 +291,11 @@ export function normalizeClinicalBiomarkers(value: unknown): ParsedClinicalBioma
 
     return {
       canonicalKey,
-      value: valueNumber,
+      value: normalizeBiomarkerUnit(
+        canonicalKey,
+        valueNumber,
+        typeof candidate.unit === "string" ? candidate.unit : undefined
+      ),
       unit: typeof candidate.unit === "string" ? candidate.unit : undefined,
       rawLabel: typeof candidate.rawLabel === "string" ? candidate.rawLabel : label,
       referenceRange:
@@ -307,4 +312,79 @@ export function canonicalizeBiomarkerKey(value: string) {
 
 function normalizeLabel(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9%]+/g, " ").trim();
+}
+
+function extractBiomarkerValue(line: string, labels: string[]) {
+  const normalizedLine = normalizeLabel(line);
+  const label = labels
+    .map((candidate) => normalizeLabel(candidate))
+    .filter((candidate) => normalizedLine.includes(candidate))
+    .sort((a, b) => b.length - a.length)[0];
+  const numericMatches = Array.from(line.matchAll(/-?\d+(?:\.\d+)?/g)).map((match) => ({
+    index: match.index ?? 0,
+    value: match[0],
+  }));
+
+  if (!numericMatches.length) return null;
+  if (!label) return numericMatches[0].value;
+
+  const labelIndex = normalizedLine.indexOf(label);
+  const afterLabel = numericMatches.find((match) => match.index >= labelIndex + label.length);
+  return (afterLabel || numericMatches[numericMatches.length - 1]).value;
+}
+
+export function normalizeBiomarkerUnit(
+  key: ClinicalBiomarkerKey,
+  value: number,
+  unit?: string
+) {
+  const normalizedUnit = normalizeUnit(unit);
+
+  switch (key) {
+    case "albumin":
+      return normalizedUnit === "g/dl" ? value * 10 : value;
+    case "creatinine":
+      return normalizedUnit === "mg/dl" ? value * 88.4 : value;
+    case "fasting_glucose":
+      return normalizedUnit === "mg/dl" ? value / 18 : value;
+    case "hscrp":
+      return normalizedUnit === "mg/l" ? value / 10 : value;
+    case "triglycerides":
+      return normalizedUnit === "mmol/l" ? value * 88.57 : value;
+    case "hdl_cholesterol":
+    case "ldl_cholesterol":
+    case "total_cholesterol":
+      return normalizedUnit === "mmol/l" ? value * 38.67 : value;
+    case "apob":
+      return normalizedUnit === "g/l" ? value * 100 : value;
+    case "fibrinogen":
+      return normalizedUnit === "g/l" ? value * 100 : value;
+    case "fasting_insulin":
+      return normalizedUnit === "pmol/l" ? value / 6 : value;
+    case "free_t3":
+      return normalizedUnit === "pmol/l" ? value / 1.536 : value;
+    case "free_t4":
+      return normalizedUnit === "pmol/l" ? value / 12.87 : value;
+    case "morning_cortisol":
+      return normalizedUnit === "nmol/l" ? value / 27.59 : value;
+    case "total_testosterone":
+      return normalizedUnit === "nmol/l" ? value * 28.84 : value;
+    case "free_testosterone":
+      return normalizedUnit === "ng/dl" ? value * 10 : value;
+    case "estradiol":
+      return normalizedUnit === "pmol/l" ? value / 3.671 : value;
+    case "progesterone":
+      return normalizedUnit === "nmol/l" ? value / 3.18 : value;
+    case "vitamin_d":
+      return normalizedUnit === "nmol/l" ? value / 2.496 : value;
+    default:
+      return value;
+  }
+}
+
+function normalizeUnit(unit?: string) {
+  return (unit || "")
+    .toLowerCase()
+    .replace(/µ/g, "u")
+    .replace(/\s+/g, "");
 }

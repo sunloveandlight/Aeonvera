@@ -3,6 +3,11 @@ import type { WearableRawMetric } from "./types";
 type OuraEnvelope<T> = { data?: T[] };
 type OuraDailySleep = {
   day?: string;
+  score?: number;
+  contributors?: { sleep_efficiency?: number };
+};
+type OuraSleep = {
+  day?: string;
   total_sleep_duration?: number;
   efficiency?: number;
 };
@@ -27,8 +32,9 @@ export async function fetchOuraMetrics({
   startDate: string;
   endDate: string;
 }): Promise<WearableRawMetric[]> {
-  const [sleep, readiness, activity] = await Promise.all([
+  const [dailySleep, sleep, readiness, activity] = await Promise.all([
     fetchOura<OuraDailySleep>("daily_sleep", accessToken, startDate, endDate),
+    fetchOura<OuraSleep>("sleep", accessToken, startDate, endDate),
     fetchOura<OuraReadiness>("daily_readiness", accessToken, startDate, endDate),
     fetchOura<OuraActivity>("daily_activity", accessToken, startDate, endDate),
   ]);
@@ -55,6 +61,15 @@ export async function fetchOuraMetrics({
       }
 
       return metrics;
+    }),
+    ...dailySleep.flatMap((entry) => {
+      const timestamp = dayToTimestamp(entry.day);
+      if (!timestamp || !Number.isFinite(entry.contributors?.sleep_efficiency)) return [];
+      return [{
+        metricName: "sleep_efficiency",
+        value: Number(entry.contributors?.sleep_efficiency),
+        timestamp,
+      }];
     }),
     ...readiness.flatMap((entry) => {
       const timestamp = dayToTimestamp(entry.day);

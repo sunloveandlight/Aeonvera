@@ -20,9 +20,6 @@ export async function GET(request: NextRequest) {
 
     if (error) throw new Error(error);
     if (!code) throw new Error("Missing WHOOP authorization code.");
-    if (!expectedState || state !== expectedState) {
-      throw new Error("Invalid WHOOP authorization state.");
-    }
 
     const supabase = await createClient();
     const {
@@ -31,6 +28,9 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.redirect(new URL("/login?mode=signin", request.url));
+    }
+    if (!isExpectedOAuthState(expectedState, user.id, state)) {
+      throw new Error("Invalid WHOOP authorization state.");
     }
 
     const admin = getSupabaseAdmin();
@@ -70,4 +70,10 @@ export async function GET(request: NextRequest) {
   const response = NextResponse.redirect(redirectUrl);
   response.cookies.delete("aeonvera_whoop_oauth_state");
   return response;
+}
+
+function isExpectedOAuthState(expected: string | undefined, userId: string, state: string | null) {
+  if (!expected || !state) return false;
+  const [expectedUserId, expectedState] = expected.split(":");
+  return expectedUserId === userId && expectedState === state;
 }

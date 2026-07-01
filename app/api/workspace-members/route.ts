@@ -127,6 +127,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (workspaceRole === "admin" && workspace.role !== "owner") {
+      return NextResponse.json(
+        { error: "Only workspace owners can grant admin access." },
+        { status: 403 }
+      );
+    }
+
     const validProfileIds = await filterWorkspaceProfileIds(
       admin,
       workspace.id,
@@ -232,6 +239,25 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    const targetMember = await getWorkspaceMember(admin, workspace.id, targetUserId);
+    if (!targetMember) {
+      return NextResponse.json({ error: "Workspace member not found." }, { status: 404 });
+    }
+
+    if (targetMember.role === "owner") {
+      return NextResponse.json(
+        { error: "Owner access cannot be removed from this panel." },
+        { status: 403 }
+      );
+    }
+
+    if (targetMember.role === "admin" && workspace.role !== "owner") {
+      return NextResponse.json(
+        { error: "Only workspace owners can remove admin access." },
+        { status: 403 }
+      );
+    }
+
     const timestamp = new Date().toISOString();
     const { error: memberError } = await admin
       .from("workspace_members")
@@ -304,6 +330,23 @@ async function getCurrentWorkspace(
     id: workspace.id,
     role: membership.role,
   };
+}
+
+async function getWorkspaceMember(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  workspaceId: string,
+  userId: string
+) {
+  const { data, error } = await admin
+    .from("workspace_members")
+    .select("id,workspace_id,user_id,role,status,created_at,updated_at")
+    .eq("workspace_id", workspaceId)
+    .eq("user_id", userId)
+    .neq("status", "removed")
+    .maybeSingle<WorkspaceMemberRow>();
+
+  if (error) throw error;
+  return data;
 }
 
 async function listWorkspaceProfiles(

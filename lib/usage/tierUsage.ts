@@ -104,26 +104,42 @@ export async function checkAndRecordUsage({
     }
   }
 
-  const { error } = await supabase.from("usage_events").insert({
-    ...(healthProfileId ? { health_profile_id: healthProfileId } : {}),
-    user_id: userId,
-    meter,
-    plan,
-    metadata,
-  });
+  const { data: recorded, error } = await supabase
+    .rpc("record_usage_event_if_available", {
+      p_health_profile_id: healthProfileId || null,
+      p_limit: check.limit,
+      p_metadata: metadata,
+      p_meter: meter,
+      p_period_start: check.periodStart,
+      p_plan: plan,
+      p_user_id: userId,
+    })
+    .maybeSingle<{ allowed: boolean; remaining: number; used: number }>();
 
   if (error) {
-    if (isMissingUsageTable(error)) {
+    if (isMissingUsageTable(error) || isMissingUsageRpc(error)) {
       return { ...check, migrationRequired: true };
     }
 
     throw error;
   }
 
+  if (recorded && !recorded.allowed) {
+    const activePlan = plan || "core";
+    return {
+      ...check,
+      allowed: false,
+      message: `You have used all ${check.limit.toLocaleString()} monthly uses included in ${PLAN_LABEL[activePlan]}.`,
+      remaining: 0,
+      statusCode: 429,
+      used: recorded.used,
+    };
+  }
+
   return {
     ...check,
-    used: check.used + 1,
-    remaining: Math.max(check.remaining - 1, 0),
+    used: recorded?.used ?? check.used + 1,
+    remaining: recorded?.remaining ?? Math.max(check.remaining - 1, 0),
   };
 }
 
@@ -252,6 +268,14 @@ function isMissingUsageTable(error: { code?: string; message?: string }) {
   return (
     error.code === "42P01" ||
     error.message?.includes("usage_events") ||
+    error.message?.includes("schema cache")
+  );
+}
+
+function isMissingUsageRpc(error: { code?: string; message?: string }) {
+  return (
+    error.code === "42883" ||
+    error.message?.includes("record_usage_event_if_available") ||
     error.message?.includes("schema cache")
   );
 }

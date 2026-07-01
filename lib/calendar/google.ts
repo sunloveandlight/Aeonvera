@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { decryptToken, encryptToken } from "@/lib/security/tokenCrypto";
 
 type TokenResponse = {
   access_token: string;
@@ -128,8 +129,8 @@ export async function saveGoogleCalendarConnection({
   const payload = {
     user_id: userId,
     provider: "google",
-    access_token: token.access_token,
-    refresh_token: token.refresh_token || undefined,
+    access_token: encryptToken(token.access_token),
+    refresh_token: token.refresh_token ? encryptToken(token.refresh_token) : undefined,
     token_type: token.token_type || "bearer",
     scope: token.scope || null,
     expires_at: expiresAt,
@@ -169,17 +170,19 @@ export async function getValidGoogleCalendarAccessToken({
 
   if (hasTime) {
     return {
-      accessToken: data.access_token,
+      accessToken: decryptToken(data.access_token) || data.access_token,
       connectionId: data.id,
       calendarId: data.calendar_id || "primary",
     };
   }
 
-  if (!data.refresh_token) {
+  const refreshToken = decryptToken(data.refresh_token);
+  if (!refreshToken) {
     throw new Error("Google Calendar connection expired. Reconnect Google Calendar.");
   }
 
-  const refreshed = await refreshGoogleCalendarToken(data.refresh_token);
+  const refreshed = await refreshGoogleCalendarToken(refreshToken);
+  refreshed.refresh_token ||= refreshToken;
   await saveGoogleCalendarConnection({ supabase, userId, token: refreshed });
 
   return {
