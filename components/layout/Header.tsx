@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { Menu, Search, UserCircle, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import ProfileSwitcher from "@/components/health-profiles/ProfileSwitcher";
-import ThemeToggle from "./ThemeToggle";
 
 type NavLink = {
   href: string;
@@ -245,7 +244,6 @@ export default function Header() {
           >
             <Search size={15} />
           </Link>
-          <ThemeToggle className="premium-theme-toggle" />
           <ProfileSwitcher authenticated={authenticated} compact />
           <button
             onClick={() => setMobileOpen((open) => !open)}

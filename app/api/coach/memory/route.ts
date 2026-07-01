@@ -11,9 +11,13 @@ import {
   getRequestedHealthProfileId,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
+import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 export async function GET(request: NextRequest) {
   try {
+    const limited = await rateLimitRequest(request, "coach-memory", 30, 60_000);
+    if (limited) return limited;
+
     const supabase = await createClient();
     const {
       data: { user },
