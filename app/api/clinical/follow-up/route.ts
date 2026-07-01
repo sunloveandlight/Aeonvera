@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
       const result = await recordClinicalFollowUpAnswer({
         answer,
         clinicalInsightId,
+        healthProfileContext,
         source: body?.source === "voice_agent" ? "voice_agent" : "agent_chat",
         supabase: admin,
         userId: user.id,

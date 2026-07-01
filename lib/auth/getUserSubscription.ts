@@ -59,13 +59,13 @@ export async function getUserSubscription() {
     subscriptionStatus: status,
 
     onboardingCompleted:
-    data.onboarding_completed,
+    data?.onboarding_completed,
 
     entityState:
-      data.entity_state,
+      data?.entity_state,
 
     lifeStage:
-      data.life_stage,
+      data?.life_stage,
 
     allowed: canAccess(
       plan,

@@ -60,10 +60,17 @@ export async function runCoachPipeline(
     .from("health_states")
     .select("*")
     .eq(healthFilter.column, healthFilter.value)
-    .single();
+    .maybeSingle();
 
   if (stateError || !state) {
-    throw new Error("Health state not found");
+    return {
+      success: true,
+      alerts: [],
+      delivered: 0,
+      optimization_context: false,
+      skipped: true,
+      reason: "Health state not found.",
+    };
   }
 
   /**

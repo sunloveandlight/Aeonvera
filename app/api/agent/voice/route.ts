@@ -11,7 +11,10 @@ import {
   serializeUsage,
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
-import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
+import {
+  resolveActiveHealthProfileContext,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type ChatMessage = {
@@ -109,6 +112,7 @@ export async function POST(request: NextRequest) {
     const history = sanitizeHistory(parseJsonField(formData.get("history")));
     const clinicalFollowUp = await maybeRecordClinicalFollowUpAnswer({
       formData,
+      healthProfileContext,
       question: transcript,
       supabase: admin,
       userId: user.id,
@@ -152,11 +156,13 @@ export async function POST(request: NextRequest) {
 
 async function maybeRecordClinicalFollowUpAnswer({
   formData,
+  healthProfileContext,
   question,
   supabase,
   userId,
 }: {
   formData: FormData;
+  healthProfileContext: ActiveHealthProfileContext;
   question: string;
   supabase: ReturnType<typeof getSupabaseAdmin>;
   userId: string;
@@ -169,6 +175,7 @@ async function maybeRecordClinicalFollowUpAnswer({
   return recordClinicalFollowUpAnswer({
     answer: question,
     clinicalInsightId,
+    healthProfileContext,
     source: "voice_agent",
     supabase,
     userId,

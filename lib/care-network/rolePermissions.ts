@@ -15,7 +15,7 @@ export const CARE_ROLE_PERMISSIONS: Record<CareNetworkRole, PhysicianExportSecti
 export function sanitizeCareRole(value: unknown): CareNetworkRole {
   return value === "coach" || value === "family" || value === "physician"
     ? value
-    : "physician";
+    : "family";
 }
 
 export function permissionsForCareRole({

@@ -4,6 +4,7 @@ import type { ClinicalBiomarkerKey } from "@/lib/labs/clinicalBiomarkers";
 
 type LabRow = {
   canonical_key: ClinicalBiomarkerKey;
+  unit?: string | null;
   value: number | string;
   measured_at: string;
 };
@@ -31,7 +32,7 @@ export async function loadLatestLabInputValues({
 }) {
   const query = supabase
     .from("lab_biomarkers")
-    .select("canonical_key, value, measured_at")
+    .select("canonical_key, value, unit, measured_at")
     .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
     .order("measured_at", { ascending: false })
     .limit(80);
@@ -46,7 +47,10 @@ export async function loadLatestLabInputValues({
   return (data || []).reduce<Partial<AssessmentInput>>((latest, row) => {
     const labRow = row as LabRow;
     const inputKey = LAB_TO_INPUT_KEY[labRow.canonical_key];
-    const value = Number(labRow.value);
+    const value = normalizeBiologicalAgeInputValue(
+      labRow.canonical_key,
+      Number(labRow.value)
+    );
 
     if (inputKey && latest[inputKey] == null && Number.isFinite(value)) {
       latest[inputKey] = value as never;
@@ -54,6 +58,24 @@ export async function loadLatestLabInputValues({
 
     return latest;
   }, {});
+}
+
+export function normalizeBiologicalAgeInputValue(
+  key: ClinicalBiomarkerKey,
+  value: number
+) {
+  if (!Number.isFinite(value)) return value;
+
+  switch (key) {
+    case "fasting_glucose":
+      // Imported labs are stored in mmol/L; the age engine scores mg/dL.
+      return value * 18;
+    case "hscrp":
+      // Imported hsCRP is stored in mg/dL; the age engine scores mg/L.
+      return value * 10;
+    default:
+      return value;
+  }
 }
 
 function isMissingLabTable(error: { message?: string; code?: string }) {

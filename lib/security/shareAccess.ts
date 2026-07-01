@@ -30,7 +30,7 @@ export function hashShareAccessCode(code: string) {
 }
 
 export function verifyShareAccessCode(value: unknown, expectedHash?: string | null) {
-  if (!expectedHash) return true;
+  if (!expectedHash) return false;
 
   const code = normalizeShareAccessCode(value);
   if (!code) return false;

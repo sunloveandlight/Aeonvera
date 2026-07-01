@@ -3,11 +3,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from "crypt
 const TOKEN_PREFIX = "av1:";
 
 function tokenEncryptionSecret() {
-  const secret =
-    process.env.OAUTH_TOKEN_ENCRYPTION_KEY ||
-    process.env.SHARE_ACCESS_SALT ||
-    process.env.CRON_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const secret = process.env.OAUTH_TOKEN_ENCRYPTION_KEY;
 
   if (secret) return secret;
 

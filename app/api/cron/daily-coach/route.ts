@@ -10,6 +10,8 @@ import {
 } from "@/lib/health-profiles/activeHealthProfile";
 import { isHealthProfileFrozenById } from "@/lib/health-profiles/profileEntitlements";
 
+const DAILY_COACH_CONCURRENCY = 5;
+
 /**
  * Aeonvera Daily Automation Job
  * -----------------------------
@@ -119,63 +121,69 @@ export async function GET(req: Request) {
     /**
      * STEP 3: RUN COACH PIPELINE PER USER/PROFILE
      */
-    for (const item of workItems) {
-      const { userId, healthProfileContext } = item;
-      try {
-        await runCoachPipeline(userId, healthProfileContext);
-      } catch (err) {
-        console.error(`Coach failed for user ${userId}`, err);
-      }
+    for (let index = 0; index < workItems.length; index += DAILY_COACH_CONCURRENCY) {
+      const batch = workItems.slice(index, index + DAILY_COACH_CONCURRENCY);
 
-      try {
-        const autopilot = await runMorningAutopilotBrief({
-          supabase,
-          userId,
-          healthProfileContext,
-        });
-        if (autopilot.status === "prepared") {
-          autopilotPrepared++;
-        } else {
-          autopilotSkipped++;
-        }
-      } catch (err) {
-        autopilotSkipped++;
-        console.error(`Morning Autopilot failed for user ${userId}`, err);
-      }
+      await Promise.all(
+        batch.map(async (item) => {
+          const { userId, healthProfileContext } = item;
+          try {
+            await runCoachPipeline(userId, healthProfileContext);
+          } catch (err) {
+            console.error(`Coach failed for user ${userId}`, err);
+          }
 
-      try {
-        const clinicalFollowUp = await runProactiveClinicalFollowUps({
-          supabase,
-          userId,
-          healthProfileContext,
-        });
-        if (clinicalFollowUp.status === "sent") {
-          clinicalFollowUpsSent++;
-        } else {
-          clinicalFollowUpsSkipped++;
-        }
-      } catch (err) {
-        clinicalFollowUpsSkipped++;
-        console.error(`Clinical follow-up failed for user ${userId}`, err);
-      }
+          try {
+            const autopilot = await runMorningAutopilotBrief({
+              supabase,
+              userId,
+              healthProfileContext,
+            });
+            if (autopilot.status === "prepared") {
+              autopilotPrepared++;
+            } else {
+              autopilotSkipped++;
+            }
+          } catch (err) {
+            autopilotSkipped++;
+            console.error(`Morning Autopilot failed for user ${userId}`, err);
+          }
 
-      try {
-        const dataSourceFollowUp = await runProactiveDataSourceFollowUps({
-          supabase,
-          userId,
-          healthProfileContext,
-        });
-        if (dataSourceFollowUp.status === "sent") {
-          dataSourceFollowUpsSent++;
-        } else {
-          dataSourceFollowUpsSkipped++;
-        }
-      } catch (err) {
-        dataSourceFollowUpsSkipped++;
-        console.error(`Data source follow-up failed for user ${userId}`, err);
-      }
+          try {
+            const clinicalFollowUp = await runProactiveClinicalFollowUps({
+              supabase,
+              userId,
+              healthProfileContext,
+            });
+            if (clinicalFollowUp.status === "sent") {
+              clinicalFollowUpsSent++;
+            } else {
+              clinicalFollowUpsSkipped++;
+            }
+          } catch (err) {
+            clinicalFollowUpsSkipped++;
+            console.error(`Clinical follow-up failed for user ${userId}`, err);
+          }
 
-      processed++;
+          try {
+            const dataSourceFollowUp = await runProactiveDataSourceFollowUps({
+              supabase,
+              userId,
+              healthProfileContext,
+            });
+            if (dataSourceFollowUp.status === "sent") {
+              dataSourceFollowUpsSent++;
+            } else {
+              dataSourceFollowUpsSkipped++;
+            }
+          } catch (err) {
+            dataSourceFollowUpsSkipped++;
+            console.error(`Data source follow-up failed for user ${userId}`, err);
+          }
+
+          processed++;
+        })
+      );
     }
 
     return NextResponse.json({

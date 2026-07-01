@@ -1,7 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { parseClinicalBiomarkerText } from "@/lib/labs/clinicalBiomarkers";
+import { normalizeBiologicalAgeInputValue } from "@/lib/labs/latestLabInputs";
 import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
+import { sanitizeCareRole } from "@/lib/care-network/rolePermissions";
+import {
+  createShareAccessCode,
+  hashShareAccessCode,
+  verifyShareAccessCode,
+} from "@/lib/security/shareAccess";
 import { decryptToken, encryptToken } from "@/lib/security/tokenCrypto";
 import { fetchOuraMetrics } from "@/lib/wearables/oura";
 import { fetchWhoopMetrics } from "@/lib/wearables/whoop";
@@ -14,6 +21,38 @@ test.describe("high-impact launch fixes", () => {
     expect(encrypted.startsWith("av1:")).toBe(true);
     expect(decryptToken(encrypted)).toBe("secret-access-token");
     expect(decryptToken("legacy-plaintext-token")).toBe("legacy-plaintext-token");
+  });
+
+  test("requires a dedicated production OAuth token encryption key", () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    const originalKey = process.env.OAUTH_TOKEN_ENCRYPTION_KEY;
+
+    try {
+      Object.assign(process.env, { NODE_ENV: "production" });
+      delete process.env.OAUTH_TOKEN_ENCRYPTION_KEY;
+
+      expect(() => encryptToken("secret-access-token")).toThrow(
+        "Production OAuth token encryption requires OAUTH_TOKEN_ENCRYPTION_KEY."
+      );
+    } finally {
+      Object.assign(process.env, { NODE_ENV: originalNodeEnv });
+      if (originalKey) {
+        process.env.OAUTH_TOKEN_ENCRYPTION_KEY = originalKey;
+      } else {
+        delete process.env.OAUTH_TOKEN_ENCRYPTION_KEY;
+      }
+    }
+  });
+
+  test("fails closed for ambiguous care roles and missing PHI share hashes", () => {
+    expect(sanitizeCareRole("coach")).toBe("coach");
+    expect(sanitizeCareRole("unexpected")).toBe("family");
+
+    const code = createShareAccessCode();
+    const hash = hashShareAccessCode(code);
+
+    expect(verifyShareAccessCode(code, hash)).toBe(true);
+    expect(verifyShareAccessCode(code, null)).toBe(false);
   });
 
   test("parses biomarker values after label digits and normalizes clinical units", () => {
@@ -29,6 +68,9 @@ test.describe("high-impact launch fixes", () => {
     expect(byKey.get("fasting_glucose")).toBe(5);
     expect(byKey.get("hscrp")).toBeCloseTo(0.08, 2);
     expect(byKey.get("apob")).toBe(90);
+
+    expect(normalizeBiologicalAgeInputValue("fasting_glucose", 5)).toBe(90);
+    expect(normalizeBiologicalAgeInputValue("hscrp", 0.08)).toBeCloseTo(0.8, 2);
   });
 
   test("reads Oura sleep duration from the sleep collection and avoids strain collision", async () => {

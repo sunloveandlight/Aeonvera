@@ -10,7 +10,10 @@ import {
   serializeUsage,
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
-import { resolveActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
+import {
+  resolveActiveHealthProfileContext,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type ChatMessage = {
@@ -67,6 +70,7 @@ export async function POST(request: NextRequest) {
 
     const clinicalFollowUp = await maybeRecordClinicalFollowUpAnswer({
       body,
+      healthProfileContext,
       question,
       supabase: admin,
       userId: user.id,
@@ -110,11 +114,13 @@ export async function POST(request: NextRequest) {
 
 async function maybeRecordClinicalFollowUpAnswer({
   body,
+  healthProfileContext,
   question,
   supabase,
   userId,
 }: {
   body: Record<string, unknown>;
+  healthProfileContext: ActiveHealthProfileContext;
   question: string;
   supabase: ReturnType<typeof getSupabaseAdmin>;
   userId: string;
@@ -128,6 +134,7 @@ async function maybeRecordClinicalFollowUpAnswer({
   return recordClinicalFollowUpAnswer({
     answer: question,
     clinicalInsightId,
+    healthProfileContext,
     source: "agent_chat",
     supabase,
     userId,

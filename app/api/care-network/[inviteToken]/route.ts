@@ -21,6 +21,7 @@ type NetworkMembershipRow = {
   member_name?: string | null;
   owner_user_id: string;
   permissions?: string[];
+  health_profile_id?: string | null;
   revoked_at?: string | null;
   role?: CareNetworkRole;
   status?: string;
@@ -43,7 +44,7 @@ export async function GET(
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
       .from("care_network_memberships")
-      .select("owner_user_id,invite_token,access_code_hash,member_email,member_name,role,status,permissions,expires_at,accepted_at,revoked_at,access_count")
+      .select("owner_user_id,invite_token,health_profile_id,access_code_hash,member_email,member_name,role,status,permissions,expires_at,accepted_at,revoked_at,access_count")
       .eq("invite_token", inviteToken)
       .maybeSingle();
 
@@ -105,6 +106,7 @@ export async function GET(
     const role = sanitizeCareRole(invite.role);
     const bundle = await buildPhysicianExportBundle({
       email: null,
+      healthProfileId: invite.health_profile_id || null,
       sections: permissionsForCareRole({
         requested: invite.permissions,
         role,

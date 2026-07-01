@@ -1,4 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  getHealthSubjectFilter,
+  healthSubjectInsertFields,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type ClinicalInsightRow = {
   id: string;
@@ -40,9 +45,11 @@ export async function recordClinicalFollowUpAnswer({
   source = "agent_chat",
   supabase,
   userId,
+  healthProfileContext,
 }: {
   answer: string;
   clinicalInsightId: string;
+  healthProfileContext: ActiveHealthProfileContext;
   source?: "agent_chat" | "voice_agent" | "system";
   supabase: SupabaseClient;
   userId: string;
@@ -107,6 +114,7 @@ export async function recordClinicalFollowUpAnswer({
     interpretation,
     supabase,
     userId,
+    healthProfileContext,
   });
 
   return {
@@ -164,10 +172,12 @@ async function maybePrepareClinicalAction({
   interpretation,
   supabase,
   userId,
+  healthProfileContext,
 }: {
   answer: string;
   insight: ClinicalInsightRow;
   interpretation: ClinicalResponseInterpretation;
+  healthProfileContext: ActiveHealthProfileContext;
   supabase: SupabaseClient;
   userId: string;
 }) {
@@ -188,10 +198,11 @@ async function maybePrepareClinicalAction({
   if (!shouldPrepare) return null;
 
   const today = new Date().toISOString().slice(0, 10);
+  const filter = getHealthSubjectFilter(healthProfileContext);
   const { data } = await supabase
     .from("daily_execution_plans")
     .select("id,plan_date,status,autopilot_mode,plan")
-    .eq("user_id", userId)
+    .eq(filter.column, filter.value)
     .eq("plan_date", today)
     .maybeSingle();
 
@@ -223,26 +234,42 @@ async function maybePrepareClinicalAction({
     },
   };
 
-  const { error } = await supabase.from("daily_execution_plans").upsert(
-    {
-      id: data?.id || undefined,
-      user_id: userId,
-      plan_date: today,
-      status: "prepared",
-      autopilot_mode: data?.autopilot_mode || "approve",
-      summary: plan.summary,
-      plan,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,plan_date" }
-  );
+  const payload = {
+    plan_date: today,
+    status: "prepared",
+    autopilot_mode: data?.autopilot_mode || "approve",
+    summary: plan.summary,
+    plan,
+    updated_at: new Date().toISOString(),
+  };
+  const updateResult = await supabase
+    .from("daily_execution_plans")
+    .update(payload)
+    .eq(filter.column, filter.value)
+    .eq("plan_date", today)
+    .select("id")
+    .maybeSingle();
+
+  if (updateResult.error) {
+    return handlePlanWriteError(updateResult.error);
+  }
+
+  const result = updateResult.data
+    ? updateResult
+    : await supabase
+        .from("daily_execution_plans")
+        .insert({
+          user_id: userId,
+          ...healthSubjectInsertFields(healthProfileContext),
+          ...payload,
+        })
+        .select("id")
+        .single();
+
+  const { error } = result;
 
   if (error) {
-    if (!isMissingPlanTable(error)) {
-      console.error("[Clinical Follow-up Plan Update Error]", error.message);
-    }
-
-    return null;
+    return handlePlanWriteError(error);
   }
 
   return {
@@ -250,6 +277,14 @@ async function maybePrepareClinicalAction({
     label: "Clinical plan updated",
     detail: "Aeonvera translated your follow-up answer into today’s active plan.",
   };
+}
+
+function handlePlanWriteError(error: { message?: string }) {
+  if (!isMissingPlanTable(error)) {
+    console.error("[Clinical Follow-up Plan Update Error]", error.message);
+  }
+
+  return null;
 }
 
 function inferClinicalStatus(answer: string) {
