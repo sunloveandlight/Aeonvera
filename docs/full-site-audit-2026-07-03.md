@@ -15,6 +15,65 @@ QA account against the real Supabase project.
 | Code | 2 | 3 | 3 (+10 unverified) | 21 unverified |
 | Visual | 0 | 9 | 14 | 6 |
 
+## Remediation status (2026-07-03)
+
+The critical/high launch blockers and several medium hardening items from this audit have
+now been fixed and deployed to production.
+
+Production deployment:
+
+- Deployment: `dpl_Bm1ZAmyQUGPHXxcgHXpRvYRsDkvj`
+- Aliased production domain: `https://www.aeonvera.com`
+
+Resolved items:
+
+- **C1 payment bypass:** locked entitlement columns with column-level grants plus
+  elevation-based insert/update triggers for `workspaces` and `profiles`.
+- **C2 + H2 lab unit corruption:** imported clinical biomarkers now store canonical
+  units consistently, old rows are backfilled, lab trends display familiar clinical
+  units, and biological-age inputs convert from storage units intentionally.
+- **H1 preferences lost:** agent preference writes now include active health profile
+  context so profile-scoped readers can apply them.
+- **H3 wearable duplication:** wearable metric ingestion now uses natural-key dedupe
+  and conflict-aware upserts.
+- **High visual theme/overflow items:** resource light-theme parity, concierge success
+  badge visibility, ops status pills, toggle contrast, and mobile hero heading overflow
+  have been addressed.
+- **Medium CSP hardening:** live responses now include `default-src`, `script-src`,
+  `style-src`, `connect-src`, `frame-src`, `img-src`, `font-src`, `worker-src`, and
+  existing anti-framing/object restrictions.
+- **Medium PhenoAge CRP:** hsCRP is no longer divided down a second time in the
+  PhenoAge-inspired clinical-age path.
+- **Medium Oura readiness/activity collision:** Oura activity score now maps to its
+  own canonical `activity_score` metric instead of `recovery_score`.
+- **Medium Oura/WHOOP pagination:** wearable fetchers now follow paginated API
+  responses instead of reading only the first page.
+- **Medium daily-plan timezone:** daily Autopilot plan dates now use the user's
+  configured timezone instead of UTC.
+- **Medium push quiet hours:** push delivery is skipped during quiet hours, matching
+  email behavior.
+- **Medium email no-throw contract:** `sendCoachEmail` now returns a skipped result on
+  network/provider exceptions instead of throwing through non-critical flows.
+
+Verification performed:
+
+- `npx playwright test tests/e2e/high-impact-fixes.spec.ts --workers=1 --reporter=line --timeout=20000`
+- `npx tsc --noEmit`
+- `npm run lint`
+- `npm run build`
+- Live header smoke check against `https://www.aeonvera.com`
+
+Remaining work from this audit:
+
+- Complete the lower-priority performance items: parallelize longevity report queries,
+  reduce N+1 entitlement lookups in profile listing, and reduce redundant plan
+  resolution on hot agent routes.
+- Finish lower-risk visual polish: decorative glow overlap, digital-twin empty-state
+  balance, and remaining consent-checkbox contrast.
+- Decide whether to delete the selected dead code after one final reference check.
+- Track future-self share access-code gating, referral-code redemption, and rate-limit
+  trusted proxy handling as separate cleanup/security tasks.
+
 ---
 
 ## 🔴 CRITICAL
