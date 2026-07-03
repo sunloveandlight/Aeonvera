@@ -25,6 +25,21 @@ export async function getWorkspaceSubscriptionForUser({
   supabase: SupabaseClient;
   userId: string;
 }): Promise<WorkspaceSubscription | null> {
+  const ownedPersonalWorkspace = await supabase
+    .from("workspaces")
+    .select("id,plan,subscription_status")
+    .eq("owner_user_id", userId)
+    .eq("workspace_type", "personal")
+    .maybeSingle<WorkspaceRow>();
+
+  if (!ownedPersonalWorkspace.error && ownedPersonalWorkspace.data?.id) {
+    return {
+      workspaceId: ownedPersonalWorkspace.data.id,
+      plan: ownedPersonalWorkspace.data.plan || null,
+      status: ownedPersonalWorkspace.data.subscription_status || null,
+    };
+  }
+
   const membership = await supabase
     .from("workspace_members")
     .select("workspace_id")
@@ -46,6 +61,7 @@ export async function getWorkspaceSubscriptionForUser({
     .from("workspaces")
     .select("id,plan,subscription_status")
     .eq("owner_user_id", userId)
+    .eq("workspace_type", "personal")
     .maybeSingle<WorkspaceRow>();
 
   if (ownedWorkspace.error || !ownedWorkspace.data?.id) {

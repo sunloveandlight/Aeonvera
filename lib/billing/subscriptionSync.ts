@@ -95,7 +95,8 @@ export async function syncUserSubscriptionState({
   await supabase
     .from("workspaces")
     .update(workspaceUpdate)
-    .eq("owner_user_id", userId);
+    .eq("owner_user_id", userId)
+    .eq("workspace_type", "personal");
 }
 
 export async function getUserIdForStripeCustomer({
