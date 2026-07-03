@@ -120,7 +120,10 @@ export async function POST(req: NextRequest) {
         value: m.value,
         measured_at: m.measured_at,
         source: m.source,
-      }))
+      })),
+      {
+        onConflict: "user_id,health_profile_id,source,metric,measured_at",
+      }
     );
 
     /**
@@ -130,9 +133,10 @@ export async function POST(req: NextRequest) {
       .from("health_metrics")
       .select("*")
       .eq(healthFilter.column, healthFilter.value)
-      .order("measured_at", { ascending: true });
+      .order("measured_at", { ascending: false })
+      .limit(720);
 
-    const formattedMetrics = (canonicalMetrics || []).map((m) => ({
+    const formattedMetrics = [...(canonicalMetrics || [])].reverse().map((m) => ({
       userId: m.user_id,
       metricName: m.metric,
       value: Number(m.value),

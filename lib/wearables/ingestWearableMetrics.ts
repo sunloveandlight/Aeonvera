@@ -44,7 +44,11 @@ export async function ingestWearableMetrics({
     recorded_at: metric.timestamp,
   }));
 
-  const { error: rawError } = await supabase.from("wearable_metrics").insert(rawRows);
+  const { error: rawError } = await supabase
+    .from("wearable_metrics")
+    .upsert(rawRows, {
+      onConflict: "user_id,health_profile_id,provider,metric_name,recorded_at",
+    });
 
   if (rawError) {
     throw new Error(rawError.message);
@@ -69,7 +73,10 @@ export async function ingestWearableMetrics({
         value: metric.value,
         measured_at: metric.measured_at,
         source: metric.source,
-      }))
+      })),
+      {
+        onConflict: "user_id,health_profile_id,source,metric,measured_at",
+      }
     );
 
     if (normalizedError) {

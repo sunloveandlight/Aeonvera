@@ -81,8 +81,6 @@ export default function OnboardingPage() {
       if (!profile) {
         const { error } = await supabase.from("profiles").insert({
           user_id: user.id,
-          plan: "free",
-          subscription_status: "inactive",
           onboarding_completed: false,
           entity_state: "dormant",
           life_stage: "initializing",

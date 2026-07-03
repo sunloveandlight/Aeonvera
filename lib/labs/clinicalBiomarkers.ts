@@ -258,7 +258,7 @@ export function parseClinicalBiomarkerText(text: string): ParsedClinicalBiomarke
     found.set(definition.key, {
       canonicalKey: definition.key,
       value,
-      unit,
+      unit: canonicalBiomarkerStorageUnit(definition.key, unit),
       rawLabel: line.slice(0, 180),
     });
   }
@@ -296,7 +296,10 @@ export function normalizeClinicalBiomarkers(value: unknown): ParsedClinicalBioma
         valueNumber,
         typeof candidate.unit === "string" ? candidate.unit : undefined
       ),
-      unit: typeof candidate.unit === "string" ? candidate.unit : undefined,
+      unit: canonicalBiomarkerStorageUnit(
+        canonicalKey,
+        typeof candidate.unit === "string" ? candidate.unit : undefined
+      ),
       rawLabel: typeof candidate.rawLabel === "string" ? candidate.rawLabel : label,
       referenceRange:
         typeof candidate.referenceRange === "string"
@@ -382,9 +385,102 @@ export function normalizeBiomarkerUnit(
   }
 }
 
+export function canonicalBiomarkerStorageUnit(
+  key: ClinicalBiomarkerKey,
+  unit?: string
+) {
+  if (!normalizeUnit(unit)) return undefined;
+  return BIOMARKER_STORAGE_UNITS[key];
+}
+
+export function displayBiomarkerValue({
+  key,
+  unit,
+  value,
+}: {
+  key: ClinicalBiomarkerKey;
+  unit?: string | null;
+  value: number;
+}) {
+  const normalizedUnit = normalizeUnit(unit || undefined);
+
+  switch (key) {
+    case "albumin":
+      return {
+        unit: "g/dL",
+        value: normalizedUnit === "g/l" ? value / 10 : value,
+      };
+    case "creatinine":
+      return {
+        unit: "mg/dL",
+        value: normalizedUnit === "umol/l" ? value / 88.4 : value,
+      };
+    case "fasting_glucose":
+      return {
+        unit: "mg/dL",
+        value: normalizedUnit === "mmol/l" ? value * 18 : value,
+      };
+    case "hscrp":
+      return {
+        unit: "mg/L",
+        value: normalizedUnit === "mg/dl" ? value * 10 : value,
+      };
+    default:
+      return {
+        unit: BIOMARKER_DISPLAY_UNITS[key] || unit || null,
+        value,
+      };
+  }
+}
+
 function normalizeUnit(unit?: string) {
   return (unit || "")
     .toLowerCase()
     .replace(/µ/g, "u")
     .replace(/\s+/g, "");
 }
+
+const BIOMARKER_STORAGE_UNITS: Record<ClinicalBiomarkerKey, string> = {
+  albumin: "g/L",
+  creatinine: "µmol/L",
+  fasting_glucose: "mmol/L",
+  fasting_insulin: "uIU/mL",
+  hba1c: "%",
+  triglycerides: "mg/dL",
+  hdl_cholesterol: "mg/dL",
+  ldl_cholesterol: "mg/dL",
+  total_cholesterol: "mg/dL",
+  apob: "mg/dL",
+  blood_pressure_systolic: "mmHg",
+  blood_pressure_diastolic: "mmHg",
+  hscrp: "mg/dL",
+  homocysteine: "µmol/L",
+  ferritin: "ng/mL",
+  esr: "mm/hr",
+  fibrinogen: "mg/dL",
+  lymphocyte_pct: "%",
+  mean_cell_volume: "fL",
+  red_cell_distribution_width: "%",
+  alkaline_phosphatase: "U/L",
+  white_blood_cell_count: "K/uL",
+  tsh: "mIU/L",
+  free_t3: "pg/mL",
+  free_t4: "ng/dL",
+  morning_cortisol: "ug/dL",
+  total_testosterone: "ng/dL",
+  free_testosterone: "pg/mL",
+  shbg: "nmol/L",
+  estradiol: "pg/mL",
+  progesterone: "ng/mL",
+  lh: "IU/L",
+  fsh: "IU/L",
+  vitamin_d: "ng/mL",
+};
+
+const BIOMARKER_DISPLAY_UNITS: Record<ClinicalBiomarkerKey, string> = {
+  ...BIOMARKER_STORAGE_UNITS,
+  albumin: "g/dL",
+  creatinine: "mg/dL",
+  fasting_glucose: "mg/dL",
+  hscrp: "mg/L",
+};

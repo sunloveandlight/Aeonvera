@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { parseClinicalBiomarkerText } from "@/lib/labs/clinicalBiomarkers";
+import { buildLabTrends } from "@/lib/labs/labTrends";
 import { normalizeBiologicalAgeInputValue } from "@/lib/labs/latestLabInputs";
 import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
 import { sanitizeCareRole } from "@/lib/care-network/rolePermissions";
@@ -63,14 +64,41 @@ test.describe("high-impact launch fixes", () => {
       "ApoB 0.9 g/L",
     ].join("\n"));
     const byKey = new Map(parsed.map((item) => [item.canonicalKey, item.value]));
+    const unitsByKey = new Map(parsed.map((item) => [item.canonicalKey, item.unit]));
 
     expect(byKey.get("vitamin_d")).toBeCloseTo(40.06, 1);
     expect(byKey.get("fasting_glucose")).toBe(5);
     expect(byKey.get("hscrp")).toBeCloseTo(0.08, 2);
     expect(byKey.get("apob")).toBe(90);
+    expect(unitsByKey.get("fasting_glucose")).toBe("mmol/L");
+    expect(unitsByKey.get("hscrp")).toBe("mg/dL");
 
     expect(normalizeBiologicalAgeInputValue("fasting_glucose", 5)).toBe(90);
     expect(normalizeBiologicalAgeInputValue("hscrp", 0.08)).toBeCloseTo(0.8, 2);
+  });
+
+  test("displays lab trends in familiar clinical units", () => {
+    const trends = buildLabTrends([
+      {
+        canonical_key: "fasting_glucose",
+        measured_at: "2026-07-01T00:00:00.000Z",
+        unit: "mmol/L",
+        value: 5,
+      },
+      {
+        canonical_key: "hscrp",
+        measured_at: "2026-07-01T00:00:00.000Z",
+        unit: "mg/dL",
+        value: 0.08,
+      },
+    ]);
+
+    const byKey = new Map(trends.map((trend) => [trend.canonicalKey, trend]));
+
+    expect(byKey.get("fasting_glucose")?.latestValue).toBe(90);
+    expect(byKey.get("fasting_glucose")?.unit).toBe("mg/dL");
+    expect(byKey.get("hscrp")?.latestValue).toBe(0.8);
+    expect(byKey.get("hscrp")?.unit).toBe("mg/L");
   });
 
   test("reads Oura sleep duration from the sleep collection and avoids strain collision", async () => {

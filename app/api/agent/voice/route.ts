@@ -125,6 +125,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
     });
     const command = await processAgentCommand({
+      healthProfileContext,
       question: transcript,
       source: "mobile",
       supabase: admin,

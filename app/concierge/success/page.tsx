@@ -75,7 +75,7 @@ export default async function ConciergeSuccessPage({
                     : "We are still waiting for Stripe to confirm payment. This page will update after the webhook lands."}
                 </p>
               </div>
-              <div className="rounded-full border border-emerald-300/20 bg-emerald-300/10 p-3 text-emerald-100">
+              <div className="rounded-full border border-[rgba(var(--success),0.35)] bg-[rgba(var(--success),0.16)] p-3 text-[rgb(var(--success))]">
                 <CheckCircle2 size={30} />
               </div>
             </div>

@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
     });
     const command = await processAgentCommand({
+      healthProfileContext,
       question,
       source: "agent_chat",
       supabase: admin,

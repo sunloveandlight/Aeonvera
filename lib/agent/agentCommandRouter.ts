@@ -1,4 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  healthSubjectInsertFields,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 type AgentAction = {
   type: string;
@@ -28,7 +32,9 @@ export async function processAgentCommand({
   source,
   supabase,
   userId,
+  healthProfileContext,
 }: {
+  healthProfileContext?: ActiveHealthProfileContext | null;
   question: string;
   source: "agent_chat" | "mobile";
   supabase: SupabaseClient;
@@ -38,7 +44,7 @@ export async function processAgentCommand({
   const preferences = detectPreferences(question);
 
   if (preferences.length) {
-    await savePreferences({ preferences, source, supabase, userId });
+    await savePreferences({ healthProfileContext, preferences, source, supabase, userId });
   }
 
   return { actions, preferences };
@@ -222,18 +228,24 @@ function detectPreferences(question: string): PreferenceCandidate[] {
 }
 
 async function savePreferences({
+  healthProfileContext,
   preferences,
   source,
   supabase,
   userId,
 }: {
+  healthProfileContext?: ActiveHealthProfileContext | null;
   preferences: PreferenceCandidate[];
   source: "agent_chat" | "mobile";
   supabase: SupabaseClient;
   userId: string;
 }) {
+  const subjectFields = healthProfileContext
+    ? healthSubjectInsertFields(healthProfileContext)
+    : { health_profile_id: null };
   const rows = preferences.map((preference) => ({
     user_id: userId,
+    ...subjectFields,
     category: preference.category,
     preference_key: preference.key,
     preference_value: preference.value,
@@ -246,12 +258,31 @@ async function savePreferences({
     updated_at: new Date().toISOString(),
   }));
 
-  const { error } = await supabase
-    .from("agent_preferences")
-    .upsert(rows, { onConflict: "user_id,category,preference_key" });
+  for (const row of rows) {
+    const query = supabase
+      .from("agent_preferences")
+      .update(row)
+      .eq("category", row.category)
+      .eq("preference_key", row.preference_key);
 
-  if (error && !isMissingAgentPreferencesTable(error)) {
-    console.error("[Agent Preference Store Error]", error.message);
+    const { data, error: updateError } = row.health_profile_id
+      ? await query.eq("health_profile_id", row.health_profile_id).select("id").limit(1)
+      : await query.eq("user_id", userId).is("health_profile_id", null).select("id").limit(1);
+
+    if (updateError) {
+      if (!isMissingAgentPreferencesTable(updateError)) {
+        console.error("[Agent Preference Store Error]", updateError.message);
+      }
+      continue;
+    }
+
+    if (Array.isArray(data) && data.length > 0) continue;
+
+    const { error: insertError } = await supabase.from("agent_preferences").insert(row);
+
+    if (insertError && !isMissingAgentPreferencesTable(insertError)) {
+      console.error("[Agent Preference Store Error]", insertError.message);
+    }
   }
 }
 

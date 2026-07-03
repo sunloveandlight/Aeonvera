@@ -1,4 +1,7 @@
-import type { ClinicalBiomarkerKey } from "@/lib/labs/clinicalBiomarkers";
+import {
+  displayBiomarkerValue,
+  type ClinicalBiomarkerKey,
+} from "@/lib/labs/clinicalBiomarkers";
 
 export type LabTrendStatus = "improving" | "worsening" | "stable" | "baseline";
 
@@ -121,15 +124,29 @@ function buildLabTrend(
 
   const definition = TREND_DEFINITIONS[canonicalKey];
   if (!definition) return null;
-  const previousValue = previous?.value ?? null;
+  const latestDisplay = displayBiomarkerValue({
+    key: canonicalKey,
+    unit: latest.unit,
+    value: latest.value,
+  });
+  const previousDisplay = previous
+    ? displayBiomarkerValue({
+        key: canonicalKey,
+        unit: previous.unit,
+        value: previous.value,
+      })
+    : null;
+  const latestValue = roundLabValue(latestDisplay.value);
+  const previousValue =
+    previousDisplay == null ? null : roundLabValue(previousDisplay.value);
   const delta =
-    previousValue == null ? null : Number((latest.value - previousValue).toFixed(2));
+    previousValue == null ? null : Number((latestValue - previousValue).toFixed(2));
   const percentChange =
     previousValue == null || previousValue === 0
       ? null
       : Number(((delta! / previousValue) * 100).toFixed(1));
   const status = classifyTrend({
-    latest: latest.value,
+    latest: latestValue,
     delta,
     definition,
   });
@@ -137,9 +154,9 @@ function buildLabTrend(
   return {
     canonicalKey,
     label: definition.label,
-    latestValue: latest.value,
+    latestValue,
     previousValue,
-    unit: latest.unit || previous?.unit || null,
+    unit: latestDisplay.unit || previousDisplay?.unit || latest.unit || previous?.unit || null,
     measuredAt: latest.measured_at,
     delta,
     percentChange,
@@ -147,12 +164,16 @@ function buildLabTrend(
     target: definition.target,
     interpretation: buildInterpretation({
       label: definition.label,
-      latest: latest.value,
+      latest: latestValue,
       delta,
       percentChange,
       status,
     }),
   };
+}
+
+function roundLabValue(value: number) {
+  return Number(value.toFixed(Math.abs(value) >= 10 ? 1 : 2));
 }
 
 function classifyTrend({

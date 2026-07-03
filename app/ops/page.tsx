@@ -346,7 +346,7 @@ function StatusPill({
     <span
       className={`rounded-full border px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${
         tone === "ok"
-          ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-100"
+          ? "border-[rgba(var(--success),0.32)] bg-[rgba(var(--success),0.14)] text-[rgb(var(--success))]"
           : "border-[rgba(var(--gold),0.24)] bg-[rgba(var(--gold),0.08)] royal-text"
       }`}
     >

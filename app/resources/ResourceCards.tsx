@@ -122,7 +122,7 @@ export function ResourceSearch({
         defaultValue={defaultValue}
         id="resource-search"
         name="q"
-        placeholder="Search healthspan, biomarkers, sleep, exercise..."
+        placeholder="Search the library..."
         type="search"
       />
       <button type="submit">Search</button>

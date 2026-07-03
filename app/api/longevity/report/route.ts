@@ -159,7 +159,9 @@ export async function POST(request: NextRequest) {
     const { data: behaviorEvents } = await supabase
       .from("behavior_events")
       .select("*")
-      .eq(healthSubjectFilter.column, healthSubjectFilter.value);
+      .eq(healthSubjectFilter.column, healthSubjectFilter.value)
+      .order("created_at", { ascending: false })
+      .limit(500);
 
     const adaptiveWeights = computeAdaptiveWeights(
       (behaviorEvents || []).map((e) => ({

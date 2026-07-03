@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createServerClient } from "@supabase/ssr";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 type CheckoutPlan = "core" | "elite" | "sovereign";
 
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
 
       customerId = customer.id;
 
-      await supabase
+      await getSupabaseAdmin()
         .from("profiles")
         .update({ stripe_customer_id: customerId })
         .eq("user_id", user.id);

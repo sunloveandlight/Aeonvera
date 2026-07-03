@@ -6835,6 +6835,72 @@ input[type="number"]::-webkit-inner-spin-button {
   padding: 0 0.65rem;
 }
 
+:root[data-theme="light"] .resources-page {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(var(--gold), 0.12), transparent 32rem),
+    radial-gradient(circle at 86% 12%, rgba(111, 220, 214, 0.12), transparent 24rem),
+    var(--bg);
+  color: var(--text-1);
+}
+
+:root[data-theme="light"] .resources-page h1,
+:root[data-theme="light"] .resources-page h2,
+:root[data-theme="light"] .resources-page h3,
+:root[data-theme="light"] .resource-category-tile span,
+:root[data-theme="light"] .resources-hero-panel span,
+:root[data-theme="light"] .resources-hero-panel strong {
+  color: var(--text-1);
+}
+
+:root[data-theme="light"] .resources-page p,
+:root[data-theme="light"] .resources-hero-panel p {
+  color: var(--text-2);
+}
+
+:root[data-theme="light"] .resources-band {
+  border-color: var(--hairline);
+}
+
+:root[data-theme="light"] .resources-hero-visual,
+:root[data-theme="light"] .resources-hero-panel,
+:root[data-theme="light"] .resource-search,
+:root[data-theme="light"] .resource-pill,
+:root[data-theme="light"] .resource-category-tile,
+:root[data-theme="light"] .resource-biomarker-card,
+:root[data-theme="light"] .resource-article-card,
+:root[data-theme="light"] .resource-empty,
+:root[data-theme="light"] .resource-cluster-card,
+:root[data-theme="light"] .resource-card-meta span,
+:root[data-theme="light"] .strategy-tags span {
+  border-color: var(--panel-border);
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: var(--shadow-1);
+}
+
+:root[data-theme="light"] .resources-hero-visual {
+  background: var(--panel);
+}
+
+:root[data-theme="light"] .resources-hero-visual::after {
+  background:
+    linear-gradient(180deg, transparent 48%, rgba(255, 255, 255, 0.78)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.48), transparent 54%);
+}
+
+:root[data-theme="light"] .resource-search input {
+  color: var(--text-1);
+}
+
+:root[data-theme="light"] .resource-search input::placeholder {
+  color: var(--text-4);
+}
+
+:root[data-theme="light"] .resource-pill,
+:root[data-theme="light"] .resource-card-meta span,
+:root[data-theme="light"] .strategy-tags span {
+  color: var(--text-2);
+}
+
 .resources-split-section {
   display: grid;
   grid-template-columns: 0.82fr 1.18fr;
