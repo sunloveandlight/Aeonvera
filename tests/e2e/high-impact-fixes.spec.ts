@@ -3,7 +3,9 @@ import { expect, test } from "@playwright/test";
 import { parseClinicalBiomarkerText } from "@/lib/labs/clinicalBiomarkers";
 import { buildLabTrends } from "@/lib/labs/labTrends";
 import { normalizeBiologicalAgeInputValue } from "@/lib/labs/latestLabInputs";
+import { computeBiologicalAge, type AssessmentInput } from "@/lib/longevity/biologicalAgeEngine";
 import { normalizeHealthMetrics } from "@/lib/metrics/normalizeHealthMetrics";
+import { sendCoachEmail } from "@/lib/notifications/email";
 import { sanitizeCareRole } from "@/lib/care-network/rolePermissions";
 import {
   createShareAccessCode,
@@ -101,17 +103,57 @@ test.describe("high-impact launch fixes", () => {
     expect(byKey.get("hscrp")?.unit).toBe("mg/L");
   });
 
-  test("reads Oura sleep duration from the sleep collection and avoids strain collision", async () => {
+  test("PhenoAge hsCRP uses mg/L without a second 10x down-conversion", () => {
+    const base: AssessmentInput = {
+      age: 50,
+      sex: "male",
+      height_cm: 178,
+      weight_kg: 78,
+      sleep_hours: 7,
+      sleep_quality: 8,
+      exercise_days: 4,
+      strength_training: true,
+      diet_type: "balanced",
+      alcohol_use: "low",
+      smoking: "never",
+      stress_level: 4,
+      primary_goal: "healthspan",
+      albumin: 4.4,
+      creatinine: 0.9,
+      fasting_glucose: 90,
+      lymphocyte_pct: 30,
+      mean_cell_volume: 90,
+      red_cell_distribution_width: 13,
+      alkaline_phosphatase: 70,
+      white_blood_cell_count: 6,
+    };
+
+    const normalInflammation = computeBiologicalAge({ ...base, hscrp: 0.8 });
+    const highInflammation = computeBiologicalAge({ ...base, hscrp: 8 });
+
+    expect(highInflammation.clinicalAgeDelta || 0).toBeGreaterThan(
+      normalInflammation.clinicalAgeDelta || 0
+    );
+  });
+
+  test("reads Oura sleep duration, paginates, and keeps activity distinct from recovery", async () => {
     const originalFetch = global.fetch;
+    const urls: string[] = [];
     global.fetch = async (input: RequestInfo | URL) => {
       const url = String(input);
-      const body = url.includes("/sleep")
+      urls.push(url);
+      const parsed = new URL(url);
+      const body = url.includes("/daily_activity") && !parsed.searchParams.has("next_token")
+        ? { data: [{ day: "2026-07-01", score: 82, steps: 9500 }], next_token: "next-page" }
+        : url.includes("/daily_activity")
+        ? { data: [{ day: "2026-07-02", score: 84, steps: 9800 }] }
+        : url.includes("/sleep")
         ? { data: [{ day: "2026-07-01", total_sleep_duration: 25_200, efficiency: 91 }] }
         : url.includes("/daily_sleep")
         ? { data: [{ day: "2026-07-01", contributors: { sleep_efficiency: 89 } }] }
         : url.includes("/daily_readiness")
         ? { data: [{ day: "2026-07-01", score: 77 }] }
-        : { data: [{ day: "2026-07-01", score: 82, steps: 9500 }] };
+        : { data: [] };
 
       return Response.json(body);
     };
@@ -128,8 +170,10 @@ test.describe("high-impact launch fixes", () => {
           expect.objectContaining({ metricName: "sleep_duration", value: 7 }),
           expect.objectContaining({ metricName: "sleep_efficiency", value: 91 }),
           expect.objectContaining({ metricName: "activity_score", value: 82 }),
+          expect.objectContaining({ metricName: "activity_score", value: 84 }),
         ])
       );
+      expect(urls.some((url) => url.includes("next_token=next-page"))).toBe(true);
 
       const normalized = normalizeHealthMetrics(metrics.map((metric) => ({
         metricName: metric.metricName,
@@ -142,7 +186,8 @@ test.describe("high-impact launch fixes", () => {
       expect(normalized).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ metric: "sleep_hours", value: 7 }),
-          expect.objectContaining({ metric: "recovery_score", value: 82 }),
+          expect.objectContaining({ metric: "recovery_score", value: 77 }),
+          expect.objectContaining({ metric: "activity_score", value: 82 }),
         ])
       );
       expect(normalized.some((metric) => metric.metric === "strain_score")).toBe(false);
@@ -151,10 +196,13 @@ test.describe("high-impact launch fixes", () => {
     }
   });
 
-  test("uses WHOOP asleep time instead of time in bed", async () => {
+  test("uses WHOOP asleep time instead of time in bed and paginates records", async () => {
     const originalFetch = global.fetch;
+    const urls: string[] = [];
     global.fetch = async (input: RequestInfo | URL) => {
       const url = String(input);
+      urls.push(url);
+      const parsed = new URL(url);
       const body = url.includes("/activity/sleep")
         ? {
             records: [{
@@ -169,7 +217,14 @@ test.describe("high-impact launch fixes", () => {
           }
         : url.includes("/recovery")
         ? { records: [] }
-        : { records: [] };
+        : !parsed.searchParams.has("nextToken")
+        ? {
+            records: [{ end: "2026-07-01T08:00:00.000Z", score: { strain: 12.5 } }],
+            next_token: "next-cycle",
+          }
+        : {
+            records: [{ end: "2026-07-02T08:00:00.000Z", score: { strain: 13.5 } }],
+          };
 
       return Response.json(body);
     };
@@ -183,9 +238,41 @@ test.describe("high-impact launch fixes", () => {
 
       expect(metrics).toEqual([
         expect.objectContaining({ metricName: "sleep", value: 7 }),
+        expect.objectContaining({ metricName: "strain", value: 12.5 }),
+        expect.objectContaining({ metricName: "strain", value: 13.5 }),
       ]);
+      expect(urls.some((url) => url.includes("nextToken=next-cycle"))).toBe(true);
     } finally {
       global.fetch = originalFetch;
+    }
+  });
+
+  test("coach email returns skipped instead of throwing on provider failures", async () => {
+    const originalFetch = global.fetch;
+    const originalApiKey = process.env.RESEND_API_KEY;
+    process.env.RESEND_API_KEY = "test-key";
+    global.fetch = async () => {
+      throw new Error("network down");
+    };
+
+    try {
+      await expect(sendCoachEmail({
+        html: "<p>hello</p>",
+        subject: "Hello",
+        text: "hello",
+        to: "test@example.com",
+      })).resolves.toEqual({
+        error: "network down",
+        provider: "resend",
+        status: "skipped",
+      });
+    } finally {
+      global.fetch = originalFetch;
+      if (originalApiKey) {
+        process.env.RESEND_API_KEY = originalApiKey;
+      } else {
+        delete process.env.RESEND_API_KEY;
+      }
     }
   });
 });

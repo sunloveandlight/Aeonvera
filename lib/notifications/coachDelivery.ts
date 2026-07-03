@@ -188,7 +188,7 @@ export async function deliverUserNotification({
     });
   }
 
-  const pushResult = pushEnabled
+  const pushResult = pushEnabled && !quietHoursActive
     ? await sendCoachPushNotifications({
         supabase,
         userId,
@@ -205,7 +205,7 @@ export async function deliverUserNotification({
         status: "skipped" as const,
         sent: 0,
         failed: 0,
-        error: "Push notifications disabled",
+        error: quietHoursActive ? "Quiet hours active" : "Push notifications disabled",
       };
 
   await recordDelivery({
@@ -223,6 +223,12 @@ export async function deliverUserNotification({
       ...basePayload,
       sent: pushResult.sent,
       failed: pushResult.failed,
+      quiet_hours: {
+        active: quietHoursActive,
+        start: prefs.quiet_hours_start,
+        end: prefs.quiet_hours_end,
+        timezone: prefs.timezone,
+      },
     },
   });
 

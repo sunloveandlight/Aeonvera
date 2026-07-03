@@ -69,7 +69,7 @@ function mapMetricName(
         case "readiness":
           return "recovery_score";
         case "activity_score":
-          return "recovery_score";
+          return "activity_score";
         case "steps":
           return "daily_steps";
         default:
@@ -162,6 +162,7 @@ function normalizeValue(
       return Math.min(21, Math.max(0, value));
 
     case "recovery_score":
+    case "activity_score":
       return Math.min(100, Math.max(0, value));
 
     default:

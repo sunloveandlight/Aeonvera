@@ -100,8 +100,8 @@ export async function GET(request: NextRequest) {
     }
     const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
-    const today = toDateKey(new Date());
     const preferences = await getOrCreatePreferences(admin, user.id, healthProfileContext);
+    const today = toDateKey(new Date(), preferences.timezone);
     const [protocol, executionMemory, preferenceMemory] = await Promise.all([
       getLatestProtocol(admin, user.id, healthProfileContext),
       getRecentExecutionMemory(admin, user.id, healthProfileContext),
@@ -257,7 +257,8 @@ export async function POST(request: NextRequest) {
     }
     const healthFilter = getHealthSubjectFilter(healthProfileContext);
 
-    const today = toDateKey(new Date());
+    const preferences = await getOrCreatePreferences(admin, user.id, healthProfileContext);
+    const today = toDateKey(new Date(), preferences.timezone);
     const now = new Date().toISOString();
     const patch: Record<string, unknown> = {
       status,
@@ -1022,8 +1023,19 @@ function sanitizeTime(value: unknown) {
   return typeof value === "string" && /^\d{2}:\d{2}$/.test(value) ? value : "";
 }
 
-function toDateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
+function toDateKey(date: Date, timezone = "UTC") {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: timezone,
+      year: "numeric",
+    }).formatToParts(date);
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
 }
 
 function isMissingAutopilotTable(error: { message?: string; code?: string }) {

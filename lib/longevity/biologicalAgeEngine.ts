@@ -1511,7 +1511,7 @@ function normalizeGlucose(value: number) {
 }
 
 function normalizeCrp(value: number) {
-  return value > 0.3 ? value / 10 : value;
+  return Math.max(0.01, value);
 }
 
 function classifyCategory(

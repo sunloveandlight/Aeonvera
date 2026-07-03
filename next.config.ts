@@ -1,13 +1,27 @@
 import type { NextConfig } from "next";
 
-// Security response headers. CSP intentionally avoids script-src until inline
-// theme/JSON-LD scripts can be nonce-backed without breaking first paint.
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://api.resend.com https://api.stripe.com https://api.ouraring.com https://api.prod.whoop.com",
+  "frame-src 'self' https://js.stripe.com https://checkout.stripe.com",
+  "manifest-src 'self'",
+  "worker-src 'self' blob:",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   {
     key: "Content-Security-Policy",
-    value:
-      "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests",
+    value: contentSecurityPolicy,
   },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

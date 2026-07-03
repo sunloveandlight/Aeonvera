@@ -1,6 +1,6 @@
 import type { WearableRawMetric } from "./types";
 
-type OuraEnvelope<T> = { data?: T[] };
+type OuraEnvelope<T> = { data?: T[]; next_token?: string | null };
 type OuraDailySleep = {
   day?: string;
   score?: number;
@@ -98,20 +98,30 @@ async function fetchOura<T>(
   startDate: string,
   endDate: string
 ): Promise<T[]> {
-  const url = new URL(`${OURA_BASE_URL}/${path}`);
-  url.searchParams.set("start_date", startDate);
-  url.searchParams.set("end_date", endDate);
+  const rows: T[] = [];
+  let nextToken: string | null = null;
 
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  for (let page = 0; page < 20; page += 1) {
+    const url = new URL(`${OURA_BASE_URL}/${path}`);
+    url.searchParams.set("start_date", startDate);
+    url.searchParams.set("end_date", endDate);
+    if (nextToken) url.searchParams.set("next_token", nextToken);
 
-  if (!response.ok) {
-    throw new Error(`Oura ${path} sync failed with ${response.status}.`);
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Oura ${path} sync failed with ${response.status}.`);
+    }
+
+    const body = (await response.json()) as OuraEnvelope<T>;
+    rows.push(...(body.data || []));
+    nextToken = body.next_token || null;
+    if (!nextToken) break;
   }
 
-  const body = (await response.json()) as OuraEnvelope<T>;
-  return body.data || [];
+  return rows;
 }
 
 function dayToTimestamp(day?: string) {

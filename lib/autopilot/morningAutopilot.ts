@@ -99,7 +99,6 @@ export async function runMorningAutopilotBrief({
   userId: string;
   healthProfileContext?: ActiveHealthProfileContext | null;
 }) {
-  const today = toDateKey(new Date());
   const activeHealthProfileContext =
     healthProfileContext || createLegacyActiveHealthProfileContext(userId);
   const subscription = await getUserPlanForUsage({ supabase, userId });
@@ -126,6 +125,8 @@ export async function runMorningAutopilotBrief({
   if (autopilotPreferences.mode === "manual") {
     return { status: "skipped", reason: "Autopilot mode is manual" };
   }
+
+  const today = toDateKey(new Date(), autopilotPreferences.timezone);
 
   if (!protocol?.protocol?.primary_protocol?.length) {
     return { status: "skipped", reason: "No active optimization protocol" };
@@ -1076,8 +1077,19 @@ function sanitizeTime(value: unknown) {
   return typeof value === "string" && /^\d{2}:\d{2}$/.test(value) ? value : "";
 }
 
-function toDateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
+function toDateKey(date: Date, timezone = "UTC") {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: timezone,
+      year: "numeric",
+    }).formatToParts(date);
+    const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return `${values.year}-${values.month}-${values.day}`;
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
 }
 
 function isMissingAutopilotTable(error: { message?: string; code?: string }) {

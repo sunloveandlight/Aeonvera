@@ -26,34 +26,42 @@ export async function sendCoachEmail({
     };
   }
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      from,
-      to,
-      subject,
-      text,
-      html,
-    }),
-  });
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from,
+        to,
+        subject,
+        text,
+        html,
+      }),
+    });
 
-  const data = await response.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({}));
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return {
+        status: "skipped",
+        provider: "resend",
+        error: data?.message || "Resend email failed",
+      };
+    }
+
+    return {
+      status: "sent",
+      provider: "resend",
+      providerMessageId: typeof data?.id === "string" ? data.id : undefined,
+    };
+  } catch (error) {
     return {
       status: "skipped",
       provider: "resend",
-      error: data?.message || "Resend email failed",
+      error: error instanceof Error ? error.message : "Resend email failed",
     };
   }
-
-  return {
-    status: "sent",
-    provider: "resend",
-    providerMessageId: typeof data?.id === "string" ? data.id : undefined,
-  };
 }

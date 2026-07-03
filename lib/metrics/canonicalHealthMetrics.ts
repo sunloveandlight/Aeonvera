@@ -13,6 +13,7 @@ export type CanonicalHealthMetric =
   | "sleep_debt"
 
   | "daily_steps"
+  | "activity_score"
   | "active_minutes"
   | "sedentary_hours"
 
@@ -75,6 +76,12 @@ export const CanonicalMetricDefinitions: Record<
     label: "Daily Steps",
     category: "activity",
     unit: "steps",
+    higherIsBetter: true,
+  },
+  activity_score: {
+    label: "Activity Score",
+    category: "activity",
+    unit: "score",
     higherIsBetter: true,
   },
   active_minutes: {

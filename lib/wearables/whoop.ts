@@ -1,6 +1,10 @@
 import type { WearableRawMetric } from "./types";
 
-type WhoopEnvelope<T> = { records?: T[] };
+type WhoopEnvelope<T> = {
+  records?: T[];
+  next_token?: string | null;
+  nextToken?: string | null;
+};
 type WhoopSleep = {
   end?: string;
   score?: {
@@ -102,20 +106,30 @@ async function fetchWhoop<T>(
   startDate: string,
   endDate: string
 ): Promise<T[]> {
-  const url = new URL(`${WHOOP_BASE_URL}/${path}`);
-  url.searchParams.set("start", new Date(`${startDate}T00:00:00.000Z`).toISOString());
-  url.searchParams.set("end", new Date(`${endDate}T23:59:59.999Z`).toISOString());
+  const rows: T[] = [];
+  let nextToken: string | null = null;
 
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  for (let page = 0; page < 20; page += 1) {
+    const url = new URL(`${WHOOP_BASE_URL}/${path}`);
+    url.searchParams.set("start", new Date(`${startDate}T00:00:00.000Z`).toISOString());
+    url.searchParams.set("end", new Date(`${endDate}T23:59:59.999Z`).toISOString());
+    if (nextToken) url.searchParams.set("nextToken", nextToken);
 
-  if (!response.ok) {
-    throw new Error(`WHOOP ${path} sync failed with ${response.status}.`);
+    const response = await fetch(url, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!response.ok) {
+      throw new Error(`WHOOP ${path} sync failed with ${response.status}.`);
+    }
+
+    const body = (await response.json()) as WhoopEnvelope<T>;
+    rows.push(...(body.records || []));
+    nextToken = body.next_token || body.nextToken || null;
+    if (!nextToken) break;
   }
 
-  const body = (await response.json()) as WhoopEnvelope<T>;
-  return body.records || [];
+  return rows;
 }
 
 function normalizeTimestamp(value?: string) {
