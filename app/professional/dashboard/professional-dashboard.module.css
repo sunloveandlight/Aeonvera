@@ -599,12 +599,21 @@
   margin: 0 0 10px;
 }
 
-.summaryList div {
+.summaryItem {
   border-top: 1px solid #dfe5e7;
   padding: 9px 0;
 }
 
+.summaryRowTop {
+  align-items: center;
+  display: grid;
+  gap: 7px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
 .summaryList strong,
+.summaryList em,
+.summaryList button,
 .summaryList span,
 .summaryList p {
   display: block;
@@ -615,12 +624,40 @@
 .summaryList strong {
   color: var(--pro-text);
   font-weight: 650;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summaryList em {
+  color: var(--pro-soft);
+  font-style: normal;
+  font-weight: 650;
+}
+
+.summaryList button {
+  background: transparent;
+  border: 1px solid rgba(148, 93, 18, 0.28);
+  border-radius: 999px;
+  color: var(--pro-warn);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 750;
+  min-height: 26px;
+  padding: 0 9px;
+  text-transform: uppercase;
 }
 
 .summaryList span,
 .summaryList p {
   color: var(--pro-muted);
   margin: 4px 0 0;
+}
+
+.summaryMuted {
+  opacity: 0.62;
 }
 
 .formsGrid {

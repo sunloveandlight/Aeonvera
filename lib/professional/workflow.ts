@@ -114,6 +114,21 @@ type ProfessionalAssignmentRow = {
   workspace_id: string;
 };
 
+type ProfessionalAuditRow = {
+  access_decision: string | null;
+  action: string | null;
+  actor_role: string | null;
+  actor_user_id: string | null;
+  assignment_id: string | null;
+  consent_id: string | null;
+  created_at?: string | null;
+  data_classes: string[] | null;
+  health_profile_id: string | null;
+  id: string;
+  route: string | null;
+  workspace_id: string;
+};
+
 export function sanitizeOrganizationSubtype(value: unknown): OrganizationSubtype | null {
   return typeof value === "string" && ORGANIZATION_SUBTYPES.includes(value as OrganizationSubtype)
     ? (value as OrganizationSubtype)
@@ -580,6 +595,70 @@ export async function listProfessionalConsents({
   };
 }
 
+export async function revokeProfessionalConsent({
+  consentId,
+  reason,
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  consentId: string;
+  reason?: string | null;
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const auth = await requireOrganizationAdmin({ supabase, userId, workspaceId });
+  if (!auth.canManage) return { consent: null, error: "You need organization admin access." };
+
+  const { data: consent, error: loadError } = await supabase
+    .from("organization_profile_consents")
+    .select("id,workspace_id,health_profile_id,data_classes,allowed_roles,purpose,starts_at,expires_at,revoked_at")
+    .eq("id", consentId)
+    .eq("workspace_id", workspaceId)
+    .maybeSingle<ProfessionalConsentRow>();
+
+  if (loadError) throw loadError;
+  if (!consent) return { consent: null, error: "Consent was not found." };
+  if (consent.revoked_at) return { consent: null, error: "Consent is already revoked." };
+
+  const timestamp = new Date().toISOString();
+  const { data: revokedConsent, error: revokeError } = await supabase
+    .from("organization_profile_consents")
+    .update({
+      revoked_at: timestamp,
+      revoked_by_user_id: userId,
+      revocation_reason: reason || null,
+      updated_at: timestamp,
+    })
+    .eq("id", consentId)
+    .eq("workspace_id", workspaceId)
+    .is("revoked_at", null)
+    .select("id,workspace_id,health_profile_id,data_classes,allowed_roles,purpose,starts_at,expires_at,revoked_at")
+    .maybeSingle<ProfessionalConsentRow>();
+
+  if (revokeError) throw revokeError;
+  if (!revokedConsent) return { consent: null, error: "Consent is already revoked." };
+
+  await recordProfessionalWorkflowAudit({
+    action: "revoke",
+    actorRole: auth.role,
+    consentId,
+    dataClasses: normalizeProfessionalDataClasses(revokedConsent.data_classes || []),
+    healthProfileId: revokedConsent.health_profile_id,
+    metadata: {
+      reason: reason || null,
+      target: "consent",
+    },
+    route: "/api/professional/consents",
+    supabase,
+    userId,
+    workspaceId,
+  });
+
+  return { consent: revokedConsent, error: null };
+}
+
 export async function createProfessionalAssignment({
   dataClasses,
   expiresAt,
@@ -684,6 +763,115 @@ export async function listProfessionalAssignments({
       staffUserId: assignment.staff_user_id,
       startsAt: assignment.starts_at || null,
       workspaceId: assignment.workspace_id,
+    })),
+    error: null,
+  };
+}
+
+export async function revokeProfessionalAssignment({
+  assignmentId,
+  reason,
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  assignmentId: string;
+  reason?: string | null;
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const auth = await requireOrganizationAdmin({ supabase, userId, workspaceId });
+  if (!auth.canManage) return { assignment: null, error: "You need organization admin access." };
+
+  const { data: assignment, error: loadError } = await supabase
+    .from("organization_profile_assignments")
+    .select("id,workspace_id,health_profile_id,staff_user_id,role,data_classes,starts_at,expires_at,revoked_at")
+    .eq("id", assignmentId)
+    .eq("workspace_id", workspaceId)
+    .maybeSingle<ProfessionalAssignmentRow>();
+
+  if (loadError) throw loadError;
+  if (!assignment) return { assignment: null, error: "Assignment was not found." };
+  if (assignment.revoked_at) return { assignment: null, error: "Assignment is already revoked." };
+
+  const timestamp = new Date().toISOString();
+  const { data: revokedAssignment, error: revokeError } = await supabase
+    .from("organization_profile_assignments")
+    .update({
+      revoked_at: timestamp,
+      updated_at: timestamp,
+    })
+    .eq("id", assignmentId)
+    .eq("workspace_id", workspaceId)
+    .is("revoked_at", null)
+    .select("id,workspace_id,health_profile_id,staff_user_id,role,data_classes,starts_at,expires_at,revoked_at")
+    .maybeSingle<ProfessionalAssignmentRow>();
+
+  if (revokeError) throw revokeError;
+  if (!revokedAssignment) return { assignment: null, error: "Assignment is already revoked." };
+
+  await recordProfessionalWorkflowAudit({
+    action: "revoke",
+    actorRole: auth.role,
+    assignmentId,
+    dataClasses: normalizeProfessionalDataClasses(revokedAssignment.data_classes || []),
+    healthProfileId: revokedAssignment.health_profile_id,
+    metadata: {
+      reason: reason || null,
+      target: "assignment",
+    },
+    route: "/api/professional/assignments",
+    supabase,
+    userId,
+    workspaceId,
+  });
+
+  return { assignment: revokedAssignment, error: null };
+}
+
+export async function listProfessionalAuditEvents({
+  healthProfileId,
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  healthProfileId?: string;
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const auth = await requireOrganizationAdmin({ supabase, userId, workspaceId });
+  if (!auth.canManage) return { auditEvents: [], error: "You need organization admin access." };
+
+  let query = supabase
+    .from("organization_access_audit_events")
+    .select(
+      "id,workspace_id,actor_user_id,actor_role,health_profile_id,action,data_classes,route,access_decision,consent_id,assignment_id,created_at"
+    )
+    .eq("workspace_id", workspaceId)
+    .order("created_at", { ascending: false })
+    .limit(250);
+
+  if (healthProfileId) query = query.eq("health_profile_id", healthProfileId);
+
+  const { data, error } = await query.returns<ProfessionalAuditRow[]>();
+  if (error) throw error;
+
+  return {
+    auditEvents: (data || []).map((event) => ({
+      accessDecision: event.access_decision || "denied",
+      action: event.action || "view",
+      actorRole: event.actor_role || null,
+      actorUserId: event.actor_user_id || null,
+      assignmentId: event.assignment_id || null,
+      consentId: event.consent_id || null,
+      createdAt: event.created_at || null,
+      dataClasses: event.data_classes || [],
+      healthProfileId: event.health_profile_id || null,
+      id: event.id,
+      route: event.route || null,
+      workspaceId: event.workspace_id,
     })),
     error: null,
   };
@@ -795,6 +983,48 @@ async function activeMemberInWorkspace({
 
   if (error) throw error;
   return Boolean(data?.user_id);
+}
+
+async function recordProfessionalWorkflowAudit({
+  action,
+  actorRole,
+  assignmentId,
+  consentId,
+  dataClasses,
+  healthProfileId,
+  metadata,
+  route,
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  action: "assign" | "authorize" | "break_glass" | "download" | "export" | "revoke" | "update" | "view";
+  actorRole?: string | null;
+  assignmentId?: string | null;
+  consentId?: string | null;
+  dataClasses: ProfessionalDataClass[];
+  healthProfileId?: string | null;
+  metadata?: Record<string, unknown>;
+  route: string;
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const { error } = await supabase.from("organization_access_audit_events").insert({
+    access_decision: "allowed",
+    action,
+    actor_role: actorRole || null,
+    actor_user_id: userId,
+    assignment_id: assignmentId || null,
+    consent_id: consentId || null,
+    data_classes: dataClasses,
+    health_profile_id: healthProfileId || null,
+    metadata: metadata || {},
+    route,
+    workspace_id: workspaceId,
+  });
+
+  if (error) throw error;
 }
 
 function buildProfileSections(

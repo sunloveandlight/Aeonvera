@@ -6,8 +6,10 @@ import {
   createProfessionalAssignment,
   defaultDataClassesForRole,
   listProfessionalAssignments,
+  revokeProfessionalAssignment,
   sanitizeProfessionalDataClassList,
   sanitizeStaffRole,
+  sanitizeText,
 } from "@/lib/professional/workflow";
 
 export async function GET(request: NextRequest) {
@@ -71,6 +73,37 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Could not create professional assignment:", error);
     return jsonError("Could not create professional assignment.", 500);
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const limited = await rateLimitRequest(request, "professional-assignment-revoke", 40, 60_000);
+    if (limited) return limited;
+
+    const auth = await requireUser();
+    if (auth.response) return auth.response;
+
+    const body = await request.json().catch(() => ({}));
+    const workspaceId = getWorkspaceId(body.workspaceId);
+    const assignmentId = typeof body.assignmentId === "string" ? body.assignmentId : "";
+
+    if (!workspaceId) return jsonError("Missing organization workspace.");
+    if (!assignmentId) return jsonError("Missing assignment.");
+
+    const result = await revokeProfessionalAssignment({
+      assignmentId,
+      reason: sanitizeText(body.reason, 200) || null,
+      supabase: getSupabaseAdmin(),
+      userId: auth.userId,
+      workspaceId,
+    });
+
+    if (result.error) return jsonError(result.error, 403);
+    return NextResponse.json({ assignment: result.assignment });
+  } catch (error) {
+    console.error("Could not revoke professional assignment:", error);
+    return jsonError("Could not revoke professional assignment.", 500);
   }
 }
 

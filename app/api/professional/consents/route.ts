@@ -9,6 +9,7 @@ import {
   createProfessionalConsent,
   isValidConsentValue,
   listProfessionalConsents,
+  revokeProfessionalConsent,
   sanitizeEmail,
   sanitizeProfessionalDataClassList,
   sanitizeStaffRole,
@@ -93,6 +94,37 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Could not create professional consent:", error);
     return jsonError("Could not create professional consent.", 500);
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const limited = await rateLimitRequest(request, "professional-consent-revoke", 40, 60_000);
+    if (limited) return limited;
+
+    const auth = await requireUser();
+    if (auth.response) return auth.response;
+
+    const body = await request.json().catch(() => ({}));
+    const workspaceId = getWorkspaceId(body.workspaceId);
+    const consentId = typeof body.consentId === "string" ? body.consentId : "";
+
+    if (!workspaceId) return jsonError("Missing organization workspace.");
+    if (!consentId) return jsonError("Missing consent.");
+
+    const result = await revokeProfessionalConsent({
+      consentId,
+      reason: sanitizeText(body.reason, 200) || null,
+      supabase: getSupabaseAdmin(),
+      userId: auth.userId,
+      workspaceId,
+    });
+
+    if (result.error) return jsonError(result.error, 403);
+    return NextResponse.json({ consent: result.consent });
+  } catch (error) {
+    console.error("Could not revoke professional consent:", error);
+    return jsonError("Could not revoke professional consent.", 500);
   }
 }
 

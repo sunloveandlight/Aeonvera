@@ -76,8 +76,24 @@ type Assignment = {
   dataClasses: string[];
   healthProfileId: string;
   id: string;
+  revokedAt?: string | null;
   role: string;
   staffUserId: string;
+};
+
+type AuditEvent = {
+  accessDecision: string;
+  action: string;
+  actorRole?: string | null;
+  actorUserId?: string | null;
+  assignmentId?: string | null;
+  consentId?: string | null;
+  createdAt?: string | null;
+  dataClasses: string[];
+  healthProfileId?: string | null;
+  id: string;
+  route?: string | null;
+  workspaceId: string;
 };
 
 type ProfilePreview = {
@@ -102,6 +118,7 @@ export default function ProfessionalDashboardClient() {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [consents, setConsents] = useState<Consent[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState("");
   const [profilePreview, setProfilePreview] = useState<ProfilePreview | null>(null);
   const [status, setStatus] = useState<LoadState>("loading");
@@ -129,6 +146,7 @@ export default function ProfessionalDashboardClient() {
     profilePreview?.profile?.id === selectedProfile?.id ? profilePreview : null;
   const profileConsents = consents.filter((consent) => consent.healthProfileId === selectedProfile?.id);
   const profileAssignments = assignments.filter((assignment) => assignment.healthProfileId === selectedProfile?.id);
+  const profileAuditEvents = auditEvents.filter((event) => event.healthProfileId === selectedProfile?.id);
   const visibleRoster = roster.filter((profile) =>
     `${profile.displayName} ${profile.relationship}`.toLowerCase().includes(search.toLowerCase())
   );
@@ -138,9 +156,9 @@ export default function ProfessionalDashboardClient() {
       { label: "Roster", value: roster.length, detail: "active profiles", icon: UsersRound },
       { label: "Staff", value: staff.length, detail: "workspace members", icon: UserPlus },
       { label: "Consents", value: consents.filter((item) => !item.revokedAt).length, detail: "active scopes", icon: ClipboardCheck },
-      { label: "Assignments", value: assignments.length, detail: "profile gates", icon: ShieldCheck },
+      { label: "Assignments", value: assignments.filter((item) => !item.revokedAt).length, detail: "active gates", icon: ShieldCheck },
     ],
-    [assignments.length, consents, roster.length, staff.length]
+    [assignments, consents, roster.length, staff.length]
   );
 
   async function loadOrganizations() {
@@ -159,14 +177,15 @@ export default function ProfessionalDashboardClient() {
   async function loadWorkspace(nextWorkspaceId: string) {
     setStatus("loading");
     const query = `workspaceId=${encodeURIComponent(nextWorkspaceId)}`;
-    const [rosterResult, staffResult, consentResult, assignmentResult] = await Promise.all([
+    const [rosterResult, staffResult, consentResult, assignmentResult, auditResult] = await Promise.all([
       apiGet<{ profiles: RosterProfile[] }>(`/api/professional/roster?${query}`),
       apiGet<{ staff: StaffMember[] }>(`/api/professional/staff?${query}`),
       apiGet<{ consents: Consent[] }>(`/api/professional/consents?${query}`),
       apiGet<{ assignments: Assignment[] }>(`/api/professional/assignments?${query}`),
+      apiGet<{ auditEvents: AuditEvent[] }>(`/api/professional/audit?${query}`),
     ]);
 
-    const failed = [rosterResult, staffResult, consentResult, assignmentResult].find((result) => !result.ok);
+    const failed = [rosterResult, staffResult, consentResult, assignmentResult, auditResult].find((result) => !result.ok);
     if (failed) {
       setStatus(failed.status === 401 ? "unauthorized" : "error");
       setNotice(failed.message);
@@ -184,6 +203,7 @@ export default function ProfessionalDashboardClient() {
     if (staffResult.ok) setStaff(staffResult.data.staff || []);
     if (consentResult.ok) setConsents(consentResult.data.consents || []);
     if (assignmentResult.ok) setAssignments(assignmentResult.data.assignments || []);
+    if (auditResult.ok) setAuditEvents(auditResult.data.auditEvents || []);
     setStatus("ready");
   }
 
@@ -264,14 +284,47 @@ export default function ProfessionalDashboardClient() {
     await loadWorkspace(workspaceId);
   }
 
+  async function revokeConsent(consentId: string) {
+    if (!workspaceId) return;
+    if (!window.confirm("Revoke this consent scope now?")) return;
+    await submit(
+      "consent revocation",
+      "/api/professional/consents",
+      {
+        consentId,
+        reason: "Revoked from Professional dashboard",
+        workspaceId,
+      },
+      "PATCH"
+    );
+    await loadWorkspace(workspaceId);
+  }
+
+  async function revokeAssignment(assignmentId: string) {
+    if (!workspaceId) return;
+    if (!window.confirm("Revoke this staff assignment now?")) return;
+    await submit(
+      "assignment revocation",
+      "/api/professional/assignments",
+      {
+        assignmentId,
+        reason: "Revoked from Professional dashboard",
+        workspaceId,
+      },
+      "PATCH"
+    );
+    await loadWorkspace(workspaceId);
+  }
+
   async function submit(
     action: string,
     url: string,
-    payload: Record<string, FormDataEntryValue | FormDataEntryValue[] | null | string | undefined>
+    payload: Record<string, FormDataEntryValue | FormDataEntryValue[] | null | string | undefined>,
+    method: "PATCH" | "POST" = "POST"
   ) {
     setSubmitting(action);
     setNotice("");
-    const result = await apiPost(url, payload);
+    const result = await apiWrite(url, payload, method);
     setSubmitting("");
     setNotice(result.ok ? `${titleize(action)} saved.` : result.message);
   }
@@ -460,11 +513,11 @@ export default function ProfessionalDashboardClient() {
                   <div className={styles.profileStats}>
                     <div>
                       <span>Consent</span>
-                      <strong>{profileConsents.length}</strong>
+                      <strong>{profileConsents.filter((item) => !item.revokedAt).length}</strong>
                     </div>
                     <div>
                       <span>Staff</span>
-                      <strong>{profileAssignments.length}</strong>
+                      <strong>{profileAssignments.filter((item) => !item.revokedAt).length}</strong>
                     </div>
                     <div>
                       <span>Visible</span>
@@ -491,6 +544,10 @@ export default function ProfessionalDashboardClient() {
                     empty="No consent captured."
                     items={profileConsents.map((consent) => ({
                       label: consent.purpose,
+                      meta: consent.revokedAt ? "Revoked" : "Active",
+                      onAction: consent.revokedAt ? undefined : () => void revokeConsent(consent.id),
+                      tone: consent.revokedAt ? "muted" : "default",
+                      actionLabel: consent.revokedAt ? undefined : "Revoke",
                       value: consent.dataClasses.map(labelDataClass).join(", "),
                     }))}
                     title="Consent scopes"
@@ -499,9 +556,25 @@ export default function ProfessionalDashboardClient() {
                     empty="No staff assigned."
                     items={profileAssignments.map((assignment) => ({
                       label: titleize(assignment.role),
+                      meta: assignment.revokedAt ? "Revoked" : "Active",
+                      onAction: assignment.revokedAt ? undefined : () => void revokeAssignment(assignment.id),
+                      tone: assignment.revokedAt ? "muted" : "default",
+                      actionLabel: assignment.revokedAt ? undefined : "Revoke",
                       value: assignment.dataClasses.map(labelDataClass).join(", "),
                     }))}
                     title="Assignments"
+                  />
+                  <SummaryList
+                    empty="No audit events yet."
+                    items={profileAuditEvents.slice(0, 6).map((event) => ({
+                      label: `${titleize(event.action)} / ${titleize(event.accessDecision)}`,
+                      meta: event.createdAt ? formatDateTime(event.createdAt) : "Just now",
+                      tone: event.accessDecision === "denied" ? "muted" : "default",
+                      value: event.dataClasses.length
+                        ? event.dataClasses.map(labelDataClass).join(", ")
+                        : event.route || "Profile access event",
+                    }))}
+                    title="Recent audit"
                   />
                 </div>
               </aside>
@@ -654,15 +727,30 @@ function SummaryList({
   title,
 }: {
   empty: string;
-  items: Array<{ label: string; value: string }>;
+  items: Array<{
+    actionLabel?: string;
+    label: string;
+    meta?: string;
+    onAction?: () => void;
+    tone?: "default" | "muted";
+    value: string;
+  }>;
   title: string;
 }) {
   return (
     <div className={styles.summaryList}>
       <h3>{title}</h3>
       {items.length ? items.slice(0, 4).map((item) => (
-        <div key={`${item.label}-${item.value}`}>
-          <strong>{titleize(item.label)}</strong>
+        <div className={`${styles.summaryItem} ${item.tone === "muted" ? styles.summaryMuted : ""}`} key={`${item.label}-${item.value}-${item.meta || ""}`}>
+          <div className={styles.summaryRowTop}>
+            <strong>{titleize(item.label)}</strong>
+            {item.meta ? <em>{item.meta}</em> : null}
+            {item.actionLabel && item.onAction ? (
+              <button onClick={item.onAction} type="button">
+                {item.actionLabel}
+              </button>
+            ) : null}
+          </div>
           <span>{item.value || "No scoped data classes"}</span>
         </div>
       )) : <p>{empty}</p>}
@@ -679,15 +767,16 @@ async function apiGet<T>(url: string): Promise<{ data: T; ok: true } | { message
   return parseApiResponse<T>(response);
 }
 
-async function apiPost<T = unknown>(
+async function apiWrite<T = unknown>(
   url: string,
-  payload: Record<string, FormDataEntryValue | FormDataEntryValue[] | null | string | undefined>
+  payload: Record<string, FormDataEntryValue | FormDataEntryValue[] | null | string | undefined>,
+  method: "PATCH" | "POST"
 ): Promise<{ data: T; ok: true } | { message: string; ok: false; status: number }> {
   const response = await fetch(url, {
     body: JSON.stringify(payload),
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
-    method: "POST",
+    method,
   });
   return parseApiResponse<T>(response);
 }
@@ -718,4 +807,15 @@ function labelDataClass(value: string) {
     mental_health: "Mental health",
   };
   return labels[value] || titleize(value);
+}
+
+function formatDateTime(value: string) {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
 }
