@@ -279,7 +279,7 @@ export async function authorizeProfessionalProfileAccess({
     workspaceId,
   });
 
-  if (auditError && decision.allowed) {
+  if (auditError && decision.allowedDataClasses.length > 0) {
     return denied(decision.role, "Professional access audit could not be recorded.");
   }
 

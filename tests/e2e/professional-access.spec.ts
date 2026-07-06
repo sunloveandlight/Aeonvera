@@ -5,6 +5,12 @@ import {
   type ProfessionalAssignment,
   type ProfessionalConsent,
 } from "@/lib/professional/access";
+import {
+  defaultDataClassesForRole,
+  sanitizeOrganizationSubtype,
+  sanitizeProfessionalDataClassList,
+  sanitizeStaffRole,
+} from "@/lib/professional/workflow";
 
 const now = new Date("2026-07-03T12:00:00.000Z");
 
@@ -115,5 +121,31 @@ test.describe("Aeonvera Professional access decisions", () => {
 
     expect(decision.allowed).toBe(false);
     expect(decision.reason).toContain("Health profile");
+  });
+
+  test("sanitizes Professional workflow inputs", () => {
+    expect(sanitizeOrganizationSubtype("clinic")).toBe("clinic");
+    expect(sanitizeOrganizationSubtype("random")).toBeNull();
+    expect(sanitizeStaffRole("coach")).toBe("coach");
+    expect(sanitizeStaffRole("owner")).toBeNull();
+    expect(sanitizeProfessionalDataClassList([
+      "readiness",
+      "readiness",
+      "labs_basic",
+      "unknown",
+    ])).toEqual(["readiness", "labs_basic"]);
+  });
+
+  test("uses conservative default data classes by role", () => {
+    expect(defaultDataClassesForRole("coach")).toEqual([
+      "identity",
+      "readiness",
+      "performance",
+    ]);
+    expect(defaultDataClassesForRole("front_desk")).toEqual([
+      "identity",
+      "administrative",
+    ]);
+    expect(defaultDataClassesForRole("auditor")).toEqual([]);
   });
 });
