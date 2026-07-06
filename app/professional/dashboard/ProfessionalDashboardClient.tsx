@@ -9,6 +9,7 @@ import {
   ClipboardCheck,
   FileCheck2,
   LockKeyhole,
+  MailPlus,
   Search,
   ShieldCheck,
   UserPlus,
@@ -96,6 +97,23 @@ type AuditEvent = {
   workspaceId: string;
 };
 
+type Invitation = {
+  acceptedAt?: string | null;
+  dataClasses: string[];
+  email: string;
+  expiresAt: string;
+  healthProfileId?: string | null;
+  id: string;
+  inviteToken: string;
+  inviteType: "roster_member" | "staff";
+  name?: string | null;
+  revokedAt?: string | null;
+  role: string;
+  status: string;
+  url: string;
+  workspaceId: string;
+};
+
 type ProfilePreview = {
   decision?: {
     accessDecision: "allowed" | "denied" | "redacted";
@@ -119,6 +137,7 @@ export default function ProfessionalDashboardClient() {
   const [consents, setConsents] = useState<Consent[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [selectedProfileId, setSelectedProfileId] = useState("");
   const [profilePreview, setProfilePreview] = useState<ProfilePreview | null>(null);
   const [status, setStatus] = useState<LoadState>("loading");
@@ -147,6 +166,7 @@ export default function ProfessionalDashboardClient() {
   const profileConsents = consents.filter((consent) => consent.healthProfileId === selectedProfile?.id);
   const profileAssignments = assignments.filter((assignment) => assignment.healthProfileId === selectedProfile?.id);
   const profileAuditEvents = auditEvents.filter((event) => event.healthProfileId === selectedProfile?.id);
+  const profileInvitations = invitations.filter((invitation) => invitation.healthProfileId === selectedProfile?.id);
   const visibleRoster = roster.filter((profile) =>
     `${profile.displayName} ${profile.relationship}`.toLowerCase().includes(search.toLowerCase())
   );
@@ -156,9 +176,9 @@ export default function ProfessionalDashboardClient() {
       { label: "Roster", value: roster.length, detail: "active profiles", icon: UsersRound },
       { label: "Staff", value: staff.length, detail: "workspace members", icon: UserPlus },
       { label: "Consents", value: consents.filter((item) => !item.revokedAt).length, detail: "active scopes", icon: ClipboardCheck },
-      { label: "Assignments", value: assignments.filter((item) => !item.revokedAt).length, detail: "active gates", icon: ShieldCheck },
+      { label: "Invites", value: invitations.filter((item) => item.status === "pending").length, detail: "pending links", icon: MailPlus },
     ],
-    [assignments, consents, roster.length, staff.length]
+    [consents, invitations, roster.length, staff.length]
   );
 
   async function loadOrganizations() {
@@ -177,15 +197,16 @@ export default function ProfessionalDashboardClient() {
   async function loadWorkspace(nextWorkspaceId: string) {
     setStatus("loading");
     const query = `workspaceId=${encodeURIComponent(nextWorkspaceId)}`;
-    const [rosterResult, staffResult, consentResult, assignmentResult, auditResult] = await Promise.all([
+    const [rosterResult, staffResult, consentResult, assignmentResult, auditResult, invitationResult] = await Promise.all([
       apiGet<{ profiles: RosterProfile[] }>(`/api/professional/roster?${query}`),
       apiGet<{ staff: StaffMember[] }>(`/api/professional/staff?${query}`),
       apiGet<{ consents: Consent[] }>(`/api/professional/consents?${query}`),
       apiGet<{ assignments: Assignment[] }>(`/api/professional/assignments?${query}`),
       apiGet<{ auditEvents: AuditEvent[] }>(`/api/professional/audit?${query}`),
+      apiGet<{ invitations: Invitation[] }>(`/api/professional/invitations?${query}`),
     ]);
 
-    const failed = [rosterResult, staffResult, consentResult, assignmentResult, auditResult].find((result) => !result.ok);
+    const failed = [rosterResult, staffResult, consentResult, assignmentResult, auditResult, invitationResult].find((result) => !result.ok);
     if (failed) {
       setStatus(failed.status === 401 ? "unauthorized" : "error");
       setNotice(failed.message);
@@ -204,6 +225,7 @@ export default function ProfessionalDashboardClient() {
     if (consentResult.ok) setConsents(consentResult.data.consents || []);
     if (assignmentResult.ok) setAssignments(assignmentResult.data.assignments || []);
     if (auditResult.ok) setAuditEvents(auditResult.data.auditEvents || []);
+    if (invitationResult.ok) setInvitations(invitationResult.data.invitations || []);
     setStatus("ready");
   }
 
@@ -241,14 +263,25 @@ export default function ProfessionalDashboardClient() {
     await loadWorkspace(workspaceId);
   }
 
-  async function addStaff(event: FormEvent<HTMLFormElement>) {
+  async function createInvitation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    await submit("staff", "/api/professional/staff", {
+    setSubmitting("invitation");
+    setNotice("");
+    const inviteType = form.get("inviteType") === "roster_member" ? "roster_member" : "staff";
+    const result = await apiWrite<{ invitation: Invitation }>("/api/professional/invitations", {
+      dataClasses: form.getAll("dataClasses"),
       email: form.get("email"),
+      healthProfileId: inviteType === "roster_member" ? selectedProfile?.id : null,
+      inviteType,
+      name: form.get("name"),
       role: form.get("role"),
       workspaceId,
-    });
+    }, "POST");
+    setSubmitting("");
+    setNotice(result.ok
+      ? `Invitation created: ${window.location.origin}${result.data.invitation.url}`
+      : result.message);
     event.currentTarget.reset();
     await loadWorkspace(workspaceId);
   }
@@ -309,6 +342,22 @@ export default function ProfessionalDashboardClient() {
       {
         assignmentId,
         reason: "Revoked from Professional dashboard",
+        workspaceId,
+      },
+      "PATCH"
+    );
+    await loadWorkspace(workspaceId);
+  }
+
+  async function revokeInvitation(invitationId: string) {
+    if (!workspaceId) return;
+    if (!window.confirm("Revoke this invitation now?")) return;
+    await submit(
+      "invitation revocation",
+      "/api/professional/invitations",
+      {
+        action: "revoke",
+        invitationId,
         workspaceId,
       },
       "PATCH"
@@ -565,6 +614,18 @@ export default function ProfessionalDashboardClient() {
                     title="Assignments"
                   />
                   <SummaryList
+                    empty="No profile invites yet."
+                    items={profileInvitations.map((invitation) => ({
+                      actionLabel: invitation.status === "pending" ? "Revoke" : undefined,
+                      label: invitation.name || invitation.email,
+                      meta: titleize(invitation.status),
+                      onAction: invitation.status === "pending" ? () => void revokeInvitation(invitation.id) : undefined,
+                      tone: invitation.status === "pending" ? "default" : "muted",
+                      value: `${titleize(invitation.inviteType)} / expires ${formatDate(invitation.expiresAt)}`,
+                    }))}
+                    title="Invitations"
+                  />
+                  <SummaryList
                     empty="No audit events yet."
                     items={profileAuditEvents.slice(0, 6).map((event) => ({
                       label: `${titleize(event.action)} / ${titleize(event.accessDecision)}`,
@@ -594,13 +655,19 @@ export default function ProfessionalDashboardClient() {
                 </form>
               </WorkflowPanel>
 
-              <WorkflowPanel icon={UserPlus} title="Add staff">
-                <form className={styles.form} onSubmit={addStaff}>
-                  <input name="email" placeholder="coach@clinic.com" type="email" required />
+              <WorkflowPanel icon={MailPlus} title="Invite person">
+                <form className={styles.form} onSubmit={createInvitation}>
+                  <input name="name" placeholder="Avery Morgan" />
+                  <input name="email" placeholder="person@clinic.com" type="email" required />
+                  <select name="inviteType" defaultValue="staff">
+                    <option value="staff">Staff</option>
+                    <option value="roster_member">Selected roster member</option>
+                  </select>
                   <select name="role" defaultValue="coach">
                     {staffRoles.map((role) => <option key={role} value={role}>{titleize(role)}</option>)}
                   </select>
-                  <button disabled={!workspaceId || submitting === "staff"} type="submit">Add staff</button>
+                  <CheckboxGroup defaults={[...consentDefaults]} name="dataClasses" options={dataClasses} />
+                  <button disabled={!workspaceId || submitting === "invitation"} type="submit">Create invite</button>
                 </form>
               </WorkflowPanel>
 
@@ -814,6 +881,16 @@ function formatDateTime(value: string) {
     return new Intl.DateTimeFormat(undefined, {
       dateStyle: "medium",
       timeStyle: "short",
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
+function formatDate(value: string) {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
     }).format(new Date(value));
   } catch {
     return value;

@@ -11,11 +11,12 @@ export async function requireUser() {
   if (error || !user) {
     return {
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      userEmail: null,
       userId: null,
     };
   }
 
-  return { response: null, userId: user.id };
+  return { response: null, userEmail: user.email || null, userId: user.id };
 }
 
 export function getWorkspaceId(value: unknown) {

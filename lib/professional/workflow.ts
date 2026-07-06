@@ -129,6 +129,24 @@ type ProfessionalAuditRow = {
   workspace_id: string;
 };
 
+type ProfessionalInvitationRow = {
+  accepted_at?: string | null;
+  accepted_by_user_id?: string | null;
+  created_at?: string | null;
+  data_classes: string[] | null;
+  email: string;
+  expires_at: string;
+  health_profile_id: string | null;
+  id: string;
+  invite_token: string;
+  invite_type: string;
+  name: string | null;
+  revoked_at?: string | null;
+  role: string;
+  status: string;
+  workspace_id: string;
+};
+
 export function sanitizeOrganizationSubtype(value: unknown): OrganizationSubtype | null {
   return typeof value === "string" && ORGANIZATION_SUBTYPES.includes(value as OrganizationSubtype)
     ? (value as OrganizationSubtype)
@@ -428,6 +446,324 @@ export async function addProfessionalStaff({
       workspaceId: member.workspace_id,
     },
   };
+}
+
+export async function createProfessionalInvitation({
+  dataClasses,
+  email,
+  expiresAt,
+  healthProfileId,
+  inviteType,
+  name,
+  role,
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  dataClasses?: ProfessionalDataClass[];
+  email: string;
+  expiresAt?: string | null;
+  healthProfileId?: string | null;
+  inviteType: "roster_member" | "staff";
+  name?: string | null;
+  role: StaffRole | "member";
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const auth = await requireOrganizationAdmin({ supabase, userId, workspaceId });
+  if (!auth.canManage) return { error: "You need organization admin access.", invitation: null };
+
+  if (inviteType === "staff" && role === "member") {
+    return { error: "Choose a staff role for staff invitations.", invitation: null };
+  }
+
+  if (inviteType === "roster_member") {
+    if (role !== "member") return { error: "Roster member invitations must use the member role.", invitation: null };
+    if (!healthProfileId) return { error: "Choose a roster profile for the invitation.", invitation: null };
+    if (!(await profileBelongsToWorkspace({ healthProfileId, supabase, workspaceId }))) {
+      return { error: "Health profile is not in this organization.", invitation: null };
+    }
+  }
+
+  const normalizedClasses =
+    role === "member"
+      ? normalizeProfessionalDataClasses(dataClasses?.length ? dataClasses : ["identity"])
+      : normalizeProfessionalDataClasses(dataClasses?.length ? dataClasses : defaultDataClassesForRole(role));
+
+  const { data: invitation, error } = await supabase
+    .from("organization_invitations")
+    .insert({
+      created_by_user_id: userId,
+      data_classes: normalizedClasses,
+      email,
+      expires_at: expiresAt || undefined,
+      health_profile_id: inviteType === "roster_member" ? healthProfileId : null,
+      invite_type: inviteType,
+      name: name || null,
+      role,
+      workspace_id: workspaceId,
+    })
+    .select(
+      "id,workspace_id,invite_token,invite_type,email,name,role,health_profile_id,data_classes,status,expires_at,accepted_at,accepted_by_user_id,revoked_at,created_at"
+    )
+    .single<ProfessionalInvitationRow>();
+
+  if (error) throw error;
+
+  await recordProfessionalWorkflowAudit({
+    action: "authorize",
+    actorRole: auth.role,
+    dataClasses: normalizedClasses,
+    healthProfileId: inviteType === "roster_member" ? healthProfileId : null,
+    metadata: {
+      email,
+      inviteType,
+      target: "invitation",
+    },
+    route: "/api/professional/invitations",
+    supabase,
+    userId,
+    workspaceId,
+  });
+
+  return { error: null, invitation: mapProfessionalInvitation(invitation) };
+}
+
+export async function listProfessionalInvitations({
+  healthProfileId,
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  healthProfileId?: string;
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const auth = await requireOrganizationAdmin({ supabase, userId, workspaceId });
+  if (!auth.canManage) return { error: "You need organization admin access.", invitations: [] };
+
+  let query = supabase
+    .from("organization_invitations")
+    .select(
+      "id,workspace_id,invite_token,invite_type,email,name,role,health_profile_id,data_classes,status,expires_at,accepted_at,accepted_by_user_id,revoked_at,created_at"
+    )
+    .eq("workspace_id", workspaceId)
+    .order("created_at", { ascending: false })
+    .limit(250);
+
+  if (healthProfileId) query = query.eq("health_profile_id", healthProfileId);
+
+  const { data, error } = await query.returns<ProfessionalInvitationRow[]>();
+  if (error) throw error;
+
+  return {
+    error: null,
+    invitations: (data || []).map(mapProfessionalInvitation),
+  };
+}
+
+export async function revokeProfessionalInvitation({
+  invitationId,
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  invitationId: string;
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const auth = await requireOrganizationAdmin({ supabase, userId, workspaceId });
+  if (!auth.canManage) return { error: "You need organization admin access.", invitation: null };
+
+  const timestamp = new Date().toISOString();
+  const { data: invitation, error } = await supabase
+    .from("organization_invitations")
+    .update({
+      revoked_at: timestamp,
+      revoked_by_user_id: userId,
+      status: "revoked",
+      updated_at: timestamp,
+    })
+    .eq("id", invitationId)
+    .eq("workspace_id", workspaceId)
+    .eq("status", "pending")
+    .select(
+      "id,workspace_id,invite_token,invite_type,email,name,role,health_profile_id,data_classes,status,expires_at,accepted_at,accepted_by_user_id,revoked_at,created_at"
+    )
+    .maybeSingle<ProfessionalInvitationRow>();
+
+  if (error) throw error;
+  if (!invitation) return { error: "Invitation was not found or is no longer pending.", invitation: null };
+
+  await recordProfessionalWorkflowAudit({
+    action: "revoke",
+    actorRole: auth.role,
+    dataClasses: normalizeProfessionalDataClasses(invitation.data_classes || []),
+    healthProfileId: invitation.health_profile_id,
+    metadata: {
+      email: invitation.email,
+      inviteType: invitation.invite_type,
+      target: "invitation",
+    },
+    route: "/api/professional/invitations",
+    supabase,
+    userId,
+    workspaceId,
+  });
+
+  return { error: null, invitation: mapProfessionalInvitation(invitation) };
+}
+
+export async function readProfessionalInvitationByToken({
+  inviteToken,
+  supabase,
+}: {
+  inviteToken: string;
+  supabase: SupabaseClient;
+}) {
+  const { data: invitation, error } = await supabase
+    .from("organization_invitations")
+    .select(
+      "id,workspace_id,invite_token,invite_type,email,name,role,health_profile_id,data_classes,status,expires_at,accepted_at,accepted_by_user_id,revoked_at,created_at"
+    )
+    .eq("invite_token", inviteToken)
+    .maybeSingle<ProfessionalInvitationRow>();
+
+  if (error) throw error;
+  if (!invitation) return { error: "Invitation was not found.", invitation: null, workspace: null };
+
+  const { data: workspace, error: workspaceError } = await supabase
+    .from("workspaces")
+    .select("id,name,organization_subtype,owner_user_id,status,workspace_type,created_at")
+    .eq("id", invitation.workspace_id)
+    .maybeSingle<WorkspaceRow>();
+
+  if (workspaceError) throw workspaceError;
+
+  return {
+    error: null,
+    invitation: mapProfessionalInvitation(invitation),
+    workspace: workspace
+      ? {
+          id: workspace.id,
+          name: workspace.name || "Aeonvera organization",
+          organizationSubtype: workspace.organization_subtype,
+        }
+      : null,
+  };
+}
+
+export async function acceptProfessionalInvitation({
+  inviteToken,
+  supabase,
+  userEmail,
+  userId,
+}: {
+  inviteToken: string;
+  supabase: SupabaseClient;
+  userEmail?: string | null;
+  userId: string;
+}) {
+  const { data: invitation, error: loadError } = await supabase
+    .from("organization_invitations")
+    .select(
+      "id,workspace_id,invite_token,invite_type,email,name,role,health_profile_id,data_classes,status,expires_at,accepted_at,accepted_by_user_id,revoked_at,created_at"
+    )
+    .eq("invite_token", inviteToken)
+    .maybeSingle<ProfessionalInvitationRow>();
+
+  if (loadError) throw loadError;
+  if (!invitation) return { error: "Invitation was not found.", invitation: null };
+
+  const status = getInvitationStatus(invitation);
+  if (status === "accepted") return { error: "Invitation has already been accepted.", invitation: null };
+  if (status === "revoked") return { error: "Invitation has been revoked.", invitation: null };
+  if (status === "expired") return { error: "Invitation has expired.", invitation: null };
+
+  const email = (userEmail || "").trim().toLowerCase();
+  if (!email || email !== invitation.email.trim().toLowerCase()) {
+    return { error: "Sign in with the email address this invitation was sent to.", invitation: null };
+  }
+
+  const timestamp = new Date().toISOString();
+  if (invitation.invite_type === "staff") {
+    await upsertWorkspaceMember({
+      role: invitation.role,
+      supabase,
+      userId,
+      workspaceId: invitation.workspace_id,
+    });
+  } else if (invitation.health_profile_id) {
+    await upsertWorkspaceMember({
+      role: "member",
+      supabase,
+      userId,
+      workspaceId: invitation.workspace_id,
+    });
+    const { error: accessError } = await supabase.from("health_profile_access").upsert(
+      {
+        health_profile_id: invitation.health_profile_id,
+        role: "viewer",
+        status: "active",
+        updated_at: timestamp,
+        user_id: userId,
+        workspace_id: invitation.workspace_id,
+      },
+      { onConflict: "health_profile_id,user_id" }
+    );
+
+    if (accessError) throw accessError;
+
+    await supabase
+      .from("organization_profile_consents")
+      .update({
+        subject_user_id: userId,
+        updated_at: timestamp,
+      })
+      .eq("workspace_id", invitation.workspace_id)
+      .eq("health_profile_id", invitation.health_profile_id)
+      .eq("subject_email", invitation.email)
+      .is("subject_user_id", null);
+  }
+
+  const { data: acceptedInvitation, error: acceptError } = await supabase
+    .from("organization_invitations")
+    .update({
+      accepted_at: timestamp,
+      accepted_by_user_id: userId,
+      status: "accepted",
+      updated_at: timestamp,
+    })
+    .eq("id", invitation.id)
+    .eq("status", "pending")
+    .select(
+      "id,workspace_id,invite_token,invite_type,email,name,role,health_profile_id,data_classes,status,expires_at,accepted_at,accepted_by_user_id,revoked_at,created_at"
+    )
+    .maybeSingle<ProfessionalInvitationRow>();
+
+  if (acceptError) throw acceptError;
+  if (!acceptedInvitation) return { error: "Invitation is no longer pending.", invitation: null };
+
+  await recordProfessionalWorkflowAudit({
+    action: "authorize",
+    actorRole: acceptedInvitation.role,
+    dataClasses: normalizeProfessionalDataClasses(acceptedInvitation.data_classes || []),
+    healthProfileId: acceptedInvitation.health_profile_id,
+    metadata: {
+      email: acceptedInvitation.email,
+      inviteType: acceptedInvitation.invite_type,
+      target: "invitation_acceptance",
+    },
+    route: "/api/professional/invitations/[inviteToken]",
+    supabase,
+    userId,
+    workspaceId: acceptedInvitation.workspace_id,
+  });
+
+  return { error: null, invitation: mapProfessionalInvitation(acceptedInvitation) };
 }
 
 export async function listProfessionalStaff({
@@ -983,6 +1319,59 @@ async function activeMemberInWorkspace({
 
   if (error) throw error;
   return Boolean(data?.user_id);
+}
+
+async function upsertWorkspaceMember({
+  role,
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  role: string;
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const { error } = await supabase.from("workspace_members").upsert(
+    {
+      role,
+      status: "active",
+      updated_at: new Date().toISOString(),
+      user_id: userId,
+      workspace_id: workspaceId,
+    },
+    { onConflict: "workspace_id,user_id" }
+  );
+
+  if (error) throw error;
+}
+
+function mapProfessionalInvitation(invitation: ProfessionalInvitationRow) {
+  return {
+    acceptedAt: invitation.accepted_at || null,
+    acceptedByUserId: invitation.accepted_by_user_id || null,
+    createdAt: invitation.created_at || null,
+    dataClasses: invitation.data_classes || [],
+    email: invitation.email,
+    expiresAt: invitation.expires_at,
+    healthProfileId: invitation.health_profile_id,
+    id: invitation.id,
+    inviteToken: invitation.invite_token,
+    inviteType: invitation.invite_type,
+    name: invitation.name,
+    revokedAt: invitation.revoked_at || null,
+    role: invitation.role,
+    status: getInvitationStatus(invitation),
+    url: `/professional/invite/${invitation.invite_token}`,
+    workspaceId: invitation.workspace_id,
+  };
+}
+
+function getInvitationStatus(invitation: ProfessionalInvitationRow) {
+  if (invitation.revoked_at || invitation.status === "revoked") return "revoked";
+  if (invitation.accepted_at || invitation.status === "accepted") return "accepted";
+  if (Date.parse(invitation.expires_at) < Date.now()) return "expired";
+  return invitation.status || "pending";
 }
 
 async function recordProfessionalWorkflowAudit({

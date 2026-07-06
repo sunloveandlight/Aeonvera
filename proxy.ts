@@ -14,8 +14,9 @@ export async function proxy(req: NextRequest) {
 
   const waitlistMode = process.env.AEONVERA_WAITLIST_MODE === "1";
   const isWaitlistPage = pathname === "/waitlist";
+  const isProfessionalInvitePage = pathname.startsWith("/professional/invite/");
 
-  if (waitlistMode && !isWaitlistPage) {
+  if (waitlistMode && !isWaitlistPage && !isProfessionalInvitePage) {
     return NextResponse.redirect(new URL("/waitlist", req.url));
   }
 
