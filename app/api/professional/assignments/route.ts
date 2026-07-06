@@ -5,9 +5,35 @@ import { getWorkspaceId, jsonError, requireUser } from "@/app/api/professional/_
 import {
   createProfessionalAssignment,
   defaultDataClassesForRole,
+  listProfessionalAssignments,
   sanitizeProfessionalDataClassList,
   sanitizeStaffRole,
 } from "@/lib/professional/workflow";
+
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await requireUser();
+    if (auth.response) return auth.response;
+
+    const workspaceId = getWorkspaceId(request.nextUrl.searchParams.get("workspaceId"));
+    const healthProfileId = request.nextUrl.searchParams.get("healthProfileId") || undefined;
+
+    if (!workspaceId) return jsonError("Missing organization workspace.");
+
+    const result = await listProfessionalAssignments({
+      healthProfileId,
+      supabase: getSupabaseAdmin(),
+      userId: auth.userId,
+      workspaceId,
+    });
+
+    if (result.error) return jsonError(result.error, 403);
+    return NextResponse.json({ assignments: result.assignments });
+  } catch (error) {
+    console.error("Could not load professional assignments:", error);
+    return jsonError("Could not load professional assignments.", 500);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

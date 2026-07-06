@@ -4,9 +4,32 @@ import { rateLimitRequest } from "@/lib/security/rateLimit";
 import { getWorkspaceId, jsonError, requireUser } from "@/app/api/professional/_utils";
 import {
   addProfessionalStaff,
+  listProfessionalStaff,
   sanitizeEmail,
   sanitizeStaffRole,
 } from "@/lib/professional/workflow";
+
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await requireUser();
+    if (auth.response) return auth.response;
+
+    const workspaceId = getWorkspaceId(request.nextUrl.searchParams.get("workspaceId"));
+    if (!workspaceId) return jsonError("Missing organization workspace.");
+
+    const result = await listProfessionalStaff({
+      supabase: getSupabaseAdmin(),
+      userId: auth.userId,
+      workspaceId,
+    });
+
+    if (result.error) return jsonError(result.error, 403);
+    return NextResponse.json({ staff: result.staff });
+  } catch (error) {
+    console.error("Could not load professional staff:", error);
+    return jsonError("Could not load professional staff.", 500);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

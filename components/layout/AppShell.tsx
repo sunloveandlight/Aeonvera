@@ -21,6 +21,8 @@ export default function AppShell({ children }: AppShellProps) {
     process.env.NEXT_PUBLIC_SHOW_DESIGN_TOOLS === "true";
   useDesignAudit(designToolsEnabled && enabled);
   const isWaitlistPage = pathname === "/waitlist";
+  const isProfessionalPage = pathname?.startsWith("/professional");
+  const hideSiteChrome = isWaitlistPage || isProfessionalPage;
 
   return (
     <main
@@ -33,15 +35,15 @@ export default function AppShell({ children }: AppShellProps) {
         className="pointer-events-none fixed inset-0 -z-20"
       />
 
-      {!isWaitlistPage && <Header />}
+      {!hideSiteChrome && <Header />}
 
-      <div className={`relative flex-1 w-full ${isWaitlistPage ? "" : "pt-11"}`}>
+      <div className={`relative flex-1 w-full ${hideSiteChrome ? "" : "pt-11"}`}>
         {children}
       </div>
 
-      {!isWaitlistPage && <Footer />}
+      {!hideSiteChrome && <Footer />}
 
-      {!isWaitlistPage && <AeonCommandOrb />}
+      {!hideSiteChrome && <AeonCommandOrb />}
       <ClientRuntimeGuards />
 
       {/* DESIGN SYSTEM OVERLAY INDICATOR */}

@@ -65,6 +65,8 @@ type MembershipRow = {
   role: string | null;
   status: string | null;
   workspace_id: string | null;
+  user_id?: string | null;
+  created_at?: string | null;
 };
 
 type HealthProfileRow = {
@@ -80,6 +82,36 @@ type ProfileIdentityRow = {
   email: string | null;
   full_name: string | null;
   user_id: string | null;
+};
+
+type ProfessionalConsentRow = {
+  allowed_roles: string[] | null;
+  capture_method?: string | null;
+  created_at?: string | null;
+  data_classes: string[] | null;
+  expires_at?: string | null;
+  health_profile_id: string;
+  id: string;
+  legal_basis?: string | null;
+  purpose: string | null;
+  revoked_at?: string | null;
+  source_document_url?: string | null;
+  starts_at?: string | null;
+  subject_email?: string | null;
+  workspace_id: string;
+};
+
+type ProfessionalAssignmentRow = {
+  created_at?: string | null;
+  data_classes: string[] | null;
+  expires_at?: string | null;
+  health_profile_id: string;
+  id: string;
+  revoked_at?: string | null;
+  role: string | null;
+  staff_user_id: string;
+  starts_at?: string | null;
+  workspace_id: string;
 };
 
 export function sanitizeOrganizationSubtype(value: unknown): OrganizationSubtype | null {
@@ -292,6 +324,42 @@ export async function createRosterProfile({
   return { error: null, profile };
 }
 
+export async function listRosterProfiles({
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const auth = await requireOrganizationAdmin({ supabase, userId, workspaceId });
+  if (!auth.canManage) return { error: "You need organization admin access.", profiles: [] };
+
+  const { data, error } = await supabase
+    .from("health_profiles")
+    .select("id,workspace_id,display_name,relationship,status,created_at")
+    .eq("workspace_id", workspaceId)
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(250)
+    .returns<HealthProfileRow[]>();
+
+  if (error) throw error;
+
+  return {
+    error: null,
+    profiles: (data || []).map((profile) => ({
+      createdAt: profile.created_at || null,
+      displayName: profile.display_name || "Roster member",
+      id: profile.id,
+      relationship: profile.relationship || "client",
+      status: profile.status || "active",
+      workspaceId: profile.workspace_id,
+    })),
+  };
+}
+
 export async function addProfessionalStaff({
   email,
   role,
@@ -344,6 +412,64 @@ export async function addProfessionalStaff({
       userId: profile.user_id,
       workspaceId: member.workspace_id,
     },
+  };
+}
+
+export async function listProfessionalStaff({
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const auth = await requireOrganizationAdmin({ supabase, userId, workspaceId });
+  if (!auth.canManage) return { error: "You need organization admin access.", staff: [] };
+
+  const { data: members, error: memberError } = await supabase
+    .from("workspace_members")
+    .select("workspace_id,user_id,role,status,created_at")
+    .eq("workspace_id", workspaceId)
+    .neq("status", "removed")
+    .order("created_at", { ascending: true })
+    .limit(250)
+    .returns<MembershipRow[]>();
+
+  if (memberError) throw memberError;
+
+  const userIds = Array.from(
+    new Set((members || []).map((member) => member.user_id).filter(Boolean))
+  ) as string[];
+  const identityByUserId = new Map<string, ProfileIdentityRow>();
+
+  if (userIds.length) {
+    const { data: identities, error: identityError } = await supabase
+      .from("profiles")
+      .select("user_id,email,full_name")
+      .in("user_id", userIds)
+      .returns<ProfileIdentityRow[]>();
+
+    if (identityError) throw identityError;
+    for (const identity of identities || []) {
+      if (identity.user_id) identityByUserId.set(identity.user_id, identity);
+    }
+  }
+
+  return {
+    error: null,
+    staff: (members || []).map((member) => {
+      const identity = member.user_id ? identityByUserId.get(member.user_id) : null;
+      return {
+        createdAt: member.created_at || null,
+        email: identity?.email || null,
+        name: identity?.full_name || null,
+        role: member.role || "read_only",
+        status: member.status || "active",
+        userId: member.user_id || "",
+        workspaceId: member.workspace_id || workspaceId,
+      };
+    }),
   };
 }
 
@@ -403,6 +529,55 @@ export async function createProfessionalConsent({
 
   if (error) throw error;
   return { consent, error: null };
+}
+
+export async function listProfessionalConsents({
+  healthProfileId,
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  healthProfileId?: string;
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const auth = await requireOrganizationAdmin({ supabase, userId, workspaceId });
+  if (!auth.canManage) return { consents: [], error: "You need organization admin access." };
+
+  let query = supabase
+    .from("organization_profile_consents")
+    .select(
+      "id,workspace_id,health_profile_id,data_classes,allowed_roles,purpose,capture_method,legal_basis,subject_email,source_document_url,starts_at,expires_at,revoked_at,created_at"
+    )
+    .eq("workspace_id", workspaceId)
+    .order("created_at", { ascending: false })
+    .limit(250);
+
+  if (healthProfileId) query = query.eq("health_profile_id", healthProfileId);
+
+  const { data, error } = await query.returns<ProfessionalConsentRow[]>();
+  if (error) throw error;
+
+  return {
+    consents: (data || []).map((consent) => ({
+      allowedRoles: consent.allowed_roles || [],
+      captureMethod: consent.capture_method || null,
+      createdAt: consent.created_at || null,
+      dataClasses: consent.data_classes || [],
+      expiresAt: consent.expires_at || null,
+      healthProfileId: consent.health_profile_id,
+      id: consent.id,
+      legalBasis: consent.legal_basis || null,
+      purpose: consent.purpose || "other",
+      revokedAt: consent.revoked_at || null,
+      sourceDocumentUrl: consent.source_document_url || null,
+      startsAt: consent.starts_at || null,
+      subjectEmail: consent.subject_email || null,
+      workspaceId: consent.workspace_id,
+    })),
+    error: null,
+  };
 }
 
 export async function createProfessionalAssignment({
@@ -467,6 +642,51 @@ export async function createProfessionalAssignment({
 
   if (insertError) throw insertError;
   return { assignment, error: null };
+}
+
+export async function listProfessionalAssignments({
+  healthProfileId,
+  supabase,
+  userId,
+  workspaceId,
+}: {
+  healthProfileId?: string;
+  supabase: SupabaseClient;
+  userId: string;
+  workspaceId: string;
+}) {
+  const auth = await requireOrganizationAdmin({ supabase, userId, workspaceId });
+  if (!auth.canManage) return { assignments: [], error: "You need organization admin access." };
+
+  let query = supabase
+    .from("organization_profile_assignments")
+    .select(
+      "id,workspace_id,health_profile_id,staff_user_id,role,data_classes,starts_at,expires_at,revoked_at,created_at"
+    )
+    .eq("workspace_id", workspaceId)
+    .order("created_at", { ascending: false })
+    .limit(250);
+
+  if (healthProfileId) query = query.eq("health_profile_id", healthProfileId);
+
+  const { data, error } = await query.returns<ProfessionalAssignmentRow[]>();
+  if (error) throw error;
+
+  return {
+    assignments: (data || []).map((assignment) => ({
+      createdAt: assignment.created_at || null,
+      dataClasses: assignment.data_classes || [],
+      expiresAt: assignment.expires_at || null,
+      healthProfileId: assignment.health_profile_id,
+      id: assignment.id,
+      revokedAt: assignment.revoked_at || null,
+      role: assignment.role || "read_only",
+      staffUserId: assignment.staff_user_id,
+      startsAt: assignment.starts_at || null,
+      workspaceId: assignment.workspace_id,
+    })),
+    error: null,
+  };
 }
 
 export async function readProfessionalProfile({
