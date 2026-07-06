@@ -295,7 +295,9 @@ export default function ProfessionalDashboardClient() {
     <main className={styles.page}>
       <aside className={styles.sidebar} aria-label="Professional navigation">
         <div className={styles.brandBlock}>
-          <div className={styles.brandMark}>A</div>
+          <div className={styles.brandMark} aria-hidden="true">
+            <span />
+          </div>
           <div>
             <p>Aeonvera</p>
             <span>Professional</span>
@@ -313,6 +315,13 @@ export default function ProfessionalDashboardClient() {
             <span>{label as string}</span>
           </button>
         ))}
+        <div className={styles.sidebarFooter}>
+          <ShieldCheck size={16} />
+          <div>
+            <strong>Consent enforced</strong>
+            <span>Scoped, revocable, audited</span>
+          </div>
+        </div>
       </aside>
 
       <section className={styles.workspace}>
@@ -321,19 +330,40 @@ export default function ProfessionalDashboardClient() {
             <p className={styles.kicker}>Organization command center</p>
             <h1>{selectedOrg?.name || "Aeonvera Professional"}</h1>
           </div>
-          <select
-            aria-label="Organization"
-            className={styles.orgSelect}
-            onChange={(event) => setWorkspaceId(event.target.value)}
-            value={workspaceId}
-          >
-            {organizations.map((org) => (
-              <option key={org.id} value={org.id}>
-                {org.name}
-              </option>
-            ))}
-          </select>
+          <div className={styles.topbarActions}>
+            <div className={styles.systemPulse}>
+              <span />
+              Live workspace
+            </div>
+            <select
+              aria-label="Organization"
+              className={styles.orgSelect}
+              onChange={(event) => setWorkspaceId(event.target.value)}
+              value={workspaceId}
+            >
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </header>
+
+        <section className={styles.systemBar} aria-label="Professional access status">
+          <div>
+            <span>Organization</span>
+            <strong>{selectedOrg ? titleize(selectedOrg.organizationSubtype || "clinic") : "Not configured"}</strong>
+          </div>
+          <div>
+            <span>Access model</span>
+            <strong>Consent + assignment</strong>
+          </div>
+          <div>
+            <span>Current view</span>
+            <strong>{activeProfilePreview?.decision?.accessDecision === "redacted" ? "Partially redacted" : "Scoped preview"}</strong>
+          </div>
+        </section>
 
         {notice ? <div className={styles.notice}>{notice}</div> : null}
         {status === "error" ? <div className={styles.notice}>{notice || "Could not load Professional data."}</div> : null}
@@ -410,12 +440,36 @@ export default function ProfessionalDashboardClient() {
               </div>
 
               <aside className={styles.detailPanel}>
-                <div className={styles.detailIdentity}>
-                  <span>{selectedProfile?.displayName?.slice(0, 1) || "A"}</span>
-                  <div>
-                    <p className={styles.kicker}>Selected profile</p>
-                    <h2>{selectedProfile?.displayName || "No profile selected"}</h2>
-                    <small>{selectedProfile ? titleize(selectedProfile.relationship) : "Create a roster member to begin."}</small>
+                <div className={styles.detailHero}>
+                  <div className={styles.detailIdentity}>
+                    <span>{selectedProfile?.displayName?.slice(0, 1) || "A"}</span>
+                    <div>
+                      <p className={styles.kicker}>Selected profile</p>
+                      <h2>{selectedProfile?.displayName || "No profile selected"}</h2>
+                      <small>{selectedProfile ? titleize(selectedProfile.relationship) : "Create a roster member to begin."}</small>
+                    </div>
+                  </div>
+                  <div className={styles.accessBadge}>
+                    <LockKeyhole size={14} />
+                    <span>
+                      {activeProfilePreview?.decision?.accessDecision === "redacted"
+                        ? "Redacted"
+                        : "Scoped"}
+                    </span>
+                  </div>
+                  <div className={styles.profileStats}>
+                    <div>
+                      <span>Consent</span>
+                      <strong>{profileConsents.length}</strong>
+                    </div>
+                    <div>
+                      <span>Staff</span>
+                      <strong>{profileAssignments.length}</strong>
+                    </div>
+                    <div>
+                      <span>Visible</span>
+                      <strong>{activeProfilePreview?.decision?.allowedDataClasses?.length || 0}</strong>
+                    </div>
                   </div>
                 </div>
 
