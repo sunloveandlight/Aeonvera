@@ -66,7 +66,7 @@ export default async function ConciergeSuccessPage({
             <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <p className="micro-label">Sovereign Concierge</p>
-                <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-white sm:text-5xl md:text-6xl">
+                <h1 className="av-mobile-hero-title mt-4 max-w-3xl font-semibold text-white md:text-6xl">
                   {paid ? "Your onboarding is underway." : "Concierge request received."}
                 </h1>
                 <p className="mt-5 max-w-2xl text-sm leading-7 text-white/52">
@@ -75,7 +75,7 @@ export default async function ConciergeSuccessPage({
                     : "We are still waiting for Stripe to confirm payment. This page will update after the webhook lands."}
                 </p>
               </div>
-              <div className="rounded-full border border-[rgba(var(--success),0.35)] bg-[rgba(var(--success),0.16)] p-3 text-[rgb(var(--success))]">
+              <div className="inline-flex size-14 flex-none items-center justify-center self-start rounded-full border border-[rgba(var(--success),0.35)] bg-[rgba(var(--success),0.16)] p-3 text-[rgb(var(--success))] lg:self-auto">
                 <CheckCircle2 size={30} />
               </div>
             </div>

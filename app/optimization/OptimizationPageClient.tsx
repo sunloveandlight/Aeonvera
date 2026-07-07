@@ -576,7 +576,7 @@ export default function OptimizationPage() {
         <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="micro-label mb-5">Optimization</p>
-            <h1 className="max-w-4xl break-words text-[clamp(2rem,9vw,4.5rem)] font-semibold leading-[1.04] text-white">
+            <h1 className="av-mobile-hero-title max-w-4xl font-semibold text-white">
               Build your health, understood.
             </h1>
             <p className="mt-6 max-w-2xl text-sm leading-7 text-white/50">
@@ -647,7 +647,7 @@ export default function OptimizationPage() {
                   {complete ? "Optimization map" : question.prompt}
                 </h2>
               </div>
-              <div className="premium-status rounded-md px-3 py-1.5 text-xs font-medium">
+              <div className="premium-status min-w-[4.75rem] shrink-0 rounded-md px-3 py-1.5 text-center text-xs font-medium">
                 Step {Math.min(step + 1, QUESTIONS.length)}
               </div>
             </div>

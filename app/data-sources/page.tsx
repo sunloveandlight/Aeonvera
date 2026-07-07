@@ -591,9 +591,9 @@ function SourceIntelligencePanel({
                 href={prompt.href}
                 className="av-control-card block rounded-lg border p-4 transition"
               >
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-sm">{prompt.title}</p>
-                  <span className={promptPriorityClassName(prompt.priority)}>
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <p className="min-w-0 text-sm leading-5">{prompt.title}</p>
+                  <span className={`${promptPriorityClassName(prompt.priority)} shrink-0`}>
                     {prompt.priority}
                   </span>
                 </div>

@@ -250,7 +250,7 @@ export default function PlanPage() {
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                 <div>
                   <p className="micro-label">Your Plan</p>
-                  <h1 className="mt-4 break-words text-[clamp(1.95rem,9vw,4.5rem)] font-semibold leading-tight text-white">
+                  <h1 className="av-mobile-hero-title mt-4 font-semibold text-white">
                     {usageLimits?.plan ? `${titleCase(usageLimits.plan)} intelligence` : "Membership inactive"}
                   </h1>
                   <p className="mt-4 max-w-2xl text-sm leading-7 text-white/52">
