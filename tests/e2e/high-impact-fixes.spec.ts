@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { NextRequest } from "next/server";
 
 import { parseClinicalBiomarkerText } from "@/lib/labs/clinicalBiomarkers";
 import { buildLabTrends } from "@/lib/labs/labTrends";
@@ -12,6 +13,7 @@ import {
   hashShareAccessCode,
   verifyShareAccessCode,
 } from "@/lib/security/shareAccess";
+import { getClientIp } from "@/lib/security/rateLimit";
 import { decryptToken, encryptToken } from "@/lib/security/tokenCrypto";
 import { fetchOuraMetrics } from "@/lib/wearables/oura";
 import { fetchWhoopMetrics } from "@/lib/wearables/whoop";
@@ -56,6 +58,31 @@ test.describe("high-impact launch fixes", () => {
 
     expect(verifyShareAccessCode(code, hash)).toBe(true);
     expect(verifyShareAccessCode(code, null)).toBe(false);
+  });
+
+  test("only trusts forwarded IP headers behind a configured proxy", () => {
+    const originalVercel = process.env.VERCEL;
+    const originalTrustProxy = process.env.TRUST_PROXY_HEADERS;
+    const request = new NextRequest("https://example.test/api", {
+      headers: {
+        "x-forwarded-for": "203.0.113.9, 10.0.0.1",
+        "x-real-ip": "198.51.100.7",
+      },
+    });
+
+    try {
+      delete process.env.VERCEL;
+      delete process.env.TRUST_PROXY_HEADERS;
+      expect(getClientIp(request)).toBe("198.51.100.7");
+
+      process.env.VERCEL = "1";
+      expect(getClientIp(request)).toBe("203.0.113.9");
+    } finally {
+      if (originalVercel) process.env.VERCEL = originalVercel;
+      else delete process.env.VERCEL;
+      if (originalTrustProxy) process.env.TRUST_PROXY_HEADERS = originalTrustProxy;
+      else delete process.env.TRUST_PROXY_HEADERS;
+    }
   });
 
   test("parses biomarker values after label digits and normalizes clinical units", () => {

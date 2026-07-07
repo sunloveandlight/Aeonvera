@@ -472,7 +472,11 @@ export default function OptimizationPage() {
         data.scenario,
         ...current.filter((scenario) => scenario.id !== data.scenario.id),
       ]);
-      setSaveScenarioMessage("Saved. Your shareable future-self page is ready.");
+      setSaveScenarioMessage(
+        data.accessCode
+          ? `Saved. Share this access code with the link: ${data.accessCode}`
+          : "Saved. Your future-self scenario is ready."
+      );
     } catch (error) {
       setSaveScenarioMessage(
         error instanceof Error ? error.message : "Could not save scenario."

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
+import { verifyShareAccessCode } from "@/lib/security/shareAccess";
 
 const SELECT_FIELDS =
-  "id,title,description,scenario_ids,controls,projection,future_self,share_token,is_public,created_at,updated_at";
+  "id,title,description,scenario_ids,controls,projection,future_self,share_token,is_public,access_code_hash,created_at,updated_at";
 
 export async function GET(
   request: NextRequest,
@@ -47,7 +48,24 @@ export async function GET(
       return NextResponse.json({ error: "Scenario not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ scenario: data });
+    if (
+      !verifyShareAccessCode(
+        request.nextUrl.searchParams.get("code"),
+        data.access_code_hash
+      )
+    ) {
+      return NextResponse.json(
+        {
+          codeRequired: true,
+          error: "Enter the access code that was shared with this scenario.",
+        },
+        { status: 401 }
+      );
+    }
+
+    const scenario = { ...data };
+    delete scenario.access_code_hash;
+    return NextResponse.json({ scenario });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Could not load shared scenario.";

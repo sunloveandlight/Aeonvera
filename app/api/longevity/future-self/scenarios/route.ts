@@ -6,6 +6,10 @@ import { canAccess, type Plan, type SubscriptionStatus } from "@/lib/auth/permis
 import { FUTURE_SELF_SCENARIOS } from "@/lib/longevity/futureSelfSimulator";
 import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 import {
+  createShareAccessCode,
+  hashShareAccessCode,
+} from "@/lib/security/shareAccess";
+import {
   frozenHealthProfilePayload,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
@@ -104,6 +108,8 @@ export async function POST(request: NextRequest) {
       sanitizeText(futureSelf.summary, 220) ||
       "Saved future-self projection.";
 
+    const isPublic = body?.isPublic === true;
+    const accessCode = isPublic ? createShareAccessCode() : null;
     const insertPayload = {
       user_id: user.id,
       ...healthSubjectInsertFields(healthProfileContext),
@@ -113,7 +119,8 @@ export async function POST(request: NextRequest) {
       controls,
       projection,
       future_self: futureSelf,
-      is_public: body?.isPublic === true,
+      is_public: isPublic,
+      access_code_hash: accessCode ? hashShareAccessCode(accessCode) : null,
       parent_scenario_id: parentScenarioId || null,
       version_number: versionNumber,
     };
@@ -134,7 +141,7 @@ export async function POST(request: NextRequest) {
           controls,
           projection,
           future_self: futureSelf,
-          is_public: body?.isPublic === true,
+          is_public: isPublic,
         })
         .select(BASE_SELECT_FIELDS)
         .single()
@@ -164,7 +171,7 @@ export async function POST(request: NextRequest) {
       importance: 0.8,
       metadata: {
         scenarioIds,
-        isPublic: body?.isPublic === true,
+        isPublic,
         storedBy: "future_self_scenario",
       },
       sourceId: typeof data === "object" && data && "id" in data ? String(data.id) : undefined,
@@ -175,7 +182,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
     });
 
-    return NextResponse.json({ scenario: data });
+    return NextResponse.json({ scenario: data, accessCode });
   } catch (error) {
     if (error instanceof FutureSelfScenarioError) {
       return NextResponse.json({ error: error.message }, { status: error.status });

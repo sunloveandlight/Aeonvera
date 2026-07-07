@@ -19,9 +19,15 @@ const durableLimiters = new Map<string, Ratelimit>();
 let redis: Redis | null = null;
 
 export function getClientIp(request: NextRequest) {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() || "unknown";
-  return request.headers.get("x-real-ip") || "unknown";
+  const directIp = normalizeIp(request.headers.get("x-real-ip"));
+  const trustForwardedHeaders =
+    process.env.VERCEL === "1" ||
+    process.env.TRUST_PROXY_HEADERS === "true";
+
+  if (!trustForwardedHeaders) return directIp || "unknown";
+
+  const forwarded = parseForwardedFor(request.headers.get("x-forwarded-for"));
+  return forwarded || directIp || "unknown";
 }
 
 export async function checkRateLimit({
@@ -127,4 +133,24 @@ function getDurableLimiter(limit: number, windowMs: number) {
 
   durableLimiters.set(cacheKey, limiter);
   return limiter;
+}
+
+function parseForwardedFor(value: string | null) {
+  if (!value) return "";
+
+  for (const part of value.split(",")) {
+    const ip = normalizeIp(part);
+    if (ip) return ip;
+  }
+
+  return "";
+}
+
+function normalizeIp(value: string | null) {
+  if (!value) return "";
+
+  const cleaned = value.trim().replace(/^::ffff:/, "");
+  if (!cleaned || cleaned.length > 64) return "";
+
+  return cleaned;
 }

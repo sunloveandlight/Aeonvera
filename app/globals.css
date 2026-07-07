@@ -6435,11 +6435,147 @@ input[type="number"]::-webkit-inner-spin-button {
   }
 
   .waitlist-benefit p {
-    display: none;
+    display: block;
   }
 
   .waitlist-portrait {
     object-position: 69% center;
+  }
+}
+
+:root[data-theme="light"] [data-waitlist-page] {
+  --wl-bg: #fbfaf7;
+  --wl-text: #1d1d1f;
+  --wl-muted: rgba(29, 29, 31, 0.7);
+  --wl-faint: rgba(29, 29, 31, 0.56);
+  --wl-line: rgba(58, 43, 18, 0.14);
+  --wl-cyan: #2a8f8a;
+  --wl-gold: #8a651a;
+  --wl-gold-strong: #6f4c10;
+  background:
+    radial-gradient(circle at 14% 0%, rgba(var(--gold), 0.14), transparent 28rem),
+    linear-gradient(180deg, #fffdf8, #f6efe2);
+  color: var(--wl-text) !important;
+}
+
+:root[data-theme="light"] .waitlist-visual {
+  background: #f7efe1;
+}
+
+:root[data-theme="light"] .waitlist-visual::before {
+  background:
+    linear-gradient(90deg, rgba(255, 253, 248, 0.98) 0%, rgba(255, 253, 248, 0.9) 30%, rgba(255, 253, 248, 0.48) 55%, rgba(255, 253, 248, 0.08) 78%),
+    linear-gradient(180deg, rgba(255, 253, 248, 0.08), rgba(255, 253, 248, 0.58) 72%, rgba(255, 253, 248, 0.96));
+}
+
+:root[data-theme="light"] .waitlist-backdrop::before {
+  background-image:
+    linear-gradient(rgba(138, 101, 26, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(138, 101, 26, 0.055) 1px, transparent 1px);
+  opacity: 0.46;
+}
+
+:root[data-theme="light"] .waitlist-backdrop::after {
+  background:
+    radial-gradient(circle at 18% 28%, rgba(42, 143, 138, 0.11), transparent 22rem),
+    radial-gradient(circle at 34% 70%, rgba(var(--gold), 0.15), transparent 24rem);
+}
+
+:root[data-theme="light"] .waitlist-scanline {
+  background: linear-gradient(180deg, transparent, rgba(138, 101, 26, 0.13), transparent);
+}
+
+:root[data-theme="light"] .waitlist-arc {
+  border-color: rgba(42, 143, 138, 0.22);
+}
+
+:root[data-theme="light"] .waitlist-arc-bottom {
+  border-color: rgba(138, 101, 26, 0.22);
+}
+
+:root[data-theme="light"] [data-waitlist-page] h1 {
+  color: var(--wl-text) !important;
+  -webkit-text-fill-color: var(--wl-text) !important;
+  text-shadow: 0 2px 18px rgba(255, 255, 255, 0.38) !important;
+}
+
+:root[data-theme="light"] .waitlist-tagline {
+  color: rgba(29, 29, 31, 0.9) !important;
+}
+
+:root[data-theme="light"] .waitlist-lede,
+:root[data-theme="light"] .waitlist-library-preview p:not(.waitlist-library-label),
+:root[data-theme="light"] .waitlist-benefit p {
+  color: var(--wl-muted) !important;
+}
+
+:root[data-theme="light"] .waitlist-launch-date,
+:root[data-theme="light"] .waitlist-field svg {
+  color: rgba(42, 143, 138, 0.86) !important;
+}
+
+:root[data-theme="light"] .waitlist-field,
+:root[data-theme="light"] .waitlist-library-preview,
+:root[data-theme="light"] .waitlist-success,
+:root[data-theme="light"] .waitlist-social-link {
+  border-color: rgba(58, 43, 18, 0.16);
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: var(--shadow-1);
+}
+
+:root[data-theme="light"] .waitlist-field:focus-within {
+  border-color: rgba(138, 101, 26, 0.48);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 0 0 3px rgba(var(--gold), 0.12), var(--shadow-1);
+}
+
+:root[data-theme="light"] .waitlist-field input {
+  color: var(--wl-text) !important;
+}
+
+:root[data-theme="light"] .waitlist-field input::placeholder {
+  color: rgba(29, 29, 31, 0.42) !important;
+}
+
+:root[data-theme="light"] .waitlist-submit {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.18) 44%, rgba(var(--gold), 0.1)),
+    linear-gradient(135deg, #2c2110, #171107),
+    #1d1609 !important;
+  color: #fff7df !important;
+}
+
+:root[data-theme="light"] .waitlist-benefits {
+  border-top-color: rgba(58, 43, 18, 0.14);
+}
+
+:root[data-theme="light"] .waitlist-benefit {
+  border-right-color: rgba(58, 43, 18, 0.14);
+}
+
+:root[data-theme="light"] .waitlist-benefit h2,
+:root[data-theme="light"] .waitlist-library-preview h2,
+:root[data-theme="light"] .waitlist-success strong {
+  color: var(--wl-text) !important;
+}
+
+:root[data-theme="light"] .waitlist-success span,
+:root[data-theme="light"] .waitlist-form-note,
+:root[data-theme="light"] .waitlist-social-link {
+  color: var(--wl-faint) !important;
+}
+
+@media (max-width: 1080px) {
+  :root[data-theme="light"] .waitlist-visual::before {
+    background:
+      linear-gradient(180deg, rgba(255, 253, 248, 0.96) 0%, rgba(255, 253, 248, 0.88) 48%, rgba(255, 253, 248, 0.58) 100%),
+      linear-gradient(90deg, rgba(255, 253, 248, 0.74), transparent 76%);
+  }
+}
+
+@media (max-width: 760px) {
+  :root[data-theme="light"] .waitlist-benefit {
+    border-bottom-color: rgba(58, 43, 18, 0.14);
   }
 }
 

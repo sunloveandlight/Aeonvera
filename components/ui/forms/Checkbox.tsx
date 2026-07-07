@@ -15,14 +15,14 @@ export default function Checkbox({
   disabled,
 }: CheckboxProps) {
   return (
-    <label className="flex items-center gap-3 text-sm text-white/60 cursor-pointer">
+    <label className="flex items-center gap-3 text-sm text-[var(--text-2)] cursor-pointer">
       <input
         data-aeonvera-input
         type="checkbox"
         checked={checked}
         disabled={disabled}
         onChange={(e) => onChange?.(e.target.checked)}
-        className="w-4 h-4 rounded border border-white/[0.08] bg-white/[0.03] accent-[rgb(var(--gold))] cursor-pointer"
+        className="w-4 h-4 rounded border border-[var(--panel-border)] bg-[var(--panel-2)] accent-[rgb(var(--gold))] cursor-pointer"
       />
       {label}
     </label>

@@ -85,6 +85,8 @@ export default function SharedFutureSelfPage() {
   const [scenario, setScenario] = useState<SharedScenario | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const [accessCode, setAccessCode] = useState("");
+  const [codeRequired, setCodeRequired] = useState(false);
   const [generatingProtocol, setGeneratingProtocol] = useState(false);
   const [protocol, setProtocol] = useState<OptimizationProtocol | null>(null);
   const [protocolHistory, setProtocolHistory] = useState<OptimizationProtocol[]>([]);
@@ -99,16 +101,22 @@ export default function SharedFutureSelfPage() {
 
       try {
         const response = await fetch(
-          `/api/longevity/future-self/scenarios/${params.shareToken}`
+          `/api/longevity/future-self/scenarios/${params.shareToken}${
+            accessCode ? `?code=${encodeURIComponent(accessCode)}` : ""
+          }`
         );
         const data = await response.json();
 
         if (!response.ok) {
+          if (response.status === 401 && data.codeRequired) {
+            setCodeRequired(true);
+          }
           throw new Error(data.error || "Could not load this future-self scenario.");
         }
 
         if (!cancelled) {
           setScenario(data.scenario);
+          setCodeRequired(false);
         }
       } catch (error) {
         if (!cancelled) {
@@ -132,7 +140,7 @@ export default function SharedFutureSelfPage() {
     return () => {
       cancelled = true;
     };
-  }, [params.shareToken]);
+  }, [accessCode, params.shareToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -249,6 +257,29 @@ export default function SharedFutureSelfPage() {
           <div className="executive-panel rounded-lg p-8">
             <p className="micro-label">Unavailable</p>
             <p className="mt-4 text-sm leading-7 text-white/50">{message}</p>
+            {codeRequired ? (
+              <form
+                className="mt-5 flex max-w-md flex-col gap-3 sm:flex-row"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const formData = new FormData(event.currentTarget);
+                  setAccessCode(String(formData.get("accessCode") || ""));
+                }}
+              >
+                <input
+                  className="av-field h-11 flex-1 rounded-md px-3 text-sm"
+                  name="accessCode"
+                  placeholder="Access code"
+                  type="text"
+                />
+                <button
+                  className="premium-action inline-flex h-11 items-center justify-center rounded-md px-5 text-sm font-medium"
+                  type="submit"
+                >
+                  Unlock
+                </button>
+              </form>
+            ) : null}
           </div>
         ) : scenario ? (
           <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
