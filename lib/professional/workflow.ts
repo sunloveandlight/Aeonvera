@@ -27,6 +27,17 @@ export const STAFF_ROLES = [
 
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
+export const CONSENT_ALLOWED_ROLES = [
+  "clinician",
+  "trainer",
+  "coach",
+  "front_desk",
+  "auditor",
+  "read_only",
+] as const satisfies readonly StaffRole[];
+
+export type ConsentAllowedRole = (typeof CONSENT_ALLOWED_ROLES)[number];
+
 export const CONSENT_CAPTURE_METHODS = [
   "in_app",
   "uploaded_form",
@@ -156,6 +167,12 @@ export function sanitizeOrganizationSubtype(value: unknown): OrganizationSubtype
 export function sanitizeStaffRole(value: unknown): StaffRole | null {
   return typeof value === "string" && STAFF_ROLES.includes(value as StaffRole)
     ? (value as StaffRole)
+    : null;
+}
+
+export function sanitizeConsentAllowedRole(value: unknown): ConsentAllowedRole | null {
+  return typeof value === "string" && CONSENT_ALLOWED_ROLES.includes(value as ConsentAllowedRole)
+    ? (value as ConsentAllowedRole)
     : null;
 }
 
@@ -720,7 +737,7 @@ export async function acceptProfessionalInvitation({
     const { error: consentError } = await supabase
       .from("organization_profile_consents")
       .insert({
-        allowed_roles: ["org_admin", "clinician", "trainer", "coach", "read_only"],
+        allowed_roles: ["clinician", "trainer", "coach", "read_only"],
         capture_method: "in_app",
         data_classes: normalizeProfessionalDataClasses(invitation.data_classes || []),
         granted_by_user_id: userId,

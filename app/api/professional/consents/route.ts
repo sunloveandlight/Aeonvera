@@ -6,15 +6,15 @@ import {
   CONSENT_CAPTURE_METHODS,
   CONSENT_LEGAL_BASES,
   CONSENT_PURPOSES,
+  type ConsentAllowedRole,
   createProfessionalConsent,
   isValidConsentValue,
   listProfessionalConsents,
   revokeProfessionalConsent,
+  sanitizeConsentAllowedRole,
   sanitizeEmail,
   sanitizeProfessionalDataClassList,
-  sanitizeStaffRole,
   sanitizeText,
-  type StaffRole,
 } from "@/lib/professional/workflow";
 
 export async function GET(request: NextRequest) {
@@ -144,9 +144,9 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-function sanitizeAllowedRoles(value: unknown): StaffRole[] {
+function sanitizeAllowedRoles(value: unknown): ConsentAllowedRole[] {
   if (!Array.isArray(value)) return [];
-  return Array.from(new Set(value.map(sanitizeStaffRole).filter(Boolean))) as StaffRole[];
+  return Array.from(new Set(value.map(sanitizeConsentAllowedRole).filter(Boolean))) as ConsentAllowedRole[];
 }
 
 function sanitizeDate(value: unknown) {

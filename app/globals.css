@@ -7089,6 +7089,21 @@ input[type="number"]::-webkit-inner-spin-button {
   font-size: 0.88rem;
 }
 
+:root[data-theme="light"] .resource-biomarker-card > span,
+:root[data-theme="light"] .resource-biomarker-card article > span {
+  color: var(--text-2);
+}
+
+:root[data-theme="light"] .resource-biomarker-card li,
+:root[data-theme="light"] .resource-biomarker-card article li {
+  color: var(--text-3);
+}
+
+:root[data-theme="light"] .resource-biomarker-card h2,
+:root[data-theme="light"] .resource-biomarker-card article h2 {
+  color: var(--text-1);
+}
+
 .resources-next-band {
   text-align: center;
 }

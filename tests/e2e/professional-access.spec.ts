@@ -7,6 +7,8 @@ import {
 } from "@/lib/professional/access";
 import {
   defaultDataClassesForRole,
+  CONSENT_ALLOWED_ROLES,
+  sanitizeConsentAllowedRole,
   sanitizeOrganizationSubtype,
   sanitizeProfessionalDataClassList,
   sanitizeStaffRole,
@@ -128,6 +130,9 @@ test.describe("Aeonvera Professional access decisions", () => {
     expect(sanitizeOrganizationSubtype("random")).toBeNull();
     expect(sanitizeStaffRole("coach")).toBe("coach");
     expect(sanitizeStaffRole("owner")).toBeNull();
+    expect(sanitizeConsentAllowedRole("coach")).toBe("coach");
+    expect(sanitizeConsentAllowedRole("org_admin")).toBeNull();
+    expect(CONSENT_ALLOWED_ROLES).not.toContain("org_admin");
     expect(sanitizeProfessionalDataClassList([
       "readiness",
       "readiness",
