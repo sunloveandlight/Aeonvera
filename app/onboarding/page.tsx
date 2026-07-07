@@ -229,7 +229,7 @@ export default function OnboardingPage() {
             </Card>
 
           <div>
-            <Card className="p-10" hover={false} glow>
+            <Card className="av-solid-panel p-10" hover={false}>
               <Form onSubmit={handleCompleteOnboarding} className="space-y-6">
                 {message && (
                   <div className="rounded-lg border border-red-500/20 bg-red-500/[0.06] px-4 py-3 text-sm leading-6 text-red-200/80">

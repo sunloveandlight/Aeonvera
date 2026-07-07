@@ -15,6 +15,9 @@ import {
   getHealthSubjectFilter,
   getRequestedHealthProfileId,
   healthSubjectInsertFields,
+  healthProfileWriteAccessDeniedResponse,
+  isHealthProfileWriteAccessError,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
@@ -82,6 +85,12 @@ export async function POST(request: NextRequest) {
     const auth = await requirePhysicianExportAccess(request);
     if (auth.response) return auth.response;
     if (!auth.healthProfileContext) throw new Error("Active health profile not found.");
+    try {
+      requireProfileWriteAccess(auth.healthProfileContext);
+    } catch (error) {
+      if (isHealthProfileWriteAccessError(error)) return healthProfileWriteAccessDeniedResponse();
+      throw error;
+    }
 
     const body = await request.json().catch(() => ({}));
     const includedSections = normalizeSections(body?.includedSections);
@@ -145,6 +154,12 @@ export async function PATCH(request: NextRequest) {
     const auth = await requirePhysicianExportAccess(request);
     if (auth.response) return auth.response;
     if (!auth.healthProfileContext) throw new Error("Active health profile not found.");
+    try {
+      requireProfileWriteAccess(auth.healthProfileContext);
+    } catch (error) {
+      if (isHealthProfileWriteAccessError(error)) return healthProfileWriteAccessDeniedResponse();
+      throw error;
+    }
 
     const body = await request.json().catch(() => ({}));
     const id = typeof body?.id === "string" ? body.id : "";

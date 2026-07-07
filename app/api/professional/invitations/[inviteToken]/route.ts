@@ -54,8 +54,13 @@ export async function POST(
 
     const { inviteToken } = await context.params;
     if (!isUuid(inviteToken)) return jsonError("Invalid invitation token.", 400);
+    const body = await request.json().catch(() => ({}));
+    const consentDataClasses = Array.isArray(body?.consentDataClasses)
+      ? body.consentDataClasses.filter((value: unknown) => typeof value === "string")
+      : [];
 
     const result = await acceptProfessionalInvitation({
+      consentDataClasses,
       inviteToken,
       supabase: getSupabaseAdmin(),
       userEmail: auth.userEmail,

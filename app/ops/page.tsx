@@ -50,7 +50,7 @@ export default async function OpsPage() {
           <div className="mb-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div className="min-w-0">
               <p className="micro-label">Operations</p>
-              <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-white sm:text-5xl md:text-6xl">
+              <h1 className="av-mobile-hero-title mt-4 max-w-3xl font-semibold text-white">
                 Workspace diagnostics.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-8 text-white/46">
@@ -287,14 +287,14 @@ function OpsMetric({
   value: string;
 }) {
   return (
-    <section className="executive-panel rounded-lg p-5">
+    <section className="executive-panel min-w-0 rounded-lg p-5">
       <div className="mb-5 flex items-center justify-between gap-4">
         <p className="micro-label">{label}</p>
         <Icon className="royal-text" size={18} />
       </div>
-      <p className="text-2xl font-semibold text-white">{value}</p>
+      <p className="min-w-0 break-words text-2xl font-semibold text-white">{value}</p>
       <div className="mt-4 flex items-center justify-between gap-4">
-        <p className="text-xs text-white/42">{detail}</p>
+        <p className="min-w-0 text-xs leading-5 text-white/42">{detail}</p>
         <StatusPill tone={healthy ? "ok" : "warn"}>{healthy ? "OK" : "Watch"}</StatusPill>
       </div>
     </section>
@@ -344,7 +344,7 @@ function StatusPill({
 }) {
   return (
     <span
-      className={`rounded-full border px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${
+      className={`shrink-0 rounded-full border px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${
         tone === "ok"
           ? "border-[rgba(var(--success),0.32)] bg-[rgba(var(--success),0.14)] text-[rgb(var(--success))]"
           : "border-[rgba(var(--gold),0.24)] bg-[rgba(var(--gold),0.08)] royal-text"

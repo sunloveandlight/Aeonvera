@@ -38,6 +38,26 @@ export const CONSENT_ALLOWED_ROLES = [
 
 export type ConsentAllowedRole = (typeof CONSENT_ALLOWED_ROLES)[number];
 
+const CLINICAL_CONSENT_CLASSES = new Set<ProfessionalDataClass>([
+  "clinical_summary",
+  "labs_basic",
+  "labs_sensitive",
+  "mental_health",
+  "documents",
+  "notes",
+]);
+
+const PERFORMANCE_CONSENT_CLASSES = new Set<ProfessionalDataClass>([
+  "nutrition",
+  "performance",
+  "readiness",
+]);
+
+const ADMINISTRATIVE_CONSENT_CLASSES = new Set<ProfessionalDataClass>([
+  "administrative",
+  "identity",
+]);
+
 export const CONSENT_CAPTURE_METHODS = [
   "in_app",
   "uploaded_form",
@@ -207,6 +227,26 @@ export function defaultDataClassesForRole(role: StaffRole): ProfessionalDataClas
     case "org_admin":
       return ["identity", "administrative"];
   }
+}
+
+export function consentAllowedRolesForDataClasses(
+  dataClasses: readonly ProfessionalDataClass[]
+): ConsentAllowedRole[] {
+  const roles = new Set<ConsentAllowedRole>();
+
+  for (const dataClass of dataClasses) {
+    if (CLINICAL_CONSENT_CLASSES.has(dataClass)) roles.add("clinician");
+    if (PERFORMANCE_CONSENT_CLASSES.has(dataClass)) {
+      roles.add("trainer");
+      roles.add("coach");
+    }
+    if (ADMINISTRATIVE_CONSENT_CLASSES.has(dataClass)) {
+      roles.add("front_desk");
+      roles.add("read_only");
+    }
+  }
+
+  return Array.from(roles);
 }
 
 export async function requireOrganizationAdmin({
@@ -674,11 +714,13 @@ export async function readProfessionalInvitationByToken({
 }
 
 export async function acceptProfessionalInvitation({
+  consentDataClasses,
   inviteToken,
   supabase,
   userEmail,
   userId,
 }: {
+  consentDataClasses?: string[] | null;
   inviteToken: string;
   supabase: SupabaseClient;
   userEmail?: string | null;
@@ -734,22 +776,31 @@ export async function acceptProfessionalInvitation({
 
     if (accessError) throw accessError;
 
-    const { error: consentError } = await supabase
-      .from("organization_profile_consents")
-      .insert({
-        allowed_roles: ["clinician", "trainer", "coach", "read_only"],
-        capture_method: "in_app",
-        data_classes: normalizeProfessionalDataClasses(invitation.data_classes || []),
-        granted_by_user_id: userId,
-        health_profile_id: invitation.health_profile_id,
-        legal_basis: "patient_consent",
-        purpose: "team_operations",
-        subject_email: invitation.email,
-        subject_user_id: userId,
-        workspace_id: invitation.workspace_id,
-      });
+    const requestedClasses = normalizeProfessionalDataClasses(consentDataClasses || []);
+    const invitationClasses = normalizeProfessionalDataClasses(invitation.data_classes || []);
+    const consentClasses = requestedClasses.filter((dataClass) =>
+      invitationClasses.includes(dataClass)
+    );
+    const allowedRoles = consentAllowedRolesForDataClasses(consentClasses);
 
-    if (consentError) throw consentError;
+    if (consentClasses.length && allowedRoles.length) {
+      const { error: consentError } = await supabase
+        .from("organization_profile_consents")
+        .insert({
+          allowed_roles: allowedRoles,
+          capture_method: "in_app",
+          data_classes: consentClasses,
+          granted_by_user_id: userId,
+          health_profile_id: invitation.health_profile_id,
+          legal_basis: "patient_consent",
+          purpose: "team_operations",
+          subject_email: invitation.email,
+          subject_user_id: userId,
+          workspace_id: invitation.workspace_id,
+        });
+
+      if (consentError) throw consentError;
+    }
   }
 
   const { data: acceptedInvitation, error: acceptError } = await supabase
@@ -1370,11 +1421,13 @@ async function upsertWorkspaceMember({
 }
 
 function mapProfessionalInvitation(invitation: ProfessionalInvitationRow) {
+  const dataClasses = normalizeProfessionalDataClasses(invitation.data_classes || []);
   return {
     acceptedAt: invitation.accepted_at || null,
     acceptedByUserId: invitation.accepted_by_user_id || null,
     createdAt: invitation.created_at || null,
-    dataClasses: invitation.data_classes || [],
+    consentRoles: consentAllowedRolesForDataClasses(dataClasses),
+    dataClasses,
     email: invitation.email,
     expiresAt: invitation.expires_at,
     healthProfileId: invitation.health_profile_id,

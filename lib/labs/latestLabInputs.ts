@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AssessmentInput } from "@/lib/longevity/biologicalAgeEngine";
-import type { ClinicalBiomarkerKey } from "@/lib/labs/clinicalBiomarkers";
+import {
+  displayBiomarkerValue,
+  type ClinicalBiomarkerKey,
+} from "@/lib/labs/clinicalBiomarkers";
 
 type LabRow = {
   canonical_key: ClinicalBiomarkerKey;
@@ -49,7 +52,8 @@ export async function loadLatestLabInputValues({
     const inputKey = LAB_TO_INPUT_KEY[labRow.canonical_key];
     const value = normalizeBiologicalAgeInputValue(
       labRow.canonical_key,
-      Number(labRow.value)
+      Number(labRow.value),
+      labRow.unit
     );
 
     if (inputKey && latest[inputKey] == null && Number.isFinite(value)) {
@@ -62,17 +66,18 @@ export async function loadLatestLabInputValues({
 
 export function normalizeBiologicalAgeInputValue(
   key: ClinicalBiomarkerKey,
-  value: number
+  value: number,
+  unit?: string | null
 ) {
   if (!Number.isFinite(value)) return value;
 
   switch (key) {
     case "fasting_glucose":
-      // Imported labs are stored in mmol/L; the age engine scores mg/dL.
-      return value * 18;
+      // The age engine scores mg/dL. Convert only rows that were actually stored in mmol/L.
+      return displayBiomarkerValue({ key, unit, value }).value;
     case "hscrp":
-      // Imported hsCRP is stored in mg/dL; the age engine scores mg/L.
-      return value * 10;
+      // The age engine scores mg/L. Convert only rows that were actually stored in mg/dL.
+      return displayBiomarkerValue({ key, unit, value }).value;
     default:
       return value;
   }

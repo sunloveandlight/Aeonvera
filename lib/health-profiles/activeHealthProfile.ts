@@ -28,6 +28,15 @@ export class FrozenHealthProfileError extends Error {
   }
 }
 
+export class HealthProfileWriteAccessError extends Error {
+  statusCode = 403;
+
+  constructor() {
+    super("Viewer access can read this health profile, but cannot create or manage sharing links.");
+    this.name = "HealthProfileWriteAccessError";
+  }
+}
+
 export type HealthSubjectFilter =
   | {
       column: "user_id";
@@ -152,8 +161,28 @@ export function assertHealthProfileWritable(context: ActiveHealthProfileContext)
   }
 }
 
+export function requireProfileWriteAccess(context: ActiveHealthProfileContext) {
+  assertHealthProfileWritable(context);
+  if (context.role === "viewer") {
+    throw new HealthProfileWriteAccessError();
+  }
+}
+
 export function isFrozenHealthProfileError(error: unknown) {
   return error instanceof FrozenHealthProfileError;
+}
+
+export function isHealthProfileWriteAccessError(error: unknown) {
+  return error instanceof HealthProfileWriteAccessError;
+}
+
+export function healthProfileWriteAccessDeniedResponse() {
+  return Response.json(
+    {
+      error: "Viewer access can read this health profile, but cannot create or manage sharing links.",
+    },
+    { status: 403 }
+  );
 }
 
 export function frozenHealthProfilePayload() {

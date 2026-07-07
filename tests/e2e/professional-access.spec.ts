@@ -6,6 +6,7 @@ import {
   type ProfessionalConsent,
 } from "@/lib/professional/access";
 import {
+  consentAllowedRolesForDataClasses,
   defaultDataClassesForRole,
   CONSENT_ALLOWED_ROLES,
   sanitizeConsentAllowedRole,
@@ -152,5 +153,30 @@ test.describe("Aeonvera Professional access decisions", () => {
       "administrative",
     ]);
     expect(defaultDataClassesForRole("auditor")).toEqual([]);
+  });
+
+  test("derives consent roles from the member-approved data classes", () => {
+    expect(consentAllowedRolesForDataClasses(["identity"])).toEqual([
+      "front_desk",
+      "read_only",
+    ]);
+    expect(consentAllowedRolesForDataClasses(["readiness", "performance"])).toEqual([
+      "trainer",
+      "coach",
+    ]);
+    expect(consentAllowedRolesForDataClasses(["labs_sensitive", "mental_health"])).toEqual([
+      "clinician",
+    ]);
+    expect(consentAllowedRolesForDataClasses([
+      "identity",
+      "readiness",
+      "labs_basic",
+    ])).toEqual([
+      "front_desk",
+      "read_only",
+      "trainer",
+      "coach",
+      "clinician",
+    ]);
   });
 });

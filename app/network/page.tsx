@@ -535,7 +535,7 @@ export default function NetworkPage() {
                 ))}
 
                 {!invitations.length && (
-                  <div className="av-surface rounded-lg p-5">
+                  <div className="av-surface av-solid-panel relative z-10 rounded-lg p-5">
                     <p className="av-muted text-sm">
                       No care network roles yet. Invite a physician, coach, or family member to open the first controlled view.
                     </p>

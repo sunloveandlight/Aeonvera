@@ -8,6 +8,7 @@ type OuraDailySleep = {
 };
 type OuraSleep = {
   day?: string;
+  type?: string | null;
   total_sleep_duration?: number;
   efficiency?: number;
 };
@@ -41,6 +42,7 @@ export async function fetchOuraMetrics({
 
   return dedupeMetrics([
     ...sleep.flatMap((entry) => {
+      if (entry.type !== "long_sleep") return [];
       const timestamp = dayToTimestamp(entry.day);
       const metrics: WearableRawMetric[] = [];
 

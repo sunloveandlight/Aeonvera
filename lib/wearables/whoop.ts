@@ -7,6 +7,7 @@ type WhoopEnvelope<T> = {
 };
 type WhoopSleep = {
   end?: string;
+  nap?: boolean;
   score?: {
     sleep_performance_percentage?: number;
     stage_summary?: {
@@ -47,6 +48,7 @@ export async function fetchWhoopMetrics({
 
   return [
     ...sleep.flatMap((entry) => {
+      if (entry.nap) return [];
       const timestamp = normalizeTimestamp(entry.end);
       const inBedMs = entry.score?.stage_summary?.total_in_bed_time_milli;
       const awakeMs = entry.score?.stage_summary?.total_awake_time_milli || 0;

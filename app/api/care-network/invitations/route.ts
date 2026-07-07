@@ -18,6 +18,9 @@ import { requireAuthenticatedRouteContext } from "@/lib/auth/routeContext";
 import {
   getHealthSubjectFilter,
   healthSubjectInsertFields,
+  healthProfileWriteAccessDeniedResponse,
+  isHealthProfileWriteAccessError,
+  requireProfileWriteAccess,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
@@ -112,6 +115,12 @@ export async function POST(request: NextRequest) {
 
     const auth = await requireNetworkAccess(request);
     if (auth.response) return auth.response;
+    try {
+      requireProfileWriteAccess(auth.healthProfileContext);
+    } catch (error) {
+      if (isHealthProfileWriteAccessError(error)) return healthProfileWriteAccessDeniedResponse();
+      throw error;
+    }
 
     const body = await request.json().catch(() => ({}));
     const role = sanitizeCareRole(body?.role);
@@ -183,6 +192,12 @@ export async function PATCH(request: NextRequest) {
 
     const auth = await requireNetworkAccess(request);
     if (auth.response) return auth.response;
+    try {
+      requireProfileWriteAccess(auth.healthProfileContext);
+    } catch (error) {
+      if (isHealthProfileWriteAccessError(error)) return healthProfileWriteAccessDeniedResponse();
+      throw error;
+    }
 
     const body = await request.json().catch(() => ({}));
     const id = typeof body?.id === "string" ? body.id : "";

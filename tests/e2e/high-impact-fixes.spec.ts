@@ -18,6 +18,10 @@ import { decryptToken, encryptToken } from "@/lib/security/tokenCrypto";
 import { fetchOuraMetrics } from "@/lib/wearables/oura";
 import { fetchWhoopMetrics } from "@/lib/wearables/whoop";
 import { proxy } from "@/proxy";
+import {
+  requireProfileWriteAccess,
+  type ActiveHealthProfileContext,
+} from "@/lib/health-profiles/activeHealthProfile";
 
 test.describe("high-impact launch fixes", () => {
   test("encrypts OAuth tokens without breaking legacy plaintext reads", () => {
@@ -125,8 +129,31 @@ test.describe("high-impact launch fixes", () => {
     expect(unitsByKey.get("fasting_glucose")).toBe("mmol/L");
     expect(unitsByKey.get("hscrp")).toBe("mg/dL");
 
-    expect(normalizeBiologicalAgeInputValue("fasting_glucose", 5)).toBe(90);
-    expect(normalizeBiologicalAgeInputValue("hscrp", 0.08)).toBeCloseTo(0.8, 2);
+    expect(normalizeBiologicalAgeInputValue("fasting_glucose", 5, "mmol/L")).toBe(90);
+    expect(normalizeBiologicalAgeInputValue("fasting_glucose", 90, null)).toBe(90);
+    expect(normalizeBiologicalAgeInputValue("hscrp", 0.08, "mg/dL")).toBeCloseTo(0.8, 2);
+    expect(normalizeBiologicalAgeInputValue("hscrp", 0.8, undefined)).toBeCloseTo(0.8, 2);
+  });
+
+  test("viewer profile access cannot create outbound PHI sharing", () => {
+    const viewerContext: ActiveHealthProfileContext = {
+      healthProfileId: "profile-1",
+      isFrozen: false,
+      legacyUserId: "user-1",
+      loginUserId: "user-2",
+      mode: "health_profile",
+      role: "viewer",
+      workspaceId: "workspace-1",
+    };
+    const editorContext: ActiveHealthProfileContext = {
+      ...viewerContext,
+      role: "editor",
+    };
+
+    expect(() => requireProfileWriteAccess(viewerContext)).toThrow(
+      "Viewer access can read this health profile"
+    );
+    expect(() => requireProfileWriteAccess(editorContext)).not.toThrow();
   });
 
   test("displays lab trends in familiar clinical units", () => {
@@ -198,7 +225,12 @@ test.describe("high-impact launch fixes", () => {
         : url.includes("/daily_activity")
         ? { data: [{ day: "2026-07-02", score: 84, steps: 9800 }] }
         : url.includes("/sleep")
-        ? { data: [{ day: "2026-07-01", total_sleep_duration: 25_200, efficiency: 91 }] }
+        ? {
+            data: [
+              { day: "2026-07-01", type: "nap", total_sleep_duration: 3_600, efficiency: 80 },
+              { day: "2026-07-01", type: "long_sleep", total_sleep_duration: 25_200, efficiency: 91 },
+            ],
+          }
         : url.includes("/daily_sleep")
         ? { data: [{ day: "2026-07-01", contributors: { sleep_efficiency: 89 } }] }
         : url.includes("/daily_readiness")
@@ -242,6 +274,11 @@ test.describe("high-impact launch fixes", () => {
       );
       expect(normalized.some((metric) => metric.metric === "strain_score")).toBe(false);
       expect(metrics.filter((metric) => metric.metricName === "sleep_efficiency")).toHaveLength(1);
+      expect(metrics).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ metricName: "sleep_duration", value: 1 }),
+        ])
+      );
     } finally {
       global.fetch = originalFetch;
     }
@@ -256,15 +293,27 @@ test.describe("high-impact launch fixes", () => {
       const parsed = new URL(url);
       const body = url.includes("/activity/sleep")
         ? {
-            records: [{
-              end: "2026-07-01T08:00:00.000Z",
-              score: {
-                stage_summary: {
-                  total_awake_time_milli: 3_600_000,
-                  total_in_bed_time_milli: 28_800_000,
+            records: [
+              {
+                end: "2026-07-01T14:00:00.000Z",
+                nap: true,
+                score: {
+                  stage_summary: {
+                    total_awake_time_milli: 0,
+                    total_in_bed_time_milli: 3_600_000,
+                  },
                 },
               },
-            }],
+              {
+                end: "2026-07-01T08:00:00.000Z",
+                score: {
+                  stage_summary: {
+                    total_awake_time_milli: 3_600_000,
+                    total_in_bed_time_milli: 28_800_000,
+                  },
+                },
+              },
+            ],
           }
         : url.includes("/recovery")
         ? { records: [] }
@@ -292,6 +341,11 @@ test.describe("high-impact launch fixes", () => {
         expect.objectContaining({ metricName: "strain", value: 12.5 }),
         expect.objectContaining({ metricName: "strain", value: 13.5 }),
       ]);
+      expect(metrics).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ metricName: "sleep", value: 1 }),
+        ])
+      );
       expect(urls.some((url) => url.includes("nextToken=next-cycle"))).toBe(true);
     } finally {
       global.fetch = originalFetch;
