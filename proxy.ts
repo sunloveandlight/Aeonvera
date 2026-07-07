@@ -15,12 +15,17 @@ export async function proxy(req: NextRequest) {
   const waitlistMode = process.env.AEONVERA_WAITLIST_MODE === "1";
   const isWaitlistPage = pathname === "/waitlist";
   const isProfessionalInvitePage = pathname.startsWith("/professional/invite/");
+  const isResourcePage = pathname === "/resources" || pathname.startsWith("/resources/");
 
-  if (waitlistMode && !isWaitlistPage && !isProfessionalInvitePage) {
+  if (waitlistMode && !isWaitlistPage && !isProfessionalInvitePage && !isResourcePage) {
     return NextResponse.redirect(new URL("/waitlist", req.url));
   }
 
   if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
+  if (isWaitlistPage || isProfessionalInvitePage || isResourcePage) {
     return NextResponse.next();
   }
 

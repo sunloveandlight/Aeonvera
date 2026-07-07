@@ -17,6 +17,7 @@ import { getClientIp } from "@/lib/security/rateLimit";
 import { decryptToken, encryptToken } from "@/lib/security/tokenCrypto";
 import { fetchOuraMetrics } from "@/lib/wearables/oura";
 import { fetchWhoopMetrics } from "@/lib/wearables/whoop";
+import { proxy } from "@/proxy";
 
 test.describe("high-impact launch fixes", () => {
   test("encrypts OAuth tokens without breaking legacy plaintext reads", () => {
@@ -82,6 +83,28 @@ test.describe("high-impact launch fixes", () => {
       else delete process.env.VERCEL;
       if (originalTrustProxy) process.env.TRUST_PROXY_HEADERS = originalTrustProxy;
       else delete process.env.TRUST_PROXY_HEADERS;
+    }
+  });
+
+  test("waitlist mode still exposes public resource pages", async () => {
+    const originalWaitlistMode = process.env.AEONVERA_WAITLIST_MODE;
+
+    try {
+      process.env.AEONVERA_WAITLIST_MODE = "1";
+
+      const resourcesResponse = await proxy(new NextRequest("https://example.test/resources/biomarkers"));
+      expect(resourcesResponse.status).toBe(200);
+      expect(resourcesResponse.headers.get("location")).toBeNull();
+
+      const marketingResponse = await proxy(new NextRequest("https://example.test/pricing"));
+      expect(marketingResponse.status).toBe(307);
+      expect(marketingResponse.headers.get("location")).toBe("https://example.test/waitlist");
+    } finally {
+      if (originalWaitlistMode) {
+        process.env.AEONVERA_WAITLIST_MODE = originalWaitlistMode;
+      } else {
+        delete process.env.AEONVERA_WAITLIST_MODE;
+      }
     }
   });
 

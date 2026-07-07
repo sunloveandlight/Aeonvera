@@ -23,20 +23,15 @@ const ROUTES = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  if (process.env.AEONVERA_WAITLIST_MODE === "1") {
-    return [
-      {
-        url: `${BASE_URL}/waitlist`,
-        changeFrequency: "weekly",
-        priority: 1,
-      },
-    ];
-  }
-
-  const staticRoutes = ROUTES.map((route) => ({
+  const resourceRoutes = [
+    "/resources",
+    "/resources/articles",
+    "/resources/guides",
+    "/resources/biomarkers",
+  ].map((route) => ({
     url: `${BASE_URL}${route}`,
-    changeFrequency: route === "" ? "weekly" as const : "monthly" as const,
-    priority: route === "" ? 1 : 0.7,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
   }));
 
   const categoryRoutes = resourceCategories.map((category) => ({
@@ -59,6 +54,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.75,
     }));
+
+  if (process.env.AEONVERA_WAITLIST_MODE === "1") {
+    return [
+      {
+        url: `${BASE_URL}/waitlist`,
+        changeFrequency: "weekly",
+        priority: 1,
+      },
+      ...resourceRoutes,
+      ...categoryRoutes,
+      ...articleRoutes,
+      ...biomarkerRoutes,
+    ];
+  }
+
+  const staticRoutes = ROUTES.map((route) => ({
+    url: `${BASE_URL}${route}`,
+    changeFrequency: route === "" ? "weekly" as const : "monthly" as const,
+    priority: route === "" ? 1 : 0.7,
+  }));
 
   return [...staticRoutes, ...categoryRoutes, ...articleRoutes, ...biomarkerRoutes];
 }

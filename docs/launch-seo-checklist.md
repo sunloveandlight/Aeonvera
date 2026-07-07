@@ -5,7 +5,7 @@ Launch date: August 19, 2026
 ## Prelaunch
 
 - Keep `AEONVERA_WAITLIST_MODE=1` in production.
-- Confirm `/waitlist` is the only public entry in the sitemap while waitlist mode is enabled.
+- Confirm `/waitlist` and the public resource library are the only public entries in the sitemap while waitlist mode is enabled.
 - Confirm waitlist page social links:
   - Facebook: `https://www.facebook.com/profile.php?id=61590871547912`
   - Instagram: `https://www.instagram.com/aeonvera.ai/`
