@@ -1,17 +1,17 @@
 .page {
-  --pro-bg: #f6f7f8;
+  --pro-bg: #fbfaf7;
   --pro-panel: #ffffff;
-  --pro-panel-2: #f1f4f5;
-  --pro-text: #172026;
-  --pro-muted: #627078;
-  --pro-soft: #8a969d;
-  --pro-border: #dfe5e7;
-  --pro-strong: #12333a;
-  --pro-teal: #0f766e;
-  --pro-green: #168464;
+  --pro-panel-2: #f6f2e8;
+  --pro-text: #1d1d1f;
+  --pro-muted: rgba(28, 30, 34, 0.68);
+  --pro-soft: rgba(28, 30, 34, 0.5);
+  --pro-border: rgba(0, 0, 0, 0.09);
+  --pro-strong: #3a2b12;
+  --pro-teal: #8a651a;
+  --pro-green: #7a8c45;
   --pro-gold: #a97d25;
   --pro-warn: #945d12;
-  --pro-ink: #0c2429;
+  --pro-ink: #1c1708;
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
   min-height: calc(100vh - 44px);
@@ -123,14 +123,14 @@
 
 .navItem:hover,
 .navActive {
-  background: #eef4f4;
+  background: #f4eddc;
   color: var(--pro-strong);
 }
 
 .sidebarFooter {
   align-items: flex-start;
-  background: #eef4f2;
-  border: 1px solid #d7e4e1;
+  background: #f6f0e2;
+  border: 1px solid #e3d6b9;
   border-radius: 8px;
   color: var(--pro-teal);
   display: flex;
@@ -702,8 +702,8 @@
 .form button,
 .primaryButton {
   align-items: center;
-  background: #12333a;
-  border: 1px solid #12333a;
+  background: #3a2b12;
+  border: 1px solid #3a2b12;
   border-radius: 8px;
   color: #ffffff;
   cursor: pointer;

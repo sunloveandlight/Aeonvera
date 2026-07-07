@@ -39,7 +39,7 @@ export async function fetchOuraMetrics({
     fetchOura<OuraActivity>("daily_activity", accessToken, startDate, endDate),
   ]);
 
-  return [
+  return dedupeMetrics([
     ...sleep.flatMap((entry) => {
       const timestamp = dayToTimestamp(entry.day);
       const metrics: WearableRawMetric[] = [];
@@ -89,7 +89,7 @@ export async function fetchOuraMetrics({
           : null,
       ].filter(Boolean) as WearableRawMetric[];
     }),
-  ];
+  ]);
 }
 
 async function fetchOura<T>(
@@ -127,4 +127,14 @@ async function fetchOura<T>(
 function dayToTimestamp(day?: string) {
   if (!day) return null;
   return new Date(`${day}T12:00:00.000Z`).toISOString();
+}
+
+function dedupeMetrics(metrics: WearableRawMetric[]) {
+  const seen = new Set<string>();
+  return metrics.filter((metric) => {
+    const key = `${metric.metricName}:${metric.timestamp}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }

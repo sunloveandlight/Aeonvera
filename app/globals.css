@@ -7321,6 +7321,48 @@ input[type="number"]::-webkit-inner-spin-button {
   line-height: 1.65;
 }
 
+:root[data-theme="light"] .article-sidebar,
+:root[data-theme="light"] .article-callout,
+:root[data-theme="light"] .article-disclaimer,
+:root[data-theme="light"] .article-takeaways > div,
+:root[data-theme="light"] .article-link-grid a,
+:root[data-theme="light"] .related-biomarker-grid a,
+:root[data-theme="light"] .biomarker-interpretation-grid article {
+  border-color: var(--panel-border);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-1);
+}
+
+:root[data-theme="light"] .article-hero-image {
+  border-color: var(--panel-border);
+  background: var(--panel-2);
+}
+
+:root[data-theme="light"] .article-meta-row span,
+:root[data-theme="light"] .strategy-tags span {
+  border-color: var(--panel-border);
+  background: rgba(0, 0, 0, 0.035);
+  color: var(--text-3);
+}
+
+:root[data-theme="light"] .article-sidebar a,
+:root[data-theme="light"] .article-callout li,
+:root[data-theme="light"] .article-takeaways > div,
+:root[data-theme="light"] .biomarker-check-list li,
+:root[data-theme="light"] .biomarker-caution-list li {
+  color: var(--text-2);
+}
+
+:root[data-theme="light"] .article-link-grid strong,
+:root[data-theme="light"] .related-biomarker-grid strong {
+  color: var(--text-1);
+}
+
+:root[data-theme="light"] .article-link-grid span,
+:root[data-theme="light"] .related-biomarker-grid span {
+  color: var(--gold-ink);
+}
+
 @media (max-width: 960px) {
   .resources-hero,
   .resources-split-section,

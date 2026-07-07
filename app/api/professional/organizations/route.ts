@@ -34,6 +34,10 @@ export async function POST(request: NextRequest) {
     const auth = await requireUser();
     if (auth.response) return auth.response;
 
+    if (process.env.AEONVERA_PROFESSIONAL_ORG_CREATION !== "enabled") {
+      return jsonError("Professional organization creation is waitlisted.", 403);
+    }
+
     const body = await request.json().catch(() => ({}));
     const name = sanitizeText(body.name, 100);
     const subtype = sanitizeOrganizationSubtype(body.organizationSubtype || body.subtype);

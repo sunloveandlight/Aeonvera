@@ -12,6 +12,9 @@ export async function GET(
   context: { params: Promise<{ inviteToken: string }> }
 ) {
   try {
+    const auth = await requireUser();
+    if (auth.response) return auth.response;
+
     const { inviteToken } = await context.params;
     if (!isUuid(inviteToken)) return jsonError("Invalid invitation token.", 400);
 
@@ -21,6 +24,13 @@ export async function GET(
     });
 
     if (result.error) return jsonError(result.error, 404);
+    if (
+      !auth.userEmail ||
+      result.invitation?.email?.trim().toLowerCase() !== auth.userEmail.trim().toLowerCase()
+    ) {
+      return jsonError("Sign in with the invited email address to view this invitation.", 403);
+    }
+
     return NextResponse.json({
       invitation: result.invitation,
       workspace: result.workspace,

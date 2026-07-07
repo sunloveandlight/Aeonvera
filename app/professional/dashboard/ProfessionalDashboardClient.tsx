@@ -296,6 +296,8 @@ export default function ProfessionalDashboardClient() {
       healthProfileId: selectedProfile?.id,
       legalBasis: form.get("legalBasis"),
       purpose: form.get("purpose"),
+      sourceDocumentHash: form.get("sourceDocumentHash"),
+      sourceDocumentUrl: form.get("sourceDocumentUrl"),
       subjectEmail: form.get("subjectEmail"),
       workspaceId,
     });
@@ -682,7 +684,6 @@ export default function ProfessionalDashboardClient() {
                     <option value="other">Other</option>
                   </select>
                   <select name="captureMethod" defaultValue="uploaded_form">
-                    <option value="in_app">In app</option>
                     <option value="uploaded_form">Uploaded form</option>
                     <option value="esignature">E-signature</option>
                     <option value="imported_contract">Imported contract</option>
@@ -695,6 +696,8 @@ export default function ProfessionalDashboardClient() {
                     <option value="contract">Contract</option>
                     <option value="other">Other</option>
                   </select>
+                  <input name="sourceDocumentUrl" placeholder="Consent document URL" />
+                  <input name="sourceDocumentHash" placeholder="Consent document hash" />
                   <CheckboxGroup defaults={["coach", "trainer"]} name="allowedRoles" options={staffRoles} />
                   <CheckboxGroup defaults={[...consentDefaults]} name="dataClasses" options={dataClasses} />
                   <button disabled={!selectedProfile || submitting === "consent"} type="submit">Save consent</button>

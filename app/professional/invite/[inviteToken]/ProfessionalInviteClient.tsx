@@ -32,6 +32,11 @@ export default function ProfessionalInviteClient({ inviteToken }: { inviteToken:
       setStatus("loading");
       const response = await fetch(`/api/professional/invitations/${inviteToken}`);
       const data = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        setStatus("unauthorized");
+        setMessage("Sign in with the invited email address to view and accept this invitation.");
+        return;
+      }
       if (!response.ok) {
         setStatus("error");
         setMessage(data.error || "This invitation could not be opened.");
@@ -79,6 +84,13 @@ export default function ProfessionalInviteClient({ inviteToken }: { inviteToken:
         <h1>{workspace?.name || "Professional invitation"}</h1>
         {status === "loading" ? (
           <p className={styles.copy}>Opening secure invitation...</p>
+        ) : status === "unauthorized" ? (
+          <>
+            <p className={styles.copy}>{message}</p>
+            <Link className={styles.primaryButton} href="/login">
+              Sign in
+            </Link>
+          </>
         ) : status === "error" ? (
           <p className={styles.copy}>{message}</p>
         ) : (
@@ -110,10 +122,6 @@ export default function ProfessionalInviteClient({ inviteToken }: { inviteToken:
             {status === "accepted" ? (
               <Link className={styles.primaryButton} href="/dashboard">
                 Continue to Aeonvera
-              </Link>
-            ) : status === "unauthorized" ? (
-              <Link className={styles.primaryButton} href="/login">
-                Sign in
               </Link>
             ) : (
               <button className={styles.primaryButton} disabled={closed} onClick={acceptInvite} type="button">

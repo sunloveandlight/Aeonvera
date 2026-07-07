@@ -103,7 +103,7 @@ test.describe("high-impact launch fixes", () => {
     expect(byKey.get("hscrp")?.unit).toBe("mg/L");
   });
 
-  test("PhenoAge hsCRP uses mg/L without a second 10x down-conversion", () => {
+  test("PhenoAge hsCRP converts Aeonvera mg/L inputs to mg/dL at the model boundary", () => {
     const base: AssessmentInput = {
       age: 50,
       sex: "male",
@@ -191,6 +191,7 @@ test.describe("high-impact launch fixes", () => {
         ])
       );
       expect(normalized.some((metric) => metric.metric === "strain_score")).toBe(false);
+      expect(metrics.filter((metric) => metric.metricName === "sleep_efficiency")).toHaveLength(1);
     } finally {
       global.fetch = originalFetch;
     }

@@ -717,16 +717,22 @@ export async function acceptProfessionalInvitation({
 
     if (accessError) throw accessError;
 
-    await supabase
+    const { error: consentError } = await supabase
       .from("organization_profile_consents")
-      .update({
+      .insert({
+        allowed_roles: ["org_admin", "clinician", "trainer", "coach", "read_only"],
+        capture_method: "in_app",
+        data_classes: normalizeProfessionalDataClasses(invitation.data_classes || []),
+        granted_by_user_id: userId,
+        health_profile_id: invitation.health_profile_id,
+        legal_basis: "patient_consent",
+        purpose: "team_operations",
+        subject_email: invitation.email,
         subject_user_id: userId,
-        updated_at: timestamp,
-      })
-      .eq("workspace_id", invitation.workspace_id)
-      .eq("health_profile_id", invitation.health_profile_id)
-      .eq("subject_email", invitation.email)
-      .is("subject_user_id", null);
+        workspace_id: invitation.workspace_id,
+      });
+
+    if (consentError) throw consentError;
   }
 
   const { data: acceptedInvitation, error: acceptError } = await supabase

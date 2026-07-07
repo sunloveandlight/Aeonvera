@@ -1511,7 +1511,9 @@ function normalizeGlucose(value: number) {
 }
 
 function normalizeCrp(value: number) {
-  return Math.max(0.01, value);
+  // The PhenoAge CRP term is calibrated to mg/dL. Aeonvera stores and displays
+  // hsCRP inputs in mg/L, so convert once at the model boundary.
+  return Math.max(0.01, value / 10);
 }
 
 function classifyCategory(

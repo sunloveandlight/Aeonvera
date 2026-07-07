@@ -58,6 +58,8 @@ export async function POST(request: NextRequest) {
     const captureMethod = typeof body.captureMethod === "string" ? body.captureMethod : "";
     const legalBasis = typeof body.legalBasis === "string" ? body.legalBasis : "";
     const purpose = typeof body.purpose === "string" ? body.purpose : "";
+    const sourceDocumentHash = sanitizeText(body.sourceDocumentHash, 160) || null;
+    const sourceDocumentUrl = sanitizeText(body.sourceDocumentUrl, 300) || null;
 
     if (!workspaceId) return jsonError("Missing organization workspace.");
     if (!healthProfileId) return jsonError("Missing roster profile.");
@@ -72,6 +74,20 @@ export async function POST(request: NextRequest) {
     if (!isValidConsentValue(CONSENT_PURPOSES, purpose)) {
       return jsonError("Choose a supported consent purpose.");
     }
+    if (
+      (legalBasis === "patient_consent" || legalBasis === "guardian_consent") &&
+      captureMethod !== "in_app" &&
+      !sourceDocumentHash &&
+      !sourceDocumentUrl
+    ) {
+      return jsonError("Documented patient or guardian consent requires a source document URL or hash.");
+    }
+    if (
+      (legalBasis === "patient_consent" || legalBasis === "guardian_consent") &&
+      captureMethod === "in_app"
+    ) {
+      return jsonError("In-app patient consent must be granted by the invited member.");
+    }
 
     const result = await createProfessionalConsent({
       allowedRoles,
@@ -81,8 +97,8 @@ export async function POST(request: NextRequest) {
       healthProfileId,
       legalBasis,
       purpose,
-      sourceDocumentHash: sanitizeText(body.sourceDocumentHash, 160) || null,
-      sourceDocumentUrl: sanitizeText(body.sourceDocumentUrl, 300) || null,
+      sourceDocumentHash,
+      sourceDocumentUrl,
       subjectEmail: sanitizeEmail(body.subjectEmail) || null,
       supabase: getSupabaseAdmin(),
       userId: auth.userId,

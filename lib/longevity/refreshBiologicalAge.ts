@@ -65,13 +65,15 @@ export async function refreshBiologicalAgeForUser({
   });
   const result = computeBiologicalAge(input);
 
-  await supabase
-    .from("profiles")
-    .update({
-      biological_age: result.biologicalAge,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", userId);
+  if (!healthProfileId) {
+    await supabase
+      .from("profiles")
+      .update({
+        biological_age: result.biologicalAge,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId);
+  }
 
   const { data: historyPoint, error: historyError } = await supabase
     .from("biological_age_history")

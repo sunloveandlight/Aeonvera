@@ -151,13 +151,15 @@ export async function POST(request: NextRequest) {
     const body = await readJsonBody(request);
     const source = normalizeSource(body?.source);
 
-    await supabase
-      .from("profiles")
-      .update({
-        biological_age: result.biologicalAge,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId);
+    if (healthProfileContext.mode === "legacy_user") {
+      await supabase
+        .from("profiles")
+        .update({
+          biological_age: result.biologicalAge,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
+    }
 
     const { data: historyPoint } = await supabase
       .from("biological_age_history")

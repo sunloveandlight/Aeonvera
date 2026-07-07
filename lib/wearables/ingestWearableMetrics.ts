@@ -24,12 +24,12 @@ export async function ingestWearableMetrics({
     : { health_profile_id: null };
   const subjectColumn = healthProfileId ? "health_profile_id" : "user_id";
   const subjectValue = healthProfileId || userId;
-  const validMetrics = metrics.filter(
+  const validMetrics = dedupeWearableMetrics(metrics.filter(
     (metric) =>
       metric.metricName &&
       Number.isFinite(metric.value) &&
       Boolean(metric.timestamp)
-  );
+  ));
 
   if (validMetrics.length === 0) {
     return { inserted: 0, normalized: 0, stateUpdated: false };
@@ -184,4 +184,14 @@ async function updateOrInsertByHealthProfile(
   if (Array.isArray(data) && data.length > 0) return null;
 
   return (await supabase.from(table).insert(payload)).error;
+}
+
+function dedupeWearableMetrics(metrics: WearableRawMetric[]) {
+  const seen = new Set<string>();
+  return metrics.filter((metric) => {
+    const key = `${metric.metricName}:${metric.timestamp}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
