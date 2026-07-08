@@ -31,9 +31,15 @@ export default function ProfessionalInviteClient({ inviteToken }: { inviteToken:
   const [selectedDataClasses, setSelectedDataClasses] = useState<string[]>([]);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function loadInvitation() {
       setStatus("loading");
-      const response = await fetch(`/api/professional/invitations/${inviteToken}`);
+      const timeout = window.setTimeout(() => controller.abort(), 10_000);
+      const response = await fetch(`/api/professional/invitations/${inviteToken}`, {
+        credentials: "same-origin",
+        signal: controller.signal,
+      }).finally(() => window.clearTimeout(timeout));
       const data = await response.json().catch(() => ({}));
       if (response.status === 401) {
         setStatus("unauthorized");
@@ -51,7 +57,16 @@ export default function ProfessionalInviteClient({ inviteToken }: { inviteToken:
       setStatus("ready");
     }
 
-    void loadInvitation();
+    void loadInvitation().catch((error) => {
+      if (error?.name === "AbortError") {
+        setMessage("The invitation check timed out. Try again or sign in with the invited email address.");
+      } else {
+        setMessage("This invitation could not be opened.");
+      }
+      setStatus("error");
+    });
+
+    return () => controller.abort();
   }, [inviteToken]);
 
   async function acceptInvite() {
@@ -90,7 +105,14 @@ export default function ProfessionalInviteClient({ inviteToken }: { inviteToken:
         <p className={styles.kicker}>Aeonvera Professional</p>
         <h1>{workspace?.name || "Professional invitation"}</h1>
         {status === "loading" ? (
-          <p className={styles.copy}>Opening secure invitation...</p>
+          <>
+            <p className={styles.copy}>Opening secure invitation...</p>
+            <div className={styles.loadingBars} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+          </>
         ) : status === "unauthorized" ? (
           <>
             <p className={styles.copy}>{message}</p>
@@ -99,7 +121,17 @@ export default function ProfessionalInviteClient({ inviteToken }: { inviteToken:
             </Link>
           </>
         ) : status === "error" ? (
-          <p className={styles.copy}>{message}</p>
+          <>
+            <p className={styles.copy}>{message}</p>
+            <div className={styles.actionRow}>
+              <button className={styles.secondaryButton} onClick={() => window.location.reload()} type="button">
+                Try again
+              </button>
+              <Link className={styles.primaryButton} href="/login">
+                Sign in
+              </Link>
+            </div>
+          </>
         ) : (
           <>
             <p className={styles.copy}>

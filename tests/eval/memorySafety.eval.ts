@@ -14,8 +14,13 @@ const followUpSource = readFileSync("lib/clinical/clinicalFollowUpResponses.ts",
 const professionalConsentRouteSource = readFileSync("app/api/professional/consents/route.ts", "utf8");
 const professionalWorkflowSource = readFileSync("lib/professional/workflow.ts", "utf8");
 const dailyCoachCronSource = readFileSync("app/api/cron/daily-coach/route.ts", "utf8");
+const dailyPlanSource = readFileSync("app/api/autopilot/daily-plan/route.ts", "utf8");
 const semanticMemorySource = readFileSync("lib/memory/semanticMemory.ts", "utf8");
 const semanticMemoryRouteSource = readFileSync("app/api/memory/semantic/route.ts", "utf8");
+const wearableOAuthSource = readFileSync("lib/wearables/oauth.ts", "utf8");
+const ouraSyncSource = readFileSync("app/api/wearables/oura/sync/route.ts", "utf8");
+const whoopSyncSource = readFileSync("app/api/wearables/whoop/sync/route.ts", "utf8");
+const proxySource = readFileSync("proxy.ts", "utf8");
 const profileWriteRoutes = [
   "app/api/agent/activity/route.ts",
   "app/api/autopilot/daily-plan/route.ts",
@@ -35,6 +40,10 @@ const profileWriteRoutes = [
 ];
 const memoryMigration = readFileSync(
   "supabase/migrations/20260707144240_typed_memory_biological_context.sql",
+  "utf8"
+);
+const phiContractMigration = readFileSync(
+  "supabase/migrations/20260708200414_profile_scoped_wearables_sensitive_phi_contract.sql",
   "utf8"
 );
 
@@ -87,12 +96,18 @@ test("automatic memory heuristic fallback runs through third-party subject filte
   );
 });
 
-test("sensitive treatment/contract professional access requires documented basis", () => {
+test("sensitive professional access requires documented basis unless granted in-app by member", () => {
   assert.match(professionalWorkflowSource, /requiresDocumentedProfessionalBasis/);
   assert.match(professionalConsentRouteSource, /requiresDocumentedProfessionalBasis/);
+  assert.match(professionalWorkflowSource, /legalBasis !== "patient_consent" && legalBasis !== "guardian_consent"/);
   assert.match(
     professionalConsentRouteSource,
-    /Sensitive treatment or contract access requires a source document URL or hash/
+    /Sensitive professional access requires a source document URL or hash unless it is granted in-app by the member/
+  );
+  assert.doesNotMatch(phiContractMigration, /legal_basis in \('treatment', 'contract'\)/);
+  assert.match(
+    phiContractMigration,
+    /legal_basis in \('patient_consent', 'guardian_consent'\)\s+and capture_method = 'in_app'\s+and granted_by_user_id is not null/s
   );
 });
 
@@ -106,6 +121,39 @@ test("daily coach cron avoids per-profile frozen checks and bounds source querie
   assert.doesNotMatch(dailyCoachCronSource, /isHealthProfileFrozenById/);
   assert.match(dailyCoachCronSource, /loadProfileEntitlementMap/);
   assert.match(dailyCoachCronSource, /DAILY_COACH_SOURCE_LIMIT/);
+});
+
+test("daily plan loads agent preferences in active health-profile scope", () => {
+  assert.match(
+    dailyPlanSource,
+    /getAgentPreferenceMemory\(\{\s*healthProfileContext,\s*supabase: admin,\s*userId: user\.id\s*\}\)/
+  );
+});
+
+test("wearable OAuth credentials and sync updates are profile-scoped", () => {
+  assert.match(wearableOAuthSource, /onConflict: "user_id,health_profile_id,provider"/);
+  assert.match(wearableOAuthSource, /health_profile_id: null/);
+  assert.match(wearableOAuthSource, /query\.eq\("health_profile_id", healthProfileContext\.healthProfileId\)/);
+  assert.match(wearableOAuthSource, /query\.is\("health_profile_id", null\)/);
+  assert.match(ouraSyncSource, /getValidWearableAccessToken\(\{\s*healthProfileContext,/s);
+  assert.match(whoopSyncSource, /getValidWearableAccessToken\(\{\s*healthProfileContext,/s);
+  assert.match(ouraSyncSource, /connectionUpdate\.eq\("health_profile_id", healthProfileContext\.healthProfileId\)/);
+  assert.match(whoopSyncSource, /connectionUpdate\.eq\("health_profile_id", healthProfileContext\.healthProfileId\)/);
+  assert.match(
+    phiContractMigration,
+    /create unique index wearable_connections_user_profile_provider_unique\s+on public\.wearable_connections \(user_id, health_profile_id, provider\)\s+nulls not distinct;/s
+  );
+});
+
+test("professional workspace pages are protected while invite links stay public", () => {
+  assert.match(proxySource, /const isProfessionalInvitePage = pathname\.startsWith\("\/professional\/invite\/"\)/);
+  assert.match(proxySource, /pathname\.startsWith\("\/professional"\)/);
+  assert.match(proxySource, /"\/professional\/:path\*"/);
+  assert.ok(
+    proxySource.indexOf("if (isWaitlistPage || isProfessionalInvitePage || isResourcePage)") <
+      proxySource.indexOf('pathname.startsWith("/professional")'),
+    "professional invite bypass should run before protected professional route matching"
+  );
 });
 
 test("profile-scoped write routes use the shared write-access guard", () => {

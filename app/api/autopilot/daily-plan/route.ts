@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     const [protocol, executionMemory, preferenceMemory] = await Promise.all([
       getLatestProtocol(admin, user.id, healthProfileContext),
       getRecentExecutionMemory(admin, user.id, healthProfileContext),
-      getAgentPreferenceMemory({ supabase: admin, userId: user.id }),
+      getAgentPreferenceMemory({ healthProfileContext, supabase: admin, userId: user.id }),
     ]);
     const prepared = buildDailyPlan({
       protocol,

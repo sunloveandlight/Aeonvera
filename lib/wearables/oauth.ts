@@ -20,6 +20,7 @@ type ConnectionRow = {
   access_token: string;
   refresh_token: string | null;
   expires_at: string | null;
+  health_profile_id: string | null;
 };
 
 const OURA_AUTHORIZE_URL = "https://cloud.ouraring.com/oauth/authorize";
@@ -149,7 +150,9 @@ export async function saveWearableConnection({
   const { error } = await supabase.from("wearable_connections").upsert(
     {
       user_id: userId,
-      ...(healthProfileContext ? healthSubjectInsertFields(healthProfileContext) : {}),
+      ...(healthProfileContext
+        ? healthSubjectInsertFields(healthProfileContext)
+        : { health_profile_id: null }),
       provider,
       access_token: encryptToken(token.access_token),
       refresh_token: token.refresh_token ? encryptToken(token.refresh_token) : null,
@@ -160,28 +163,37 @@ export async function saveWearableConnection({
       connected_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "user_id,provider" }
+    { onConflict: "user_id,health_profile_id,provider" }
   );
 
   if (error) throw new Error(error.message);
 }
 
 export async function getValidWearableAccessToken({
+  healthProfileContext,
   supabase,
   userId,
   provider,
 }: {
+  healthProfileContext?: ActiveHealthProfileContext | null;
   supabase: SupabaseClient;
   userId: string;
   provider: WearableOAuthProvider;
 }) {
-  const { data, error } = await supabase
+  const query = supabase
     .from("wearable_connections")
-    .select("access_token, refresh_token, expires_at")
+    .select("access_token, refresh_token, expires_at, health_profile_id")
     .eq("user_id", userId)
     .eq("provider", provider)
-    .eq("status", "connected")
-    .maybeSingle<ConnectionRow>();
+    .eq("status", "connected");
+
+  if (healthProfileContext?.healthProfileId) {
+    query.eq("health_profile_id", healthProfileContext.healthProfileId);
+  } else {
+    query.is("health_profile_id", null);
+  }
+
+  const { data, error } = await query.maybeSingle<ConnectionRow>();
 
   if (error) throw new Error(error.message);
   if (!data) return null;
@@ -202,7 +214,13 @@ export async function getValidWearableAccessToken({
   });
   refreshed.refresh_token ||= refreshToken;
 
-  await saveWearableConnection({ supabase, userId, provider, token: refreshed });
+  await saveWearableConnection({
+    healthProfileContext,
+    supabase,
+    userId,
+    provider,
+    token: refreshed,
+  });
 
   return refreshed.access_token;
 }

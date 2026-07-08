@@ -224,9 +224,15 @@ function isSafeSubjectMemory(candidate: AutomaticMemoryCandidate) {
     return false;
   }
 
+  const thirdPartySubject =
+    /\b(my|our)\s+(wife|husband|partner|spouse|child|son|daughter|mother|father|parent|client|patient|friend|brother|sister|grandmother|grandfather|grandparent|aunt|uncle|cousin)\b/;
+  const thirdPersonClinical =
+    /\b(he|she|they|him|her|them)\s+(has|have|had|takes|take|took|was|were|is|are|got|gets|became|becomes)\b.{0,80}\b(diagnosed|diagnosis|cancer|pregnant|postpartum|allergy|allergic|medication|condition|disease|therapy|treatment)\b/;
+
   if (
-    /\b(my|our)\s+(wife|husband|partner|spouse|child|son|daughter|mother|father|parent|client|patient|friend|brother|sister)\b/.test(text) ||
-    /\b(he|she|they)\s+(has|have|takes|take|was diagnosed|is diagnosed|is pregnant|is postpartum)\b/.test(text)
+    thirdPartySubject.test(text) ||
+    thirdPersonClinical.test(text) ||
+    /\b(diagnosed|diagnosis|cancer|pregnant|postpartum|allergy|allergic|medication|condition|disease|therapy|treatment)\b.{0,80}\b(my|our)\s+(wife|husband|partner|spouse|child|son|daughter|mother|father|parent|client|patient|friend|brother|sister|grandmother|grandfather|grandparent|aunt|uncle|cousin)\b/.test(text)
   ) {
     return false;
   }

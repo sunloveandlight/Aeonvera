@@ -933,6 +933,53 @@
   .searchBox {
     max-width: none;
   }
+
+  .tableWrap {
+    overflow: visible;
+  }
+
+  .table {
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    min-width: 0;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table tr {
+    border: 1px solid var(--pro-border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .table td {
+    align-items: center;
+    border-bottom: 0;
+    display: flex;
+    gap: 18px;
+    justify-content: space-between;
+    padding: 10px 12px;
+    text-align: right;
+  }
+
+  .table td::before {
+    color: var(--pro-soft);
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    font-weight: 750;
+    text-align: left;
+    text-transform: uppercase;
+  }
 }
 
 @media (max-width: 560px) {

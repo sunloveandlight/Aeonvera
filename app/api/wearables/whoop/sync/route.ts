@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json().catch(() => ({}));
     const accessToken = await getValidWearableAccessToken({
+      healthProfileContext,
       supabase: admin,
       userId: user.id,
       provider: "whoop",
@@ -80,11 +81,19 @@ export async function POST(request: NextRequest) {
       healthProfileContext,
     });
 
-    await admin
+    const connectionUpdate = admin
       .from("wearable_connections")
       .update({ last_synced_at: new Date().toISOString(), updated_at: new Date().toISOString() })
       .eq("user_id", user.id)
       .eq("provider", "whoop");
+
+    if (healthProfileContext.healthProfileId) {
+      connectionUpdate.eq("health_profile_id", healthProfileContext.healthProfileId);
+    } else {
+      connectionUpdate.is("health_profile_id", null);
+    }
+
+    await connectionUpdate;
 
     return NextResponse.json({
       success: true,

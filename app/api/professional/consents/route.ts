@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       !sourceDocumentUrl
     ) {
       return jsonError(
-        "Sensitive treatment or contract access requires a source document URL or hash."
+        "Sensitive professional access requires a source document URL or hash unless it is granted in-app by the member."
       );
     }
 

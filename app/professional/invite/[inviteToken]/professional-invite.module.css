@@ -112,6 +112,36 @@
   padding: 12px 14px;
 }
 
+.loadingBars {
+  display: grid;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.loadingBars span {
+  animation: invitePulse 1.25s ease-in-out infinite;
+  background: linear-gradient(90deg, rgba(196, 169, 105, 0.12), rgba(196, 169, 105, 0.24), rgba(196, 169, 105, 0.12));
+  border-radius: 8px;
+  height: 12px;
+}
+
+.loadingBars span:nth-child(2) {
+  animation-delay: 0.12s;
+  width: 82%;
+}
+
+.loadingBars span:nth-child(3) {
+  animation-delay: 0.24s;
+  width: 58%;
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 .consentBox {
   border: 1px solid rgba(196, 169, 105, 0.22);
   border-radius: 8px;
@@ -206,6 +236,22 @@
   text-decoration: none;
 }
 
+.secondaryButton {
+  align-items: center;
+  background: var(--panel-2, #f6f2e8);
+  border: 1px solid var(--panel-border, rgba(0, 0, 0, 0.09));
+  border-radius: 8px;
+  color: var(--text-1, #1d1d1f);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+}
+
 :global(:root[data-theme="dark"]) .page {
   background:
     radial-gradient(circle at 18% 0%, rgba(196, 169, 105, 0.1), transparent 28rem),
@@ -238,9 +284,26 @@
     rgb(64, 49, 20);
 }
 
+:global(:root[data-theme="dark"]) .secondaryButton {
+  background: rgba(255, 255, 255, 0.052);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-1);
+}
+
 .primaryButton:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+@keyframes invitePulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 560px) {

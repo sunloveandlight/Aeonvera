@@ -527,15 +527,15 @@ export default function ProfessionalDashboardClient() {
                           key={profile.id}
                           onClick={() => setSelectedProfileId(profile.id)}
                         >
-                          <td>{profile.displayName}</td>
-                          <td>{titleize(profile.relationship)}</td>
-                          <td><StatusPill label={titleize(profile.status)} tone="ok" /></td>
-                          <td>{consents.filter((item) => item.healthProfileId === profile.id && !item.revokedAt).length}</td>
+                          <td data-label="Name">{profile.displayName}</td>
+                          <td data-label="Relationship">{titleize(profile.relationship)}</td>
+                          <td data-label="Status"><StatusPill label={titleize(profile.status)} tone="ok" /></td>
+                          <td data-label="Consents">{consents.filter((item) => item.healthProfileId === profile.id && !item.revokedAt).length}</td>
                         </tr>
                       ))}
                       {!visibleRoster.length ? (
                         <tr>
-                          <td colSpan={4}>No roster profiles yet.</td>
+                          <td colSpan={4} data-label="Roster">No roster profiles yet.</td>
                         </tr>
                       ) : null}
                     </tbody>

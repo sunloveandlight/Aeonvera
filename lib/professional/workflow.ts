@@ -260,10 +260,11 @@ export function requiresDocumentedProfessionalBasis({
   dataClasses: readonly ProfessionalDataClass[];
   legalBasis: string;
 }) {
-  return (
-    (legalBasis === "treatment" || legalBasis === "contract") &&
-    dataClasses.some((dataClass) => DOCUMENTED_BASIS_DATA_CLASSES.has(dataClass))
-  );
+  if (!dataClasses.some((dataClass) => DOCUMENTED_BASIS_DATA_CLASSES.has(dataClass))) {
+    return false;
+  }
+
+  return legalBasis !== "patient_consent" && legalBasis !== "guardian_consent";
 }
 
 export async function requireOrganizationAdmin({
