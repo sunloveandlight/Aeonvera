@@ -418,17 +418,6 @@ export async function createRosterProfile({
 
   if (error) throw error;
 
-  await supabase.from("health_profile_access").upsert(
-    {
-      health_profile_id: profile.id,
-      role: "owner",
-      status: "active",
-      user_id: userId,
-      workspace_id: workspaceId,
-    },
-    { onConflict: "health_profile_id,user_id" }
-  );
-
   return { error: null, profile };
 }
 
@@ -780,19 +769,6 @@ export async function acceptProfessionalInvitation({
       userId,
       workspaceId: invitation.workspace_id,
     });
-    const { error: accessError } = await supabase.from("health_profile_access").upsert(
-      {
-        health_profile_id: invitation.health_profile_id,
-        role: "viewer",
-        status: "active",
-        updated_at: timestamp,
-        user_id: userId,
-        workspace_id: invitation.workspace_id,
-      },
-      { onConflict: "health_profile_id,user_id" }
-    );
-
-    if (accessError) throw accessError;
 
     const requestedClasses = normalizeProfessionalDataClasses(consentDataClasses || []);
     const invitationClasses = normalizeProfessionalDataClasses(invitation.data_classes || []);

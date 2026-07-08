@@ -95,11 +95,17 @@ export async function buildPhysicianExportBundle({
     clinicalInsights,
   ] = await Promise.all([
     safeQuery(() =>
-      admin
-        .from("profiles")
-        .select("display_name, plan, subscription_status, biological_age, created_at")
-        .eq("user_id", userId)
-        .maybeSingle()
+      healthProfileContext.healthProfileId
+        ? admin
+            .from("health_profiles")
+            .select("display_name, relationship, created_at")
+            .eq("id", healthProfileContext.healthProfileId)
+            .maybeSingle()
+        : admin
+            .from("profiles")
+            .select("display_name, plan, subscription_status, biological_age, created_at")
+            .eq("user_id", userId)
+            .maybeSingle()
     ),
     safeQuery(() =>
         admin
@@ -200,7 +206,9 @@ export async function buildPhysicianExportBundle({
     includedSections,
     patient: {
       email: include.has("snapshot") ? email || null : null,
-      profile: include.has("snapshot") ? asRecord(profile.data) : null,
+      profile: include.has("snapshot")
+        ? withProfileBiologicalAge(asRecord(profile.data), bundleSections.biologicalAgeHistory)
+        : null,
     },
     ...bundleSections,
   };
@@ -238,6 +246,15 @@ function asRows(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value)
     ? value.filter((row) => row && typeof row === "object") as Record<string, unknown>[]
     : [];
+}
+
+function withProfileBiologicalAge(
+  profile: Record<string, unknown> | null,
+  biologicalAgeHistory: Record<string, unknown>[]
+) {
+  if (!profile) return null;
+  const latestBio = numberOrNull(biologicalAgeHistory[0]?.biological_age);
+  return latestBio == null ? profile : { ...profile, biological_age: latestBio };
 }
 
 function buildClinicalPacket({

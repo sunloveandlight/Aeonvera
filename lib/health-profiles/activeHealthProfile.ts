@@ -88,9 +88,10 @@ export async function resolveActiveHealthProfileContext({
 }: ResolveActiveHealthProfileOptions): Promise<ActiveHealthProfileContext> {
   const baseQuery = supabase
     .from("health_profile_access")
-    .select("workspace_id, health_profile_id, role")
+    .select("workspace_id, health_profile_id, role, workspaces!inner(workspace_type)")
     .eq("user_id", loginUserId)
-    .eq("status", "active");
+    .eq("status", "active")
+    .eq("workspaces.workspace_type", "personal");
 
   const query = requestedHealthProfileId
     ? baseQuery.eq("health_profile_id", requestedHealthProfileId)

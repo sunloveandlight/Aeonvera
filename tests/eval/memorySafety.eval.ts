@@ -21,6 +21,8 @@ const wearableOAuthSource = readFileSync("lib/wearables/oauth.ts", "utf8");
 const ouraSyncSource = readFileSync("app/api/wearables/oura/sync/route.ts", "utf8");
 const whoopSyncSource = readFileSync("app/api/wearables/whoop/sync/route.ts", "utf8");
 const proxySource = readFileSync("proxy.ts", "utf8");
+const activeHealthProfileSource = readFileSync("lib/health-profiles/activeHealthProfile.ts", "utf8");
+const physicianExportBundleSource = readFileSync("lib/digital-twin/physicianExportBundle.ts", "utf8");
 const profileWriteRoutes = [
   "app/api/agent/activity/route.ts",
   "app/api/autopilot/daily-plan/route.ts",
@@ -44,6 +46,10 @@ const memoryMigration = readFileSync(
 );
 const phiContractMigration = readFileSync(
   "supabase/migrations/20260708200414_profile_scoped_wearables_sensitive_phi_contract.sql",
+  "utf8"
+);
+const professionalRosterIsolationMigration = readFileSync(
+  "supabase/migrations/20260708204925_isolate_professional_roster_profiles_from_consumer_access.sql",
   "utf8"
 );
 
@@ -183,4 +189,38 @@ test("recent/listed semantic memories exclude expired rows", () => {
   const recentBody = functionBody(semanticMemorySource, "listRecentSemanticMemories");
   assert.match(recentBody, /expires_at\.is\.null,expires_at\.gt\./);
   assert.match(semanticMemoryRouteSource, /expires_at\.is\.null,expires_at\.gt\./);
+});
+
+test("consumer active profile resolution only accepts personal workspace profiles", () => {
+  const body = functionBody(activeHealthProfileSource, "resolveActiveHealthProfileContext");
+  assert.match(body, /workspaces!inner\(workspace_type\)/);
+  assert.match(body, /\.eq\("workspaces\.workspace_type", "personal"\)/);
+});
+
+test("professional roster profiles do not create consumer health-profile access rows", () => {
+  const createBody = functionBody(professionalWorkflowSource, "createRosterProfile");
+  const acceptBody = functionBody(professionalWorkflowSource, "acceptProfessionalInvitation");
+  assert.doesNotMatch(createBody, /\.from\("health_profile_access"\)/);
+  assert.doesNotMatch(acceptBody, /\.from\("health_profile_access"\)/);
+});
+
+test("database rejects organization roster profiles as consumer active profiles", () => {
+  assert.match(professionalRosterIsolationMigration, /delete from public\.health_profile_access/);
+  assert.match(professionalRosterIsolationMigration, /workspace\.workspace_type = 'organization'/);
+  assert.match(professionalRosterIsolationMigration, /reject_organization_health_profile_access/);
+  assert.match(
+    professionalRosterIsolationMigration,
+    /before insert or update of workspace_id, health_profile_id, user_id, status\s+on public\.health_profile_access/s
+  );
+  assert.match(
+    professionalRosterIsolationMigration,
+    /join public\.workspaces workspace\s+on workspace\.id = profile\.workspace_id/s
+  );
+});
+
+test("physician export profile metadata follows the selected health profile", () => {
+  assert.match(physicianExportBundleSource, /\.from\("health_profiles"\)/);
+  assert.match(physicianExportBundleSource, /\.eq\("id", healthProfileContext\.healthProfileId\)/);
+  assert.match(physicianExportBundleSource, /withProfileBiologicalAge/);
+  assert.match(physicianExportBundleSource, /biologicalAgeHistory\[0\]\?\.biological_age/);
 });
