@@ -150,7 +150,7 @@ test("professional workspace pages are protected while invite links stay public"
   assert.match(proxySource, /pathname\.startsWith\("\/professional"\)/);
   assert.match(proxySource, /"\/professional\/:path\*"/);
   assert.ok(
-    proxySource.indexOf("if (isWaitlistPage || isProfessionalInvitePage || isResourcePage)") <
+    proxySource.indexOf("if (isProfessionalInvitePage || isResourcePage)") <
       proxySource.indexOf('pathname.startsWith("/professional")'),
     "professional invite bypass should run before protected professional route matching"
   );

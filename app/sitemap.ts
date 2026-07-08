@@ -23,17 +23,6 @@ const ROUTES = [
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const resourceRoutes = [
-    "/resources",
-    "/resources/articles",
-    "/resources/guides",
-    "/resources/biomarkers",
-  ].map((route) => ({
-    url: `${BASE_URL}${route}`,
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
-  }));
-
   const categoryRoutes = resourceCategories.map((category) => ({
     url: `${BASE_URL}/resources/categories/${category.slug}`,
     changeFrequency: "monthly" as const,
@@ -54,20 +43,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly" as const,
       priority: 0.75,
     }));
-
-  if (process.env.AEONVERA_WAITLIST_MODE === "1") {
-    return [
-      {
-        url: `${BASE_URL}/waitlist`,
-        changeFrequency: "weekly",
-        priority: 1,
-      },
-      ...resourceRoutes,
-      ...categoryRoutes,
-      ...articleRoutes,
-      ...biomarkerRoutes,
-    ];
-  }
 
   const staticRoutes = ROUTES.map((route) => ({
     url: `${BASE_URL}${route}`,

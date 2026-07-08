@@ -90,26 +90,14 @@ test.describe("high-impact launch fixes", () => {
     }
   });
 
-  test("waitlist mode still exposes public resource pages", async () => {
-    const originalWaitlistMode = process.env.AEONVERA_WAITLIST_MODE;
+  test("marketing pages are public at launch", async () => {
+    const pricingResponse = await proxy(new NextRequest("https://example.test/pricing"));
+    expect(pricingResponse.status).toBe(200);
+    expect(pricingResponse.headers.get("location")).toBeNull();
 
-    try {
-      process.env.AEONVERA_WAITLIST_MODE = "1";
-
-      const resourcesResponse = await proxy(new NextRequest("https://example.test/resources/biomarkers"));
-      expect(resourcesResponse.status).toBe(200);
-      expect(resourcesResponse.headers.get("location")).toBeNull();
-
-      const marketingResponse = await proxy(new NextRequest("https://example.test/pricing"));
-      expect(marketingResponse.status).toBe(307);
-      expect(marketingResponse.headers.get("location")).toBe("https://example.test/waitlist");
-    } finally {
-      if (originalWaitlistMode) {
-        process.env.AEONVERA_WAITLIST_MODE = originalWaitlistMode;
-      } else {
-        delete process.env.AEONVERA_WAITLIST_MODE;
-      }
-    }
+    const resourcesResponse = await proxy(new NextRequest("https://example.test/resources/biomarkers"));
+    expect(resourcesResponse.status).toBe(200);
+    expect(resourcesResponse.headers.get("location")).toBeNull();
   });
 
   test("parses biomarker values after label digits and normalizes clinical units", () => {

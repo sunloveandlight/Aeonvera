@@ -1,22 +1,10 @@
 # Aeonvera Launch SEO Checklist
 
-Launch date: August 19, 2026
-
-## Prelaunch
-
-- Keep `AEONVERA_WAITLIST_MODE=1` in production.
-- Confirm `/waitlist` and the public resource library are the only public entries in the sitemap while waitlist mode is enabled.
-- Confirm waitlist page social links:
-  - Facebook: `https://www.facebook.com/profile.php?id=61590871547912`
-  - Instagram: `https://www.instagram.com/aeonvera.ai/`
-  - X: `https://x.com/aeonvera`
-  - YouTube: `https://www.youtube.com/@Aeonvera`
-- Confirm Organization JSON-LD `sameAs` matches the official social URLs.
-- Review all health content before public exposure, especially pages marked `Clinical review planned`.
+Launch date: July 8, 2026
 
 ## Launch Day
 
-- Set `AEONVERA_WAITLIST_MODE=0` or remove it from production.
+- Confirm the waitlist/email-capture surface is removed from app routes, API routes, sitemap, robots, footer links, and production environment variables.
 - Verify `/` is the public homepage.
 - Verify `/resources` is crawlable and is the main public share link for the Longevity Library.
 - Verify `/sitemap.xml` includes:
@@ -27,9 +15,6 @@ Launch date: August 19, 2026
   - all published article URLs
   - all published biomarker guide URLs
 - Verify `/robots.txt` allows public marketing and resources pages while blocking app/auth/API routes.
-- Decide post-launch `/waitlist` behavior:
-  - preferred: 301 redirect `/waitlist` to `/`
-  - alternate: keep `/waitlist` live with `noindex`
 - Submit sitemap in Google Search Console.
 - Test social previews for `/`, `/resources`, and the two flagship articles.
 

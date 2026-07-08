@@ -27,10 +27,10 @@ const FOOTER_GROUPS = [
   {
     title: "Start",
     links: [
-      { href: "/waitlist", label: "Early access" },
+      { href: "/login?mode=signup", label: "Create account" },
       { href: "/pricing", label: "Plans" },
       { href: "/demo", label: "Demo profile" },
-      { href: "/login?mode=signup", label: "Create account" },
+      { href: "/professional", label: "For clinics" },
     ],
   },
   {

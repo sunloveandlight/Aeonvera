@@ -20,9 +20,8 @@ export default function AppShell({ children }: AppShellProps) {
     process.env.NODE_ENV !== "production" &&
     process.env.NEXT_PUBLIC_SHOW_DESIGN_TOOLS === "true";
   useDesignAudit(designToolsEnabled && enabled);
-  const isWaitlistPage = pathname === "/waitlist";
   const isProfessionalPage = pathname?.startsWith("/professional");
-  const hideSiteChrome = isWaitlistPage || isProfessionalPage;
+  const hideSiteChrome = isProfessionalPage;
 
   return (
     <main
