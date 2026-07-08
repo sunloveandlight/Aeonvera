@@ -70,14 +70,18 @@ async function syncWearables(request: NextRequest) {
           continue;
         }
 
+        // Resolve the connection's OWN profile first, then fetch the token scoped to
+        // that same profile. Otherwise profile-scoped connections never match the
+        // (user_id, health_profile_id, provider) lookup and silently never sync.
+        const healthProfileContext = resolveConnectionProfileContext(connection);
         const accessToken = await getValidWearableAccessToken({
+          healthProfileContext,
           supabase: admin,
           userId: connection.user_id,
           provider: connection.provider,
         });
 
         if (!accessToken) continue;
-        const healthProfileContext = resolveConnectionProfileContext(connection);
 
         const metrics =
           connection.provider === "oura"
@@ -92,7 +96,7 @@ async function syncWearables(request: NextRequest) {
           metrics,
         });
 
-        await admin
+        const syncedUpdate = admin
           .from("wearable_connections")
           .update({
             last_synced_at: new Date().toISOString(),
@@ -100,6 +104,12 @@ async function syncWearables(request: NextRequest) {
           })
           .eq("user_id", connection.user_id)
           .eq("provider", connection.provider);
+        if (connection.health_profile_id) {
+          syncedUpdate.eq("health_profile_id", connection.health_profile_id);
+        } else {
+          syncedUpdate.is("health_profile_id", null);
+        }
+        await syncedUpdate;
 
         results.push({
           provider: connection.provider,

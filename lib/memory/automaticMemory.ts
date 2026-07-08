@@ -237,6 +237,21 @@ function isSafeSubjectMemory(candidate: AutomaticMemoryCandidate) {
     return false;
   }
 
+  // Clinical facts must be UNAMBIGUOUSLY about the profile subject. Anything that
+  // references another person — even without a "my/our" possessive ("wife diagnosed
+  // with cancer", "daughter is pregnant", "he is on estrogen") — or a third-person
+  // pronoun is dropped rather than stored as the subject's own PHI. Default-drop the
+  // ambiguous case: over-blocking only skips an auto-memory; under-blocking leaks a
+  // third party's health data onto this profile.
+  if (candidate.sensitivity === "clinical") {
+    const relationNoun =
+      /\b(wife|husband|partner|spouse|child|kid|son|daughter|mother|mom|father|dad|parent|parents|client|patient|friend|brother|sister|sibling|grandmother|grandfather|grandparent|grandma|grandpa|aunt|uncle|cousin|colleague|co-?worker|boss|roommate|neighbou?r)\b/;
+    const thirdPersonPronoun = /\b(he|she|they|him|her|them)\b/;
+    if (relationNoun.test(text) || thirdPersonPronoun.test(text)) {
+      return false;
+    }
+  }
+
   return true;
 }
 

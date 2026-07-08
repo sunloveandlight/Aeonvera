@@ -224,3 +224,31 @@ test("physician export profile metadata follows the selected health profile", ()
   assert.match(physicianExportBundleSource, /withProfileBiologicalAge/);
   assert.match(physicianExportBundleSource, /biologicalAgeHistory\[0\]\?\.biological_age/);
 });
+
+test("wearable cron token lookup is scoped to the connection's own profile", () => {
+  const cron = readFileSync("app/api/cron/wearable-sync/route.ts", "utf8");
+  assert.match(cron, /getValidWearableAccessToken\(\{\s*healthProfileContext,/s);
+  assert.ok(
+    cron.indexOf("resolveConnectionProfileContext(connection)") <
+      cron.indexOf("getValidWearableAccessToken({"),
+    "the connection's own profile must be resolved before the token lookup"
+  );
+  assert.match(cron, /syncedUpdate\.eq\("health_profile_id", connection\.health_profile_id\)/);
+});
+
+test("automatic memory drops clinical facts that reference another person", () => {
+  const body = functionBody(automaticMemorySource, "isSafeSubjectMemory");
+  assert.match(body, /candidate\.sensitivity === "clinical"/);
+  assert.match(body, /relationNoun/);
+  assert.match(body, /thirdPersonPronoun/);
+});
+
+test("documented-consent constraint covers all non-member-granted legal bases (incl. 'other')", () => {
+  const mig = readFileSync(
+    "supabase/migrations/20260708210000_documented_sensitive_consent_all_non_consent_bases.sql",
+    "utf8"
+  );
+  assert.match(mig, /legal_basis not in \('patient_consent', 'guardian_consent'\)/);
+  assert.match(mig, /labs_sensitive/);
+  assert.match(mig, /mental_health/);
+});
