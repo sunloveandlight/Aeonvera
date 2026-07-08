@@ -47,7 +47,10 @@ export default function RenewalImage({
         )}
       </div>
       {caption ? (
-        <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 via-black/20 to-transparent p-5 text-sm font-medium text-white">
+        <figcaption
+          className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent p-5 text-sm font-semibold"
+          style={{ color: "#fff", textShadow: "0 1px 12px rgba(0,0,0,0.65)" }}
+        >
           {caption}
         </figcaption>
       ) : null}

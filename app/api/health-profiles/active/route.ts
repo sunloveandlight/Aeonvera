@@ -33,10 +33,11 @@ export async function POST(request: NextRequest) {
     const admin = getSupabaseAdmin();
     const { data, error } = await admin
       .from("health_profile_access")
-      .select("health_profile_id")
+      .select("health_profile_id, workspaces!inner(workspace_type)")
       .eq("user_id", user.id)
       .eq("health_profile_id", profileId)
       .eq("status", "active")
+      .eq("workspaces.workspace_type", "personal")
       .maybeSingle<{ health_profile_id: string }>();
 
     if (error) throw error;

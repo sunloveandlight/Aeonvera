@@ -12,14 +12,19 @@ type Cookie = {
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  if (pathname === "/waitlist") {
+    return NextResponse.redirect(new URL("/", req.url), 308);
+  }
+
   const isProfessionalInvitePage = pathname.startsWith("/professional/invite/");
+  const isProfessionalLandingPage = pathname === "/professional";
   const isResourcePage = pathname === "/resources" || pathname.startsWith("/resources/");
 
   if (pathname.startsWith("/api")) {
     return NextResponse.next();
   }
 
-  if (isProfessionalInvitePage || isResourcePage) {
+  if (isProfessionalInvitePage || isProfessionalLandingPage || isResourcePage) {
     return NextResponse.next();
   }
 
@@ -66,7 +71,7 @@ export async function proxy(req: NextRequest) {
     pathname.startsWith("/optimization") ||
     pathname.startsWith("/physician-export") ||
     pathname.startsWith("/plan") ||
-    pathname.startsWith("/professional") ||
+    (pathname.startsWith("/professional") && !isProfessionalLandingPage) ||
     pathname.startsWith("/assessment") ||
     pathname.startsWith("/report") ||
     pathname.startsWith("/settings") ||

@@ -153,12 +153,13 @@ test("wearable OAuth credentials and sync updates are profile-scoped", () => {
 
 test("professional workspace pages are protected while invite links stay public", () => {
   assert.match(proxySource, /const isProfessionalInvitePage = pathname\.startsWith\("\/professional\/invite\/"\)/);
+  assert.match(proxySource, /const isProfessionalLandingPage = pathname === "\/professional"/);
   assert.match(proxySource, /pathname\.startsWith\("\/professional"\)/);
   assert.match(proxySource, /"\/professional\/:path\*"/);
   assert.ok(
-    proxySource.indexOf("if (isProfessionalInvitePage || isResourcePage)") <
+    proxySource.indexOf("if (isProfessionalInvitePage || isProfessionalLandingPage || isResourcePage)") <
       proxySource.indexOf('pathname.startsWith("/professional")'),
-    "professional invite bypass should run before protected professional route matching"
+    "professional invite and landing bypass should run before protected professional route matching"
   );
 });
 
