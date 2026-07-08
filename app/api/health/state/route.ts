@@ -8,7 +8,9 @@ import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAg
 import {
   frozenHealthProfilePayload,
   getHealthSubjectFilter,
+  healthProfileWriteAccessDeniedResponse,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
@@ -41,6 +43,13 @@ export async function POST(req: NextRequest) {
     });
     if (healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
+    if (!isCron) {
+      try {
+        requireProfileWriteAccess(healthProfileContext);
+      } catch {
+        return healthProfileWriteAccessDeniedResponse();
+      }
     }
     const healthFilter = getHealthSubjectFilter(healthProfileContext);
 

@@ -7,6 +7,7 @@ import PageContainer from "@/components/ui/PageContainer";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Spinner from "@/components/ui/Spinner";
+import NextBestAction from "@/components/ui/NextBestAction";
 import {
   applyHealthSubjectFilter,
   resolveActiveHealthProfileContext,
@@ -379,6 +380,12 @@ export default function ReportPage() {
   const displayName = resolveDisplayName(profile?.display_name);
   const primaryObjective = sentenceDisplay(report.primary_goal);
   const riskNarrative = buildRiskNarrative(report, assessment);
+  const reportNextAction = buildReportNextAction({
+    accuracyScore,
+    firstLoopAction: improvementLoop?.nextActions?.[0] || null,
+    hasSimulations: bioAgeSimulations.length > 0,
+    missingFields,
+  });
 
   return (
     <PageContainer>
@@ -438,6 +445,15 @@ export default function ReportPage() {
             </div>
           </div>
         </div>
+
+        <NextBestAction
+          title={reportNextAction.title}
+          body={reportNextAction.body}
+          actionLabel={reportNextAction.actionLabel}
+          href={reportNextAction.href}
+          secondaryHref="/data-sources"
+          secondaryLabel="Add data"
+        />
 
         {/* ═══════════════════════════════════════
             HERO METRICS
@@ -746,6 +762,52 @@ function normalizeStringList(value: unknown) {
   return Array.isArray(value)
     ? value.flatMap((item) => typeof item === "string" && item.trim() ? [item] : [])
     : [];
+}
+
+function buildReportNextAction({
+  accuracyScore,
+  firstLoopAction,
+  hasSimulations,
+  missingFields,
+}: {
+  accuracyScore: number;
+  firstLoopAction: ImprovementLoop["nextActions"][number] | null;
+  hasSimulations: boolean;
+  missingFields: string[];
+}) {
+  if (accuracyScore < 80 && missingFields.length > 0) {
+    return {
+      actionLabel: "Add missing data",
+      body: `Adding ${missingFields.slice(0, 3).join(", ").toLowerCase()} will make the report more precise and easier to act on.`,
+      href: "/data-sources",
+      title: "Improve this report first",
+    };
+  }
+
+  if (firstLoopAction) {
+    return {
+      actionLabel: "Open optimization",
+      body: firstLoopAction.reason,
+      href: "/optimization",
+      title: firstLoopAction.action,
+    };
+  }
+
+  if (hasSimulations) {
+    return {
+      actionLabel: "Compare levers",
+      body: "Your simulations are ready. Pick the lever with the biggest age impact and turn it into a simple weekly protocol.",
+      href: "/optimization",
+      title: "Choose the highest-impact lever",
+    };
+  }
+
+  return {
+    actionLabel: "Update assessment",
+    body: "A fresher assessment gives Aeonvera a clearer baseline before it recommends the next protocol.",
+    href: "/assessment",
+    title: "Refresh the baseline",
+  };
 }
 
 function BioAgeHistoryCard({

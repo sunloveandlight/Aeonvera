@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Sparkles } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState, { EmptyState } from "@/components/ui/AccessState";
+import NextBestAction from "@/components/ui/NextBestAction";
 import { supabase } from "@/lib/supabase/client";
 import { isUserAllowed, type Plan, type SubscriptionStatus } from "@/lib/auth/permissions";
 
@@ -509,6 +510,38 @@ export default function OptimizationPage() {
     });
   }
 
+  const optimizationNextAction = protocol
+    ? {
+        actionLabel: "Use Companion",
+        body: "The protocol is ready. Ask Aeonvera to turn the first step into a scheduled action with the right reminder cadence.",
+        href: "/companion",
+        title: "Make the protocol executable",
+      }
+    : simulatorProjection || futureSelf?.optimized
+    ? {
+        actionLabel: "Build protocol",
+        body: "You have a projection. Convert it into the smallest protocol that can actually fit into this week.",
+        onAction: () => void buildProtocolFromProjection(),
+        title: "Turn the projection into a protocol",
+      }
+    : answeredCount === QUESTIONS.length
+    ? {
+        actionLabel: "Build protocol",
+        body: "Your intake is complete. Aeonvera can now turn your answers into a focused optimization map.",
+        onAction: () => void buildOptimizationProtocol(),
+        title: "Generate the first protocol",
+      }
+    : {
+        actionLabel: answeredCount > 0 ? "Continue intake" : "Start intake",
+        body: "Answer the next visible question. The builder keeps the work to one decision at a time.",
+        onAction: () =>
+          document.getElementById("optimization-intake")?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          }),
+        title: "Answer one question",
+      };
+
   if (!authChecked) {
     return (
       <PageContainer>
@@ -593,7 +626,19 @@ export default function OptimizationPage() {
           </Link>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr]">
+        <NextBestAction
+          className="mb-6"
+          title={optimizationNextAction.title}
+          body={optimizationNextAction.body}
+          actionLabel={optimizationNextAction.actionLabel}
+          href={"href" in optimizationNextAction ? optimizationNextAction.href : undefined}
+          onAction={"onAction" in optimizationNextAction ? optimizationNextAction.onAction : undefined}
+          busy={generatingProtocol}
+          secondaryHref="/dashboard"
+          secondaryLabel="Dashboard"
+        />
+
+        <div id="optimization-intake" className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr]">
           <div className="hero-stage relative overflow-hidden rounded-xl border border-white/10 p-6 md:p-7">
             <div className="relative z-10 flex h-full min-h-[34rem] flex-col">
               <div className="flex items-center justify-between gap-4">

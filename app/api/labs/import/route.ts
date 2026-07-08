@@ -19,7 +19,9 @@ import { refreshBiologicalAgeForUser } from "@/lib/longevity/refreshBiologicalAg
 import { storeSemanticMemory } from "@/lib/memory/semanticMemory";
 import {
   getRequestedHealthProfileId,
+  healthProfileWriteAccessDeniedResponse,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
@@ -61,6 +63,11 @@ export async function POST(request: NextRequest) {
       loginUserId: user.id,
       requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
     const usage = await checkAndRecordUsage({
       healthProfileId: healthProfileContext.healthProfileId,
       metadata: { source: "lab_import" },
@@ -141,13 +148,20 @@ export async function POST(request: NextRequest) {
         ),
       ].join("\n"),
       healthProfileId: healthProfileContext.healthProfileId,
+      healthProfileContext,
       importance: 0.86,
       metadata: {
         biomarkerCount: biomarkers.length,
         source,
         storedBy: "lab_import",
       },
+      memoryKind: "fact",
       occurredAt: measuredAt,
+      provenance: {
+        actor: "user",
+        surface: "labs",
+        source: "lab_import",
+      },
       sourceType: "lab_import",
       supabase: admin,
       title: "Imported lab biomarkers",

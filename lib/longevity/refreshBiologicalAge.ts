@@ -126,6 +126,7 @@ async function buildWearableEnhancedInput({
     .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
     .in("metric", [
       "sleep_hours",
+      "resting_hr",
       "resting_heart_rate",
       "heart_rate_variability",
       "vo2max",
@@ -141,7 +142,7 @@ async function buildWearableEnhancedInput({
     ...input,
     ...labInput,
     sleep_hours: latest.sleep_hours ?? input.sleep_hours,
-    resting_hr: latest.resting_heart_rate ?? input.resting_hr,
+    resting_hr: latest.resting_hr ?? latest.resting_heart_rate ?? input.resting_hr,
     hrv: latest.heart_rate_variability ?? input.hrv,
     vo2_max: latest.vo2max ?? input.vo2_max,
   } satisfies AssessmentInput;

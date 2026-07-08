@@ -13,7 +13,9 @@ import {
   frozenHealthProfilePayload,
   getHealthSubjectFilter,
   getRequestedHealthProfileId,
+  healthProfileWriteAccessDeniedResponse,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
@@ -119,6 +121,11 @@ export async function POST(request: NextRequest) {
     });
     if (healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
     }
 
     const { data: assessment, error: assessmentError } = await supabase

@@ -13,6 +13,8 @@ import {
   frozenHealthProfilePayload,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
+  healthProfileWriteAccessDeniedResponse,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
@@ -95,6 +97,11 @@ export async function POST(request: NextRequest) {
     if (healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
     }
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
     const body = await readJsonBody(request);
     const scenarioIds = sanitizeScenarioIds(body?.scenarioIds);
     const futureSelf = safeRecord(body?.futureSelf);
@@ -169,10 +176,17 @@ export async function POST(request: NextRequest) {
         futureSelf.summary ? `Projection summary: ${futureSelf.summary}` : "",
       ].filter(Boolean).join("\n"),
       importance: 0.8,
+      healthProfileContext,
       metadata: {
         scenarioIds,
         isPublic,
         storedBy: "future_self_scenario",
+      },
+      memoryKind: "insight",
+      provenance: {
+        actor: "user",
+        surface: "future_self",
+        source: "scenario_save",
       },
       sourceId: typeof data === "object" && data && "id" in data ? String(data.id) : undefined,
       sourceType: "future_self_scenario",

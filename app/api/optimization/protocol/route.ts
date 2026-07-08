@@ -13,7 +13,9 @@ import {
 import {
   getRequestedHealthProfileId,
   getHealthSubjectFilter,
+  healthProfileWriteAccessDeniedResponse,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
@@ -117,6 +119,11 @@ export async function POST(request: NextRequest) {
       loginUserId: user.id,
       requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
     const healthSubjectFilter = getHealthSubjectFilter(healthProfileContext);
 
     const [

@@ -11,7 +11,9 @@ import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import {
   frozenHealthProfilePayload,
   getHealthSubjectFilter,
+  healthProfileWriteAccessDeniedResponse,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
@@ -195,6 +197,11 @@ export async function PATCH(request: NextRequest) {
     if (healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
     }
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
 
     const current = await getOrCreatePreferences(admin, user.id, healthProfileContext);
     const next = sanitizePreferences(user.id, { ...current, ...body });
@@ -254,6 +261,11 @@ export async function POST(request: NextRequest) {
     });
     if (healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
     }
     const healthFilter = getHealthSubjectFilter(healthProfileContext);
 

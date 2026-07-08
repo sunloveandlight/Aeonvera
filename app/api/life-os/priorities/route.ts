@@ -6,7 +6,9 @@ import {
   frozenHealthProfilePayload,
   getHealthSubjectFilter,
   getRequestedHealthProfileId,
+  healthProfileWriteAccessDeniedResponse,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
@@ -103,6 +105,11 @@ export async function POST(request: NextRequest) {
     if (auth.healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
     }
+    try {
+      requireProfileWriteAccess(auth.healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
 
     const body = await request.json().catch(() => ({}));
     const domain = sanitizeDomain(body?.domain);
@@ -162,6 +169,14 @@ export async function PATCH(request: NextRequest) {
 
     const auth = await requireLifeOsAccess(request);
     if (auth.response) return auth.response;
+    if (auth.healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
+    try {
+      requireProfileWriteAccess(auth.healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
 
     const body = await request.json().catch(() => ({}));
     const id = typeof body?.id === "string" ? body.id : "";

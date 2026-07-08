@@ -14,9 +14,12 @@ import {
   usageErrorResponse,
 } from "@/lib/usage/tierUsage";
 import {
+  frozenHealthProfilePayload,
   getRequestedHealthProfileId,
   getHealthSubjectFilter,
+  healthProfileWriteAccessDeniedResponse,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
@@ -108,6 +111,14 @@ export async function POST(request: NextRequest) {
       loginUserId: userId,
       requestedHealthProfileId: getRequestedHealthProfileId({ cookies: cookieStore }),
     });
+    if (healthProfileContext.isFrozen) {
+      return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
     const healthSubjectFilter = getHealthSubjectFilter(healthProfileContext);
 
     /**
@@ -136,32 +147,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: assessment } = await supabase
-      .from("longevity_assessments")
-      .select("*")
-      .eq(healthSubjectFilter.column, healthSubjectFilter.value)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    /**
-     * STEP 2 — HEALTH STATE
-     */
-    const { data: state } = await supabase
-      .from("health_states")
-      .select("*")
-      .eq(healthSubjectFilter.column, healthSubjectFilter.value)
-      .single();
-
-    /**
-     * STEP 3 — BEHAVIOR MEMORY
-     */
-    const { data: behaviorEvents } = await supabase
-      .from("behavior_events")
-      .select("*")
-      .eq(healthSubjectFilter.column, healthSubjectFilter.value)
-      .order("created_at", { ascending: false })
-      .limit(500);
+    const [
+      { data: assessment },
+      { data: state },
+      { data: behaviorEvents },
+      { data: conversationEvents },
+    ] = await Promise.all([
+      supabase
+        .from("longevity_assessments")
+        .select("*")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single(),
+      supabase
+        .from("health_states")
+        .select("*")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
+        .single(),
+      supabase
+        .from("behavior_events")
+        .select("*")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabase
+        .from("conversation_events")
+        .select("*")
+        .eq(healthSubjectFilter.column, healthSubjectFilter.value)
+        .order("timestamp", { ascending: true })
+        .limit(50),
+    ]);
 
     const adaptiveWeights = computeAdaptiveWeights(
       (behaviorEvents || []).map((e) => ({
@@ -172,16 +188,6 @@ export async function POST(request: NextRequest) {
         timestamp: e.created_at,
       }))
     );
-
-    /**
-     * STEP 4 — CONVERSATION MEMORY
-     */
-    const { data: conversationEvents } = await supabase
-      .from("conversation_events")
-      .select("*")
-      .eq(healthSubjectFilter.column, healthSubjectFilter.value)
-      .order("timestamp", { ascending: true })
-      .limit(50);
 
     const conversationMemory = buildConversationMemory(
       (conversationEvents || []).map((c) => ({

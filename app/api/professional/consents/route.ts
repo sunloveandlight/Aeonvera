@@ -10,6 +10,7 @@ import {
   createProfessionalConsent,
   isValidConsentValue,
   listProfessionalConsents,
+  requiresDocumentedProfessionalBasis,
   revokeProfessionalConsent,
   sanitizeConsentAllowedRole,
   sanitizeEmail,
@@ -87,6 +88,15 @@ export async function POST(request: NextRequest) {
       captureMethod === "in_app"
     ) {
       return jsonError("In-app patient consent must be granted by the invited member.");
+    }
+    if (
+      requiresDocumentedProfessionalBasis({ dataClasses, legalBasis }) &&
+      !sourceDocumentHash &&
+      !sourceDocumentUrl
+    ) {
+      return jsonError(
+        "Sensitive treatment or contract access requires a source document URL or hash."
+      );
     }
 
     const result = await createProfessionalConsent({

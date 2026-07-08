@@ -4,7 +4,9 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import {
   frozenHealthProfilePayload,
   getHealthSubjectFilter,
+  healthProfileWriteAccessDeniedResponse,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
@@ -104,6 +106,11 @@ export async function POST(request: NextRequest) {
     });
     if (healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
     }
     const { data, error } = await admin
       .from("command_orb_action_events")

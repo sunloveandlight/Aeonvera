@@ -6,7 +6,9 @@ import {
   frozenHealthProfilePayload,
   getRequestedHealthProfileId,
   getHealthSubjectFilter,
+  healthProfileWriteAccessDeniedResponse,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
@@ -116,6 +118,11 @@ export async function POST(request: NextRequest) {
     });
     if (healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
+    }
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
     }
     const sleepSchedule = await deriveQuietHours(admin, user.id, healthProfileContext);
     const nextPreferences: Preferences = {

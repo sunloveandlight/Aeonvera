@@ -7,6 +7,8 @@ import {
   frozenHealthProfilePayload,
   getHealthSubjectFilter,
   healthSubjectInsertFields,
+  healthProfileWriteAccessDeniedResponse,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
@@ -103,6 +105,11 @@ export async function POST(request: NextRequest) {
     if (healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
     }
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
 
     const payload = {
       ...healthSubjectInsertFields(healthProfileContext),
@@ -169,11 +176,18 @@ export async function POST(request: NextRequest) {
         payload.notes ? `Notes: ${payload.notes}` : "",
       ].filter(Boolean).join("\n"),
       healthProfileId: healthProfileContext.healthProfileId,
+      healthProfileContext,
       importance: outcome === "success" ? 0.74 : 0.82,
       metadata: {
         confidence: payload.confidence,
         outcome,
         storedBy: "digital_twin_outcome",
+      },
+      memoryKind: "episode",
+      provenance: {
+        actor: "user",
+        surface: "digital_twin",
+        source: "intervention_outcome",
       },
       sourceId: typeof data === "object" && data && "id" in data ? String(data.id) : undefined,
       sourceType: "digital_twin_outcome",

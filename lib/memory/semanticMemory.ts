@@ -1,5 +1,7 @@
 import OpenAI from "openai";
 import type { getSupabaseAdmin } from "@/lib/supabase/admin";
+import type { ActiveHealthProfileContext } from "@/lib/health-profiles/activeHealthProfile";
+import { requireProfileWriteAccess } from "@/lib/health-profiles/activeHealthProfile";
 
 type SupabaseAdmin = ReturnType<typeof getSupabaseAdmin>;
 
@@ -12,8 +14,14 @@ export type SemanticMemory = {
   metadata: Record<string, unknown>;
   importance: number;
   occurred_at: string | null;
+  memory_kind?: MemoryKind;
+  confidence?: number;
+  provenance?: Record<string, unknown>;
+  is_pinned?: boolean;
   similarity?: number;
 };
+
+export type MemoryKind = "fact" | "preference" | "episode" | "insight" | "biological_context";
 
 const EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small";
 let openaiClient: OpenAI | null | undefined;
@@ -78,10 +86,21 @@ export async function listRecentSemanticMemories({
   supabase: SupabaseAdmin;
   userId: string;
 }): Promise<SemanticMemory[]> {
-  const { data, error } = await supabase
+  const query = supabase
     .from("semantic_memories")
-    .select("id, source_type, source_id, title, content, metadata, importance, occurred_at")
+    .select(
+      "id, source_type, source_id, title, content, metadata, importance, occurred_at, memory_kind, confidence, provenance, is_pinned"
+    )
     .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
+    .is("superseded_at", null)
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
+
+  if (!healthProfileId) {
+    query.is("health_profile_id", null);
+  }
+
+  const { data, error } = await query
+    .order("is_pinned", { ascending: false })
     .order("importance", { ascending: false })
     .order("occurred_at", { ascending: false, nullsFirst: false })
     .limit(Math.min(Math.max(limit, 1), 24));
@@ -98,20 +117,32 @@ export async function listRecentSemanticMemories({
 export async function storeSemanticMemory({
   content,
   healthProfileId,
+  confidence = 0.7,
+  expiresAt,
+  isPinned = false,
   importance = 0.55,
+  memoryKind = "episode",
   metadata = {},
   occurredAt,
+  provenance = {},
   sourceId,
   sourceType,
   supabase,
   title,
   userId,
+  healthProfileContext,
 }: {
   content: string;
   healthProfileId?: string | null;
+  healthProfileContext?: ActiveHealthProfileContext;
+  confidence?: number;
+  expiresAt?: string | null;
+  isPinned?: boolean;
   importance?: number;
+  memoryKind?: MemoryKind;
   metadata?: Record<string, unknown>;
   occurredAt?: string;
+  provenance?: Record<string, unknown>;
   sourceId?: string;
   sourceType: string;
   supabase: SupabaseAdmin;
@@ -120,19 +151,25 @@ export async function storeSemanticMemory({
 }) {
   const normalized = content.trim().slice(0, 6000);
   if (!normalized) return;
+  if (!canStoreForSubject({ healthProfileContext, healthProfileId, sourceType })) return;
 
   // Dedup before embedding so unchanged content never burns an embedding call.
   // A (source_type, source_id) pair is treated as a stable key and updated in place;
   // otherwise an identical (source_type, content) row is skipped entirely.
   try {
     if (sourceId) {
-      const { data: existing, error: lookupError } = await supabase
+      const lookupQuery = supabase
         .from("semantic_memories")
         .select("id, content")
         .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
         .eq("source_type", sourceType)
         .eq("source_id", sourceId)
-        .maybeSingle();
+        .is("superseded_at", null);
+      if (!healthProfileId) {
+        lookupQuery.is("health_profile_id", null);
+      }
+
+      const { data: existing, error: lookupError } = await lookupQuery.maybeSingle();
       if (lookupError && isSemanticMemoryMissing(lookupError)) return;
       if (existing) {
         if (existing.content === normalized) return;
@@ -142,10 +179,15 @@ export async function storeSemanticMemory({
           .from("semantic_memories")
           .update({
             content: normalized,
+            confidence: clampUnit(confidence, 0.7),
             embedding: refreshed,
+            expires_at: expiresAt || null,
             importance: clampImportance(importance),
+            is_pinned: isPinned,
+            memory_kind: memoryKind,
             metadata,
             occurred_at: occurredAt || new Date().toISOString(),
+            provenance,
             title: title?.trim().slice(0, 180) || null,
             updated_at: new Date().toISOString(),
           })
@@ -153,14 +195,19 @@ export async function storeSemanticMemory({
         return;
       }
     } else {
-      const { data: dupe, error: dupeError } = await supabase
+      const dupeQuery = supabase
         .from("semantic_memories")
         .select("id")
         .eq(healthProfileId ? "health_profile_id" : "user_id", healthProfileId || userId)
         .eq("source_type", sourceType)
         .eq("content", normalized)
-        .limit(1)
-        .maybeSingle();
+        .is("superseded_at", null)
+        .limit(1);
+      if (!healthProfileId) {
+        dupeQuery.is("health_profile_id", null);
+      }
+
+      const { data: dupe, error: dupeError } = await dupeQuery.maybeSingle();
       if (dupeError && isSemanticMemoryMissing(dupeError)) return;
       if (dupe) return;
     }
@@ -173,11 +220,16 @@ export async function storeSemanticMemory({
 
   const { error } = await supabase.from("semantic_memories").insert({
     content: normalized,
+    confidence: clampUnit(confidence, 0.7),
     embedding,
+    expires_at: expiresAt || null,
     ...(healthProfileId ? { health_profile_id: healthProfileId } : {}),
     importance: clampImportance(importance),
+    is_pinned: isPinned,
+    memory_kind: memoryKind,
     metadata,
     occurred_at: occurredAt || new Date().toISOString(),
+    provenance,
     source_id: sourceId || null,
     source_type: sourceType,
     title: title?.trim().slice(0, 180) || null,
@@ -191,27 +243,87 @@ export async function storeSemanticMemory({
     return;
   }
 
-  await enforceMemoryCap(supabase, userId);
+  await enforceMemoryCap(supabase, { healthProfileId, userId });
 }
 
-// Keep per-user memory bounded: drop the least-important / oldest rows past the cap.
+function canStoreForSubject({
+  healthProfileContext,
+  healthProfileId,
+  sourceType,
+}: {
+  healthProfileContext?: ActiveHealthProfileContext;
+  healthProfileId?: string | null;
+  sourceType: string;
+}) {
+  if (!healthProfileId) return true;
+
+  if (!healthProfileContext) {
+    console.error(
+      `[Semantic Memory Store Blocked] ${sourceType} attempted a profile-scoped write without write context.`
+    );
+    return false;
+  }
+
+  if (healthProfileContext.healthProfileId !== healthProfileId) {
+    console.error(
+      `[Semantic Memory Store Blocked] ${sourceType} attempted to write outside the active health profile.`
+    );
+    return false;
+  }
+
+  try {
+    requireProfileWriteAccess(healthProfileContext);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Keep memory bounded per subject. A caregiver with many profiles should never
+// evict one person's context because another profile is chatty.
 const MEMORY_CAP = 800;
 
-async function enforceMemoryCap(supabase: SupabaseAdmin, userId: string) {
+async function enforceMemoryCap(
+  supabase: SupabaseAdmin,
+  {
+    healthProfileId,
+    userId,
+  }: {
+    healthProfileId?: string | null;
+    userId: string;
+  }
+) {
   try {
-    const { count, error } = await supabase
+    const subjectColumn = healthProfileId ? "health_profile_id" : "user_id";
+    const subjectValue = healthProfileId || userId;
+
+    const countQuery = supabase
       .from("semantic_memories")
       .select("id", { count: "exact", head: true })
-      .eq("user_id", userId);
-    if (error || !count || count <= MEMORY_CAP) return;
+      .eq(subjectColumn, subjectValue)
+      .is("superseded_at", null)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
+    if (!healthProfileId) {
+      countQuery.is("health_profile_id", null);
+    }
 
-    const { data: stale } = await supabase
+    const { count: subjectCount, error: subjectCountError } = await countQuery;
+    if (subjectCountError || !subjectCount || subjectCount <= MEMORY_CAP) return;
+
+    const staleQuery = supabase
       .from("semantic_memories")
       .select("id")
-      .eq("user_id", userId)
+      .eq(subjectColumn, subjectValue)
+      .is("superseded_at", null)
+      .eq("is_pinned", false)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
       .order("importance", { ascending: true })
-      .order("created_at", { ascending: true })
-      .limit(count - MEMORY_CAP);
+      .order("created_at", { ascending: true });
+    if (!healthProfileId) {
+      staleQuery.is("health_profile_id", null);
+    }
+
+    const { data: stale } = await staleQuery.limit(subjectCount - MEMORY_CAP);
 
     const ids = (stale || []).map((row) => row.id);
     if (ids.length) {
@@ -244,6 +356,10 @@ async function embedText(input: string) {
 
 function clampImportance(value: number) {
   return Math.min(1, Math.max(0, Number.isFinite(value) ? value : 0.5));
+}
+
+function clampUnit(value: number, fallback: number) {
+  return Math.min(1, Math.max(0, Number.isFinite(value) ? value : fallback));
 }
 
 function isSemanticMemoryMissing(error: { code?: string; message?: string }) {

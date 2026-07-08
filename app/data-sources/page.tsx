@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState, { EmptyState } from "@/components/ui/AccessState";
+import NextBestAction from "@/components/ui/NextBestAction";
 import {
   buildDataSourceIntelligence,
   formatFreshness,
@@ -181,6 +182,7 @@ export default function DataSourcesPage() {
     labRows,
     wearableRows,
   });
+  const topSourcePrompt = sourceIntelligence.prompts[0];
 
   async function refreshSources() {
     setLoading(true);
@@ -424,6 +426,16 @@ export default function DataSourcesPage() {
           <SignalMetric label="Lab Markers" value={labRows.length.toString()} detail={formatFreshness(latestLabAt)} />
           <SignalMetric label="Health State" value={healthState?.updated_at ? "Live" : "Building"} detail={formatFreshness(healthState?.updated_at)} />
         </section>
+
+        <NextBestAction
+          className="mt-6"
+          title={topSourcePrompt?.title || "Keep your signal current"}
+          body={topSourcePrompt?.body || sourceIntelligence.nextBestAction}
+          actionLabel={topSourcePrompt?.actionLabel || "Open dashboard"}
+          href={topSourcePrompt?.href || "/dashboard"}
+          secondaryLabel="Refresh"
+          secondaryOnAction={() => void refreshSources()}
+        />
 
         <SourceIntelligencePanel intelligence={sourceIntelligence} />
 

@@ -3,10 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { ACTIVE_HEALTH_PROFILE_COOKIE } from "@/lib/health-profiles/activeHealthProfile";
 import { isSubscriptionValid, type SubscriptionStatus } from "@/lib/auth/permissions";
-import {
-  getWorkspaceProfileEntitlements,
-  isHealthProfileFrozen,
-} from "@/lib/health-profiles/profileEntitlements";
+import { isHealthProfileFrozen } from "@/lib/health-profiles/profileEntitlements";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
 
 type AccessRow = {
@@ -24,6 +21,11 @@ type HealthProfileRow = {
   status: string | null;
   created_at: string | null;
   updated_at: string | null;
+};
+
+type WorkspaceLimitRow = {
+  id: string;
+  max_health_profiles: number | null;
 };
 
 const RELATIONSHIPS = new Set([
@@ -258,35 +260,57 @@ async function listProfiles(
   if (profileError) throw profileError;
 
   const accessByProfile = new Map(accessRows.map((row) => [row.health_profile_id, row]));
-  const entitlementByWorkspace = new Map<
-    string,
-    Awaited<ReturnType<typeof getWorkspaceProfileEntitlements>>
-  >();
-
-  for (const row of accessRows) {
-    if (entitlementByWorkspace.has(row.workspace_id)) continue;
-    entitlementByWorkspace.set(
-      row.workspace_id,
-      await getWorkspaceProfileEntitlements({
-        supabase: admin,
-        workspaceId: row.workspace_id,
-      })
-    );
-  }
+  const writableProfileIds = await getWritableProfileIdsByWorkspace(admin, profiles || []);
 
   return (profiles || [])
     .map((profile) => {
       const access = accessByProfile.get(profile.id);
-      const entitlements = access?.workspace_id
-        ? entitlementByWorkspace.get(access.workspace_id)
-        : null;
       return formatProfile(
         profile,
         access,
-        entitlements ? !entitlements.writableProfileIds.has(profile.id) : false
+        !writableProfileIds.has(profile.id)
       );
     })
     .sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary) || a.createdAt.localeCompare(b.createdAt));
+}
+
+async function getWritableProfileIdsByWorkspace(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  profiles: HealthProfileRow[]
+) {
+  const writableProfileIds = new Set<string>();
+  const workspaceIds = Array.from(new Set(profiles.map((profile) => profile.workspace_id)));
+  if (!workspaceIds.length) return writableProfileIds;
+
+  const { data: workspaces, error } = await admin
+    .from("workspaces")
+    .select("id,max_health_profiles")
+    .in("id", workspaceIds)
+    .returns<WorkspaceLimitRow[]>();
+
+  if (error) throw error;
+
+  const maxByWorkspace = new Map(
+    (workspaces || []).map((workspace) => [
+      workspace.id,
+      Math.max(Number(workspace.max_health_profiles) || 1, 1),
+    ])
+  );
+
+  for (const workspaceId of workspaceIds) {
+    const maxHealthProfiles = maxByWorkspace.get(workspaceId) || 1;
+    profiles
+      .filter((profile) => profile.workspace_id === workspaceId)
+      .sort((a, b) => {
+        const primaryDelta = Number(Boolean(b.is_primary)) - Number(Boolean(a.is_primary));
+        if (primaryDelta !== 0) return primaryDelta;
+        return String(a.created_at || "").localeCompare(String(b.created_at || ""));
+      })
+      .slice(0, maxHealthProfiles)
+      .forEach((profile) => writableProfileIds.add(profile.id));
+  }
+
+  return writableProfileIds;
 }
 
 async function getManagedWorkspace(

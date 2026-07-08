@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Brain, Clock, MessageCircle, Target, Trash2 } from "lucide-react";
 import PageContainer from "@/components/ui/PageContainer";
 import AccessState, { EmptyState } from "@/components/ui/AccessState";
+import NextBestAction from "@/components/ui/NextBestAction";
 import { supabase } from "@/lib/supabase/client";
 
 type CoachMemory = {
@@ -37,6 +38,9 @@ type SemanticMemory = {
   title: string | null;
   content: string;
   importance: number | string;
+  memory_kind?: string | null;
+  confidence?: number | string | null;
+  is_pinned?: boolean | null;
   occurred_at: string | null;
   created_at: string;
 };
@@ -69,16 +73,12 @@ export default function MemoryPage() {
       const [memoryResponse, preferencesResponse, semanticMemoryResponse] = await Promise.all([
         fetch("/api/coach/memory", { credentials: "include" }),
         fetch("/api/agent/preferences", { credentials: "include" }),
-        supabase
-          .from("semantic_memories")
-          .select("id, source_type, title, content, importance, occurred_at, created_at")
-          .order("importance", { ascending: false })
-          .order("occurred_at", { ascending: false, nullsFirst: false })
-          .limit(12),
+        fetch("/api/memory/semantic?limit=12", { credentials: "include" }),
       ]);
-      const [memoryData, preferencesData] = await Promise.all([
+      const [memoryData, preferencesData, semanticMemoryData] = await Promise.all([
         memoryResponse.json().catch(() => null),
         preferencesResponse.json().catch(() => null),
+        semanticMemoryResponse.json().catch(() => null),
       ]);
 
       if (cancelled) return;
@@ -88,8 +88,8 @@ export default function MemoryPage() {
       setMemory(memoryResponse.ok ? memoryData?.memory || null : null);
       setPreferences(preferencesResponse.ok ? preferencesData?.preferences || [] : []);
       setSemanticMemories(
-        !semanticMemoryResponse.error && Array.isArray(semanticMemoryResponse.data)
-          ? semanticMemoryResponse.data as SemanticMemory[]
+        semanticMemoryResponse.ok && Array.isArray(semanticMemoryData?.memories)
+          ? semanticMemoryData.memories as SemanticMemory[]
           : []
       );
       setMessage(memoryData?.message || preferencesData?.message || null);
@@ -105,6 +105,11 @@ export default function MemoryPage() {
 
   const confidence = Math.round((memory?.confidence || 0) * 100);
   const groupedPreferences = useMemo(() => groupPreferences(preferences), [preferences]);
+  const memoryNextAction = buildMemoryNextAction({
+    confidence,
+    preferencesCount: preferences.length,
+    semanticMemoryCount: semanticMemories.length,
+  });
 
   async function forgetSemanticMemory(id: string) {
     setSemanticMemories((current) => current.filter((memory) => memory.id !== id));
@@ -245,6 +250,16 @@ export default function MemoryPage() {
           <MemoryMetric label="Updated" value={formatFreshness(memory?.lastComputedAt)} detail="last model refresh" />
         </section>
 
+        <NextBestAction
+          className="mt-6"
+          title={memoryNextAction.title}
+          body={memoryNextAction.body}
+          actionLabel={memoryNextAction.actionLabel}
+          href={memoryNextAction.href}
+          secondaryHref="/data-sources"
+          secondaryLabel="Add data"
+        />
+
         <section className="mt-6 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="executive-panel rounded-lg p-6">
             <div className="mb-5 flex items-center justify-between gap-3">
@@ -378,7 +393,7 @@ export default function MemoryPage() {
                   <div className="mb-3 flex items-start justify-between gap-4">
                     <div>
                       <p className="av-eyebrow av-subtle">
-                        {formatKey(item.source_type)}
+                        {formatKey(item.memory_kind || item.source_type)}
                       </p>
                       <h2 className="mt-2 text-sm font-medium leading-5">
                         {item.title || "Remembered signal"}
@@ -441,6 +456,50 @@ function groupPreferences(preferences: AgentPreference[]) {
     acc[category] = [...(acc[category] || []), preference];
     return acc;
   }, {});
+}
+
+function buildMemoryNextAction({
+  confidence,
+  preferencesCount,
+  semanticMemoryCount,
+}: {
+  confidence: number;
+  preferencesCount: number;
+  semanticMemoryCount: number;
+}) {
+  if (semanticMemoryCount === 0) {
+    return {
+      actionLabel: "Tell Aeonvera",
+      body: "Start with one sentence about how you want to be coached, what gets in your way, or what you are trying to protect.",
+      href: "/companion",
+      title: "Give Aeonvera one durable clue",
+    };
+  }
+
+  if (preferencesCount === 0) {
+    return {
+      actionLabel: "Teach a preference",
+      body: "A direct preference makes the assistant easier immediately: timing, tone, reminders, foods, workouts, or boundaries.",
+      href: "/companion",
+      title: "Turn memory into a preference",
+    };
+  }
+
+  if (confidence < 60) {
+    return {
+      actionLabel: "Chat for context",
+      body: "Aeonvera has fragments. A short companion session helps connect them into a more reliable coaching model.",
+      href: "/companion",
+      title: "Strengthen the personal model",
+    };
+  }
+
+  return {
+    actionLabel: "Use Companion",
+    body: "Your memory layer is active. The easiest next step is to ask Aeonvera what it would change in today’s plan.",
+    href: "/companion",
+    title: "Put the memory to work",
+  };
 }
 
 function styleLabel(value?: string) {

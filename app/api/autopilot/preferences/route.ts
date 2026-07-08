@@ -8,7 +8,9 @@ import {
   frozenHealthProfilePayload,
   getHealthSubjectFilter,
   getRequestedHealthProfileId,
+  healthProfileWriteAccessDeniedResponse,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
@@ -143,6 +145,11 @@ export async function PATCH(request: NextRequest) {
     if (healthProfileContext.isFrozen) {
       return NextResponse.json(frozenHealthProfilePayload(), { status: 423 });
     }
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
 
     const body = await request.json().catch(() => ({}));
     const current = await getOrCreatePreferences(admin, user.id, healthProfileContext);
@@ -183,10 +190,17 @@ export async function PATCH(request: NextRequest) {
         mode: next.mode,
         storedBy: "autopilot_preferences",
       },
+      memoryKind: "preference",
+      provenance: {
+        actor: "user",
+        surface: "life_autopilot",
+        source: "autopilot_preferences",
+      },
       sourceType: "autopilot_preferences",
       supabase: admin,
       title: "Life Autopilot preferences",
       healthProfileId: healthProfileContext.healthProfileId,
+      healthProfileContext,
       userId: user.id,
     });
 

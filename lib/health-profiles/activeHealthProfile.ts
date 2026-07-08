@@ -179,7 +179,7 @@ export function isHealthProfileWriteAccessError(error: unknown) {
 export function healthProfileWriteAccessDeniedResponse() {
   return Response.json(
     {
-      error: "Viewer access can read this health profile, but cannot create or manage sharing links.",
+      error: "Viewer access can read this health profile, but cannot modify profile data.",
     },
     { status: 403 }
   );

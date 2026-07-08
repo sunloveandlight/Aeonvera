@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronDown, Circle } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { isUserAllowed } from "@/lib/auth/permissions";
 import PageContainer from "@/components/ui/PageContainer";
@@ -1387,25 +1387,33 @@ function FirstThirtyDaysPanel({
 }) {
   const steps = [
     {
+      actionLabel: "Start assessment",
       complete: hasAssessment,
+      detail: "Answer the core questions once so Aeonvera has a baseline.",
       href: "/assessment",
       label: "Create baseline",
       week: "Day 1",
     },
     {
+      actionLabel: "Open report",
       complete: hasReport,
+      detail: "Turn the baseline into biological age, risks, and priorities.",
       href: "/report",
       label: "Generate first report",
       week: "Week 1",
     },
     {
+      actionLabel: "Add data",
       complete: hasLabs,
+      detail: "Add labs, Apple Health, Oura, or WHOOP to improve precision.",
       href: "/data-sources",
       label: "Upload labs and wearables",
       week: "Week 2",
     },
     {
+      actionLabel: "Build protocol",
       complete: hasProtocol,
+      detail: "Convert the report into one simple plan you can execute.",
       href: "/optimization",
       label: "Run the protocol",
       week: "Weeks 3-4",
@@ -1413,6 +1421,7 @@ function FirstThirtyDaysPanel({
   ];
   const completedCount = steps.filter((step) => step.complete).length;
   const nextStep = steps.find((step) => !step.complete) || steps.at(-1);
+  const progress = Math.round((completedCount / steps.length) * 100);
 
   return (
     <section className="executive-panel rounded-lg p-5 md:p-6">
@@ -1420,22 +1429,29 @@ function FirstThirtyDaysPanel({
         <div>
           <p className="micro-label">First 30 Days</p>
           <h2 className="mt-3 text-3xl font-semibold leading-tight text-white">
-            Make the value obvious fast.
+            The shortest path to value.
           </h2>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-white/50">
-            Aeonvera works best when the first month moves from baseline to report,
-            data depth, and a protocol you can actually execute.
+            Follow these four steps in order. You can always go deeper later; this path gets the app useful first.
           </p>
         </div>
         {nextStep ? (
           <button
             type="button"
             onClick={() => onNavigate(nextStep.href)}
-            className="premium-action inline-flex h-11 shrink-0 items-center justify-center rounded-md px-5 text-sm font-medium"
+            className="premium-action inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md px-5 text-sm font-medium"
           >
-            {nextStep.complete ? "Review protocol" : nextStep.label}
+            {nextStep.complete ? "Review protocol" : nextStep.actionLabel}
+            <ArrowRight size={15} />
           </button>
         ) : null}
+      </div>
+
+      <div className="mt-6 overflow-hidden rounded-full bg-white/[0.06]">
+        <div
+          className="h-1.5 rounded-full bg-[rgb(var(--gold))] transition-all duration-700"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
       <div className="mt-6 grid gap-3 md:grid-cols-4">
@@ -1444,22 +1460,31 @@ function FirstThirtyDaysPanel({
             key={step.week}
             type="button"
             onClick={() => onNavigate(step.href)}
+            aria-current={step === nextStep && !step.complete ? "step" : undefined}
             className={`av-control-card rounded-lg border p-4 text-left transition ${
-              step.complete ? "av-control-card-active" : ""
+              step.complete || step === nextStep ? "av-control-card-active" : ""
             }`}
           >
             <div className="flex items-center justify-between gap-3">
               <p className="av-eyebrow text-[rgba(var(--gold),0.72)]">{step.week}</p>
-              <span className="av-eyebrow text-white/30">
-                {step.complete ? "done" : "open"}
+              <span className="inline-flex items-center gap-1.5 text-white/40">
+                {step.complete ? (
+                  <CheckCircle2 size={14} className="text-[rgba(var(--gold),0.82)]" />
+                ) : (
+                  <Circle size={14} />
+                )}
+                <span className="av-eyebrow">
+                  {step.complete ? "done" : step === nextStep ? "next" : "open"}
+                </span>
               </span>
             </div>
             <p className="mt-4 text-sm leading-6 text-white/58">{step.label}</p>
+            <p className="mt-2 min-h-10 text-xs leading-5 text-white/36">{step.detail}</p>
           </button>
         ))}
       </div>
       <p className="mt-4 text-xs leading-5 text-white/32">
-        {completedCount} of {steps.length} activation milestones complete.
+        {completedCount} of {steps.length} steps complete. {nextStep?.complete ? "You are ready to use the daily plan." : `${nextStep?.label} is next.`}
       </p>
     </section>
   );

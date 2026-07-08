@@ -2856,9 +2856,19 @@ body:has(.aeon-orb-system) main {
 
 .aeon-orb-system-idle .aeon-command-orb,
 .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb {
-  opacity: 0.86;
-  filter: saturate(0.78) brightness(1.02);
-  transform: translateY(0.02rem) scale(0.98);
+  opacity: 0.42;
+  filter: saturate(0.62) brightness(0.98);
+  transform: translateY(0.48rem) scale(0.66);
+}
+
+.aeon-orb-system-idle .aeon-command-orb::before,
+.aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb::before {
+  opacity: 0.018;
+}
+
+.aeon-orb-system-idle .aeon-canvas-orb,
+.aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-canvas-orb {
+  opacity: 0.3;
 }
 
 .aeon-orb-system-idle:hover .aeon-command-orb,
@@ -2892,9 +2902,14 @@ body:has(.aeon-orb-system) main {
 
   .aeon-orb-system-idle .aeon-command-orb,
   .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-command-orb {
-    opacity: 0.64;
-    filter: saturate(0.78) brightness(1.02);
-    transform: translateY(0.06rem) scale(0.86);
+    opacity: 0.38;
+    filter: saturate(0.6) brightness(0.98);
+    transform: translateY(0.42rem) scale(0.64);
+  }
+
+  .aeon-orb-system-idle .aeon-canvas-orb,
+  .aeon-orb-system-content-aware:not(:hover):not(:focus-within) .aeon-canvas-orb {
+    opacity: 0.24;
   }
 
   .aeon-orb-system-idle:hover .aeon-command-orb,

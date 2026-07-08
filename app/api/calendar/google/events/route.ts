@@ -10,7 +10,9 @@ import {
 import {
   frozenHealthProfileResponse,
   getRequestedHealthProfileId,
+  healthProfileWriteAccessDeniedResponse,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
@@ -47,6 +49,11 @@ export async function POST(request: NextRequest) {
       requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
     if (healthProfileContext.isFrozen) return frozenHealthProfileResponse();
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
 
     if (!canAccess(subscription.plan, subscription.status, "autopilot_calendar")) {
       return NextResponse.json(

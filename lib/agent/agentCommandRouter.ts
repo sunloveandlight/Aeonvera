@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 
@@ -240,6 +241,14 @@ async function savePreferences({
   supabase: SupabaseClient;
   userId: string;
 }) {
+  if (healthProfileContext) {
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return;
+    }
+  }
+
   const subjectFields = healthProfileContext
     ? healthSubjectInsertFields(healthProfileContext)
     : { health_profile_id: null };

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "test:e2e": "playwright test",
+    "test:eval": "node --experimental-strip-types --test 'tests/eval/*.eval.ts'",
     "mobile:start": "cd apps/mobile && npm run start --",
     "mobile:ios": "cd apps/mobile && npm run ios --",
     "mobile:android": "cd apps/mobile && npm run android --",

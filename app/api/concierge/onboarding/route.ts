@@ -4,7 +4,10 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { requireServerFeatureAccess } from "@/lib/auth/serverFeatureAccess";
 import {
+  frozenHealthProfileResponse,
   getRequestedHealthProfileId,
+  healthProfileWriteAccessDeniedResponse,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { sendCoachEmail } from "@/lib/notifications/email";
@@ -91,6 +94,12 @@ export async function POST(request: NextRequest) {
       loginUserId: auth.user.id,
       requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
+    if (healthProfileContext.isFrozen) return frozenHealthProfileResponse();
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
     const workspaceId = await getWorkspaceId(admin, auth.user.id);
     const contactEmail = sanitizeEmail(body.contactEmail) || auth.user.email || null;
     const requestedScope = sanitizeScope(body.requestedScope);

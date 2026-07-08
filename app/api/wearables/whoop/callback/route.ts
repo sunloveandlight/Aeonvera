@@ -6,6 +6,7 @@ import { getUserPlanForUsage } from "@/lib/usage/tierUsage";
 import { exchangeWearableCode, saveWearableConnection } from "@/lib/wearables/oauth";
 import {
   ACTIVE_HEALTH_PROFILE_COOKIE,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
       loginUserId: user.id,
       requestedHealthProfileId: request.cookies.get(ACTIVE_HEALTH_PROFILE_COOKIE)?.value,
     });
+    requireProfileWriteAccess(healthProfileContext);
 
     await saveWearableConnection({
       healthProfileContext,

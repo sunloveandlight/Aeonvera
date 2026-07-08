@@ -9,6 +9,8 @@ import type { WearableRawMetric } from "@/lib/wearables/types";
 import {
   frozenHealthProfileResponse,
   getRequestedHealthProfileId,
+  healthProfileWriteAccessDeniedResponse,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
@@ -50,6 +52,11 @@ export async function POST(request: NextRequest) {
       requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
     if (healthProfileContext.isFrozen) return frozenHealthProfileResponse();
+    try {
+      requireProfileWriteAccess(healthProfileContext);
+    } catch {
+      return healthProfileWriteAccessDeniedResponse();
+    }
 
     const entitlement = await requireServerFeatureAccess({
       feature: "dashboard_access",

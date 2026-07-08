@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   getHealthSubjectFilter,
   healthSubjectInsertFields,
+  requireProfileWriteAccess,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 
@@ -56,6 +57,11 @@ export async function recordClinicalFollowUpAnswer({
 }) {
   const cleanAnswer = answer.trim().slice(0, 4000);
   if (!cleanAnswer || !clinicalInsightId) {
+    return null;
+  }
+  try {
+    requireProfileWriteAccess(healthProfileContext);
+  } catch {
     return null;
   }
 

@@ -58,6 +58,10 @@ const ADMINISTRATIVE_CONSENT_CLASSES = new Set<ProfessionalDataClass>([
   "identity",
 ]);
 
+const DOCUMENTED_BASIS_DATA_CLASSES = new Set<ProfessionalDataClass>([
+  ...CLINICAL_CONSENT_CLASSES,
+]);
+
 export const CONSENT_CAPTURE_METHODS = [
   "in_app",
   "uploaded_form",
@@ -247,6 +251,19 @@ export function consentAllowedRolesForDataClasses(
   }
 
   return Array.from(roles);
+}
+
+export function requiresDocumentedProfessionalBasis({
+  dataClasses,
+  legalBasis,
+}: {
+  dataClasses: readonly ProfessionalDataClass[];
+  legalBasis: string;
+}) {
+  return (
+    (legalBasis === "treatment" || legalBasis === "contract") &&
+    dataClasses.some((dataClass) => DOCUMENTED_BASIS_DATA_CLASSES.has(dataClass))
+  );
 }
 
 export async function requireOrganizationAdmin({
@@ -953,6 +970,25 @@ export async function createProfessionalConsent({
     .single();
 
   if (error) throw error;
+
+  await recordProfessionalWorkflowAudit({
+    action: "authorize",
+    actorRole: auth.role,
+    consentId: consent.id,
+    dataClasses: normalizeProfessionalDataClasses(consent.data_classes || []),
+    healthProfileId: consent.health_profile_id,
+    metadata: {
+      allowedRoles: consent.allowed_roles || [],
+      legalBasis,
+      purpose,
+      target: "consent",
+    },
+    route: "/api/professional/consents",
+    supabase,
+    userId,
+    workspaceId,
+  });
+
   return { consent, error: null };
 }
 
@@ -1121,7 +1157,26 @@ export async function createProfessionalAssignment({
     .maybeSingle();
 
   if (updateError) throw updateError;
-  if (existing) return { assignment: existing, error: null };
+  if (existing) {
+    await recordProfessionalWorkflowAudit({
+      action: "assign",
+      actorRole: auth.role,
+      assignmentId: existing.id,
+      dataClasses: normalizeProfessionalDataClasses(existing.data_classes || []),
+      healthProfileId: existing.health_profile_id,
+      metadata: {
+        role: existing.role || role,
+        staffUserId,
+        target: "assignment",
+        writeMode: "update_existing",
+      },
+      route: "/api/professional/assignments",
+      supabase,
+      userId,
+      workspaceId,
+    });
+    return { assignment: existing, error: null };
+  }
 
   const { data: assignment, error: insertError } = await supabase
     .from("organization_profile_assignments")
@@ -1130,6 +1185,25 @@ export async function createProfessionalAssignment({
     .single();
 
   if (insertError) throw insertError;
+
+  await recordProfessionalWorkflowAudit({
+    action: "assign",
+    actorRole: auth.role,
+    assignmentId: assignment.id,
+    dataClasses: normalizeProfessionalDataClasses(assignment.data_classes || []),
+    healthProfileId: assignment.health_profile_id,
+    metadata: {
+      role: assignment.role || role,
+      staffUserId,
+      target: "assignment",
+      writeMode: "insert",
+    },
+    route: "/api/professional/assignments",
+    supabase,
+    userId,
+    workspaceId,
+  });
+
   return { assignment, error: null };
 }
 

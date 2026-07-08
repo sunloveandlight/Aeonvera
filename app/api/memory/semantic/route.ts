@@ -5,6 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import {
   frozenHealthProfileResponse,
   getRequestedHealthProfileId,
+  healthProfileWriteAccessDeniedResponse,
+  isHealthProfileWriteAccessError,
+  requireProfileWriteAccess,
   resolveActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
 import { rateLimitRequest } from "@/lib/security/rateLimit";
@@ -18,6 +21,67 @@ const ALLOWED_SOURCE_TYPES = new Set([
   "onboarding",
   "user_note",
 ]);
+
+const ALLOWED_MEMORY_KINDS = new Set([
+  "fact",
+  "preference",
+  "episode",
+  "insight",
+  "biological_context",
+]);
+
+export async function GET(request: NextRequest) {
+  try {
+    const limited = await rateLimitRequest(request, "semantic-memory-read", 60, 60_000);
+    if (limited) return limited;
+
+    const user = await requireUser();
+    const admin = getSupabaseAdmin();
+    const healthProfileContext = await resolveActiveHealthProfileContext({
+      supabase: admin,
+      loginUserId: user.id,
+      requestedHealthProfileId: getRequestedHealthProfileId(request),
+    });
+    const subjectColumn = healthProfileContext.healthProfileId ? "health_profile_id" : "user_id";
+    const subjectValue = healthProfileContext.healthProfileId || user.id;
+    const url = new URL(request.url);
+    const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 12, 1), 50);
+
+    const query = admin
+      .from("semantic_memories")
+      .select(
+        "id, source_type, source_id, title, content, metadata, importance, occurred_at, created_at, memory_kind, confidence, provenance, is_pinned"
+      )
+      .eq(subjectColumn, subjectValue)
+      .is("superseded_at", null)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
+
+    if (!healthProfileContext.healthProfileId) {
+      query.is("health_profile_id", null);
+    }
+
+    const { data, error } = await query
+      .order("is_pinned", { ascending: false })
+      .order("importance", { ascending: false })
+      .order("occurred_at", { ascending: false, nullsFirst: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return NextResponse.json({
+      memories: data || [],
+      healthProfileId: healthProfileContext.healthProfileId,
+      mode: healthProfileContext.mode,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Could not load memory.";
+    if (message !== "Unauthorized") console.error("Could not load semantic memory:", error);
+    return NextResponse.json(
+      { error: message === "Unauthorized" ? "Unauthorized" : "Internal server error." },
+      { status: message === "Unauthorized" ? 401 : 500 }
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,13 +107,20 @@ export async function POST(request: NextRequest) {
       requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
     if (healthProfileContext.isFrozen) return frozenHealthProfileResponse();
+    requireProfileWriteAccess(healthProfileContext);
 
     await storeSemanticMemory({
       content,
       healthProfileId: healthProfileContext.healthProfileId,
+      healthProfileContext,
+      confidence: clampConfidence(body.confidence),
+      expiresAt: sanitizeText(body.expiresAt, 64) || null,
+      isPinned: body.isPinned === true,
       importance: clampImportance(body.importance),
+      memoryKind: sanitizeMemoryKind(body.memoryKind),
       metadata: safeMetadata(body.metadata),
       occurredAt: new Date().toISOString(),
+      provenance: safeMetadata(body.provenance),
       sourceId: sanitizeText(body.sourceId, 160) || undefined,
       sourceType,
       supabase: admin,
@@ -59,6 +130,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (isHealthProfileWriteAccessError(error)) return healthProfileWriteAccessDeniedResponse();
+
     const message = error instanceof Error ? error.message : "Could not store memory.";
     if (message !== "Unauthorized") console.error("Could not store memory:", error);
     return NextResponse.json(
@@ -81,14 +154,20 @@ export async function DELETE(request: NextRequest) {
       loginUserId: user.id,
       requestedHealthProfileId: getRequestedHealthProfileId(request),
     });
+    requireProfileWriteAccess(healthProfileContext);
     const subjectColumn = healthProfileContext.healthProfileId ? "health_profile_id" : "user_id";
     const subjectValue = healthProfileContext.healthProfileId || user.id;
 
     if (body.all === true) {
-      const { error } = await admin
+      const query = admin
         .from("semantic_memories")
         .delete()
         .eq(subjectColumn, subjectValue);
+      if (!healthProfileContext.healthProfileId) {
+        query.is("health_profile_id", null);
+      }
+
+      const { error } = await query;
       if (error) throw error;
       return NextResponse.json({ ok: true });
     }
@@ -101,15 +180,21 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Choose at least one memory to forget." }, { status: 400 });
     }
 
-    const { error } = await admin
+    const query = admin
       .from("semantic_memories")
       .delete()
       .eq(subjectColumn, subjectValue)
       .in("id", ids);
+    if (!healthProfileContext.healthProfileId) {
+      query.is("health_profile_id", null);
+    }
 
+    const { error } = await query;
     if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (isHealthProfileWriteAccessError(error)) return healthProfileWriteAccessDeniedResponse();
+
     const message = error instanceof Error ? error.message : "Could not forget memory.";
     if (message !== "Unauthorized") console.error("Could not forget memory:", error);
     return NextResponse.json(
@@ -146,6 +231,20 @@ function clampImportance(value: unknown) {
   const number = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(number)) return 0.62;
   return Math.min(1, Math.max(0.1, number));
+}
+
+function clampConfidence(value: unknown) {
+  const number = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(number)) return 0.7;
+  return Math.min(1, Math.max(0, number));
+}
+
+function sanitizeMemoryKind(value: unknown) {
+  if (typeof value !== "string") return "episode";
+  const kind = value.trim().toLowerCase();
+  return ALLOWED_MEMORY_KINDS.has(kind)
+    ? kind as "fact" | "preference" | "episode" | "insight" | "biological_context"
+    : "episode";
 }
 
 function safeMetadata(value: unknown) {

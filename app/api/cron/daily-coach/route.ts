@@ -8,9 +8,9 @@ import {
   createLegacyActiveHealthProfileContext,
   type ActiveHealthProfileContext,
 } from "@/lib/health-profiles/activeHealthProfile";
-import { isHealthProfileFrozenById } from "@/lib/health-profiles/profileEntitlements";
 
 const DAILY_COACH_CONCURRENCY = 5;
+const DAILY_COACH_SOURCE_LIMIT = 5000;
 
 /**
  * Aeonvera Daily Automation Job
@@ -62,29 +62,30 @@ export async function GET(req: Request) {
       await Promise.all([
         supabase
           .from("health_states")
-          .select("user_id,health_profile_id"),
+          .select("user_id,health_profile_id")
+          .limit(DAILY_COACH_SOURCE_LIMIT),
         supabase
           .from("optimization_protocols")
           .select("user_id,health_profile_id")
           .order("created_at", { ascending: false })
-          .limit(5000),
+          .limit(DAILY_COACH_SOURCE_LIMIT),
         supabase
           .from("autopilot_preferences")
           .select("user_id,health_profile_id")
-          .limit(5000),
+          .limit(DAILY_COACH_SOURCE_LIMIT),
         supabase
           .from("clinical_insights")
           .select("user_id,health_profile_id")
           .in("concern_status", ["active", "unresolved", "monitoring"])
-          .limit(5000),
+          .limit(DAILY_COACH_SOURCE_LIMIT),
         supabase
           .from("wearable_metrics")
           .select("user_id,health_profile_id")
-          .limit(5000),
+          .limit(DAILY_COACH_SOURCE_LIMIT),
         supabase
           .from("lab_biomarkers")
           .select("user_id,health_profile_id")
-          .limit(5000),
+          .limit(DAILY_COACH_SOURCE_LIMIT),
       ]);
 
     if (error) {
@@ -212,19 +213,24 @@ async function buildProfileWorkItems(
     string,
     { userId: string; healthProfileContext: ActiveHealthProfileContext }
   >();
+  const profileIds = Array.from(
+    new Set(
+      rows
+        .map((row) => row.health_profile_id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+  const profileEntitlements = await loadProfileEntitlementMap(profileIds, supabase);
 
   for (const row of rows) {
     if (!row.user_id) continue;
     const key = `${row.user_id}:${row.health_profile_id || "legacy"}`;
     if (items.has(key)) continue;
 
-    if (
-      row.health_profile_id &&
-      (await isHealthProfileFrozenById({
-        healthProfileId: row.health_profile_id,
-        supabase,
-      }))
-    ) {
+    const profileAccess = row.health_profile_id
+      ? profileEntitlements.get(row.health_profile_id)
+      : null;
+    if (row.health_profile_id && !profileAccess?.writable) {
       continue;
     }
 
@@ -233,7 +239,7 @@ async function buildProfileWorkItems(
       healthProfileContext: row.health_profile_id
         ? {
             loginUserId: row.user_id,
-            workspaceId: null,
+            workspaceId: profileAccess?.workspaceId || null,
             healthProfileId: row.health_profile_id,
             legacyUserId: row.user_id,
             mode: "health_profile",
@@ -245,4 +251,74 @@ async function buildProfileWorkItems(
   }
 
   return Array.from(items.values());
+}
+
+async function loadProfileEntitlementMap(
+  profileIds: string[],
+  supabase: ReturnType<typeof getSupabaseAdmin>
+) {
+  const entitlementMap = new Map<string, { writable: boolean; workspaceId: string | null }>();
+  if (!profileIds.length) return entitlementMap;
+
+  const { data: profiles, error: profilesError } = await supabase
+    .from("health_profiles")
+    .select("id,workspace_id,is_primary,created_at,status")
+    .in("id", profileIds)
+    .eq("status", "active");
+
+  if (profilesError) throw profilesError;
+
+  const workspaceIds = Array.from(
+    new Set((profiles || []).map((profile) => profile.workspace_id).filter(Boolean))
+  ) as string[];
+  const { data: workspaces, error: workspacesError } = workspaceIds.length
+    ? await supabase
+        .from("workspaces")
+        .select("id,max_health_profiles")
+        .in("id", workspaceIds)
+    : { data: [], error: null };
+
+  if (workspacesError) throw workspacesError;
+
+  const maxByWorkspace = new Map(
+    (workspaces || []).map((workspace) => [
+      workspace.id,
+      Math.max(Number(workspace.max_health_profiles) || 1, 1),
+    ])
+  );
+  const profilesByWorkspace = new Map<string, typeof profiles>();
+
+  for (const profile of profiles || []) {
+    if (!profile.workspace_id) {
+      entitlementMap.set(profile.id, { writable: true, workspaceId: null });
+      continue;
+    }
+
+    const list = profilesByWorkspace.get(profile.workspace_id) || [];
+    list.push(profile);
+    profilesByWorkspace.set(profile.workspace_id, list);
+  }
+
+  for (const [workspaceId, workspaceProfiles] of profilesByWorkspace) {
+    const maxHealthProfiles = maxByWorkspace.get(workspaceId) || 1;
+    const writableIds = new Set(
+      [...workspaceProfiles]
+        .sort((a, b) => {
+          const primaryDelta = Number(Boolean(b.is_primary)) - Number(Boolean(a.is_primary));
+          if (primaryDelta !== 0) return primaryDelta;
+          return String(a.created_at || "").localeCompare(String(b.created_at || ""));
+        })
+        .slice(0, maxHealthProfiles)
+        .map((profile) => profile.id)
+    );
+
+    for (const profile of workspaceProfiles) {
+      entitlementMap.set(profile.id, {
+        writable: writableIds.has(profile.id),
+        workspaceId,
+      });
+    }
+  }
+
+  return entitlementMap;
 }
