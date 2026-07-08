@@ -4,7 +4,6 @@ import Script from "next/script";
 import "./globals.css";
 
 import AppShell from "@/components/layout/AppShell";
-import { socialLinks } from "@/lib/brand/socialLinks";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -90,7 +89,6 @@ export default function RootLayout({
               url: "https://www.aeonvera.com",
               logo: "https://www.aeonvera.com/aeonvera-app-icon.svg",
               description: "Longevity Intelligence Platform",
-              sameAs: socialLinks.map((link) => link.href),
             }),
           }}
         />
