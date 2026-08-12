@@ -185,7 +185,7 @@ export default function HomePage() {
     }
   }
 
-function activateVoiceOrb() {
+  function activateVoiceOrb() {
     if (typeof window === "undefined") return;
     window.dispatchEvent(new CustomEvent("aeonvera:activate-voice-orb"));
   }

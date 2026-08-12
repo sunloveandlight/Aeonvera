@@ -112,7 +112,7 @@ export default function Header() {
   const [authChecked, setAuthChecked] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const [activeMenu, setActiveMenu] = useState<{ label: string; pathname: string } | null>(null);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const headerRef = useRef<HTMLElement | null>(null);
   const accountCloseTimerRef = useRef<number | null>(null);
 
@@ -181,12 +181,11 @@ export default function Header() {
   }
 
   const navGroups = authenticated ? AUTH_NAV_GROUPS : PUBLIC_NAV_GROUPS;
-  const activeMenuLabel = activeMenu?.pathname === pathname ? activeMenu.label : null;
-  const activeGroup = navGroups.find((group) => group.label === activeMenuLabel) || null;
+  const activeGroup = navGroups.find((group) => group.label === activeMenu) || null;
 
   function openMenu(label: string) {
     setAccountOpen(false);
-    setActiveMenu({ label, pathname });
+    setActiveMenu(label);
   }
 
   return (
@@ -213,16 +212,19 @@ export default function Header() {
         <nav className="hidden items-center gap-0.5 justify-self-center md:flex" aria-label="Primary navigation">
           {navGroups.map((group) => {
             const active = isActive(pathname, group.href);
-            const expanded = activeMenuLabel === group.label;
+            const expanded = activeMenu === group.label;
 
             return (
               <Link
                 key={group.label}
                 href={group.href}
+                onPointerEnter={() => openMenu(group.label)}
                 onMouseEnter={() => openMenu(group.label)}
+                onMouseOver={() => openMenu(group.label)}
                 onFocus={() => openMenu(group.label)}
                 onClick={() => setActiveMenu(null)}
                 className={`premium-nav-link ${active || expanded ? "premium-nav-link-active" : ""}`}
+                data-nav-label={group.label}
                 aria-expanded={expanded}
                 aria-haspopup="true"
               >
@@ -245,15 +247,83 @@ export default function Header() {
             <Search size={15} />
           </Link>
           <ProfileSwitcher authenticated={authenticated} compact />
-          <button
-            onClick={() => setMobileOpen((open) => !open)}
-            className="premium-icon-link inline-flex min-h-11 min-w-11 items-center justify-center rounded-md md:hidden"
-            aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
-            aria-expanded={mobileOpen}
-            type="button"
+          <details
+            className="premium-mobile-nav-shell md:hidden"
+            open={mobileOpen}
+            onToggle={(event) => setMobileOpen(event.currentTarget.open)}
           >
-            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
+            <summary
+              className="premium-icon-link inline-flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-md"
+              aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+              role="button"
+            >
+              <span className="premium-mobile-open-icon" aria-hidden>
+                <Menu size={18} />
+              </span>
+              <span className="premium-mobile-close-icon" aria-hidden>
+                <X size={18} />
+              </span>
+            </summary>
+            <div className="premium-mobile-menu border-t px-6 py-5">
+              <nav className="mx-auto flex max-w-6xl flex-col gap-5">
+                {navGroups.map((group) => (
+                  <div key={group.label}>
+                    <p className="premium-mega-label mb-2">{group.label}</p>
+                    <div className="grid gap-0.5">
+                      {group.items.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="rounded-lg px-1 py-1.5 text-lg font-medium tracking-[-0.01em]"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {!authChecked ? null : authenticated ? (
+                  <div>
+                    <div className="mb-4">
+                      <ProfileSwitcher authenticated={authenticated} />
+                    </div>
+                    <p className="premium-mega-label mb-2">Account</p>
+                    <div className="grid gap-0.5">
+                      {ACCOUNT_LINKS.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="rounded-lg px-1 py-1.5 text-lg font-medium tracking-[-0.01em]"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                      <button
+                        onClick={() => {
+                          setMobileOpen(false);
+                          void handleLogout();
+                        }}
+                        className="rounded-lg px-1 py-2 text-left text-lg font-medium tracking-[-0.01em]"
+                        type="button"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <Link
+                    href="/login?mode=signin"
+                    onClick={() => setMobileOpen(false)}
+                    className="rounded-lg px-1 py-2 text-lg font-medium tracking-[-0.01em]"
+                  >
+                    Sign In
+                  </Link>
+                )}
+              </nav>
+            </div>
+          </details>
           {!authChecked ? (
             <div className="hidden h-8 w-20 rounded-md bg-white/[0.08] sm:block" />
           ) : authenticated ? (
@@ -334,88 +404,34 @@ export default function Header() {
         </div>
       </div>
 
-      {activeGroup ? (
-        <div className="premium-mega-menu hidden md:block">
-          <div className="mx-auto max-w-6xl px-5 py-7 lg:px-8">
-            <p className="premium-mega-label">{activeGroup.label}</p>
-            <div className="mt-4 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
-              {activeGroup.items.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setActiveMenu(null)}
-                  className="premium-mega-primary rounded-xl px-3 py-3"
-                >
-                  <span>{item.label}</span>
-                  {item.description ? <small>{item.description}</small> : null}
-                </Link>
-              ))}
+      <div className="hidden md:block">
+        {navGroups.map((group) => (
+          <div
+            key={group.label}
+            className="premium-mega-menu"
+            data-menu-label={group.label}
+            data-menu-active={activeGroup?.label === group.label ? "true" : undefined}
+          >
+            <div className="mx-auto max-w-6xl px-5 py-7 lg:px-8">
+              <p className="premium-mega-label">{group.label}</p>
+              <div className="mt-4 grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
+                {group.items.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setActiveMenu(null)}
+                    className="premium-mega-primary rounded-xl px-3 py-3"
+                  >
+                    <span>{item.label}</span>
+                    {item.description ? <small>{item.description}</small> : null}
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ))}
+      </div>
 
-      {mobileOpen ? (
-        <div className="premium-mobile-menu border-t px-6 py-5 md:hidden">
-          <nav className="mx-auto flex max-w-6xl flex-col gap-5">
-            {navGroups.map((group) => (
-              <div key={group.label}>
-                <p className="premium-mega-label mb-2">{group.label}</p>
-                <div className="grid gap-0.5">
-                  {group.items.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="rounded-lg px-1 py-1.5 text-lg font-medium tracking-[-0.01em]"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {!authChecked ? null : authenticated ? (
-              <div>
-                <div className="mb-4">
-                  <ProfileSwitcher authenticated={authenticated} />
-                </div>
-                <p className="premium-mega-label mb-2">Account</p>
-                <div className="grid gap-0.5">
-                  {ACCOUNT_LINKS.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="rounded-lg px-1 py-1.5 text-lg font-medium tracking-[-0.01em]"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                  <button
-                    onClick={() => {
-                      setMobileOpen(false);
-                      void handleLogout();
-                    }}
-                    className="rounded-lg px-1 py-2 text-left text-lg font-medium tracking-[-0.01em]"
-                    type="button"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <Link
-                href="/login?mode=signin"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg px-1 py-2 text-lg font-medium tracking-[-0.01em]"
-              >
-                Sign In
-              </Link>
-            )}
-          </nav>
-        </div>
-      ) : null}
     </header>
   );
 }

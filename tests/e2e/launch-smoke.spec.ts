@@ -40,6 +40,7 @@ async function collectConsoleProblems(page: Page) {
     if (["error", "warning"].includes(message.type())) {
       const text = message.text();
       if (text.includes("/_next/webpack-hmr")) return;
+      if (text.includes("eval() is not supported") && text.includes("development mode")) return;
       problems.push(`${message.type()}: ${text}`);
     }
   });
@@ -77,13 +78,15 @@ test.describe("launch shell", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("load");
     const overview = page.getByRole("link", { name: "Overview" });
+    const overviewMenu = page.locator('.premium-mega-menu[data-menu-label="Overview"]');
     await expect(overview).toBeVisible();
 
     await overview.hover();
-    await expect(page.locator(".premium-mega-menu")).toContainText("Demo profile");
+    await expect(overviewMenu).toBeVisible();
+    await expect(overviewMenu).toContainText("Demo profile");
 
     await page.mouse.click(20, 900);
-    await expect(page.locator(".premium-mega-menu")).toHaveCount(0);
+    await expect(overviewMenu).toBeHidden();
   });
 
   test("mobile navigation exposes only public launch paths", async ({ page, isMobile }) => {
@@ -91,6 +94,7 @@ test.describe("launch shell", () => {
 
     await page.goto("/pricing", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("load");
+    await page.waitForTimeout(500);
     const menuButton = page.getByRole("button", { name: "Open navigation" });
     await expect(menuButton).toBeVisible();
     await menuButton.click();

@@ -3254,12 +3254,28 @@ body:has(.aeon-orb-system) main {
 }
 
 .premium-mega-menu {
+  display: none;
   position: relative;
   z-index: 1;
   border-bottom: 1px solid var(--hairline);
   background: transparent;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.1);
   animation: premium-menu-in 160ms ease-out both;
+}
+
+@media (min-width: 768px) {
+  .premium-mega-menu[data-menu-active="true"],
+  .premium-header:has(.premium-nav-link[data-nav-label="Overview"]:is(:hover, :focus-visible)) .premium-mega-menu[data-menu-label="Overview"],
+  .premium-header:has(.premium-nav-link[data-nav-label="Resources"]:is(:hover, :focus-visible)) .premium-mega-menu[data-menu-label="Resources"],
+  .premium-header:has(.premium-nav-link[data-nav-label="Pricing"]:is(:hover, :focus-visible)) .premium-mega-menu[data-menu-label="Pricing"],
+  .premium-header:has(.premium-nav-link[data-nav-label="Privacy"]:is(:hover, :focus-visible)) .premium-mega-menu[data-menu-label="Privacy"],
+  .premium-header:has(.premium-nav-link[data-nav-label="Today"]:is(:hover, :focus-visible)) .premium-mega-menu[data-menu-label="Today"],
+  .premium-header:has(.premium-nav-link[data-nav-label="Optimize"]:is(:hover, :focus-visible)) .premium-mega-menu[data-menu-label="Optimize"],
+  .premium-header:has(.premium-nav-link[data-nav-label="Twin"]:is(:hover, :focus-visible)) .premium-mega-menu[data-menu-label="Twin"],
+  .premium-header:has(.premium-nav-link[data-nav-label="Data"]:is(:hover, :focus-visible)) .premium-mega-menu[data-menu-label="Data"],
+  .premium-header:has(.premium-nav-link[data-nav-label="Care"]:is(:hover, :focus-visible)) .premium-mega-menu[data-menu-label="Care"] {
+    display: block;
+  }
 }
 
 .premium-mega-label {
@@ -3385,11 +3401,30 @@ body:has(.aeon-orb-system) main {
 }
 
 .premium-mobile-menu {
+  position: fixed;
+  top: 2.75rem;
+  left: 0;
+  right: 0;
+  max-height: calc(100svh - 2.75rem);
+  overflow-y: auto;
   background: var(--header-bg);
   color: var(--text-1);
   box-shadow: var(--shadow-2);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
+}
+
+.premium-mobile-nav-shell > summary::-webkit-details-marker {
+  display: none;
+}
+
+.premium-mobile-close-icon,
+.premium-mobile-nav-shell[open] .premium-mobile-open-icon {
+  display: none;
+}
+
+.premium-mobile-nav-shell[open] .premium-mobile-close-icon {
+  display: inline-flex;
 }
 
 .premium-header .premium-mobile-menu p {

@@ -1,0 +1,2274 @@
+[
+  {
+    "variant": "desktop-light-anon",
+    "route": "/",
+    "finalUrl": "/",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [
+      {
+        "src": "3001/_next/image?url=%2Fmarketing%2Frejuvenation-woman.png&w=1920&q=75",
+        "alt": "",
+        "coveredPts": 5,
+        "rect": {
+          "w": 1440,
+          "h": 868
+        },
+        "coverer": "div.aeon-apple-hero-content \"AEONVERA The operating system for your b\"",
+        "covererBg": "rgba(0, 0, 0, 0)",
+        "covererOpacity": "1"
+      }
+    ],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__root.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/about",
+    "finalUrl": "/about",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__about.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/pricing",
+    "finalUrl": "/pricing",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__pricing.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/privacy",
+    "finalUrl": "/privacy",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__privacy.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/terms",
+    "finalUrl": "/terms",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__terms.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/login",
+    "finalUrl": "/login",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__login.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/demo",
+    "finalUrl": "/demo",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__demo.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/professional",
+    "finalUrl": "/professional",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__professional.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/resources",
+    "finalUrl": "/resources",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__resources.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/resources/articles",
+    "finalUrl": "/resources/articles",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__resources_articles.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/resources/guides",
+    "finalUrl": "/resources/guides",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__resources_guides.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/resources/biomarkers",
+    "finalUrl": "/resources/biomarkers",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__resources_biomarkers.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/resources/biomarkers/apob",
+    "finalUrl": "/resources/biomarkers/apob",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__resources_biomarkers_apob.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/resources/biomarkers/vo2-max",
+    "finalUrl": "/resources/biomarkers/vo2-max",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__resources_biomarkers_vo2_max.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/resources/categories/nutrition",
+    "finalUrl": "/resources/categories/nutrition",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__resources_categories_nutrition.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/resources/categories/sleep",
+    "finalUrl": "/resources/categories/sleep",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__resources_categories_sleep.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/resources/what-is-biological-age",
+    "finalUrl": "/resources/what-is-biological-age",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__resources_what_is_biological_age.png"
+  },
+  {
+    "variant": "desktop-light-anon",
+    "route": "/resources/how-to-read-your-first-longevity-blood-panel",
+    "finalUrl": "/resources/how-to-read-your-first-longevity-blood-panel",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light-anon__resources_how_to_read_your_first_longevity_blood_panel.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/dashboard",
+    "finalUrl": "/dashboard",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__dashboard.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/settings",
+    "finalUrl": "/settings",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__settings.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/ops",
+    "finalUrl": "/ops",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__ops.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/memory",
+    "finalUrl": "/memory",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__memory.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/network",
+    "finalUrl": "/network",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__network.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/onboarding",
+    "finalUrl": "/onboarding",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__onboarding.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/assessment",
+    "finalUrl": "/assessment",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__assessment.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/report",
+    "finalUrl": "/report",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__report.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/plan",
+    "finalUrl": "/plan",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__plan.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/companion",
+    "finalUrl": "/companion",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__companion.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/data-sources",
+    "finalUrl": "/data-sources",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__data_sources.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/digital-twin",
+    "finalUrl": "/digital-twin",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__digital_twin.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/life-autopilot",
+    "finalUrl": "/life-autopilot",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__life_autopilot.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/life-os",
+    "finalUrl": "/life-os",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__life_os.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/optimization",
+    "finalUrl": "/optimization",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__optimization.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/physician-export",
+    "finalUrl": "/physician-export",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__physician_export.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/concierge/success",
+    "finalUrl": "/concierge/success",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__concierge_success.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/success",
+    "finalUrl": "/onboarding?activated=sovereign",
+    "status": 200,
+    "redirected": true,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__success.png"
+  },
+  {
+    "variant": "desktop-light",
+    "route": "/professional/dashboard",
+    "finalUrl": "/professional/dashboard",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-light__professional_dashboard.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/",
+    "finalUrl": "/",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [
+      {
+        "src": "3001/_next/image?url=%2Fmarketing%2Frejuvenation-woman.png&w=1920&q=75",
+        "alt": "",
+        "coveredPts": 5,
+        "rect": {
+          "w": 1440,
+          "h": 868
+        },
+        "coverer": "div.aeon-apple-hero-content \"AEONVERA The operating system for your b\"",
+        "covererBg": "rgba(0, 0, 0, 0)",
+        "covererOpacity": "1"
+      }
+    ],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__root.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/about",
+    "finalUrl": "/about",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__about.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/pricing",
+    "finalUrl": "/pricing",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__pricing.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/privacy",
+    "finalUrl": "/privacy",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__privacy.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/terms",
+    "finalUrl": "/terms",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__terms.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/login",
+    "finalUrl": "/login",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__login.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/demo",
+    "finalUrl": "/demo",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__demo.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/professional",
+    "finalUrl": "/professional",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__professional.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/resources",
+    "finalUrl": "/resources",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__resources.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/resources/articles",
+    "finalUrl": "/resources/articles",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__resources_articles.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/resources/guides",
+    "finalUrl": "/resources/guides",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__resources_guides.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/resources/biomarkers",
+    "finalUrl": "/resources/biomarkers",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__resources_biomarkers.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/resources/biomarkers/apob",
+    "finalUrl": "/resources/biomarkers/apob",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__resources_biomarkers_apob.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/resources/biomarkers/vo2-max",
+    "finalUrl": "/resources/biomarkers/vo2-max",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__resources_biomarkers_vo2_max.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/resources/categories/nutrition",
+    "finalUrl": "/resources/categories/nutrition",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__resources_categories_nutrition.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/resources/categories/sleep",
+    "finalUrl": "/resources/categories/sleep",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__resources_categories_sleep.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/resources/what-is-biological-age",
+    "finalUrl": "/resources/what-is-biological-age",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__resources_what_is_biological_age.png"
+  },
+  {
+    "variant": "desktop-dark-anon",
+    "route": "/resources/how-to-read-your-first-longevity-blood-panel",
+    "finalUrl": "/resources/how-to-read-your-first-longevity-blood-panel",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark-anon__resources_how_to_read_your_first_longevity_blood_panel.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/dashboard",
+    "finalUrl": "/dashboard",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__dashboard.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/settings",
+    "finalUrl": "/settings",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__settings.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/ops",
+    "finalUrl": "/ops",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__ops.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/memory",
+    "finalUrl": "/memory",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__memory.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/network",
+    "finalUrl": "/network",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__network.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/onboarding",
+    "finalUrl": "/onboarding",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__onboarding.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/assessment",
+    "finalUrl": "/assessment",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__assessment.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/report",
+    "finalUrl": "/report",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__report.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/plan",
+    "finalUrl": "/plan",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__plan.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/companion",
+    "finalUrl": "/companion",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__companion.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/data-sources",
+    "finalUrl": "/data-sources",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__data_sources.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/digital-twin",
+    "finalUrl": "/digital-twin",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__digital_twin.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/life-autopilot",
+    "finalUrl": "/life-autopilot",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__life_autopilot.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/life-os",
+    "finalUrl": "/life-os",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__life_os.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/optimization",
+    "finalUrl": "/optimization",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__optimization.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/physician-export",
+    "finalUrl": "/physician-export",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__physician_export.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/concierge/success",
+    "finalUrl": "/concierge/success",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__concierge_success.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/success",
+    "finalUrl": "/onboarding?activated=sovereign",
+    "status": 200,
+    "redirected": true,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__success.png"
+  },
+  {
+    "variant": "desktop-dark",
+    "route": "/professional/dashboard",
+    "finalUrl": "/professional/dashboard",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "desktop-dark__professional_dashboard.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/",
+    "finalUrl": "/",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [
+      {
+        "src": ":3001/_next/image?url=%2Fmarketing%2Frejuvenation-woman.png&w=640&q=75",
+        "alt": "",
+        "coveredPts": 5,
+        "rect": {
+          "w": 390,
+          "h": 754
+        },
+        "coverer": "div.aeon-apple-hero-content \"AEONVERA The operating system for your b\"",
+        "covererBg": "rgba(0, 0, 0, 0)",
+        "covererOpacity": "1"
+      }
+    ],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__root.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/about",
+    "finalUrl": "/about",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__about.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/pricing",
+    "finalUrl": "/pricing",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__pricing.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/privacy",
+    "finalUrl": "/privacy",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__privacy.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/terms",
+    "finalUrl": "/terms",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__terms.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/login",
+    "finalUrl": "/login",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__login.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/demo",
+    "finalUrl": "/demo",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__demo.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/professional",
+    "finalUrl": "/professional",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__professional.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/resources",
+    "finalUrl": "/resources",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__resources.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/resources/articles",
+    "finalUrl": "/resources/articles",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__resources_articles.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/resources/guides",
+    "finalUrl": "/resources/guides",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__resources_guides.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/resources/biomarkers",
+    "finalUrl": "/resources/biomarkers",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__resources_biomarkers.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/resources/biomarkers/apob",
+    "finalUrl": "/resources/biomarkers/apob",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__resources_biomarkers_apob.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/resources/biomarkers/vo2-max",
+    "finalUrl": "/resources/biomarkers/vo2-max",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__resources_biomarkers_vo2_max.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/resources/categories/nutrition",
+    "finalUrl": "/resources/categories/nutrition",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__resources_categories_nutrition.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/resources/categories/sleep",
+    "finalUrl": "/resources/categories/sleep",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__resources_categories_sleep.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/resources/what-is-biological-age",
+    "finalUrl": "/resources/what-is-biological-age",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__resources_what_is_biological_age.png"
+  },
+  {
+    "variant": "mobile-light-anon",
+    "route": "/resources/how-to-read-your-first-longevity-blood-panel",
+    "finalUrl": "/resources/how-to-read-your-first-longevity-blood-panel",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light-anon__resources_how_to_read_your_first_longevity_blood_panel.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/dashboard",
+    "finalUrl": "/dashboard",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__dashboard.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/settings",
+    "finalUrl": "/settings",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__settings.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/ops",
+    "finalUrl": "/ops",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__ops.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/memory",
+    "finalUrl": "/memory",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__memory.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/network",
+    "finalUrl": "/network",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__network.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/onboarding",
+    "finalUrl": "/onboarding",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__onboarding.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/assessment",
+    "finalUrl": "/assessment",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__assessment.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/report",
+    "finalUrl": "/report",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__report.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/plan",
+    "finalUrl": "/plan",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__plan.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/companion",
+    "finalUrl": "/companion",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__companion.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/data-sources",
+    "finalUrl": "/data-sources",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__data_sources.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/digital-twin",
+    "finalUrl": "/digital-twin",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__digital_twin.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/life-autopilot",
+    "finalUrl": "/life-autopilot",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__life_autopilot.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/life-os",
+    "finalUrl": "/life-os",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__life_os.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/optimization",
+    "finalUrl": "/optimization",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__optimization.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/physician-export",
+    "finalUrl": "/physician-export",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__physician_export.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/concierge/success",
+    "finalUrl": "/concierge/success",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__concierge_success.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/success",
+    "finalUrl": "/onboarding?activated=sovereign",
+    "status": 200,
+    "redirected": true,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__success.png"
+  },
+  {
+    "variant": "mobile-light",
+    "route": "/professional/dashboard",
+    "finalUrl": "/professional/dashboard",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-light__professional_dashboard.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/",
+    "finalUrl": "/",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [
+      {
+        "src": ":3001/_next/image?url=%2Fmarketing%2Frejuvenation-woman.png&w=640&q=75",
+        "alt": "",
+        "coveredPts": 5,
+        "rect": {
+          "w": 390,
+          "h": 754
+        },
+        "coverer": "div.aeon-apple-hero-content \"AEONVERA The operating system for your b\"",
+        "covererBg": "rgba(0, 0, 0, 0)",
+        "covererOpacity": "1"
+      }
+    ],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__root.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/about",
+    "finalUrl": "/about",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__about.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/pricing",
+    "finalUrl": "/pricing",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__pricing.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/privacy",
+    "finalUrl": "/privacy",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__privacy.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/terms",
+    "finalUrl": "/terms",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__terms.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/login",
+    "finalUrl": "/login",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__login.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/demo",
+    "finalUrl": "/demo",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__demo.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/professional",
+    "finalUrl": "/professional",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__professional.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/resources",
+    "finalUrl": "/resources",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__resources.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/resources/articles",
+    "finalUrl": "/resources/articles",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__resources_articles.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/resources/guides",
+    "finalUrl": "/resources/guides",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__resources_guides.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/resources/biomarkers",
+    "finalUrl": "/resources/biomarkers",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__resources_biomarkers.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/resources/biomarkers/apob",
+    "finalUrl": "/resources/biomarkers/apob",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__resources_biomarkers_apob.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/resources/biomarkers/vo2-max",
+    "finalUrl": "/resources/biomarkers/vo2-max",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__resources_biomarkers_vo2_max.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/resources/categories/nutrition",
+    "finalUrl": "/resources/categories/nutrition",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__resources_categories_nutrition.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/resources/categories/sleep",
+    "finalUrl": "/resources/categories/sleep",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__resources_categories_sleep.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/resources/what-is-biological-age",
+    "finalUrl": "/resources/what-is-biological-age",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__resources_what_is_biological_age.png"
+  },
+  {
+    "variant": "mobile-dark-anon",
+    "route": "/resources/how-to-read-your-first-longevity-blood-panel",
+    "finalUrl": "/resources/how-to-read-your-first-longevity-blood-panel",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark-anon__resources_how_to_read_your_first_longevity_blood_panel.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/dashboard",
+    "finalUrl": "/dashboard",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__dashboard.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/settings",
+    "finalUrl": "/settings",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__settings.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/ops",
+    "finalUrl": "/ops",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__ops.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/memory",
+    "finalUrl": "/memory",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__memory.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/network",
+    "finalUrl": "/network",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__network.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/onboarding",
+    "finalUrl": "/onboarding",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__onboarding.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/assessment",
+    "finalUrl": "/assessment",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__assessment.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/report",
+    "finalUrl": "/report",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__report.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/plan",
+    "finalUrl": "/plan",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__plan.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/companion",
+    "finalUrl": "/companion",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__companion.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/data-sources",
+    "finalUrl": "/data-sources",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__data_sources.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/digital-twin",
+    "finalUrl": "/digital-twin",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__digital_twin.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/life-autopilot",
+    "finalUrl": "/life-autopilot",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__life_autopilot.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/life-os",
+    "finalUrl": "/life-os",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__life_os.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/optimization",
+    "finalUrl": "/optimization",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__optimization.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/physician-export",
+    "finalUrl": "/physician-export",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__physician_export.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/concierge/success",
+    "finalUrl": "/concierge/success",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__concierge_success.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/success",
+    "finalUrl": "/onboarding?activated=sovereign",
+    "status": 200,
+    "redirected": true,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__success.png"
+  },
+  {
+    "variant": "mobile-dark",
+    "route": "/professional/dashboard",
+    "finalUrl": "/professional/dashboard",
+    "status": 200,
+    "redirected": false,
+    "overflow": null,
+    "covered": [],
+    "broken": [],
+    "clipped": [],
+    "problems": [
+      "console: eval() is not supported in this environment. If this page was served with a `Content-Security-Policy` header, make sure that `unsafe-eval` is included. React requires eval() in development mode for va"
+    ],
+    "shot": "mobile-dark__professional_dashboard.png"
+  }
+]
