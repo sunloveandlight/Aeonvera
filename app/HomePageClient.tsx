@@ -27,7 +27,7 @@ const PLANS = [
     id: "core",
     name: "Core",
     price: "$49",
-    body: "Essential longevity OS for focused operators.",
+    body: "Baseline health intelligence for people starting with labs, wearables, and biological age.",
     features: [
       "Biological age tracking",
       "Unified health timeline",
@@ -39,7 +39,7 @@ const PLANS = [
     id: "elite",
     name: "Elite",
     price: "$199",
-    body: "Advanced intelligence for performance-driven longevity.",
+    body: "Proactive coaching for people actively changing sleep, training, nutrition, and protocols.",
     features: [
       "Everything in Core",
       "Proactive coaching",
@@ -51,7 +51,7 @@ const PLANS = [
     id: "sovereign",
     name: "Sovereign",
     price: "$999",
-    body: "The complete longevity infrastructure for those who lead.",
+    body: "Full digital-twin context, clinical sharing, and concierge-level longevity infrastructure.",
     features: [
       "Everything in Elite",
       "Full digital twin",
@@ -62,12 +62,12 @@ const PLANS = [
 ] satisfies Array<{ id: Plan; name: string; price: string; body: string; features: string[] }>;
 
 const CAPABILITIES = [
-  "Biological age modeling",
-  "Wearable intelligence",
-  "Biomarker analysis",
-  "Future-self simulation",
-  "Proactive reminders",
-  "Physician-ready exports",
+  "Import labs and wearables",
+  "Track biological age",
+  "Explain biomarker changes",
+  "Prioritize next actions",
+  "Model future scenarios",
+  "Prepare clinician summaries",
 ];
 
 export default function HomePage() {
@@ -210,29 +210,40 @@ export default function HomePage() {
           </div>
           <div className="aeon-apple-hero-copy">
             <p className="aeon-apple-hero-subtitle">
-              The operating system for your biological future.
+              Private AI longevity intelligence for labs, wearables, protocols,
+              and clinician-ready next steps.
             </p>
             <div className="aeon-apple-cta-row">
               <Link
-                href={authenticated ? "/dashboard" : "/login?mode=signup"}
+                href={authenticated ? "/dashboard" : "/demo"}
                 className="apple-cta-primary"
               >
-                Open Today
+                {authenticated ? "Open Today" : "View demo"}
+              </Link>
+              <Link
+                href={authenticated ? "/dashboard" : "/login?mode=signup"}
+                className="apple-cta-link"
+              >
+                {authenticated ? "Dashboard" : "Create account"} <ArrowRight size={15} />
               </Link>
               <Link href="/pricing" className="apple-cta-link">
                 View plans <ArrowRight size={15} />
               </Link>
             </div>
+            <p className="aeon-apple-hero-note">
+              Preview sample health data before entering your own.
+            </p>
           </div>
         </div>
       </section>
 
       <section className="aeon-apple-section aeon-apple-section-light">
         <div className="aeon-apple-copy">
-          <h2>A continuously updating digital human.</h2>
+          <h2>Know what your health data is telling you.</h2>
           <p>
-            Aeonvera ingests labs, wearables, recovery, behavior, and clinical context
-            into one private model that updates as your life changes.
+            Aeonvera brings labs, wearables, recovery, behavior, and clinical
+            context into one private model, then shows what changed, what matters,
+            and what deserves your next conversation or action.
           </p>
         </div>
         <div className="aeon-signal-strip" aria-label="Aeonvera capabilities">
@@ -253,10 +264,11 @@ export default function HomePage() {
           />
         </div>
         <div className="aeon-apple-split-copy">
-          <h2>Simulate the body you could become.</h2>
+          <h2>A private model built from your real signals.</h2>
           <p>
-            Ask what happens if you lose weight, raise VO2 max, improve sleep, or change
-            nutrition. Aeonvera turns possible futures into practical next actions.
+            Aeonvera is not a generic chatbot. It works from your timeline,
+            biomarkers, habits, goals, and protocols so the guidance is tied to
+            your body instead of internet averages.
           </p>
           <Link href="/digital-twin" className="apple-cta-link">
             Explore Twin <ArrowRight size={15} />
@@ -276,10 +288,11 @@ export default function HomePage() {
           </button>
         </div>
         <div className="aeon-apple-copy aeon-apple-copy-center">
-          <h2>Your longevity coach should reach you first.</h2>
+          <h2>Ask what changed, what matters, and what to do next.</h2>
           <p>
-            When sleep drops, recovery weakens, fasting windows shift, or a protocol
-            starts slipping, Aeonvera should notice and guide the next healthy move.
+            The companion can explain lab results, compare trends, help prioritize
+            protocols, and turn insight into a tracked plan you can review with a
+            qualified clinician.
           </p>
           <Link href="/companion" className="apple-cta-link apple-cta-link-light">
             Open companion <ArrowRight size={15} />
@@ -314,8 +327,13 @@ export default function HomePage() {
       ) : (
         <section className="aeon-apple-pricing">
           <div className="aeon-apple-copy aeon-apple-copy-center">
-            <h2>Choose how much of your biological future Aeonvera runs.</h2>
-            <p>Start with biological age. Scale into digital twin modeling, proactive coaching, and concierge-level health intelligence.</p>
+            <h2>Clear plans. No mystery.</h2>
+            <p>Core is $49/mo for baseline intelligence. Elite is $199/mo for proactive optimization. Sovereign is $999/mo for digital twin, clinical sharing, and concierge-level context.</p>
+            <div className="aeon-pricing-reassurance" aria-label="Aeonvera trust notes">
+              <span><Check size={14} /> Demo before signup</span>
+              <span><Check size={14} /> Private health profile</span>
+              <span><Check size={14} /> Not a medical diagnosis</span>
+            </div>
           </div>
 
           <div className="aeon-apple-plan-grid">

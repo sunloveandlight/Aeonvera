@@ -1,12 +1,14 @@
 import type { NextConfig } from "next";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://api.resend.com https://api.stripe.com https://api.ouraring.com https://api.prod.whoop.com",
+  `connect-src 'self'${isProduction ? "" : " ws: wss:"} https://*.supabase.co wss://*.supabase.co https://api.openai.com https://api.resend.com https://api.stripe.com https://api.ouraring.com https://api.prod.whoop.com`,
   "frame-src 'self' https://js.stripe.com https://checkout.stripe.com",
   "manifest-src 'self'",
   "worker-src 'self' blob:",
@@ -14,7 +16,7 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "upgrade-insecure-requests",
+  ...(isProduction ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
 const securityHeaders = [
@@ -25,10 +27,14 @@ const securityHeaders = [
   },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  {
-    key: "Strict-Transport-Security",
-    value: "max-age=63072000; includeSubDomains; preload",
-  },
+  ...(isProduction
+    ? [
+        {
+          key: "Strict-Transport-Security",
+          value: "max-age=63072000; includeSubDomains; preload",
+        },
+      ]
+    : []),
   {
     key: "Permissions-Policy",
     value: "camera=(), geolocation=(), browsing-topics=()",
