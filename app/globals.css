@@ -7337,6 +7337,38 @@ input[type="number"]::-webkit-inner-spin-button {
   color: rgba(91, 66, 16, 0.92) !important;
 }
 
+.aeon-demo-page .aeon-demo-inline-link,
+.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark)) .premium-action-secondary {
+  min-height: 2.65rem;
+  border: 1px solid rgba(91, 66, 16, 0.28) !important;
+  border-radius: 0.5rem;
+  background:
+    linear-gradient(180deg, rgba(255, 248, 226, 0.96), rgba(214, 187, 114, 0.42)) !important;
+  color: rgba(45, 32, 9, 0.96) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 10px 24px rgba(36, 27, 11, 0.08) !important;
+  font-weight: 780;
+}
+
+.aeon-demo-page .aeon-demo-inline-link {
+  padding: 0.65rem 0.9rem;
+}
+
+.aeon-demo-page .aeon-demo-inline-link :is(svg, span),
+.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark)) .premium-action-secondary :is(svg, span) {
+  color: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.aeon-demo-page .aeon-demo-inline-link:hover,
+.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark)) .premium-action-secondary:hover {
+  border-color: rgba(91, 66, 16, 0.42) !important;
+  background:
+    linear-gradient(180deg, rgba(255, 250, 235, 0.98), rgba(214, 187, 114, 0.52)) !important;
+  color: rgba(33, 24, 7, 0.98) !important;
+}
+
 .aeon-demo-live-panel-dark {
   border-color: rgba(255, 255, 255, 0.13) !important;
   background:
