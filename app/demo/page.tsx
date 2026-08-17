@@ -257,11 +257,11 @@ export default function DemoPage() {
         </PageContainer>
       </section>
 
-      <section className="py-12">
+      <section className="aeon-demo-section py-12">
         <PageContainer>
-          <div className="mx-auto max-w-3xl text-center">
+          <div className="aeon-demo-section-heading mx-auto max-w-3xl text-center">
             <p className="micro-label">Where the value comes from</p>
-            <h2 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-white md:text-6xl">
+            <h2 className="aeon-demo-dark-heading mt-4 text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
               Aeonvera earns the subscription by doing the synthesis work.
             </h2>
           </div>
@@ -284,12 +284,12 @@ export default function DemoPage() {
         </PageContainer>
       </section>
 
-      <section className="py-12">
+      <section className="aeon-demo-section py-12">
         <PageContainer>
           <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="executive-panel rounded-lg p-6 md:p-8">
               <p className="micro-label">Weekly longevity plan</p>
-              <h2 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-white">
+              <h2 className="mt-4 text-4xl font-semibold leading-tight tracking-tight">
                 The plan has to land in real life.
               </h2>
               <p className="mt-4 text-base leading-7 text-white/58">
@@ -303,14 +303,14 @@ export default function DemoPage() {
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {weeklyPlan.map((item) => (
-                <div key={item.day} className="rounded-lg border border-white/[0.08] bg-white/[0.035] p-5">
+                <div key={item.day} className="aeon-demo-plan-card rounded-lg p-5">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="rounded-full bg-white/[0.08] px-3 py-1 text-xs font-bold text-white/72">
+                    <span className="aeon-demo-day-chip rounded-full px-3 py-1 text-xs font-bold">
                       {item.day}
                     </span>
                     <CalendarCheck size={18} className="text-[rgb(var(--gold))]" />
                   </div>
-                  <h3 className="mt-5 text-lg font-semibold text-white">{item.task}</h3>
+                  <h3 className="mt-5 text-lg font-semibold">{item.task}</h3>
                   <p className="mt-3 text-sm leading-6 text-white/56">{item.why}</p>
                 </div>
               ))}

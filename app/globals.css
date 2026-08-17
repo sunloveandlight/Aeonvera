@@ -7282,48 +7282,70 @@ input[type="number"]::-webkit-inner-spin-button {
   }
 }
 
-/* Final demo contrast guard. Keep this at the end so global theme utilities
-   cannot leave muted dark text on the black demo background. */
-.aeon-demo-page,
-.aeon-demo-page :is(section, div):not(.executive-panel):not(.aeon-demo-live-panel):not(.aeon-demo-reason-list div):not(.aeon-demo-next-action):not(.aeon-demo-packet div):not(.aeon-demo-week div) {
-  color: rgba(247, 247, 244, 0.94) !important;
+/* Demo page contrast system. Keep this at the end so utility classes cannot
+   invert text against the wrong surface. */
+.aeon-demo-page {
+  background:
+    radial-gradient(circle at 50% 0%, rgba(214, 187, 114, 0.12), transparent 38rem),
+    #050506;
+  color: rgba(247, 247, 244, 0.94);
 }
 
-.aeon-demo-page :is(h1, h2, h3),
+.aeon-demo-hero h1,
+.aeon-demo-dark-heading,
+.aeon-demo-section-heading h2,
 .aeon-demo-live-panel-dark :is(h2, h3, strong),
-.aeon-demo-page :is(.text-white, [class*="text-white"]) {
-  color: rgba(255, 255, 255, 0.96) !important;
+.aeon-demo-page > section:not(:has(.executive-panel)) :is(h2, h3) {
+  color: rgba(255, 255, 255, 0.97) !important;
 }
 
-.aeon-demo-page :is(p, span, li),
-.aeon-demo-page :is([class*="text-white/3"], [class*="text-white/4"], [class*="text-white/5"], [class*="text-white/6"], [class*="text-white/7"]) {
-  color: rgba(232, 234, 238, 0.82) !important;
+.aeon-demo-hero-copy,
+.aeon-demo-section-heading p,
+.aeon-demo-live-panel-dark p {
+  color: rgba(236, 238, 242, 0.84) !important;
 }
 
 .aeon-demo-page :is(.micro-label, .av-eyebrow, .aeon-demo-panel-topline, .aeon-demo-answer-head),
 .aeon-demo-page :is(.micro-label, .av-eyebrow, .aeon-demo-panel-topline, .aeon-demo-answer-head) :is(span, svg) {
-  color: rgba(226, 197, 126, 0.94) !important;
+  color: rgba(214, 183, 108, 0.96) !important;
 }
 
-.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark)) {
-  color: rgba(29, 29, 31, 0.9) !important;
+.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark), .aeon-demo-plan-card) {
+  border: 1px solid rgba(38, 39, 43, 0.11) !important;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(214, 187, 114, 0.08), transparent 16rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.985), rgba(244, 244, 246, 0.995)) !important;
+  color: rgba(29, 29, 31, 0.92) !important;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
 }
 
-.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark)) :is(h2, h3, strong, .text-white, [class*="text-white"]) {
+.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark), .aeon-demo-plan-card) :is(h2, h3, strong, .text-white, [class*="text-white"]) {
   color: rgba(29, 29, 31, 0.94) !important;
 }
 
-.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark)) :is(p, span, li, [class*="text-white/"]) {
-  color: rgba(42, 43, 48, 0.76) !important;
+.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark), .aeon-demo-plan-card) :is(p, span, li, [class*="text-white/"]) {
+  color: rgba(48, 49, 54, 0.76) !important;
 }
 
-.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark)) :is(.micro-label, .av-eyebrow, .aeon-demo-panel-topline, .aeon-demo-answer-head),
-.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark)) :is(.micro-label, .av-eyebrow, .aeon-demo-panel-topline, .aeon-demo-answer-head) :is(span, svg) {
-  color: rgb(134, 98, 27) !important;
+.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark), .aeon-demo-plan-card) :is(.micro-label, .av-eyebrow, .aeon-demo-panel-topline, .aeon-demo-answer-head),
+.aeon-demo-page :is(.executive-panel, .aeon-demo-live-panel:not(.aeon-demo-live-panel-dark), .aeon-demo-plan-card) :is(.micro-label, .av-eyebrow, .aeon-demo-panel-topline, .aeon-demo-answer-head) :is(span, svg) {
+  color: rgb(129, 94, 24) !important;
 }
 
-.aeon-demo-live-panel-dark :is(p, span, button),
-.aeon-demo-live-panel-dark :is([class*="text-white/"]) {
+.aeon-demo-day-chip {
+  background: rgba(129, 94, 24, 0.1) !important;
+  color: rgba(91, 66, 16, 0.92) !important;
+}
+
+.aeon-demo-live-panel-dark {
+  border-color: rgba(255, 255, 255, 0.13) !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(214, 187, 114, 0.14), transparent 20rem),
+    linear-gradient(145deg, rgba(39, 40, 45, 0.98), rgba(8, 8, 10, 0.99)) !important;
+  color: rgba(247, 247, 244, 0.94) !important;
+}
+
+.aeon-demo-live-panel-dark :is(p, span, button, [class*="text-white/"]) {
   color: rgba(247, 247, 244, 0.9) !important;
 }
 
@@ -7336,4 +7358,19 @@ input[type="number"]::-webkit-inner-spin-button {
   border-color: rgba(226, 197, 126, 0.58) !important;
   background: rgba(226, 197, 126, 0.16) !important;
   color: rgba(255, 255, 255, 0.98) !important;
+}
+
+:root[data-theme] [data-aeonvera-content] .aeon-demo-page .aeon-demo-section-heading h2,
+:root[data-theme] [data-aeonvera-content] .aeon-demo-page .aeon-demo-hero h1 {
+  color: rgba(255, 255, 255, 0.97) !important;
+}
+
+:root[data-theme] [data-aeonvera-content] .aeon-demo-page .aeon-demo-section-heading .micro-label,
+:root[data-theme] [data-aeonvera-content] .aeon-demo-page .aeon-demo-hero .micro-label {
+  color: rgba(214, 183, 108, 0.96) !important;
+}
+
+:root[data-theme] [data-aeonvera-content] .aeon-demo-page .aeon-demo-section-heading p,
+:root[data-theme] [data-aeonvera-content] .aeon-demo-page .aeon-demo-hero-copy {
+  color: rgba(236, 238, 242, 0.84) !important;
 }
