@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const sessionStripe = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: "subscription",
-      allow_promotion_codes: true,
+      allow_promotion_codes: plan !== "sovereign",
       line_items: [
         {
           price: PRICE_IDS[plan],
